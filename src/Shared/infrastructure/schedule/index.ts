@@ -9,8 +9,10 @@ export const closeFinancialMonth = async (): Promise<void> => {
     await new CloseFinancialMonth(
       FinancialYearMongoRepository.getInstance()
     ).execute({
+      churchId: church.getChurchId(),
       closed: true,
       month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
     })
   }
 }
