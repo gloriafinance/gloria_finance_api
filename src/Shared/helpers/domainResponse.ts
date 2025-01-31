@@ -1,13 +1,23 @@
-import { DomainException, HttpStatus } from "../domain"
+import { DomainException, HttpStatus, QueueName } from "../domain"
+import { QueueBullService } from "../infrastructure"
+import { Logger } from "../adapter"
 
 export default (e, res) => {
+  const logger = Logger("domainResponse")
+
   if (e instanceof DomainException) {
     res.status(HttpStatus.BAD_REQUEST).send({
       code: e.getErrorCode(),
       message: e.getMessage(),
     })
+    QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
+      message: e.getMessage() + " RequestId:" + logger.getRequestId(),
+    })
     return
   }
 
+  QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
+    message: e.message + " RequestId:" + logger.getRequestId(),
+  })
   res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: e.message })
 }

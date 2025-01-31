@@ -42,8 +42,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP "          
           cd church_finance_api          
           
-          git reset --hard HEAD
-          git clean -fd
+          git fetch origin
+          git reset --hard origin/main
           git pull
           rm -rf dist node_modules
           

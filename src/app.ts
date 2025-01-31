@@ -8,7 +8,7 @@ import financialRouter from "./Financial/infrastructure/http/routes"
 import worldRoute from "./World/infrastructure/http/routes/World.route"
 import ministerRoute from "./Church/infrastructure/http/routes/Minsiter.routers"
 import { Express } from "express"
-import { server } from "./Shared/infrastructure"
+import { Schedule, server } from "./Shared/infrastructure"
 import { Queues } from "./queues"
 import { BullBoard } from "./Shared/infrastructure/bull/bullBoard"
 import userRoutes from "./SecuritySystem/infrastructure/http/routes/user.routes"
@@ -32,6 +32,8 @@ app.use("/api/v1/world", worldRoute)
 app.use("/api/v1/reports", reportsRouter)
 
 //StorageGCP.getInstance(process.env.BUCKET_FILES);
+
+Schedule()
 
 const serverInstance = app.listen(port, () =>
   logger.info(`server running on port ${port}`)

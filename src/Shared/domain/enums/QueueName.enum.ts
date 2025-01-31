@@ -6,4 +6,5 @@ export enum QueueName {
   CreateUserForMember = "CreateUserForMember",
   InitialLoadingFinancialConcepts = "InitialLoadingFinancialConcepts",
   SendMail = "SendMail",
+  TelegramNotification = "TelegramNotification",
 }

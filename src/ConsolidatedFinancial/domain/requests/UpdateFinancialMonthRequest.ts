@@ -1,4 +1,6 @@
 export type UpdateFinancialMonthRequest = {
   closed: boolean
-  financialMonthId: string
+  month: number
+  churchId: string
+  year: number
 }

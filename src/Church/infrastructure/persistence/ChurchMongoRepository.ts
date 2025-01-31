@@ -38,6 +38,14 @@ export class ChurchMongoRepository
     await this.persist(church.getId(), church)
   }
 
+  async all(): Promise<Church[]> {
+    const collection = await this.collection()
+    const result = await collection.find().toArray()
+    return result.map((r) =>
+      Church.fromPrimitives({ id: r._id.toString(), ...r })
+    )
+  }
+
   async list(criteria: Criteria): Promise<Paginate<ChurchDTO>> {
     const result: ChurchDTO[] = await this.searchByCriteria<ChurchDTO>(
       criteria,

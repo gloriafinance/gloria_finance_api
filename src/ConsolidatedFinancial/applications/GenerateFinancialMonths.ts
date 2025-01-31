@@ -14,7 +14,7 @@ export class GenerateFinancialMonths {
         month,
         args.year
       )
-      await this.financialYearRepository.upsertFinancialMonth(financialMonth)
+      await this.financialYearRepository.upsert(financialMonth)
     }
   }
 }

@@ -59,6 +59,10 @@ class CustomLogger {
     this.logger.debug(this.createLogMessage(message, context))
   }
 
+  getRequestId(): string | undefined {
+    return RequestContext.requestId
+  }
+
   private createLogMessage(message: string, context?: object): object {
     const requestId = RequestContext.requestId || "N/A" // Recuperar el requestId
     return {
@@ -71,7 +75,7 @@ class CustomLogger {
 
 function createGoogleCloudLoggingTransport() {
   const logging = new Logging()
-  const log = logging.log("application-log") // Nombre del log en Google Cloud
+  const log = logging.log("church-api") // Nombre del log en Google Cloud
 
   const levelsMap: { [key: number]: string } = {
     10: "DEBUG",
@@ -89,10 +93,11 @@ function createGoogleCloudLoggingTransport() {
 
         const severity = levelsMap[logEntry.level] || "DEFAULT"
 
-        const entry = log.entry(
-          { severity, timestamp: logEntry.time },
-          logEntry
-        )
+        const timestamp = logEntry.time
+          ? new Date(logEntry.time).toISOString()
+          : new Date().toISOString() // Si no hay timestamp, usa la hora actual
+
+        const entry = log.entry({ severity, timestamp }, logEntry)
         await log.write(entry) // Escribir en Google Cloud Logging
       } catch (error) {
         console.error("Error escribiendo en Google Cloud Logging:", error)
