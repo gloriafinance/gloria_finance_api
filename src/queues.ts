@@ -9,6 +9,7 @@ import { FinancialConfigurationMongoRepository } from "./Financial/infrastructur
 import { ChurchMongoRepository } from "./Church/infrastructure"
 import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
 import { SendMail } from "./SendMail/SendMail"
+import { TelegramNotification } from "./Shared/infrastructure/telegram"
 
 export const Queues: IDefinitionQueue[] = [
   ...FinancialQueue,
@@ -26,6 +27,10 @@ export const Queues: IDefinitionQueue[] = [
   {
     useClass: SendMail,
     inject: [],
+    delay: 4,
+  },
+  {
+    useClass: TelegramNotification,
     delay: 4,
   },
 ]

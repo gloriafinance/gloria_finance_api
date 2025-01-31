@@ -18,12 +18,11 @@ export class FinancialMonthValidator {
       `Validating financial month ${currentMonth} ${currentYear} ${churchId}`
     )
 
-    const financialMonth =
-      await this.financialYearRepository.findByMonthAndYear(
-        currentMonth,
-        currentYear,
-        churchId
-      )
+    const financialMonth = await this.financialYearRepository.one({
+      month: currentMonth,
+      year: currentYear,
+      churchId,
+    })
 
     if (!financialMonth) {
       this.logger.info(`Financial month not found`, financialMonth)

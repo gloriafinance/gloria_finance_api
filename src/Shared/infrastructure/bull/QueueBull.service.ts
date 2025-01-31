@@ -43,11 +43,16 @@ export class QueueBullService implements IQueueService {
           ? new definitionQueue.useClass(...definitionQueue.inject)
           : new definitionQueue.useClass()
 
-      worker.process(async (job) => {
+      worker.process(async (job, done) => {
         const requestId = job.data?.requestId || "N/A"
 
         RequestContext.run({ requestId }, async () => {
-          return await instanceWorker.handle(job.data)
+          try {
+            await instanceWorker.handle(job.data)
+            done() // Marca el trabajo como exitoso
+          } catch (error) {
+            done(error) // Marca el trabajo como fallido
+          }
         })
       })
 
@@ -97,6 +102,23 @@ export class QueueBullService implements IQueueService {
     )
   }
 
+  private addWorkerListeners(worker: Queue.Queue) {
+    worker.on("failed", (job, e: Error) => {
+      const requestId = job.data?.requestId || "N/A"
+
+      RequestContext.run({ requestId }, async () => {
+        this.logger.error(`Job failed: ${worker.name}`, e)
+
+        QueueBullService.getInstance().dispatch(
+          QueueName.TelegramNotification,
+          {
+            message: `Job failed: ${worker.name} ${e.message}  RequestId: ${requestId}`,
+          }
+        )
+      })
+    })
+  }
+
   private generateEnumFile(enumName: string, outputPath: string) {
     const enumContent = Object.keys(this.queueMap)
       .map((key) => `  ${key} = "${key}",`)
@@ -113,9 +135,9 @@ export class QueueBullService implements IQueueService {
     this.logger.info(`Enum file generated at ${outputPath}`)
   }
 
-  private addWorkerListeners(worker: Queue.Queue) {
-    worker.on("failed", (job, err) =>
-      this.logger.error(`Job failed in queue: ${worker.name}`, err)
-    )
-  }
+  // private addWorkerListeners(worker: Queue.Queue) {
+  //   worker.on("failed", (job, err) =>
+  //     this.logger.error(`Job failed in queue: ${worker.name}`, err)
+  //   )
+  // }
 }

@@ -59,6 +59,10 @@ class CustomLogger {
     this.logger.debug(this.createLogMessage(message, context))
   }
 
+  getRequestId(): string | undefined {
+    return RequestContext.requestId
+  }
+
   private createLogMessage(message: string, context?: object): object {
     const requestId = RequestContext.requestId || "N/A" // Recuperar el requestId
     return {

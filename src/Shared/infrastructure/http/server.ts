@@ -37,7 +37,7 @@ export function server(port: number) {
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     skip: (req) => {
       // Excluye las rutas de @bull-board/express
-      return req.originalUrl.startsWith("/admin/queues")
+      return req.originalUrl.startsWith("/ui/queues")
     },
   })
 
