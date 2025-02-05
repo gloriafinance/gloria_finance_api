@@ -10,6 +10,11 @@ export class FindFinancialConceptByChurchIdAndFinancialConceptId {
   ) {}
 
   async execute(churchId: string, financialConceptId: string) {
+    this.logger.info(`FindFinancialConceptByChurchIdAndFinancialConceptId`, {
+      churchId,
+      financialConceptId,
+    })
+
     const financialConcept =
       await this.financialConceptRepository.findFinancialConceptByChurchIdAndFinancialConceptId(
         churchId,

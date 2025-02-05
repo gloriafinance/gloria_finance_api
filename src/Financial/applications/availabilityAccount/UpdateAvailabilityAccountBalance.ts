@@ -5,6 +5,7 @@ import {
 } from "../../domain/interfaces"
 import {
   AvailabilityAccount,
+  TypeOperationMoney,
   UpdateAvailabilityAccountBalanceRequest,
 } from "../../domain"
 
@@ -26,7 +27,7 @@ export class UpdateAvailabilityAccountBalance implements IQueue {
         args.availabilityAccountId
       )
 
-    if (args.operationType === "MONEY_IN") {
+    if (args.operationType === TypeOperationMoney.MONEY_IN) {
       account.increaseBalance(Number(args.amount))
     } else {
       account.decreaseBalance(Number(args.amount))

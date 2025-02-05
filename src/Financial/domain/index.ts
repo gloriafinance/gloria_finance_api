@@ -18,6 +18,7 @@ export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
 export { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 export { ConceptType } from "./enums/ConcepType.enum"
 export { MoneyLocation } from "./enums/MoneyLocation.enum"
+export { TypeOperationMoney } from "./enums/TypeOperationMoney.enum"
 
 export { TypeBankAccount } from "./enums/TypeBankAccount.enum"
 export { AccountType } from "./enums/AccountType.enum"

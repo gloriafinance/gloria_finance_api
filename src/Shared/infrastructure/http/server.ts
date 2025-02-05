@@ -3,8 +3,9 @@ import express = require("express")
 import fileUpload = require("express-fileupload")
 import bodyParser = require("body-parser")
 import rateLimit from "express-rate-limit"
-import { RequestContext } from "../../adapter/CustomLogger"
+import { Logger, RequestContext } from "../../adapter/CustomLogger"
 import { v4 } from "uuid"
+import { Express } from "express"
 
 const requestContextMiddleware = (req, res, next) => {
   const requestId = (req.headers["x-request-id"] as string) || v4()
@@ -56,4 +57,28 @@ export function server(port: number) {
   app.use(requestContextMiddleware)
 
   return app
+}
+
+export const startServer = (app: Express, port: number) => {
+  const logger = Logger("AppServer")
+
+  const serverInstance = app.listen(port, () =>
+    logger.info(`server running on port ${port}`)
+  )
+
+  process.on("SIGINT", () => {
+    logger.info("Recibida señal SIGINT. Cerrando servidor...")
+    serverInstance.close(() => {
+      logger.info("Servidor cerrado.")
+      process.exit(0)
+    })
+  })
+
+  process.on("SIGTERM", () => {
+    logger.info("Recibida señal SIGTERM. Cerrando servidor...")
+    serverInstance.close(() => {
+      logger.info("Servidor cerrado.")
+      process.exit(0)
+    })
+  })
 }

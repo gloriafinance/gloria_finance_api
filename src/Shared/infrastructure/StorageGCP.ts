@@ -70,6 +70,8 @@ export class StorageGCP implements IStorageService {
    * @param file File to upload
    */
   async uploadFile(file: any): Promise<string> {
+    this.logger.info(`Uploading file to GCP Storage...`, file)
+
     const key: string = this.generateNameFile(file) // Generate a unique file name
 
     try {
@@ -105,6 +107,7 @@ export class StorageGCP implements IStorageService {
         }
       })
 
+      this.logger.info("File uploaded successfully to GCP Storage.")
       return key // Return the file name in GCP Storage
     } catch (error) {
       this.logger.error("Error uploading file to GCP Storage:", error)

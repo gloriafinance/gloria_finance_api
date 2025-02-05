@@ -1,7 +1,7 @@
 import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
 import { IQueue } from "../../../Shared/domain"
 import { FinanceRecord } from "../../domain/FinanceRecord"
-import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications/FinancialMonthValidator"
+import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
 import {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,

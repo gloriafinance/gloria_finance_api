@@ -1,5 +1,7 @@
+import { TypeOperationMoney } from "../enums/TypeOperationMoney.enum"
+
 export type UpdateAvailabilityAccountBalanceRequest = {
   availabilityAccountId: string
   amount: number
-  operationType: "MONEY_IN" | "MONEY_OUT"
+  operationType: TypeOperationMoney
 }

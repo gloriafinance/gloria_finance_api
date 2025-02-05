@@ -10,14 +10,16 @@ export default (e, res) => {
       code: e.getErrorCode(),
       message: e.getMessage(),
     })
-    QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
-      message: e.getMessage() + " RequestId:" + logger.getRequestId(),
-    })
+
+    // QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
+    //   message: e.getMessage() + " RequestId:" + logger.getRequestId(),
+    // })
     return
   }
 
   QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
     message: e.message + " RequestId:" + logger.getRequestId(),
   })
+
   res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: e.message })
 }
