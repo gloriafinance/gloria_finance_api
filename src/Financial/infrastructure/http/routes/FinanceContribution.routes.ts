@@ -15,20 +15,22 @@ import {
 const financeContribution = Router()
 
 financeContribution.post(
-  "",
+  "/",
   [PermissionMiddleware, ContributionValidator],
   async (req, res) => {
+    const file = req.files?.file ?? null
+
     await onlineContributionsController(
       {
         ...(req.body as ContributionRequest),
-        bankTransferReceipt: req.files.file,
+        bankTransferReceipt: file,
       },
       res
     )
   }
 )
 
-financeContribution.get("", PermissionMiddleware, async (req, res) => {
+financeContribution.get("/", PermissionMiddleware, async (req, res) => {
   let filter = {
     ...(req.query as unknown as FilterContributionsRequest),
   }
@@ -46,11 +48,9 @@ financeContribution.patch(
   "/:contributionId/status/:status",
   PermissionMiddleware,
   async (req, res) => {
-    const { contributionId, status } = req.params
-
     await UpdateContributionStatusController(
-      contributionId,
-      status as OnlineContributionsStatus,
+      req.params.contributionId,
+      req.params.status as OnlineContributionsStatus,
       res
     )
   }

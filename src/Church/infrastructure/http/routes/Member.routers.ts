@@ -15,8 +15,7 @@ memberRoute.get("/list", PermissionMiddleware, async (req, res) => {
 })
 
 memberRoute.get("/:memberId", PermissionMiddleware, async (req, res) => {
-  const { memberId } = req.params as any
-  await MemberController.findById(memberId, res)
+  await MemberController.findById(req.params.memberId, res)
 })
 
 export default memberRoute

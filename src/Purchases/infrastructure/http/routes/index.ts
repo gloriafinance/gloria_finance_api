@@ -1,7 +1,11 @@
 import { Request, Response, Router } from "express"
 import { PermissionMiddleware } from "../../../../Shared/infrastructure"
-import { recordPurchaseController } from "../controllers/Purchase.controller"
+import {
+  listPurchasesController,
+  recordPurchaseController,
+} from "../controllers/Purchase.controller"
 import PurchaseValidator from "../validators/Purchase.validator"
+import { FilterPurchasesRequest } from "../../../domain/requests"
 
 const purchaseRouter = Router()
 
@@ -15,6 +19,20 @@ purchaseRouter.post(
         churchId: req["user"].churchId,
         file: req.files.invoice,
       },
+      res
+    )
+  }
+)
+
+purchaseRouter.get(
+  "/",
+  [PermissionMiddleware],
+  async (req: Request, res: Response) => {
+    await listPurchasesController(
+      {
+        ...req.query,
+        churchId: req["user"].churchId,
+      } as FilterPurchasesRequest,
       res
     )
   }

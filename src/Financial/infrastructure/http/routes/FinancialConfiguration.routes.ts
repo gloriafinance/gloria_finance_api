@@ -39,8 +39,7 @@ financialConfigurationRoute.put(
 )
 
 financialConfigurationRoute.get("/cost-center/:churchId", async (req, res) => {
-  const { churchId } = req.params as any
-  await FindCostCenterByChurchIdController(churchId, res)
+  await FindCostCenterByChurchIdController(req.params.churchId, res)
 })
 
 //TODO sera necesario crear endpoint por pais para el registro de banco?
@@ -59,32 +58,45 @@ financialConfigurationRoute.get(
   "/bank/:churchId",
   PermissionMiddleware,
   async (req, res) => {
-    const { churchId } = req.params as any
-    await FinancialConfigurationController.listBankByChurchId(churchId, res)
+    await FinancialConfigurationController.listBankByChurchId(
+      req.params.churchId,
+      res
+    )
   }
 )
 
 financialConfigurationRoute.get("/bank/data/:bankId", async (req, res) => {
-  const { bankId } = req.params as any
-  await FinancialConfigurationController.findBankByBankId(bankId, res)
+  await FinancialConfigurationController.findBankByBankId(
+    req.params.bankId,
+    res
+  )
 })
 
 financialConfigurationRoute.get(
-  "/financial-concepts/:churchId/:typeConcept?",
+  "/financial-concepts/:churchId/:typeConcept",
   PermissionMiddleware,
   async (req, res) => {
-    const { churchId, typeConcept } = req.params as any
-
     await FinancialConfigurationController.findFinancialConceptsByChurchIdAndTypeConcept(
-      churchId,
+      req.params.churchId,
       res,
-      typeConcept as ConceptType
+      req.params.typeConcept as ConceptType
+    )
+  }
+)
+
+financialConfigurationRoute.get(
+  "/financial-concepts/:churchId",
+  PermissionMiddleware,
+  async (req, res) => {
+    await FinancialConfigurationController.findFinancialConceptsByChurchIdAndTypeConcept(
+      req.params.churchId,
+      res
     )
   }
 )
 
 financialConfigurationRoute.post(
-  "/availability-account/",
+  "/availability-account",
   [PermissionMiddleware, AvailabilityAccountValidator],
   async (req, res) => {
     await createOrUpdateAvailabilityAccount(
@@ -98,8 +110,7 @@ financialConfigurationRoute.get(
   "/availability-account/:churchId",
   PermissionMiddleware,
   async (req, res) => {
-    const { churchId } = req.params as any
-    await listAvailabilityAccountByChurchId(churchId, res)
+    await listAvailabilityAccountByChurchId(req.params.churchId, res)
   }
 )
 

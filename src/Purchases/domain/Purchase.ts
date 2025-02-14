@@ -15,7 +15,7 @@ export class Purchase extends AggregateRoot {
   private total: number
   private tax: number
   private description: string
-  private invoiceFile: string
+  private invoice: string
   private availabilityAccount: {
     accountName: string
     accountType: AccountType
@@ -55,7 +55,7 @@ export class Purchase extends AggregateRoot {
     p.total = total
     p.tax = tax
     p.description = description
-    p.invoiceFile = invoice
+    p.invoice = invoice
     p.availabilityAccount = {
       accountName: availabilityAccount.getAccountName(),
       accountType: availabilityAccount.getType(),
@@ -80,7 +80,7 @@ export class Purchase extends AggregateRoot {
     p.total = plainData.total
     p.tax = plainData.tax
     p.description = plainData.description
-    p.invoiceFile = plainData.invoiceFile
+    p.invoice = plainData.invoice
     p.availabilityAccount = plainData.availabilityAccount
     p.items = plainData.items
     p.costCenter = plainData.costCenter
@@ -101,7 +101,7 @@ export class Purchase extends AggregateRoot {
       total: this.total,
       tax: this.tax,
       description: this.description,
-      invoice: this.invoiceFile,
+      invoice: this.invoice,
       availabilityAccount: this.availabilityAccount,
       items: this.items,
       costCenter: this.costCenter,

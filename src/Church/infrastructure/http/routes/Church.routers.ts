@@ -36,13 +36,12 @@ churchRoute.post(
   "/remove-minister/:churchId",
   PermissionMiddleware,
   async (req, res) => {
-    await ChurchController.removeMinister(req.params["churchId"], res)
+    await ChurchController.removeMinister(req.params.churchId, res)
   }
 )
 
 churchRoute.get("/:churchId", PermissionMiddleware, async (req, res) => {
-  const { churchId } = req.params as any
-  await ChurchController.findByChurchId(churchId, res)
+  await ChurchController.findByChurchId(req.params.churchId, res)
 })
 
 export default churchRoute

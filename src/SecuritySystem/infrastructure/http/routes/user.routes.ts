@@ -25,9 +25,11 @@ userRoutes.post("/create", PermissionMiddleware, async (req, res) => {
 })
 
 userRoutes.put("/edit-user/:userId", PermissionMiddleware, async (req, res) => {
-  const { userId } = req.params as any
   await UserController.createOrUpdateUser(
-    { ...(req.body as unknown as CreateUserRequest), userId: userId },
+    {
+      ...(req.body as unknown as CreateUserRequest),
+      userId: req.params.userId,
+    },
     res
   )
 })

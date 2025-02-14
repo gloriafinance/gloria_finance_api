@@ -1,7 +1,10 @@
-import { RecordPurchaseRequest } from "../../../domain/requests"
+import {
+  FilterPurchasesRequest,
+  RecordPurchaseRequest,
+} from "../../../domain/requests"
 import { Response } from "express"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { RecordPurchase } from "../../../applications"
+import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
 import {
   AvailabilityAccountMongoRepository,
@@ -11,6 +14,7 @@ import { HttpStatus } from "../../../../Shared/domain"
 import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
 import { FinancialMonthValidator } from "../../../../ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
+import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
 
 export const recordPurchaseController = async (
   request: RecordPurchaseRequest,
@@ -38,5 +42,20 @@ export const recordPurchaseController = async (
       request.invoice
     )
     domainResponse(e, res)
+  }
+}
+
+export const listPurchasesController = async (
+  request: FilterPurchasesRequest,
+  res: Response
+) => {
+  try {
+    const list = await new SearchPurchase(
+      PurchaseMongoRepository.getInstance()
+    ).execute(request)
+
+    res.status(HttpStatus.OK).send(await PurchasePaginateDto(list))
+  } catch (e) {
+    return domainResponse(e, res)
   }
 }
