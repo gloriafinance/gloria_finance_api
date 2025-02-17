@@ -39,7 +39,7 @@ jobs:
       - name: Deploy
         run: |
           echo "$SSH_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key abejarano@$PUBLIC_IP "          
+          ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP "          
           cd church_finance_api          
           
           git fetch origin
