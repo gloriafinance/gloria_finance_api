@@ -13,7 +13,6 @@ export default async (req, res, next) => {
     amount: "required|numeric",
     availabilityAccountId: "required|string",
     financialConceptId: "required|string",
-    bankId: "required|string",
   }
 
   const customMessage = {

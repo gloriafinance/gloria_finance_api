@@ -1,5 +1,11 @@
 [
   {
+    "name": "Suprimentos Gerais",
+    "description": "Despesas com materiais e produtos comumente utilizados na igreja, como água, papel e outros suprimentos necessários ao funcionamento diário.",
+    "type": "PURCHASE",
+    "active": true
+  },
+  {
     "name": "Saldo inicial em contas de disponibilidade",
     "description": "Saldo inicial em contas de disponibilidade / Abertura de exercício.",
     "type": "INCOME",

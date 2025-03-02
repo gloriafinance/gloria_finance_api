@@ -13,12 +13,14 @@ export class AvailabilityAccount extends AggregateRoot {
   private accountType: AccountType
   private lastMove: Date
   private createdAt: Date
+  private source?: any
 
   static create(
     churchId: string,
     accountName: string,
     active: boolean,
-    accountType: AccountType
+    accountType: AccountType,
+    source?: any
   ): AvailabilityAccount {
     const account: AvailabilityAccount = new AvailabilityAccount()
     account.churchId = churchId
@@ -28,6 +30,7 @@ export class AvailabilityAccount extends AggregateRoot {
     account.active = active
     account.accountType = accountType
     account.createdAt = DateBR()
+    account.source = source
 
     return account
   }
@@ -43,12 +46,17 @@ export class AvailabilityAccount extends AggregateRoot {
     account.lastMove = plainData.lastMove
     account.createdAt = plainData.createdAt
     account.id = plainData._id
+    account.source = plainData.source
 
     return account
   }
 
   getId(): string {
     return this.id
+  }
+
+  getSource() {
+    return this.source
   }
 
   getChurchId() {
@@ -99,6 +107,7 @@ export class AvailabilityAccount extends AggregateRoot {
       accountType: this.accountType,
       lastUpdate: this.lastMove,
       createdAt: this.createdAt,
+      source: this.source,
     }
   }
 }

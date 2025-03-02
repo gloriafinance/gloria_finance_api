@@ -5,6 +5,7 @@ import { Member } from "../../Church/domain"
 import { FinancialConcept } from "./FinancialConcept"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 import { DateBR } from "../../Shared/helpers"
+import { AvailabilityAccount } from "./AvailabilityAccount"
 
 export class OnlineContributions extends AggregateRoot {
   private id?: string
@@ -17,7 +18,7 @@ export class OnlineContributions extends AggregateRoot {
   private bankTransferReceipt: string
   private observation: string
   private createdAt: Date
-  private bankId: string
+  private availabilityAccount: AvailabilityAccount
 
   static create(
     amount: AmountValueObject,
@@ -25,7 +26,7 @@ export class OnlineContributions extends AggregateRoot {
     financialConcept: FinancialConcept,
     bankTransferReceipt: string,
     observation: string,
-    bankId: string
+    availabilityAccount: AvailabilityAccount
   ): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.member = member
@@ -37,7 +38,7 @@ export class OnlineContributions extends AggregateRoot {
     contributions.amount = amount.getValue()
     contributions.createdAt = DateBR()
     contributions.financialConcept = financialConcept
-    contributions.bankId = bankId
+    contributions.availabilityAccount = availabilityAccount
 
     if (financialConcept.isDisable()) {
       throw new FinancialConceptDisable()
@@ -62,7 +63,10 @@ export class OnlineContributions extends AggregateRoot {
       plainData.financialConcept
     )
     contributions.observation = plainData.observation
-    contributions.bankId = plainData.bankId
+    contributions.availabilityAccount = AvailabilityAccount.fromPrimitives(
+      plainData.availabilityAccount
+    )
+
     return contributions
   }
 
@@ -94,8 +98,16 @@ export class OnlineContributions extends AggregateRoot {
     return this.member
   }
 
-  getBankId() {
-    return this.bankId
+  getAvailabilityAccount(): AvailabilityAccount {
+    return this.availabilityAccount
+  }
+
+  getFinancialConcept() {
+    return this.financialConcept
+  }
+
+  getBankTransferReceipt() {
+    return this.bankTransferReceipt
   }
 
   toPrimitives() {
@@ -109,7 +121,7 @@ export class OnlineContributions extends AggregateRoot {
       churchId: this.churchId,
       observation: this.observation,
       financialConcept: this.financialConcept.toPrimitives(),
-      bankId: this.bankId,
+      availabilityAccount: this.availabilityAccount,
     }
   }
 }

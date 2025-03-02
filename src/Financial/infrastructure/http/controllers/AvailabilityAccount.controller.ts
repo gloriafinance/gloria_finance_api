@@ -1,9 +1,13 @@
-import { AvailabilityAccountRequest } from "../../../domain"
+import { AccountType, AvailabilityAccountRequest } from "../../../domain"
 import {
   CreateOrUpdateAvailabilityAccount,
+  FinBankByBankId,
   SearchAvailabilityAccountByChurchId,
 } from "../../../applications"
-import { AvailabilityAccountMongoRepository } from "../../persistence"
+import {
+  AvailabilityAccountMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "../../persistence"
 import { HttpStatus } from "../../../../Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { Response } from "express"
@@ -13,6 +17,30 @@ export const createOrUpdateAvailabilityAccount = async (
   res: Response
 ) => {
   try {
+    if (
+      (request.accountType === AccountType.BANK ||
+        request.accountType === AccountType.WALLET) &&
+      request.source == ""
+    ) {
+      res.status(HttpStatus.BAD_REQUEST).send({
+        source: {
+          message: "The source field is mandatory.",
+          rule: "required",
+        },
+      })
+      return
+    }
+
+    if (request.accountType === AccountType.BANK && request.source != "") {
+      request.source = await new FinBankByBankId(
+        FinancialConfigurationMongoRepository.getInstance()
+      ).execute(request.source)
+    }
+
+    if (request.accountType === AccountType.WALLET && request.source != "") {
+      //TODO implement search wallet
+    }
+
     await new CreateOrUpdateAvailabilityAccount(
       AvailabilityAccountMongoRepository.getInstance()
     ).execute(request)

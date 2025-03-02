@@ -6,10 +6,12 @@ import {
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import {
   AccountType,
+  AvailabilityAccount,
   ConceptType,
   CostCenter,
   FinancialConcept,
   FinancialRecordRequest,
+  TypeOperationMoney,
 } from "../../../domain"
 import { RegisterFinancialRecord } from "../../../applications/financeRecord/RegisterFinancialRecord"
 import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
@@ -21,10 +23,7 @@ import {
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
 import {
-  MovementBankRequest,
-  TypeBankingOperation,
-} from "../../../../MovementBank/domain"
-import {
+  DispatchUpdateAvailabilityAccountBalance,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
   FindFinancialConceptByChurchIdAndFinancialConceptId,
@@ -50,6 +49,18 @@ export const FinancialRecordController = async (
 
     if (
       financialConcept.getType() === ConceptType.DISCHARGE &&
+      !request.costCenterId
+    ) {
+      res.status(HttpStatus.BAD_REQUEST).send({
+        costCenterId: {
+          message: "The costCenterId field is mandatory.",
+          rule: "required",
+        },
+      })
+      return
+    }
+    if (
+      financialConcept.getType() === ConceptType.DISCHARGE &&
       request.costCenterId
     ) {
       costCenter = await new FindCostCenterByCostCenterId(
@@ -65,7 +76,7 @@ export const FinancialRecordController = async (
     ).handle(request, financialConcept, costCenter)
 
     if (availabilityAccount.getType() === AccountType.BANK) {
-      await recordMovementBank(request, financialConcept)
+      await recordMovementBank(request, availabilityAccount, financialConcept)
     }
 
     if (costCenter) {
@@ -94,18 +105,9 @@ export const FinancialRecordController = async (
 }
 
 const searchAvailabilityAccount = async (request: FinancialRecordRequest) => {
-  const availabilityAccount =
-    await new FindAvailabilityAccountByAvailabilityAccountId(
-      AvailabilityAccountMongoRepository.getInstance()
-    ).execute(request.availabilityAccountId)
-
-  if (availabilityAccount.getType() === AccountType.BANK) {
-    if (!request.bankId) {
-      throw new GenericException("The bank id field is mandatory.")
-    }
-  }
-
-  return availabilityAccount
+  return await new FindAvailabilityAccountByAvailabilityAccountId(
+    AvailabilityAccountMongoRepository.getInstance()
+  ).execute(request.availabilityAccountId)
 }
 
 const searchFinancialConcept = async (request: FinancialRecordRequest) => {
@@ -126,29 +128,18 @@ const searchFinancialConcept = async (request: FinancialRecordRequest) => {
 
 const recordMovementBank = async (
   request: FinancialRecordRequest,
+  availabilityAccount: AvailabilityAccount,
   financialConcept: FinancialConcept
 ) => {
-  const movementBank: MovementBankRequest = {
+  new DispatchUpdateAvailabilityAccountBalance(
+    QueueBullService.getInstance()
+  ).execute({
+    availabilityAccount: availabilityAccount,
     amount: request.amount,
-    bankingOperation: TypeBankingOperation.DEPOSIT,
     concept: financialConcept.getName(),
-    bankId: request.bankId,
-  }
-
-  QueueBullService.getInstance().dispatch(
-    QueueName.MovementBankRecord,
-    movementBank
-  )
-
-  QueueBullService.getInstance().dispatch(
-    QueueName.UpdateAvailabilityAccountBalance,
-    {
-      availabilityAccountId: request.availabilityAccountId,
-      amount: request.amount,
-      operationType:
-        financialConcept.getType() === ConceptType.INCOME
-          ? "MONEY_IN"
-          : "MONEY_OUT",
-    }
-  )
+    operationType:
+      financialConcept.getType() === ConceptType.INCOME
+        ? TypeOperationMoney.MONEY_IN
+        : TypeOperationMoney.MONEY_OUT,
+  })
 }

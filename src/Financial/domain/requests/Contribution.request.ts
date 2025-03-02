@@ -6,5 +6,4 @@ export type ContributionRequest = {
   availabilityAccountId: string
   month: string
   observation?: string
-  bankId: string
 }

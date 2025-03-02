@@ -6,6 +6,7 @@ import {
   IFinancialConfigurationRepository,
 } from "../../Financial/domain/interfaces"
 import {
+  DispatchFinancialRecord,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
 } from "../../Financial/applications"
@@ -62,7 +63,7 @@ export class RecordPurchase {
       amount: request.total,
     })
 
-    this.queueService.dispatch(QueueName.RegisterFinancialRecord, {
+    new DispatchFinancialRecord(this.queueService).execute({
       financialConceptId: request.financialConceptId,
       churchId: request.churchId,
       amount: request.total,
@@ -70,7 +71,6 @@ export class RecordPurchase {
       availabilityAccountId: request.availabilityAccountId,
       voucher: request.invoice,
       description: request.description,
-      bankId: request.bankId,
       costCenterId: request.costCenterId,
     })
 
