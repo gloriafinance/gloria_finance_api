@@ -22,7 +22,7 @@ export class OnlineContributionsMongoRepository
   }
 
   collectionName(): string {
-    return "contributions_sent"
+    return "contributions"
   }
 
   async upsert(contribution: OnlineContributions): Promise<void> {

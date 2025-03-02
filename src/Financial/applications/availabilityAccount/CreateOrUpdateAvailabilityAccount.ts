@@ -33,7 +33,8 @@ export class CreateOrUpdateAvailabilityAccount {
       requestAvailabilityAccount.churchId,
       requestAvailabilityAccount.accountName,
       requestAvailabilityAccount.active,
-      requestAvailabilityAccount.accountType
+      requestAvailabilityAccount.accountType,
+      requestAvailabilityAccount.source
     )
     await this.availabilityAccountRepository.upsert(availabilityAccount)
   }

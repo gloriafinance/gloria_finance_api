@@ -2,25 +2,14 @@ import {
   AvailabilityAccount,
   ContributionRequest,
   FinancialConcept,
-  FinancialRecordQueueRequest,
   OnlineContributions,
 } from "../../domain"
-import {
-  AmountValueObject,
-  IQueueService,
-  IStorageService,
-  QueueName,
-} from "../../../Shared/domain"
+import { AmountValueObject, IStorageService } from "../../../Shared/domain"
 import { Member } from "../../../Church/domain"
 import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "../../../Shared/adapter"
-import {
-  MovementBankRequest,
-  TypeBankingOperation,
-} from "../../../MovementBank/domain"
-import { DateBR } from "../../../Shared/helpers"
 
 export class RegisterContributionsOnline {
   private logger = Logger("RegisterContributionsOnline")
@@ -28,7 +17,6 @@ export class RegisterContributionsOnline {
   constructor(
     private readonly contributionRepository: IOnlineContributionsRepository,
     private readonly storageService: IStorageService,
-    private readonly queueService: IQueueService,
     private readonly financialYearRepository: IFinancialYearRepository
   ) {}
 
@@ -56,32 +44,9 @@ export class RegisterContributionsOnline {
       financialConcept,
       voucher,
       contributionRequest.observation,
-      contributionRequest.bankId
+      availabilityAccount
     )
 
     await this.contributionRepository.upsert(contribution)
-
-    const movementBank: MovementBankRequest = {
-      amount: contributionRequest.amount,
-      bankingOperation: TypeBankingOperation.DEPOSIT,
-      concept: financialConcept.getName(),
-      bankId: contributionRequest.bankId,
-    }
-
-    this.queueService.dispatch(QueueName.MovementBankRecord, movementBank)
-
-    const financialRecord: FinancialRecordQueueRequest = {
-      financialConceptId: financialConcept.getFinancialConceptId(),
-      amount: contributionRequest.amount,
-      churchId: member.getChurchId(),
-      date: DateBR(),
-      availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
-      voucher,
-    }
-
-    this.queueService.dispatch(
-      QueueName.RegisterFinancialRecord,
-      financialRecord
-    )
   }
 }

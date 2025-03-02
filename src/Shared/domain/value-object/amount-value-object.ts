@@ -11,13 +11,13 @@ export class AmountValueObject extends ValueObject<number> {
     return new AmountValueObject(value)
   }
 
+  getValue(): number {
+    return Number(this.value)
+  }
+
   private ensureValueIsPositive(): void {
     if (this.value <= 0) {
       throw new InvalidArgumentError("Amount must be positive")
     }
-  }
-
-  getValue(): number {
-    return Number(this.value)
   }
 }

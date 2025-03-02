@@ -6,13 +6,15 @@ import {
   IFinancialConfigurationRepository,
 } from "../../Financial/domain/interfaces"
 import {
+  DispatchFinancialRecord,
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
 } from "../../Financial/applications"
 import { Purchase } from "../domain"
-import { IQueueService, QueueName } from "../../Shared/domain"
+import { IQueueService } from "../../Shared/domain"
 import { TypeOperationMoney } from "../../Financial/domain"
-import { TypeBankingOperation } from "../../MovementBank/domain"
 
 export class RecordPurchase {
   private logger = Logger("RecordPurchase")
@@ -48,21 +50,23 @@ export class RecordPurchase {
       request.items
     )
 
+    this.logger.info(`RecordPurchase saving purchase`, purchase)
     await this.purchaseRepository.upsert(purchase)
 
-    this.queueService.dispatch(QueueName.UpdateCostCenterMaster, {
+    new DispatchUpdateCostCenterMaster(this.queueService).execute({
       churchId: request.churchId,
       costCenterId: request.costCenterId,
       amount: request.total,
     })
 
-    this.queueService.dispatch(QueueName.UpdateAvailabilityAccountBalance, {
+    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       operationType: TypeOperationMoney.MONEY_OUT,
-      availabilityAccountId: request.availabilityAccountId,
+      availabilityAccount: account,
+      concept: request.description,
       amount: request.total,
     })
 
-    this.queueService.dispatch(QueueName.RegisterFinancialRecord, {
+    new DispatchFinancialRecord(this.queueService).execute({
       financialConceptId: request.financialConceptId,
       churchId: request.churchId,
       amount: request.total,
@@ -70,15 +74,7 @@ export class RecordPurchase {
       availabilityAccountId: request.availabilityAccountId,
       voucher: request.invoice,
       description: request.description,
-      bankId: request.bankId,
       costCenterId: request.costCenterId,
-    })
-
-    this.queueService.dispatch(QueueName.MovementBankRecord, {
-      bankId: request.bankId,
-      amount: request.total,
-      bankingOperation: TypeBankingOperation.WITHDRAWAL,
-      concept: request.description,
     })
 
     this.logger.info(`Purchase recorded`)

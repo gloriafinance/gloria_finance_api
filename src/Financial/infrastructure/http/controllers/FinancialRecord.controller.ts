@@ -1,15 +1,11 @@
-import {
-  GenericException,
-  HttpStatus,
-  QueueName,
-} from "../../../../Shared/domain"
+import { GenericException, HttpStatus } from "../../../../Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import {
   AccountType,
   ConceptType,
   CostCenter,
-  FinancialConcept,
   FinancialRecordRequest,
+  TypeOperationMoney,
 } from "../../../domain"
 import { RegisterFinancialRecord } from "../../../applications/financeRecord/RegisterFinancialRecord"
 import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
@@ -21,10 +17,8 @@ import {
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
 import {
-  MovementBankRequest,
-  TypeBankingOperation,
-} from "../../../../MovementBank/domain"
-import {
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
   FindFinancialConceptByChurchIdAndFinancialConceptId,
@@ -50,6 +44,18 @@ export const FinancialRecordController = async (
 
     if (
       financialConcept.getType() === ConceptType.DISCHARGE &&
+      !request.costCenterId
+    ) {
+      res.status(HttpStatus.BAD_REQUEST).send({
+        costCenterId: {
+          message: "The costCenterId field is mandatory.",
+          rule: "required",
+        },
+      })
+      return
+    }
+    if (
+      financialConcept.getType() === ConceptType.DISCHARGE &&
       request.costCenterId
     ) {
       costCenter = await new FindCostCenterByCostCenterId(
@@ -65,18 +71,27 @@ export const FinancialRecordController = async (
     ).handle(request, financialConcept, costCenter)
 
     if (availabilityAccount.getType() === AccountType.BANK) {
-      await recordMovementBank(request, financialConcept)
+      new DispatchUpdateAvailabilityAccountBalance(
+        QueueBullService.getInstance()
+      ).execute({
+        availabilityAccount: availabilityAccount,
+        amount: request.amount,
+        concept: financialConcept.getName(),
+        operationType:
+          financialConcept.getType() === ConceptType.INCOME
+            ? TypeOperationMoney.MONEY_IN
+            : TypeOperationMoney.MONEY_OUT,
+      })
     }
 
     if (costCenter) {
-      QueueBullService.getInstance().dispatch(
-        QueueName.UpdateCostCenterMaster,
-        {
-          churchId: request.churchId,
-          amount: request.amount,
-          costCenterId: costCenter.getCostCenterId(),
-        }
-      )
+      new DispatchUpdateCostCenterMaster(
+        QueueBullService.getInstance()
+      ).execute({
+        churchId: request.churchId,
+        amount: request.amount,
+        costCenterId: costCenter.getCostCenterId(),
+      })
     }
 
     res.status(HttpStatus.CREATED).send({
@@ -94,18 +109,9 @@ export const FinancialRecordController = async (
 }
 
 const searchAvailabilityAccount = async (request: FinancialRecordRequest) => {
-  const availabilityAccount =
-    await new FindAvailabilityAccountByAvailabilityAccountId(
-      AvailabilityAccountMongoRepository.getInstance()
-    ).execute(request.availabilityAccountId)
-
-  if (availabilityAccount.getType() === AccountType.BANK) {
-    if (!request.bankId) {
-      throw new GenericException("The bank id field is mandatory.")
-    }
-  }
-
-  return availabilityAccount
+  return await new FindAvailabilityAccountByAvailabilityAccountId(
+    AvailabilityAccountMongoRepository.getInstance()
+  ).execute(request.availabilityAccountId)
 }
 
 const searchFinancialConcept = async (request: FinancialRecordRequest) => {
@@ -122,33 +128,4 @@ const searchFinancialConcept = async (request: FinancialRecordRequest) => {
   }
 
   return financialConcept
-}
-
-const recordMovementBank = async (
-  request: FinancialRecordRequest,
-  financialConcept: FinancialConcept
-) => {
-  const movementBank: MovementBankRequest = {
-    amount: request.amount,
-    bankingOperation: TypeBankingOperation.DEPOSIT,
-    concept: financialConcept.getName(),
-    bankId: request.bankId,
-  }
-
-  QueueBullService.getInstance().dispatch(
-    QueueName.MovementBankRecord,
-    movementBank
-  )
-
-  QueueBullService.getInstance().dispatch(
-    QueueName.UpdateAvailabilityAccountBalance,
-    {
-      availabilityAccountId: request.availabilityAccountId,
-      amount: request.amount,
-      operationType:
-        financialConcept.getType() === ConceptType.INCOME
-          ? "MONEY_IN"
-          : "MONEY_OUT",
-    }
-  )
 }

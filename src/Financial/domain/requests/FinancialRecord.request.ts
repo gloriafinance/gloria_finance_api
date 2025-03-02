@@ -8,11 +8,10 @@ export type FinancialRecordQueueRequest = {
   availabilityAccountId: string
   voucher?: string
   description?: string
+  costCenterId?: string
 }
 
 export type FinancialRecordRequest = {
-  bankId: string
   file?: any
   bankingOperation?: TypeBankingOperation
-  costCenterId?: string
 } & FinancialRecordQueueRequest

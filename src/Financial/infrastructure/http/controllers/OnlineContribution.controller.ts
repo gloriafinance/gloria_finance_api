@@ -55,21 +55,8 @@ export const onlineContributionsController = async (
     await new RegisterContributionsOnline(
       OnlineContributionsMongoRepository.getInstance(),
       StorageGCP.getInstance(process.env.BUCKET_FILES),
-      QueueBullService.getInstance(),
       FinancialYearMongoRepository.getInstance()
     ).execute(request, availabilityAccount, member, financialConcept)
-
-    // QueueBullService.getInstance().dispatch(
-    //   QueueName.UpdateAvailabilityAccountBalance,
-    //   {
-    //     availabilityAccountId: request.availabilityAccountId,
-    //     amount: request.amount,
-    //     operationType:
-    //       financialConcept.getType() === ConceptType.INCOME
-    //         ? "MONEY_IN"
-    //         : "MONEY_OUT",
-    //   }
-    // )
 
     res.status(HttpStatus.CREATED).send({
       message: "successful contribution registration",
@@ -104,7 +91,8 @@ export const UpdateContributionStatusController = async (
 ) => {
   try {
     await new UpdateContributionStatus(
-      OnlineContributionsMongoRepository.getInstance()
+      OnlineContributionsMongoRepository.getInstance(),
+      QueueBullService.getInstance()
     ).execute(contributionId, status)
 
     res.status(HttpStatus.OK).send({ message: "Contribution updated" })

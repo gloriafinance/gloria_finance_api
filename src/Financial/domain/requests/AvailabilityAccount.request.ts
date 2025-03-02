@@ -7,4 +7,5 @@ export type AvailabilityAccountRequest = {
   accountName: string
   active: boolean
   accountType: AccountType
+  source?: any
 }

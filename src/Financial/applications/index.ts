@@ -1,9 +1,9 @@
 export { SearchCostCenterByChurchId } from "./costCenter/SearchCostCenterByChurchId"
 export { FindCostCenterByCostCenterId } from "./costCenter/FindCostCenterByCostCenterId"
 
-export { FinBankByBankId } from "./financialConfiguration/finders/FinBankByBankId"
-export { SearchBankByChurchId } from "./financialConfiguration/finders/SearchBankByChurchId"
-export { CreateOrUpdateBank } from "./financialConfiguration/CreateOrUpdateBank"
+export { FinBankByBankId } from "./bank/FinBankByBankId"
+export { SearchBankByChurchId } from "./bank/SearchBankByChurchId"
+export { CreateOrUpdateBank } from "./bank/CreateOrUpdateBank"
 export { InitialLoadingFinancialConcepts } from "./financialConfiguration/InitialLoadingFinancialConcepts"
 
 export { RegisterContributionsOnline } from "./contribution/RegisterContributionsOnline"
@@ -20,3 +20,7 @@ export { CreateOrUpdateAvailabilityAccount } from "./availabilityAccount/CreateO
 export { SearchAvailabilityAccountByChurchId } from "./availabilityAccount/SearchAvailabilityAccountByChurchId"
 export { UpdateAvailabilityAccountBalance } from "./availabilityAccount/UpdateAvailabilityAccountBalance"
 export { FindAvailabilityAccountByAvailabilityAccountId } from "./availabilityAccount/FindAvailabilityAccountByAvailabilityAccountId"
+
+export { DispatchUpdateAvailabilityAccountBalance } from "./DispatchUpdateAvailabilityAccountBalance"
+export { DispatchFinancialRecord } from "./DispatchFinancialRecord"
+export { DispatchUpdateCostCenterMaster } from "./DispatchUpdateCostCenterMaster"
