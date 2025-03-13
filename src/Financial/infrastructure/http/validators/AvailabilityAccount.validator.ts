@@ -4,15 +4,16 @@ import { Logger } from "../../../../Shared/adapter"
 
 export default async (req, res, next) => {
   const payload = req.body
-  const logger = Logger("AssingChurchValidator")
+  const logger = Logger("AvailabilityAccountValidator")
 
-  logger.info(`Validando banco ${JSON.stringify(payload)}`)
+  logger.info(`Validando  ${JSON.stringify(payload)}`)
 
   const rule = {
     accountType: "required|in:BANK,CASH,WALLET,INVESTMENT",
     active: "required|boolean",
     churchId: "required",
     accountName: "required|string",
+    symbol: "required|string",
   }
 
   const v = new Validator(payload, rule)

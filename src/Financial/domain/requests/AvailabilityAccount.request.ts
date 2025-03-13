@@ -8,4 +8,5 @@ export type AvailabilityAccountRequest = {
   active: boolean
   accountType: AccountType
   source?: any
+  symbol: string
 }
