@@ -1,7 +1,6 @@
 import { GenericException, HttpStatus } from "../../../../Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import {
-  AccountType,
   ConceptType,
   CostCenter,
   FinancialRecordRequest,
@@ -70,19 +69,17 @@ export const FinancialRecordController = async (
       AvailabilityAccountMongoRepository.getInstance()
     ).handle(request, financialConcept, costCenter)
 
-    if (availabilityAccount.getType() === AccountType.BANK) {
-      new DispatchUpdateAvailabilityAccountBalance(
-        QueueBullService.getInstance()
-      ).execute({
-        availabilityAccount: availabilityAccount,
-        amount: request.amount,
-        concept: financialConcept.getName(),
-        operationType:
-          financialConcept.getType() === ConceptType.INCOME
-            ? TypeOperationMoney.MONEY_IN
-            : TypeOperationMoney.MONEY_OUT,
-      })
-    }
+    new DispatchUpdateAvailabilityAccountBalance(
+      QueueBullService.getInstance()
+    ).execute({
+      availabilityAccount: availabilityAccount,
+      amount: request.amount,
+      concept: financialConcept.getName(),
+      operationType:
+        financialConcept.getType() === ConceptType.INCOME
+          ? TypeOperationMoney.MONEY_IN
+          : TypeOperationMoney.MONEY_OUT,
+    })
 
     if (costCenter) {
       new DispatchUpdateCostCenterMaster(
