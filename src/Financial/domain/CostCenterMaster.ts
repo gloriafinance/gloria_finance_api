@@ -57,6 +57,10 @@ export class CostCenterMaster extends AggregateRoot {
     return this.id
   }
 
+  getTotal(): number {
+    return this.total
+  }
+
   toPrimitives() {
     return {
       costCenterMasterId: this.costCenterMasterId,
