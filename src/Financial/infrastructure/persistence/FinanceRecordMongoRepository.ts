@@ -2,13 +2,20 @@ import { MongoRepository } from "../../../Shared/infrastructure"
 import { FinanceRecord } from "../../domain/FinanceRecord"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { Criteria, Paginate } from "../../../Shared/domain"
-import { ConceptType } from "../../domain"
+import {
+  AvailabilityAccountMaster,
+  ConceptType,
+  CostCenterMaster,
+} from "../../domain"
+import { Logger } from "../../../Shared/adapter"
 
 export class FinanceRecordMongoRepository
   extends MongoRepository<FinanceRecord>
   implements IFinancialRecordRepository
 {
   private static instance: FinanceRecordMongoRepository
+  private logger = Logger("FinanceRecordMongoRepository")
+  private dbCollectionName = "financial_records"
 
   constructor() {
     super()
@@ -22,7 +29,7 @@ export class FinanceRecordMongoRepository
   }
 
   collectionName(): string {
-    return "financial_records"
+    return this.dbCollectionName
   }
 
   async fetch(criteria: Criteria): Promise<Paginate<FinanceRecord>> {
@@ -89,5 +96,83 @@ export class FinanceRecordMongoRepository
       records: result[0].records,
       tithesOfTithes: ((result[0].total ?? 0) * 10) / 100,
     }
+  }
+
+  async fetchAvailableAccounts(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<AvailabilityAccountMaster[]> {
+    this.logger.info(
+      `Fetch available accounts params: ${JSON.stringify(filter)}`
+    )
+
+    this.dbCollectionName = "availability_accounts_master"
+
+    const { churchId, year, month } = filter
+
+    const collection = await this.collection()
+
+    const mustConditions = [
+      { text: { query: churchId, path: "churchId" } },
+      { equals: { value: Number(year), path: "year" } },
+    ]
+
+    if (month !== undefined) {
+      mustConditions.push({ equals: { value: Number(month), path: "month" } })
+    }
+
+    const result = await collection
+      .aggregate([
+        {
+          $search: {
+            index: "availabilityAccountMasterIndex",
+            compound: {
+              must: mustConditions,
+            },
+          },
+        },
+      ])
+      .toArray()
+
+    return result.map((r) => AvailabilityAccountMaster.fromPrimitives(r))
+  }
+
+  async fetchCostCenters(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]> {
+    this.logger.info(`Fetch costs center params: ${JSON.stringify(filter)}`)
+
+    this.dbCollectionName = "cost_centers_master"
+
+    const { churchId, year, month } = filter
+
+    const collection = await this.collection()
+
+    const mustConditions = [
+      { text: { query: churchId, path: "churchId" } },
+      { equals: { value: Number(year), path: "year" } },
+    ]
+
+    if (month !== undefined) {
+      mustConditions.push({ equals: { value: Number(month), path: "month" } })
+    }
+
+    const result = await collection
+      .aggregate([
+        {
+          $search: {
+            index: "costCentersMasterIndex",
+            compound: {
+              must: mustConditions,
+            },
+          },
+        },
+      ])
+      .toArray()
+
+    return result.map((r) => CostCenterMaster.fromPrimitives(r))
   }
 }
