@@ -65,6 +65,14 @@ export class AvailabilityAccountMaster extends AggregateRoot {
     return this.totalInput - this.totalOutput
   }
 
+  getIncome(): number {
+    return this.totalInput
+  }
+
+  getExpenses(): number {
+    return this.totalOutput
+  }
+
   updateMaster(
     amount: number,
     operationType: "MONEY_IN" | "MONEY_OUT"

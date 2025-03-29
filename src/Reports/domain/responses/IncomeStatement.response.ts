@@ -7,6 +7,8 @@ export type IncomeStatementResponse = {
   assets: {
     accounts: AvailabilityAccountMaster[]
     total: number
+    totalAssetIncome: number
+    totalAssetExpenses: number
   }
   liabilities: {
     costCenters: CostCenterMaster[]
