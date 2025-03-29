@@ -42,7 +42,7 @@ export class IncomeStatement {
     }
 
     return {
-      result: totalAssets - liabilitiesAssets,
+      result: totalAssetIncome - liabilitiesAssets,
       assets: {
         accounts: availableAccounts,
         total: totalAssets,
