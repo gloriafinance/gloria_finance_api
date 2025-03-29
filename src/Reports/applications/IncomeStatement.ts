@@ -32,7 +32,6 @@ export class IncomeStatement {
       totalAssetExpenses += availableAccount.getExpenses()
     }
 
-
     const costCenters =
       await this.financialRecordRepository.fetchCostCenters(params)
 
@@ -48,7 +47,7 @@ export class IncomeStatement {
         accounts: availableAccounts,
         total: totalAssets,
         totalAssetIncome,
-        totalAssetExpenses
+        totalAssetExpenses,
       },
       liabilities: {
         costCenters: costCenters,

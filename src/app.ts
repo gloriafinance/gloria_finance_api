@@ -1,4 +1,3 @@
-import "reflect-metadata"
 import "dotenv/config"
 
 import churchRouters from "./Church/infrastructure/http/routes/Church.routers"
