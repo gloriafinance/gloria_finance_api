@@ -23,9 +23,15 @@ export class IncomeStatement {
 
     this.logger.info(`Calculating the total assets`)
     let totalAssets = 0
+    let totalAssetIncome = 0
+    let totalAssetExpenses = 0
+
     for (const availableAccount of availableAccounts) {
       totalAssets += availableAccount.getBalance()
+      totalAssetIncome += availableAccount.getIncome()
+      totalAssetExpenses += availableAccount.getExpenses()
     }
+
 
     const costCenters =
       await this.financialRecordRepository.fetchCostCenters(params)
@@ -41,6 +47,8 @@ export class IncomeStatement {
       assets: {
         accounts: availableAccounts,
         total: totalAssets,
+        totalAssetIncome,
+        totalAssetExpenses
       },
       liabilities: {
         costCenters: costCenters,
