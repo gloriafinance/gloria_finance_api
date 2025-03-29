@@ -68,5 +68,7 @@ export class RegisterFinancialRecord implements IQueue {
     })
 
     await this.financialRecordRepository.upsert(financialRecord)
+
+    this.logger.info(`RegisterFinancialRecord finish`)
   }
 }

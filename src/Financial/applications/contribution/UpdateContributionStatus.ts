@@ -65,6 +65,7 @@ export class UpdateContributionStatus {
         .getAvailabilityAccount()
         .getAvailabilityAccountId(),
       voucher: contribution.getBankTransferReceipt(),
+      description: contribution.getFinancialConcept().getName(),
     })
   }
 }

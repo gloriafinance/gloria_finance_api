@@ -33,5 +33,7 @@ export class DispatchUpdateAvailabilityAccountBalance {
         bankId: args.availabilityAccount.getSource().bankId,
       })
     }
+
+    this.logger.info(`finished process`)
   }
 }

@@ -52,7 +52,7 @@ export class OnlineContributions extends AggregateRoot {
   static fromPrimitives(plainData: any): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.id = plainData.id
-    contributions.member = plainData.member
+    contributions.member = Member.fromPrimitives(plainData.member)
     contributions.contributionId = plainData.contributionId
     contributions.status = plainData.status
     contributions.amount = plainData.amount
