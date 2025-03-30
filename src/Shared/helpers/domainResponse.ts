@@ -1,6 +1,6 @@
 import { DomainException, HttpStatus, QueueName } from "../domain"
-import { QueueBullService } from "../infrastructure"
 import { Logger } from "../adapter"
+import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 
 export default (e, res) => {
   const logger = Logger("domainResponse")
@@ -11,13 +11,13 @@ export default (e, res) => {
       message: e.getMessage(),
     })
 
-    // QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
+    // QueueService.getInstance().dispatch(QueueName.TelegramNotification, {
     //   message: e.getMessage() + " RequestId:" + logger.getRequestId(),
     // })
     return
   }
 
-  QueueBullService.getInstance().dispatch(QueueName.TelegramNotification, {
+  QueueService.getInstance().dispatch(QueueName.TelegramNotification, {
     message: e.message + " RequestId:" + logger.getRequestId(),
   })
 

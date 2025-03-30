@@ -1,17 +1,17 @@
-import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { BankRequest, ConceptType } from "../../../domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
+import { BankRequest, ConceptType } from "@/Financial/domain"
 import {
   CreateOrUpdateBank,
   FinBankByBankId,
   FindFinancialConceptsByChurchIdAndTypeConcept,
   SearchBankByChurchId,
-} from "../../../applications"
+} from "@/Financial/applications"
 import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
-import { HttpStatus } from "../../../../Shared/domain"
-import { ChurchMongoRepository } from "../../../../Church/infrastructure"
+import { HttpStatus } from "@/Shared/domain"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
 
 export class FinancialConfigurationController {
   static async createOrUpdateBank(request: BankRequest, res) {

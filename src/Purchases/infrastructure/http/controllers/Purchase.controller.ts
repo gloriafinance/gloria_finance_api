@@ -11,10 +11,11 @@ import {
   FinancialConfigurationMongoRepository,
 } from "../../../../Financial/infrastructure/persistence"
 import { HttpStatus } from "../../../../Shared/domain"
-import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
+import { StorageGCP } from "../../../../Shared/infrastructure"
 import { FinancialMonthValidator } from "../../../../ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
+import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 
 export const recordPurchaseController = async (
   request: RecordPurchaseRequest,
@@ -33,7 +34,7 @@ export const recordPurchaseController = async (
       PurchaseMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       FinancialConfigurationMongoRepository.getInstance(),
-      QueueBullService.getInstance()
+      QueueService.getInstance()
     ).execute(request)
 
     res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })

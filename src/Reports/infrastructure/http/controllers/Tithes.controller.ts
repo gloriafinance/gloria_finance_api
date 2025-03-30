@@ -1,10 +1,10 @@
-import { BaseReportRequest } from "../../domain"
+import { BaseReportRequest } from "../../../domain"
 import { Response } from "express"
-import domainResponse from "../../../Shared/helpers/domainResponse"
-import { MonthlyTithes } from "../../applications"
-import { FinanceRecordMongoRepository } from "../../../Financial/infrastructure"
-import { ChurchMongoRepository } from "../../../Church/infrastructure"
-import { HttpStatus } from "../../../Shared/domain"
+import domainResponse from "../../../../Shared/helpers/domainResponse"
+import { MonthlyTithes } from "../../../applications"
+import { FinanceRecordMongoRepository } from "../../../../Financial/infrastructure"
+import { ChurchMongoRepository } from "../../../../Church/infrastructure"
+import { HttpStatus } from "../../../../Shared/domain"
 
 /**
  * TithesController

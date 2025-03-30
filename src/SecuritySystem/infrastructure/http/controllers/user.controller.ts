@@ -13,9 +13,9 @@ import { CreateUserRequest, FilterUserRequest } from "../../../domain"
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "../../../../Shared/adapter"
 import { Response } from "express"
-import { QueueBullService } from "../../../../Shared/infrastructure"
 import { SendEmailChangePassword } from "../../../../SendMail/applications"
 import randomString from "../../../../Shared/helpers/randomString"
+import { QueueService } from "@/Shared/infrastructure"
 
 export type userLoginPayload = {
   email: string
@@ -95,7 +95,7 @@ export const recoveryPassword = async (email: string, res: Response) => {
       new PasswordAdapter()
     ).execute(email, temporalPassword)
 
-    new SendEmailChangePassword(QueueBullService.getInstance()).execute(
+    new SendEmailChangePassword(QueueService.getInstance()).execute(
       user,
       temporalPassword
     )

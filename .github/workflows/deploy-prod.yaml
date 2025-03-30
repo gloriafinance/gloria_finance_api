@@ -56,7 +56,7 @@ jobs:
           fi
           
           # Configurar PM2 para ejecutar la aplicación
-          pm2 stop church_financial_api || true
+          pm2 stop church_financial_api --wait-time 10000 || true
           pm2 delete church_financial_api || true
           
           # Iniciar la aplicación con PM2

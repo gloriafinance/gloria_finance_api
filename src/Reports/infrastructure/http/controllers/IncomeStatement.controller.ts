@@ -1,9 +1,9 @@
 import { Response } from "express"
-import { BaseReportRequest } from "../../domain"
-import { FinanceRecordMongoRepository } from "../../../Financial/infrastructure"
-import { IncomeStatement } from "../../applications"
-import domainResponse from "../../../Shared/helpers/domainResponse"
-import { ChurchMongoRepository } from "../../../Church/infrastructure"
+import { BaseReportRequest } from "../../../domain"
+import { FinanceRecordMongoRepository } from "../../../../Financial/infrastructure"
+import { IncomeStatement } from "../../../applications"
+import domainResponse from "../../../../Shared/helpers/domainResponse"
+import { ChurchMongoRepository } from "../../../../Church/infrastructure"
 
 /**
  * IncomeStatementController

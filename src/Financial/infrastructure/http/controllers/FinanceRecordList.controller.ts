@@ -2,10 +2,10 @@ import { Response } from "express"
 import { FilterFinanceRecordRequest } from "../../../domain"
 import { SearchFinanceRecord } from "../../../applications"
 import { FinanceRecordMongoRepository } from "../../persistence"
-import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { HttpStatus } from "../../../../Shared/domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
+import { HttpStatus } from "@/Shared/domain"
 import FinanceRecordPaginateDTO from "../dto/FinanceRecordPaginate.dto"
-import { Logger } from "../../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export const FinanceRecordListController = async (
   filter: FilterFinanceRecordRequest,

@@ -5,15 +5,15 @@ import { IdentifyEntity } from "../../Shared/adapter"
 import { DateBR } from "../../Shared/helpers"
 import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 import { InstallmentsStatus } from "./enums/InstallmentsStatus.enum"
+import { AggregateRoot } from "../../Shared/domain"
 
-export class AccountReceivable {
+export class AccountReceivable extends AggregateRoot {
   private id?: string
   private debtor: {
     debtorType: DebtorType
     debtorId: string
     name: string
   }
-
   private accountReceivableId: string
   private churchId: string
   private description: string
@@ -64,7 +64,7 @@ export class AccountReceivable {
     return accountReceivable
   }
 
-  static fromPrimitive(params: any): AccountReceivable {
+  static fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.id = params.id
     accountReceivable.installments = params.installments
@@ -104,7 +104,7 @@ export class AccountReceivable {
     this.updatedAt = DateBR()
   }
 
-  toPrimitive() {
+  toPrimitives() {
     return {
       status: this.status,
       createdAt: this.createdAt,

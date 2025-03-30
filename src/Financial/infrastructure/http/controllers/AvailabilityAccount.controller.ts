@@ -8,8 +8,8 @@ import {
   AvailabilityAccountMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
-import { HttpStatus } from "../../../../Shared/domain"
-import domainResponse from "../../../../Shared/helpers/domainResponse"
+import { HttpStatus } from "@/Shared/domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import { Response } from "express"
 
 export const createOrUpdateAvailabilityAccount = async (

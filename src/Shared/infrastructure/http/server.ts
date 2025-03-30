@@ -3,6 +3,8 @@ import rateLimit from "express-rate-limit"
 import { Logger, RequestContext } from "../../adapter/CustomLogger"
 import { v4 } from "uuid"
 import { Express } from "express"
+import { MongoClientFactory } from "@/Shared/infrastructure"
+import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 import cors = require("cors")
 import express = require("express")
 import fileUpload = require("express-fileupload")
@@ -64,6 +66,36 @@ export function server(port: number) {
   return app
 }
 
+async function gracefulShutdown(serverInstance) {
+  const queueService = QueueService.getInstance()
+
+  const logger = Logger("AppServer")
+
+  try {
+    // 1. Detener aceptación de nuevos trabajos
+    logger.info("Closing queue system...")
+    await queueService.shutdown()
+
+    // 2. Cerrar conexiones a bases de datos
+    logger.info("Closing MongoDB connections...")
+    await MongoClientFactory.closeClient()
+
+    // 3. Cerrar servidor HTTP
+    logger.info("Closing HTTP server...")
+    if (serverInstance) {
+      await new Promise((resolve) => {
+        serverInstance.close(resolve)
+      })
+    }
+
+    logger.info("Graceful shutdown completed. Exiting...")
+    process.exit(0)
+  } catch (error) {
+    logger.error("Error during graceful shutdown:", error)
+    process.exit(1)
+  }
+}
+
 export const startServer = (app: Express, port: number) => {
   const logger = Logger("AppServer")
 
@@ -71,19 +103,13 @@ export const startServer = (app: Express, port: number) => {
     logger.info(`server running on port ${port}`)
   )
 
-  process.on("SIGINT", () => {
-    logger.info("Recibida señal SIGINT. Cerrando servidor...")
-    serverInstance.close(() => {
-      logger.info("Servidor cerrado.")
-      process.exit(0)
-    })
+  process.on("SIGINT", async () => {
+    logger.info("SIGINT signal received. Shutting down application...")
+    await gracefulShutdown(serverInstance)
   })
 
-  process.on("SIGTERM", () => {
-    logger.info("Recibida señal SIGTERM. Cerrando servidor...")
-    serverInstance.close(() => {
-      logger.info("Servidor cerrado.")
-      process.exit(0)
-    })
+  process.on("SIGTERM", async () => {
+    logger.info("SIGTERM signal received. Shutting down application...")
+    await gracefulShutdown(serverInstance)
   })
 }

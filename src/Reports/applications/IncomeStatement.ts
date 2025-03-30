@@ -1,9 +1,9 @@
-import { IFinancialRecordRepository } from "../../Financial/domain/interfaces"
-import { IChurchRepository } from "../../Church/domain"
-import { FindChurchById } from "../../Church/applications"
+import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { IChurchRepository } from "@/Church/domain"
+import { FindChurchById } from "@/Church/applications"
 import { BaseReportRequest } from "../domain"
 import { IncomeStatementResponse } from "../domain/responses/IncomeStatement.response"
-import { Logger } from "../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class IncomeStatement {
   private logger = Logger("IncomeStatement")
