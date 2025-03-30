@@ -29,7 +29,7 @@ export class User extends AggregateRoot {
 
     u.churchId = churchId
 
-    u.userId = IdentifyEntity.get()
+    u.userId = IdentifyEntity.get(`user`)
 
     u.profiles = profiles
 

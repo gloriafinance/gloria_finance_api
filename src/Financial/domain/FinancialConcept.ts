@@ -22,7 +22,7 @@ export class FinancialConcept extends AggregateRoot {
     church: Church
   ): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
-    concept.financialConceptId = IdentifyEntity.get()
+    concept.financialConceptId = IdentifyEntity.get(`financialConcept`)
     concept.name = name
     concept.description = description
     concept.active = active

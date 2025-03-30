@@ -48,7 +48,7 @@ export class Purchase extends AggregateRoot {
   ): Purchase {
     const p: Purchase = new Purchase()
 
-    p.purchaseId = IdentifyEntity.get()
+    p.purchaseId = IdentifyEntity.get(`purchase`)
     p.financialConceptId = financialConceptId
     p.churchId = churchId
     p.purchaseDate = purchaseDate

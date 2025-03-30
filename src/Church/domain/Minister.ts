@@ -29,7 +29,7 @@ export class Minister extends AggregateRoot {
     m.createdAt = DateBR()
     m.dni = dni
     m.ministerType = ministerType
-    m.ministerId = IdentifyEntity.get()
+    m.ministerId = IdentifyEntity.get(`minister`)
 
     return m
   }

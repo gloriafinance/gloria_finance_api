@@ -47,7 +47,7 @@ export class Church extends AggregateRoot {
     c.openingDate = openingDate
     //c.region = region;
     c.createdAt = DateBR()
-    c.churchId = IdentifyEntity.get()
+    c.churchId = IdentifyEntity.get(`church`)
     c.status = ChurchStatus.ACTIVE
 
     return c

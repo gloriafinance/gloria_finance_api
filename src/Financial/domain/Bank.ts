@@ -26,7 +26,7 @@ export class Bank extends AggregateRoot {
     const bank: Bank = new Bank()
     bank.accountType = accountType
     bank.active = active
-    bank.bankId = IdentifyEntity.get()
+    bank.bankId = IdentifyEntity.get(`bank`)
     bank.name = name
     bank.tag = tag
     bank.addressInstancePayment = addressInstancePayment

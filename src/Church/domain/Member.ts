@@ -40,7 +40,7 @@ export class Member extends AggregateRoot {
     m.baptismDate = baptismDate
     m.churchId = church.getChurchId()
     m.birthdate = birthdate
-    m.memberId = IdentifyEntity.get()
+    m.memberId = IdentifyEntity.get(`member`)
     m.isTreasurer = isTreasurer
     m.isMinister = isMinister
 

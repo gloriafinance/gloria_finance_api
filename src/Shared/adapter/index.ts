@@ -1,2 +1,2 @@
-export { IdentifyEntity } from "./identify-entity.adapter"
+export { IdentifyEntity } from "./IdentifyEntity.adapter"
 export { Logger } from "./CustomLogger"

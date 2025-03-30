@@ -29,7 +29,7 @@ export class MovementBank extends AggregateRoot {
     movementBank.impact = OperationImpact[operationType]
     movementBank.operationType = operationType
     movementBank.concept = concept
-    movementBank.movementBankId = IdentifyEntity.get()
+    movementBank.movementBankId = IdentifyEntity.get(`movementBank`)
     movementBank.bankId = bank.getBankId()
     movementBank.churchId = bank.getChurchId()
     movementBank.createdAt = DateBR()

@@ -47,7 +47,7 @@ export class FinanceRecord extends AggregateRoot {
       costCenter,
     } = params
     const financialRecord: FinanceRecord = new FinanceRecord()
-    financialRecord.financialRecordId = IdentifyEntity.get()
+    financialRecord.financialRecordId = IdentifyEntity.get(`financialRecord`)
     financialRecord.financialConcept = financialConcept
     financialRecord.churchId = churchId
     financialRecord.amount = Number(amount)

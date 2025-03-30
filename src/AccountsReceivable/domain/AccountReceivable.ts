@@ -37,7 +37,8 @@ export class AccountReceivable {
     } = params
 
     const accountReceivable: AccountReceivable = new AccountReceivable()
-    accountReceivable.accountReceivableId = IdentifyEntity.get()
+    accountReceivable.accountReceivableId =
+      IdentifyEntity.get(`accountReceivable`)
     accountReceivable.churchId = churchId
     accountReceivable.description = description
     accountReceivable.amountTotal = amountTotal
@@ -46,7 +47,7 @@ export class AccountReceivable {
     accountReceivable.status = AccountsReceivableStatus.PENDING
     accountReceivable.installments = installments.map((i) => ({
       ...i,
-      installmentId: i.installmentId || IdentifyEntity.get(),
+      installmentId: i.installmentId || IdentifyEntity.get(`installment`),
       status: InstallmentsStatus.PENDING,
     }))
     accountReceivable.createdAt = DateBR()
@@ -55,7 +56,7 @@ export class AccountReceivable {
     if (debtor) {
       accountReceivable.debtor = {
         debtorType: debtor.debtorType,
-        debtorId: debtor.debtorId || IdentifyEntity.get(),
+        debtorId: debtor.debtorId || IdentifyEntity.get(`debtor`),
         name: debtor.name,
       }
     }
