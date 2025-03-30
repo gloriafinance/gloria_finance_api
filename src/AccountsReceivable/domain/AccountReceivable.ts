@@ -1,0 +1,125 @@
+import { DebtorType } from "./enums/DebtorType.enum"
+import { AccountsReceivableStatus } from "./enums/AccountsReceivableStatus.enum"
+import { Installments } from "./types/Installments.type"
+import { IdentifyEntity } from "../../Shared/adapter"
+import { DateBR } from "../../Shared/helpers"
+import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
+import { InstallmentsStatus } from "./enums/InstallmentsStatus.enum"
+
+export class AccountReceivable {
+  private id?: string
+  private debtor: {
+    debtorType: DebtorType
+    debtorId: string
+    name: string
+  }
+
+  private accountReceivableId: string
+  private churchId: string
+  private description: string
+  private amountTotal: number
+  private amountPaid: number
+  private amountPending: number
+  private status: AccountsReceivableStatus
+  private installments: Installments[]
+  private createdAt: Date
+  private updatedAt: Date
+
+  static create(params: Partial<ICreateAccountReceivable>): AccountReceivable {
+    const {
+      debtor,
+      churchId,
+      description,
+      amountTotal,
+      amountPaid,
+      amountPending,
+      installments,
+    } = params
+
+    const accountReceivable: AccountReceivable = new AccountReceivable()
+    accountReceivable.accountReceivableId = IdentifyEntity.get()
+    accountReceivable.churchId = churchId
+    accountReceivable.description = description
+    accountReceivable.amountTotal = amountTotal
+    accountReceivable.amountPaid = amountPaid
+    accountReceivable.amountPending = amountPending
+    accountReceivable.status = AccountsReceivableStatus.PENDING
+    accountReceivable.installments = installments.map((i) => ({
+      ...i,
+      installmentId: i.installmentId || IdentifyEntity.get(),
+      status: InstallmentsStatus.PENDING,
+    }))
+    accountReceivable.createdAt = DateBR()
+    accountReceivable.updatedAt = DateBR()
+
+    if (debtor) {
+      accountReceivable.debtor = {
+        debtorType: debtor.debtorType,
+        debtorId: debtor.debtorId || IdentifyEntity.get(),
+        name: debtor.name,
+      }
+    }
+
+    return accountReceivable
+  }
+
+  static fromPrimitive(params: any): AccountReceivable {
+    const accountReceivable: AccountReceivable = new AccountReceivable()
+    accountReceivable.id = params.id
+    accountReceivable.installments = params.installments
+    accountReceivable.accountReceivableId = params.accountReceivableId
+    accountReceivable.churchId = params.churchId
+    accountReceivable.description = params.description
+    accountReceivable.amountTotal = params.amountTotal
+    accountReceivable.amountPaid = params.amountPaid
+    accountReceivable.amountPending = params.amountPending
+    accountReceivable.status = params.status
+    accountReceivable.createdAt = params.createdAt
+    accountReceivable.updatedAt = params.updatedAt
+    accountReceivable.debtor = params.debtor
+
+    return accountReceivable
+  }
+
+  getId(): string {
+    return this.id
+  }
+
+  getInstallments(): Installments[] {
+    return this.installments
+  }
+
+  paidInstallment(installmentId: string): void {
+    const installment = this.installments.find(
+      (i) => i.installmentId === installmentId
+    )
+
+    if (installment) {
+      installment.status = InstallmentsStatus.PAID
+      this.amountPaid += installment.amount
+      this.amountPending -= installment.amount
+    }
+
+    this.updatedAt = DateBR()
+  }
+
+  toPrimitive() {
+    return {
+      status: this.status,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      debtor: {
+        debtorType: this.debtor.debtorType,
+        debtorId: this.debtor.debtorId,
+        name: this.debtor.name,
+      },
+      accountReceivableId: this.accountReceivableId,
+      churchId: this.churchId,
+      description: this.description,
+      amountTotal: this.amountTotal,
+      amountPaid: this.amountPaid,
+      amountPending: this.amountPending,
+      installments: this.installments,
+    }
+  }
+}
