@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { TithesController } from "../controllers/Tithes.controller"
-import { PermissionMiddleware } from "../../../Shared/infrastructure"
-import { BaseReportRequest } from "../../domain"
+import { PermissionMiddleware } from "../../../../Shared/infrastructure"
+import { BaseReportRequest } from "../../../domain"
 import { IncomeStatementController } from "../controllers/IncomeStatement.controller"
 
 const reportFinanceRouter = Router()

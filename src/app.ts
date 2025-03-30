@@ -7,11 +7,10 @@ import financialRouter from "./Financial/infrastructure/http/routes"
 import worldRoute from "./World/infrastructure/http/routes/World.route"
 import ministerRoute from "./Church/infrastructure/http/routes/Minsiter.routers"
 import { Express } from "express"
-import { Schedule } from "./Shared/infrastructure"
+import { Schedule, StartQueueService } from "./Shared/infrastructure"
 import { Queues } from "./queues"
-import { BullBoard } from "./Shared/infrastructure/bull/bullBoard"
 import userRoutes from "./SecuritySystem/infrastructure/http/routes/user.routes"
-import reportsRouter from "./Reports/http/routes"
+import reportsRouter from "./Reports/infrastructure/http/routes"
 import purchaseRouter from "./Purchases/infrastructure/http/routes"
 import { server, startServer } from "./Shared/infrastructure/http/server"
 
@@ -20,7 +19,7 @@ export const APP_DIR = __dirname
 const port = Number(process.env.APP_PORT) || 8080
 const app: Express = server(port)
 
-BullBoard(app, Queues)
+StartQueueService(app, Queues)
 
 app.use("/api/v1/church", churchRouters)
 app.use("/api/v1/church/member", memberRouters)

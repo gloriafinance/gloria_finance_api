@@ -1,26 +1,27 @@
 {
   "compilerOptions": {
-    "resolveJsonModule": true,
     "module": "commonjs",
     "declaration": true,
-    "removeComments": false,
+    "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": [
-      "es2015",
-      "es2017"
-    ],
-    "target": "es2016",
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
-    "plugins": [
-      {
-        "transform": "ts-auto-mock/transformer",
-        "cacheBetweenTests": false
-      }
-    ]
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   },
   "exclude": [
     "node_modules",

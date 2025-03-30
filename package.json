@@ -4,7 +4,7 @@
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "nodemon src/app.ts",
+    "dev": "nodemon -r tsconfig-paths/register src/app.ts",
     "test": "jest --forceExit --runInBand --detectOpenHandles",
     "start:prod": "node dist/app.js",
     "build": "tsc -p tsconfig.build.json && npm run copy-static-assets",
@@ -61,6 +61,7 @@
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.2"
   },
   "jest": {

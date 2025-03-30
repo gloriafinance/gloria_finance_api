@@ -1,14 +1,16 @@
 import { MemberPaginateRequest, MemberRequest } from "../../../domain"
-import domainResponse from "../../../../Shared/helpers/domainResponse"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   CreateOrUpdateMember,
   FindMemberById,
   SearchMembers,
 } from "../../../applications"
-import { MemberMongoRepository } from "../../persistence/MemberMongoRepository"
-import { ChurchMongoRepository } from "../../persistence/ChurchMongoRepository"
-import { HttpStatus } from "../../../../Shared/domain"
-import { QueueBullService } from "../../../../Shared/infrastructure"
+import {
+  ChurchMongoRepository,
+  MemberMongoRepository,
+} from "@/Church/infrastructure"
+import { HttpStatus } from "@/Shared/domain"
+import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 
 export class MemberController {
   static async createOrUpdate(memberRequest: MemberRequest, res) {
@@ -16,7 +18,7 @@ export class MemberController {
       await new CreateOrUpdateMember(
         MemberMongoRepository.getInstance(),
         ChurchMongoRepository.getInstance(),
-        QueueBullService.getInstance()
+        QueueService.getInstance()
       ).execute(memberRequest)
 
       res.status(HttpStatus.CREATED).send({

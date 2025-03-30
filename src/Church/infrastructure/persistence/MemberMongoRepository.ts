@@ -8,10 +8,6 @@ export class MemberMongoRepository
 {
   private static instance: MemberMongoRepository
 
-  constructor() {
-    super()
-  }
-
   public static getInstance(): MemberMongoRepository {
     if (MemberMongoRepository.instance) {
       return MemberMongoRepository.instance
@@ -41,8 +37,8 @@ export class MemberMongoRepository
 
     return result
       ? Member.fromPrimitives({
-          id: result._id.toString(),
           ...result,
+          id: result._id.toString(),
         })
       : undefined
   }

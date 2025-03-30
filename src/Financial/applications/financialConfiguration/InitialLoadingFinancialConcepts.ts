@@ -1,13 +1,10 @@
 import { ConceptType, FinancialConcept } from "../../domain"
-import {
-  Church,
-  ChurchNotFound,
-  IChurchRepository,
-} from "../../../Church/domain"
-import * as conceptBase from "../../../fixtures/financialConcepts.json"
-import { IQueue } from "../../../Shared/domain"
+import { Church, ChurchNotFound, IChurchRepository } from "@/Church/domain"
+import { IQueue } from "@/Shared/domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+
+const conceptBase = require("../../../fixtures/financialConcepts.json")
 
 export class InitialLoadingFinancialConcepts implements IQueue {
   private logger = Logger("InitialLoadingFinancialConcepts")

@@ -5,25 +5,25 @@ import {
   OnlineContributions,
   OnlineContributionsStatus,
 } from "../../../domain"
-import { FindMemberById } from "../../../../Church/applications"
-import { MemberMongoRepository } from "../../../../Church/infrastructure"
-import domainResponse from "../../../../Shared/helpers/domainResponse"
+import { FindMemberById } from "@/Church/applications"
+import { MemberMongoRepository } from "@/Church/infrastructure"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   FindFinancialConceptByChurchIdAndFinancialConceptId,
   ListContributions,
   RegisterContributionsOnline,
   UpdateContributionStatus,
 } from "../../../applications"
-import { HttpStatus, Paginate } from "../../../../Shared/domain"
-import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
+import { HttpStatus, Paginate } from "@/Shared/domain"
+import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import MemberContributionsDTO from "../dto/MemberContributions.dto"
 import {
   AvailabilityAccountMongoRepository,
   FinancialConceptMongoRepository,
   OnlineContributionsMongoRepository,
 } from "../../persistence"
-import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
-import { Logger } from "../../../../Shared/adapter"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
+import { Logger } from "@/Shared/adapter"
 
 export const onlineContributionsController = async (
   request: ContributionRequest,
@@ -92,7 +92,7 @@ export const UpdateContributionStatusController = async (
   try {
     await new UpdateContributionStatus(
       OnlineContributionsMongoRepository.getInstance(),
-      QueueBullService.getInstance()
+      QueueService.getInstance()
     ).execute(contributionId, status)
 
     res.status(HttpStatus.OK).send({ message: "Contribution updated" })

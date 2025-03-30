@@ -1,5 +1,5 @@
-import { GenericException, HttpStatus } from "../../../../Shared/domain"
-import domainResponse from "../../../../Shared/helpers/domainResponse"
+import { GenericException, HttpStatus } from "@/Shared/domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   ConceptType,
   CostCenter,
@@ -7,8 +7,8 @@ import {
   TypeOperationMoney,
 } from "../../../domain"
 import { RegisterFinancialRecord } from "../../../applications/financeRecord/RegisterFinancialRecord"
-import { QueueBullService, StorageGCP } from "../../../../Shared/infrastructure"
-import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
+import { QueueService, StorageGCP } from "@/Shared/infrastructure"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
@@ -21,7 +21,7 @@ import {
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
   FindFinancialConceptByChurchIdAndFinancialConceptId,
-} from "../../../applications"
+} from "@/Financial/applications"
 import { Response } from "express"
 
 export const FinancialRecordController = async (
@@ -70,7 +70,7 @@ export const FinancialRecordController = async (
     ).handle(request, financialConcept, costCenter)
 
     new DispatchUpdateAvailabilityAccountBalance(
-      QueueBullService.getInstance()
+      QueueService.getInstance()
     ).execute({
       availabilityAccount: availabilityAccount,
       amount: request.amount,
@@ -82,9 +82,7 @@ export const FinancialRecordController = async (
     })
 
     if (costCenter) {
-      new DispatchUpdateCostCenterMaster(
-        QueueBullService.getInstance()
-      ).execute({
+      new DispatchUpdateCostCenterMaster(QueueService.getInstance()).execute({
         churchId: request.churchId,
         amount: request.amount,
         costCenterId: costCenter.getCostCenterId(),
