@@ -1,5 +1,5 @@
-import { APP_DIR } from "../../app"
-import { Logger } from "../../Shared/adapter"
+import { APP_DIR } from "@/app"
+import { Logger } from "@/Shared/adapter"
 import hbs = require("nodemailer-express-handlebars")
 
 export default async (transport: any) => {

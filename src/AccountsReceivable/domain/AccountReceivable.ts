@@ -1,11 +1,11 @@
 import { DebtorType } from "./enums/DebtorType.enum"
 import { AccountsReceivableStatus } from "./enums/AccountsReceivableStatus.enum"
 import { Installments } from "./types/Installments.type"
-import { IdentifyEntity } from "../../Shared/adapter"
-import { DateBR } from "../../Shared/helpers"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { DateBR } from "@/Shared/helpers"
 import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 import { InstallmentsStatus } from "./enums/InstallmentsStatus.enum"
-import { AggregateRoot } from "../../Shared/domain"
+import { AggregateRoot } from "@/Shared/domain"
 
 export class AccountReceivable extends AggregateRoot {
   private id?: string
@@ -30,7 +30,6 @@ export class AccountReceivable extends AggregateRoot {
       debtor,
       churchId,
       description,
-      amountTotal,
       amountPaid,
       amountPending,
       installments,
@@ -41,15 +40,30 @@ export class AccountReceivable extends AggregateRoot {
       IdentifyEntity.get(`accountReceivable`)
     accountReceivable.churchId = churchId
     accountReceivable.description = description
-    accountReceivable.amountTotal = amountTotal
+
+    // installments.forEach((installment) => {
+    //   accountReceivable.amountTotal += installment.amount
+    // })
+
     accountReceivable.amountPaid = amountPaid
     accountReceivable.amountPending = amountPending
     accountReceivable.status = AccountsReceivableStatus.PENDING
-    accountReceivable.installments = installments.map((i) => ({
-      ...i,
-      installmentId: i.installmentId || IdentifyEntity.get(`installment`),
-      status: InstallmentsStatus.PENDING,
-    }))
+
+    let amountTotal = 0
+    accountReceivable.installments = installments.map((i) => {
+      amountTotal += i.amount
+
+      return {
+        ...i,
+        installmentId: i.installmentId || IdentifyEntity.get(`installment`),
+        status: InstallmentsStatus.PENDING,
+      }
+    })
+
+    accountReceivable.amountTotal = amountTotal
+    accountReceivable.amountPaid = 0
+    accountReceivable.amountPending = accountReceivable.amountTotal
+    
     accountReceivable.createdAt = DateBR()
     accountReceivable.updatedAt = DateBR()
 

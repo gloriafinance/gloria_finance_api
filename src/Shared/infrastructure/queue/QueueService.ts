@@ -13,7 +13,6 @@ export class QueueService {
   private processor: QueueProcessor
   private dispatcher: QueueDispatcher
   private initialized = false
-  private healthCheckInterval: NodeJS.Timeout | null = null
 
   private constructor() {
     this.registry = QueueRegistry.getInstance()
@@ -60,12 +59,6 @@ export class QueueService {
 
   async shutdown(): Promise<void> {
     this.logger.info("Shutting down queue system")
-
-    // Detener health checks
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval)
-      this.healthCheckInterval = null
-    }
 
     // Pausar procesamiento primero
     await this.processor.pauseProcessing()

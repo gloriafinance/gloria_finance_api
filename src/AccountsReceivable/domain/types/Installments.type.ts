@@ -1,4 +1,4 @@
-import { InstallmentsStatus } from "../enums/InstallmentsStatus.enum"
+import { InstallmentsStatus } from "@/AccountsReceivable/domain"
 
 export type Installments = {
   installmentId?: string

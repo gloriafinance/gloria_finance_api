@@ -13,6 +13,7 @@ import userRoutes from "./SecuritySystem/infrastructure/http/routes/user.routes"
 import reportsRouter from "./Reports/infrastructure/http/routes"
 import purchaseRouter from "./Purchases/infrastructure/http/routes"
 import { server, startServer } from "./Shared/infrastructure/http/server"
+import accountReceivableRoutes from "@/AccountsReceivable/infrastructure/http/AccountReceivable.routes"
 
 export const APP_DIR = __dirname
 
@@ -25,6 +26,7 @@ app.use("/api/v1/church", churchRouters)
 app.use("/api/v1/church/member", memberRouters)
 app.use("/api/v1/minister", ministerRoute)
 app.use("/api/v1/finance", financialRouter)
+app.use("/api/v1/account-receivable", accountReceivableRoutes)
 app.use("/api/v1/user", userRoutes)
 app.use("/api/v1/world", worldRoute)
 app.use("/api/v1/reports", reportsRouter)
