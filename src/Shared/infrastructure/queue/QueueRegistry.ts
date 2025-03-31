@@ -62,7 +62,6 @@ export class QueueRegistry {
         // Algunas colas pueden iniciar en estado pausado, asegurarse de que estén activas
         const isPaused = await queue.isPaused()
         if (isPaused) {
-          this.logger.info(`Queue ${queueName} is paused, resuming...`)
           await queue.resume()
         }
 

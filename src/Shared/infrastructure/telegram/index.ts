@@ -25,7 +25,7 @@ const TelegramSendMessage = async (message: string) => {
   }
 }
 
-export class TelegramNotification implements IQueue {
+export class TelegramNotification implements IQueue<void> {
   async handle(args: any): Promise<void> {
     await TelegramSendMessage(args.message)
   }
