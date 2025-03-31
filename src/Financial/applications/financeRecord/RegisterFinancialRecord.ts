@@ -1,7 +1,7 @@
-import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
-import { IQueue } from "../../../Shared/domain"
+import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { IQueue } from "@/Shared/domain"
 import { FinanceRecord } from "../../domain/FinanceRecord"
-import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
@@ -13,10 +13,10 @@ import {
   FinancialConcept,
   FinancialRecordQueueRequest,
 } from "../../domain"
-import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "../financialConcept/FindFinancialConceptByChurchIdAndFinancialConceptId"
-import { Logger } from "../../../Shared/adapter"
+import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "@/Financial/applications"
+import { Logger } from "@/Shared/adapter"
 
-export class RegisterFinancialRecord implements IQueue {
+export class RegisterFinancialRecord implements IQueue<FinanceRecord> {
   private logger = Logger("RegisterFinancialRecord")
 
   constructor(
@@ -30,7 +30,7 @@ export class RegisterFinancialRecord implements IQueue {
     args: FinancialRecordQueueRequest,
     financialConcept?: FinancialConcept,
     costCenter?: CostCenter
-  ): Promise<void> {
+  ): Promise<FinanceRecord> {
     this.logger.info(`RegisterFinancialRecord`, args)
 
     await new FinancialMonthValidator(this.financialYearRepository).validate(
@@ -70,5 +70,7 @@ export class RegisterFinancialRecord implements IQueue {
     await this.financialRecordRepository.upsert(financialRecord)
 
     this.logger.info(`RegisterFinancialRecord finish`)
+
+    return financialRecord
   }
 }

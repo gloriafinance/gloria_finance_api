@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { PermissionMiddleware } from "../../../../Shared/infrastructure"
+import { PermissionMiddleware } from "@/Shared/infrastructure"
 import { FilterFinanceRecordRequest } from "../../../domain"
 import FinancialRecordValidator from "../validators/FinancialRecord.validator"
 import { FinancialRecordController } from "../controllers/FinancialRecord.controller"

@@ -12,7 +12,7 @@ import {
 import { UpdateAvailabilityAccountMaster } from "./UpdateAvailabilityAccountMaster"
 import { Logger } from "../../../Shared/adapter"
 
-export class UpdateAvailabilityAccountBalance implements IQueue {
+export class UpdateAvailabilityAccountBalance implements IQueue<void> {
   private logger = Logger("UpdateAvailabilityAccountBalance")
 
   constructor(

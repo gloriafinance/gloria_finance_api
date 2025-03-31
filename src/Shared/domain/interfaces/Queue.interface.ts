@@ -1,3 +1,3 @@
-export interface IQueue {
-  handle(args: any): Promise<void>
+export interface IQueue<T> {
+  handle(args: any): Promise<T>
 }

@@ -1,7 +1,7 @@
-import { TypeBankingOperation } from "../../../MovementBank/domain"
+import { TypeBankingOperation } from "@/MovementBank/domain"
 
 export type FinancialRecordQueueRequest = {
-  financialConceptId: string
+  financialConceptId?: string
   churchId: string
   amount: number
   date: Date

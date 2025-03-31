@@ -1,11 +1,11 @@
-import { Member } from "../../Church/domain"
-import { IQueue } from "../../Shared/domain"
+import { Member } from "@/Church/domain"
+import { IQueue } from "@/Shared/domain"
 import { IPasswordAdapter, IUserRepository, ProfileType, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
-import { Logger } from "../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
-export class CreateUserForMember implements IQueue {
+export class CreateUserForMember implements IQueue<void> {
   private logger = Logger("AssingChurchValidator")
 
   constructor(
