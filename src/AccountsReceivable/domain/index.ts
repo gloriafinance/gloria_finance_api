@@ -15,3 +15,4 @@ export { PayAccountReceivableRequest } from "./requests/PayAccountReceivable.req
 
 export { PayAccountReceivableNotFound } from "./exceptions/PayAccountReceivableNotFound.exception"
 export { InstallmentNotFound } from "./exceptions/InstallmentNotFound.exception"
+export { AccountReceivablePaid } from "./exceptions/AccountReceivablePaid.exception"
