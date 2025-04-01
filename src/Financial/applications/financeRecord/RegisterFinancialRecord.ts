@@ -31,7 +31,7 @@ export class RegisterFinancialRecord implements IQueue<FinanceRecord> {
     financialConcept?: FinancialConcept,
     costCenter?: CostCenter
   ): Promise<FinanceRecord> {
-    this.logger.info(`RegisterFinancialRecord`, args)
+    this.logger.info(`Record financial movement`, args)
 
     await new FinancialMonthValidator(this.financialYearRepository).validate(
       args.churchId
@@ -43,6 +43,7 @@ export class RegisterFinancialRecord implements IQueue<FinanceRecord> {
       )
 
     if (!availabilityAccount) {
+      this.logger.debug(`Availability account not found`)
       throw new AvailabilityAccountNotFound()
     }
 
@@ -69,7 +70,7 @@ export class RegisterFinancialRecord implements IQueue<FinanceRecord> {
 
     await this.financialRecordRepository.upsert(financialRecord)
 
-    this.logger.info(`RegisterFinancialRecord finish`)
+    this.logger.info(`Financial transaction record completed`)
 
     return financialRecord
   }

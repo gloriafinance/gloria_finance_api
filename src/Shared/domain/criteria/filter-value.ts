@@ -1,6 +1,6 @@
-import { StringValueObject } from "../value-object/string-value-object"
+import { StringValue } from "../value-object/StringValue"
 
-export class FilterValue extends StringValueObject {
+export class FilterValue extends StringValue {
   constructor(value: string) {
     super(value)
   }

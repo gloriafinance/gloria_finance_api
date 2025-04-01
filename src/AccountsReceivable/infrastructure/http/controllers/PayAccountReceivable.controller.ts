@@ -63,7 +63,7 @@ const makeFinanceRecord = async (req: PayAccountReceivableRequest) => {
         churchId: req.churchId,
         availabilityAccountId: req.availabilityAccountId,
         voucher,
-        amount: req.amount,
+        amount: req.amount.getValue(),
         date: new Date(),
       },
       await FinancialConceptMongoRepository.getInstance().one({

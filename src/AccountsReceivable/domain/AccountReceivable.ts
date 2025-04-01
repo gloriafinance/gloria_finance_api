@@ -5,7 +5,7 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 import { InstallmentsStatus } from "./enums/InstallmentsStatus.enum"
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot, AmountValue } from "@/Shared/domain"
 
 export class AccountReceivable extends AggregateRoot {
   protected amountTotal: number
@@ -45,9 +45,9 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.amountPending = amountPending
     accountReceivable.status = AccountsReceivableStatus.PENDING
 
-    let amountTotal = 0
+    let amountTotal: number = 0
     accountReceivable.installments = installments.map((i) => {
-      amountTotal += i.amount
+      amountTotal += Number(i.amount)
 
       return {
         ...i,
@@ -100,9 +100,9 @@ export class AccountReceivable extends AggregateRoot {
     return this.installments.find((i) => i.installmentId === installmentId)
   }
 
-  updateAmount(installment: Installments, amountPaid: number) {
-    this.amountPaid += amountPaid
-    this.amountPending -= installment.amount - amountPaid
+  updateAmount(amountPaid: AmountValue) {
+    this.amountPaid += amountPaid.getValue()
+    this.amountPending -= amountPaid.getValue()
 
     if (this.amountPending === 0) {
       this.status = AccountsReceivableStatus.PAID

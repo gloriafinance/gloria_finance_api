@@ -1,6 +1,6 @@
 # Stack
 
-- [`node v20`](https://nodejs.org/)
+- [`node v22`](https://nodejs.org/)
 - [`express`](https://expressjs.com/)
 - [`typescript`](https://www.typescriptlang.org/)
 - [`docker`](https://www.docker.com/) [`docker-compose`](https://docs.docker.com/compose/)

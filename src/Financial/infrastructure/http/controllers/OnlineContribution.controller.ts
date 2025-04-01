@@ -24,10 +24,11 @@ import {
 } from "../../persistence"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { Logger } from "@/Shared/adapter"
+import { Response } from "express"
 
 export const onlineContributionsController = async (
   request: ContributionRequest,
-  res
+  res: Response
 ) => {
   try {
     const logger = Logger("OnlineContributionsController")
@@ -68,7 +69,7 @@ export const onlineContributionsController = async (
 
 export const listOnlineContributionsController = async (
   request: FilterContributionsRequest,
-  res
+  res: Response
 ) => {
   const logger = Logger("listOnlineContributionsController")
   logger.info(`Filtering online contributions with: `, request)
@@ -87,7 +88,7 @@ export const listOnlineContributionsController = async (
 export const UpdateContributionStatusController = async (
   contributionId: string,
   status: OnlineContributionsStatus,
-  res
+  res: Response
 ) => {
   try {
     await new UpdateContributionStatus(

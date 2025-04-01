@@ -4,7 +4,7 @@ import {
   FinancialConcept,
   OnlineContributions,
 } from "../../domain"
-import { AmountValueObject, IStorageService } from "../../../Shared/domain"
+import { AmountValue, IStorageService } from "../../../Shared/domain"
 import { Member } from "../../../Church/domain"
 import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
@@ -39,7 +39,7 @@ export class RegisterContributionsOnline {
     )
 
     const contribution: OnlineContributions = OnlineContributions.create(
-      AmountValueObject.create(contributionRequest.amount),
+      AmountValue.create(contributionRequest.amount),
       member,
       financialConcept,
       voucher,

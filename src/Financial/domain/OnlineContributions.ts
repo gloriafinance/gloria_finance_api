@@ -1,4 +1,4 @@
-import { AggregateRoot, AmountValueObject } from "../../Shared/domain"
+import { AggregateRoot, AmountValue } from "../../Shared/domain"
 import { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 import { IdentifyEntity } from "../../Shared/adapter"
 import { Member } from "../../Church/domain"
@@ -21,7 +21,7 @@ export class OnlineContributions extends AggregateRoot {
   private availabilityAccount: AvailabilityAccount
 
   static create(
-    amount: AmountValueObject,
+    amount: AmountValue,
     member: Member,
     financialConcept: FinancialConcept,
     bankTransferReceipt: string,

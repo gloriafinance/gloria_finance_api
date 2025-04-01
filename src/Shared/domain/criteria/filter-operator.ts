@@ -1,4 +1,4 @@
-import { EnumValueObject } from "../value-object/enum-value-object"
+import { EnumValue } from "../value-object/EnumValue"
 import { InvalidArgumentError } from "../exceptions/invalid-argument-error"
 
 export enum Operator {
@@ -13,7 +13,7 @@ export enum Operator {
   DATE_RANGE = "DATE_RANGE",
 }
 
-export class FilterOperator extends EnumValueObject<Operator> {
+export class FilterOperator extends EnumValue<Operator> {
   constructor(value: Operator) {
     super(value, Object.values(Operator))
   }
@@ -28,6 +28,10 @@ export class FilterOperator extends EnumValueObject<Operator> {
     throw new InvalidArgumentError(`The filter operator ${value} is invalid`)
   }
 
+  static equal() {
+    return this.fromValue(Operator.EQUAL)
+  }
+
   public isPositive(): boolean {
     return (
       this.value !== Operator.NOT_EQUAL && this.value !== Operator.NOT_CONTAINS
@@ -36,9 +40,5 @@ export class FilterOperator extends EnumValueObject<Operator> {
 
   protected throwErrorForInvalidValue(value: Operator): void {
     throw new InvalidArgumentError(`The filter operator ${value} is invalid`)
-  }
-
-  static equal() {
-    return this.fromValue(Operator.EQUAL)
   }
 }
