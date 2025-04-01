@@ -1,5 +1,6 @@
 import { Logger } from "@/Shared/adapter"
 import {
+  AccountReceivablePaid,
   IAccountsReceivableRepository,
   InstallmentNotFound,
   InstallmentsStatus,
@@ -31,14 +32,17 @@ export class PayAccountReceivable {
       throw new InstallmentNotFound(req.installmentId)
     }
 
+    if (installment.status === InstallmentsStatus.PAID) {
+      this.logger.info(`Installment ${req.installmentId} already paid`)
+      throw new AccountReceivablePaid()
+    }
+
     if (installment.status === InstallmentsStatus.PENDING) {
       installment.status =
         req.amount === installment.amount
           ? InstallmentsStatus.PAID
           : InstallmentsStatus.PARTIAL
-    }
-
-    if (installment.status === InstallmentsStatus.PARTIAL) {
+    } else if (installment.status === InstallmentsStatus.PARTIAL) {
       this.logger.info(
         `Installment ${req.installmentId} is was partial payment`
       )
