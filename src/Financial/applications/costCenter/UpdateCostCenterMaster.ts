@@ -5,8 +5,8 @@ import {
 
 import { CostCenter, CostCenterMaster } from "../../domain"
 import MasterBalanceIdentifier from "../helpers/MasterBalanceIdentifier"
-import { IQueue } from "../../../Shared/domain"
-import { Logger } from "../../../Shared/adapter"
+import { IQueue } from "@/Shared/domain"
+import { Logger } from "@/Shared/adapter"
 
 export class UpdateCostCenterMaster implements IQueue {
   private logger = Logger("UpdateCostCenterMaster")

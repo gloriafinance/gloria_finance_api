@@ -3,9 +3,9 @@ import {
   MovementBank,
   MovementBankRequest,
 } from "../domain"
-import { IQueue } from "../../Shared/domain"
-import { IFinancialConfigurationRepository } from "../../Financial/domain/interfaces"
-import { Logger } from "../../Shared/adapter"
+import { IQueue } from "@/Shared/domain"
+import { IFinancialConfigurationRepository } from "@/Financial/domain/interfaces"
+import { Logger } from "@/Shared/adapter"
 
 export class MovementBankRecord implements IQueue {
   private logger = Logger("MovementBankRecord")

@@ -10,7 +10,7 @@ import {
 } from "../../domain"
 
 import { UpdateAvailabilityAccountMaster } from "./UpdateAvailabilityAccountMaster"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class UpdateAvailabilityAccountBalance implements IQueue {
   private logger = Logger("UpdateAvailabilityAccountBalance")

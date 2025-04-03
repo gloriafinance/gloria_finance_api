@@ -1,5 +1,17 @@
 [
   {
+    "name": "Conta a Receber",
+    "description": "Valor a receber por pagamento de uma conta a receber.",
+    "type": "INCOME",
+    "active": true
+  },
+  {
+    "name": "Empréstimos",
+    "description": "Valor a ser emprestado a um membro ou entidade.",
+    "type": "OUTGO",
+    "active": true
+  },
+  {
     "name": "Suprimentos Gerais",
     "description": "Despesas com materiais e produtos comumente utilizados na igreja, como água, papel e outros suprimentos necessários ao funcionamento diário.",
     "type": "PURCHASE",
@@ -126,7 +138,7 @@
     "active": true
   },
   {
-    "name": "Dívidas e Empréstimos",
+    "name": "Pagamento de Dívidas e Empréstimos",
     "description": "Pagamentos de empréstimos ou dívidas pendentes, como hipotecas ou outros compromissos financeiros",
     "type": "OUTGO",
     "active": true

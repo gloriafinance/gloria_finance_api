@@ -11,3 +11,8 @@ export { Installments } from "./types/Installments.type"
 
 export { AccountReceivableRequest } from "./requests/AccountReceivable.request"
 export { FilterAccountReceivableRequest } from "./requests/FilterAccountReceivable.request"
+export { PayAccountReceivableRequest } from "./requests/PayAccountReceivable.request"
+
+export { PayAccountReceivableNotFound } from "./exceptions/PayAccountReceivableNotFound.exception"
+export { InstallmentNotFound } from "./exceptions/InstallmentNotFound.exception"
+export { AccountReceivablePaid } from "./exceptions/AccountReceivablePaid.exception"

@@ -1,7 +1,7 @@
-import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
-import { IQueue } from "../../../Shared/domain"
+import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { IQueue } from "@/Shared/domain"
 import { FinanceRecord } from "../../domain/FinanceRecord"
-import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
@@ -13,8 +13,8 @@ import {
   FinancialConcept,
   FinancialRecordQueueRequest,
 } from "../../domain"
-import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "../financialConcept/FindFinancialConceptByChurchIdAndFinancialConceptId"
-import { Logger } from "../../../Shared/adapter"
+import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "@/Financial/applications"
+import { Logger } from "@/Shared/adapter"
 
 export class RegisterFinancialRecord implements IQueue {
   private logger = Logger("RegisterFinancialRecord")
@@ -30,8 +30,8 @@ export class RegisterFinancialRecord implements IQueue {
     args: FinancialRecordQueueRequest,
     financialConcept?: FinancialConcept,
     costCenter?: CostCenter
-  ): Promise<void> {
-    this.logger.info(`RegisterFinancialRecord`, args)
+  ): Promise<FinanceRecord> {
+    this.logger.info(`Record financial movement`, args)
 
     await new FinancialMonthValidator(this.financialYearRepository).validate(
       args.churchId
@@ -43,6 +43,7 @@ export class RegisterFinancialRecord implements IQueue {
       )
 
     if (!availabilityAccount) {
+      this.logger.debug(`Availability account not found`)
       throw new AvailabilityAccountNotFound()
     }
 
@@ -69,6 +70,8 @@ export class RegisterFinancialRecord implements IQueue {
 
     await this.financialRecordRepository.upsert(financialRecord)
 
-    this.logger.info(`RegisterFinancialRecord finish`)
+    this.logger.info(`Financial transaction record completed`)
+
+    return financialRecord
   }
 }

@@ -1,4 +1,4 @@
-import { IQueue } from "./Queue.interface"
+import { IQueue } from "@/Shared/domain"
 
 export interface IDefinitionQueue {
   useClass: new (...args: any[]) => IQueue

@@ -1,4 +1,4 @@
-import { EnumValueObject } from "../value-object/enum-value-object"
+import { EnumValue } from "../value-object/EnumValue"
 import { InvalidArgumentError } from "../exceptions/invalid-argument-error"
 
 export enum OrderTypes {
@@ -7,7 +7,7 @@ export enum OrderTypes {
   NONE = "none",
 }
 
-export class OrderType extends EnumValueObject<OrderTypes> {
+export class OrderType extends EnumValue<OrderTypes> {
   constructor(value: OrderTypes) {
     super(value, Object.values(OrderTypes))
   }

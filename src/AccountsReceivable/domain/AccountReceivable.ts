@@ -5,9 +5,11 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 import { InstallmentsStatus } from "./enums/InstallmentsStatus.enum"
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot, AmountValue } from "@/Shared/domain"
 
 export class AccountReceivable extends AggregateRoot {
+  protected amountTotal: number
+  protected amountPaid: number
   private id?: string
   private debtor: {
     debtorType: DebtorType
@@ -17,8 +19,6 @@ export class AccountReceivable extends AggregateRoot {
   private accountReceivableId: string
   private churchId: string
   private description: string
-  private amountTotal: number
-  private amountPaid: number
   private amountPending: number
   private status: AccountsReceivableStatus
   private installments: Installments[]
@@ -41,17 +41,13 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.churchId = churchId
     accountReceivable.description = description
 
-    // installments.forEach((installment) => {
-    //   accountReceivable.amountTotal += installment.amount
-    // })
-
     accountReceivable.amountPaid = amountPaid
     accountReceivable.amountPending = amountPending
     accountReceivable.status = AccountsReceivableStatus.PENDING
 
-    let amountTotal = 0
+    let amountTotal: number = 0
     accountReceivable.installments = installments.map((i) => {
-      amountTotal += i.amount
+      amountTotal += Number(i.amount)
 
       return {
         ...i,
@@ -100,22 +96,27 @@ export class AccountReceivable extends AggregateRoot {
     return this.id
   }
 
-  getInstallments(): Installments[] {
-    return this.installments
+  getInstallment(installmentId: string): Installments {
+    return this.installments.find((i) => i.installmentId === installmentId)
   }
 
-  paidInstallment(installmentId: string): void {
-    const installment = this.installments.find(
-      (i) => i.installmentId === installmentId
-    )
+  updateAmount(amountPaid: AmountValue) {
+    this.amountPaid += amountPaid.getValue()
+    this.amountPending -= amountPaid.getValue()
 
-    if (installment) {
-      installment.status = InstallmentsStatus.PAID
-      this.amountPaid += installment.amount
-      this.amountPending -= installment.amount
+    if (this.amountPending === 0) {
+      this.status = AccountsReceivableStatus.PAID
     }
 
     this.updatedAt = DateBR()
+  }
+
+  getAmountPending() {
+    return this.amountPending
+  }
+
+  getStatus() {
+    return this.status
   }
 
   toPrimitives() {

@@ -4,7 +4,8 @@ import { IQueue } from "@/Shared/domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
 
-const conceptBase = require("@/fixtures/financialConcepts.json")
+// @ts-ignore
+import conceptBase from "@/fixtures/financialConcepts.json"
 
 export class InitialLoadingFinancialConcepts implements IQueue {
   private logger = Logger("InitialLoadingFinancialConcepts")
