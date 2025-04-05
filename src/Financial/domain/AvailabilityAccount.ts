@@ -1,7 +1,7 @@
 import { AccountType } from "./enums/AccountType.enum"
-import { IdentifyEntity } from "../../Shared/adapter"
-import { DateBR } from "../../Shared/helpers"
-import { AggregateRoot } from "../../Shared/domain"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { DateBR } from "@/Shared/helpers"
+import { AggregateRoot } from "@/Shared/domain"
 
 export class AvailabilityAccount extends AggregateRoot {
   private id?: string
