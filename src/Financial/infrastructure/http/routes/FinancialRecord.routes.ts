@@ -4,6 +4,7 @@ import { FilterFinanceRecordRequest } from "../../../domain"
 import FinancialRecordValidator from "../validators/FinancialRecord.validator"
 import { FinancialRecordController } from "../controllers/FinancialRecord.controller"
 import { FinanceRecordListController } from "../controllers/FinanceRecordList.controller"
+import { ExportFinanceRecordToExcelController } from "../controllers/ExportFinanceRecordToExcel.controller"
 
 const financialRecordRoutes = Router()
 
@@ -25,6 +26,14 @@ financialRecordRoutes.post(
 financialRecordRoutes.get("/", PermissionMiddleware, async (req, res) => {
   const params = req.query as unknown as FilterFinanceRecordRequest
   await FinanceRecordListController(
+    { ...params, churchId: req["user"].churchId },
+    res
+  )
+})
+
+financialRecordRoutes.get("/export", PermissionMiddleware, async (req, res) => {
+  const params = req.query as unknown as FilterFinanceRecordRequest
+  await ExportFinanceRecordToExcelController(
     { ...params, churchId: req["user"].churchId },
     res
   )

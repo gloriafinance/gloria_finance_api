@@ -1,8 +1,7 @@
 import { FinanceRecord } from "../FinanceRecord"
-import { Criteria, Paginate } from "../../../Shared/domain"
-import { BaseReportRequest } from "../../../Reports/domain"
-import { AvailabilityAccountMaster } from "../AvailabilityAccountMaster"
-import { CostCenterMaster } from "../CostCenterMaster"
+import { Criteria, Paginate } from "@/Shared/domain"
+import { BaseReportRequest } from "@/Reports/domain"
+import { AvailabilityAccountMaster, CostCenterMaster } from "@/Financial/domain"
 
 export interface IFinancialRecordRepository {
   upsert(financialRecord: FinanceRecord): Promise<void>

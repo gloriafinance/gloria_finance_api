@@ -46,7 +46,8 @@
     "pino-pretty": "^11.0.0",
     "shelljs": "^0.9.2",
     "tsconfig-paths": "^4.2.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -59,6 +60,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer-express-handlebars": "^4.0.2",
     "@types/uuid": "^9.0.8",
+    "@types/xlsx": "^0.0.35",
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
