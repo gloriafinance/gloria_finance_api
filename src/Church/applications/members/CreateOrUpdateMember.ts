@@ -7,11 +7,11 @@ import {
   MemberExist,
   MemberRequest,
 } from "../../domain"
-import { IQueueService, QueueName } from "../../../Shared/domain"
-import { Logger } from "../../../Shared/adapter"
+import { IQueueService, QueueName } from "@/Shared/domain"
+import { Logger } from "@/Shared/adapter"
 
 export class CreateOrUpdateMember {
-  private logger = Logger("CreateOrUpdateMember")
+  private logger = Logger(CreateOrUpdateMember.name)
 
   constructor(
     private readonly memberRepository: IMemberRepository,
@@ -23,6 +23,7 @@ export class CreateOrUpdateMember {
     const member = await this.memberRepository.one(request.dni)
     if (!member) {
       await this.create(request)
+      this.logger.info(`Finished creating member`)
       return
     }
 
@@ -33,6 +34,8 @@ export class CreateOrUpdateMember {
     member.setBirthdate(request.birthdate)
     member.setBaptismDate(request.baptismDate)
     member.setConversionDate(request.conversionDate)
+
+    this.logger.info(`Finished updating member`)
 
     return await this.memberRepository.upsert(member)
   }
@@ -71,5 +74,9 @@ export class CreateOrUpdateMember {
     await this.memberRepository.upsert(member)
 
     this.queueService.dispatch(QueueName.CreateUserForMember, member)
+
+    this.logger.info(
+      `Queue dispatched for create user for member ${JSON.stringify(member)}`
+    )
   }
 }

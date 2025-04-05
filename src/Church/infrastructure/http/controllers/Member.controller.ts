@@ -11,9 +11,10 @@ import {
 } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import { Response } from "express"
 
 export class MemberController {
-  static async createOrUpdate(memberRequest: MemberRequest, res) {
+  static async createOrUpdate(memberRequest: MemberRequest, res: Response) {
     try {
       await new CreateOrUpdateMember(
         MemberMongoRepository.getInstance(),
@@ -29,7 +30,7 @@ export class MemberController {
     }
   }
 
-  static async list(memberRequest: MemberPaginateRequest, res) {
+  static async list(memberRequest: MemberPaginateRequest, res: Response) {
     try {
       const members = await new SearchMembers(
         MemberMongoRepository.getInstance()
@@ -41,7 +42,7 @@ export class MemberController {
     }
   }
 
-  static async findById(memberId: string, res) {
+  static async findById(memberId: string, res: Response) {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()

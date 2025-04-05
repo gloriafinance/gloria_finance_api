@@ -32,7 +32,7 @@ export class Member extends AggregateRoot {
   ): Member {
     const m: Member = new Member()
     m.name = name
-    m.email = email
+    m.email = email.toLowerCase()
     m.phone = phone
     m.createdAt = DateBR()
     m.dni = dni
@@ -95,7 +95,7 @@ export class Member extends AggregateRoot {
   }
 
   setEmail(email: string) {
-    this.email = email
+    this.email = email.toLowerCase()
   }
 
   setPhone(phone: string) {
