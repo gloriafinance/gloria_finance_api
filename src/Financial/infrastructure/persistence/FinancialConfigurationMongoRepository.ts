@@ -1,4 +1,4 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
+import { MongoRepository } from "@/Shared/infrastructure"
 import { Bank, CostCenter, FinancialConcept } from "../../domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
 

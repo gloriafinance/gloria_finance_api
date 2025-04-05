@@ -1,14 +1,23 @@
 import { IAvailabilityAccountRepository } from "../../domain/interfaces"
 import { AvailabilityAccount, AvailabilityAccountRequest } from "../../domain"
+import { Logger } from "@/Shared/adapter"
 
 export class CreateOrUpdateAvailabilityAccount {
+  private logger = Logger(CreateOrUpdateAvailabilityAccount.name)
+
   constructor(
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository
   ) {}
 
   async execute(requestAvailabilityAccount: AvailabilityAccountRequest) {
+    this.logger.info(
+      `Creating or updating availability account`,
+      requestAvailabilityAccount
+    )
+
     if (!requestAvailabilityAccount.availabilityAccountId) {
       await this.registerAvailabilityAccount(requestAvailabilityAccount)
+      this.logger.error(`Finished creating availability account`)
       return
     }
 

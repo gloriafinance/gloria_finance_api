@@ -1,6 +1,6 @@
 import { CostCenter } from "../CostCenter"
 import { Bank } from "../Bank"
-import { FinancialConcept } from "../FinancialConcept"
+import { FinancialConcept } from "@/Financial/domain"
 
 export interface IFinancialConfigurationRepository {
   findBankByBankId(bankId: string): Promise<Bank>
