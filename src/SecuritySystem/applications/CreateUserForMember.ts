@@ -15,9 +15,7 @@ export class CreateUserForMember implements IQueue {
 
   async handle(args: any): Promise<void> {
     this.logger.info(
-      `Solicitud de creación de usuario para el miembro: ${JSON.stringify(
-        args
-      )}`
+      `User creation request for member: ${JSON.stringify(args)}`
     )
     const member = Member.fromPrimitives(args)
 
@@ -28,7 +26,7 @@ export class CreateUserForMember implements IQueue {
     if (userExist) {
       return
     }
-    this.logger.info("Crear usuario")
+    this.logger.info("Create user")
 
     await new CreateOrUpdateUser(
       this.userRepository,
