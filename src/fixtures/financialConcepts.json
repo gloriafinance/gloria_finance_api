@@ -1,5 +1,11 @@
 [
   {
+    "name": "Rendimiento de conta bancária",
+    "description": "Rendimentos obtidos com juros gerados em contas bancárias, incluindo contas poupança ou outras contas com rentabilidade financeira.",
+    "type": "INCOME",
+    "active": true
+  },
+  {
     "name": "Perda de investimento",
     "description": "Diminuição do valor de um fundo de investimento ou outro instrumento financeiro, registada como ajustamento negativo na conta correspondente.",
     "type": "OUTGO",

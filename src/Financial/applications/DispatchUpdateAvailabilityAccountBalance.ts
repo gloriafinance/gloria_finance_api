@@ -35,7 +35,7 @@ export class DispatchUpdateAvailabilityAccountBalance {
             : TypeBankingOperation.DEPOSIT,
         concept: concept,
         bankId: availabilityAccount.getSource().bankId,
-        createdAt: createdAt,
+        createdAt: new Date(createdAt),
       })
     }
 

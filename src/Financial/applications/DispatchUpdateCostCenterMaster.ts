@@ -1,8 +1,8 @@
-import { Logger } from "../../Shared/adapter"
-import { IQueueService, QueueName } from "../../Shared/domain"
+import { Logger } from "@/Shared/adapter"
+import { IQueueService, QueueName } from "@/Shared/domain"
 
 export class DispatchUpdateCostCenterMaster {
-  private logger = Logger("DispatchUpdateCostCenterMaster")
+  private logger = Logger(DispatchUpdateCostCenterMaster.name)
 
   constructor(private readonly queueService: IQueueService) {}
 
