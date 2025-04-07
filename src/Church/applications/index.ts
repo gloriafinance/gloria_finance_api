@@ -7,6 +7,7 @@ export { SearchChurchesByDistrictId } from "./church/SearchChurchesByDistrictId"
 export { CreateOrUpdateMember } from "./members/CreateOrUpdateMember"
 export { FindMemberById } from "./members/FindMemberById"
 export { SearchMembers } from "./members/SearchMembers"
+export { AllMember } from "./members/AllMember"
 
 export { AssignChurch } from "./ministers/AssignChurch"
 export { RemoveMinister } from "./ministers/RemoveMinister"

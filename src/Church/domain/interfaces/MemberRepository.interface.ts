@@ -1,4 +1,4 @@
-import { Criteria, Paginate } from "../../../Shared/domain"
+import { Criteria, Paginate } from "@/Shared/domain"
 import { Member } from "../Member"
 
 export interface IMemberRepository {
@@ -7,4 +7,6 @@ export interface IMemberRepository {
   upsert(member: Member): Promise<void>
 
   list(criteria: Criteria): Promise<Paginate<Member>>
+
+  all(churchId: string): Promise<Member[]>
 }
