@@ -4,7 +4,7 @@ import { Installments } from "../types/Installments.type"
 export interface ICreateAccountReceivable {
   debtor: {
     debtorType: DebtorType
-    debtorId?: string
+    debtorDNI?: string
     name: string
   }
   accountReceivableId?: string

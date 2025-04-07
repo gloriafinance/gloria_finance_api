@@ -11,7 +11,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
   const rule = {
     debtor: "required|object",
-    "debtor.debtorType": "required|string",
+    "debtor.debtorType": "required|string|in:MEMBER,GROUP,EXTERNAL_ENTITY",
     "debtor.name": "required|string",
     churchId: "required|string",
     description: "required|string",

@@ -17,6 +17,7 @@ export class Member extends AggregateRoot {
   private baptismDate?: Date
   private birthdate: Date
   private churchId: string
+  private active: boolean
 
   static create(
     name: string,
@@ -43,6 +44,7 @@ export class Member extends AggregateRoot {
     m.memberId = IdentifyEntity.get(`member`)
     m.isTreasurer = isTreasurer
     m.isMinister = isMinister
+    m.active = true
 
     return m
   }
@@ -62,6 +64,7 @@ export class Member extends AggregateRoot {
     m.isTreasurer = plainData.isTreasurer
     m.churchId = plainData.churchId
     m.id = plainData.id
+    m.active = plainData.active
 
     return m
   }
@@ -122,6 +125,14 @@ export class Member extends AggregateRoot {
     this.name = name
   }
 
+  disable() {
+    this.active = false
+  }
+
+  enable() {
+    this.active = true
+  }
+
   toPrimitives(): any {
     return {
       memberId: this.memberId,
@@ -136,6 +147,7 @@ export class Member extends AggregateRoot {
       birthdate: this.birthdate,
       isMinister: this.isMinister,
       isTreasurer: this.isTreasurer,
+      active: this.active,
     }
   }
 }

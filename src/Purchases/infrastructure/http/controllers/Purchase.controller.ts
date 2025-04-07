@@ -9,11 +9,11 @@ import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoReposito
 import {
   AvailabilityAccountMongoRepository,
   FinancialConfigurationMongoRepository,
-} from "../../../../Financial/infrastructure/persistence"
-import { HttpStatus } from "../../../../Shared/domain"
-import { StorageGCP } from "../../../../Shared/infrastructure"
-import { FinancialMonthValidator } from "../../../../ConsolidatedFinancial/applications"
-import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
+} from "@/Financial/infrastructure/persistence"
+import { HttpStatus } from "@/Shared/domain"
+import { StorageGCP } from "@/Shared/infrastructure"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 

@@ -3,7 +3,7 @@ import { DebtorType } from "@/AccountsReceivable/domain"
 export type AccountReceivableRequest = {
   debtor: {
     debtorType: DebtorType
-    debtorId?: string
+    debtorDNI?: string
     name: string
   }
   churchId: string
