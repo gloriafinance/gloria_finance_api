@@ -14,7 +14,7 @@ import {
 } from "@/Shared/domain"
 
 export class ListAccountReceivable {
-  private logger = Logger("ListAccountReceivable")
+  private logger = Logger(ListAccountReceivable.name)
 
   constructor(
     private readonly accountReceivableRepository: IAccountsReceivableRepository

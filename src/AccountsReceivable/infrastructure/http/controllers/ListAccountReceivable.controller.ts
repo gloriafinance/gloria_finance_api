@@ -40,7 +40,7 @@ import { Logger } from "@/Shared/adapter"
  *       "updatedAt": "2023-05-15T14:30:00.000Z",
  *       "debtor": {
  *         "debtorType": "MEMBER",
- *         "debtorId": "member123",
+ *         "debtorDNI": "member123",
  *         "name": "John Doe"
  *       },
  *       "accountReceivableId": "acc123",

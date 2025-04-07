@@ -22,8 +22,7 @@ export class CreateAccountReceivable {
 
     const account = AccountReceivable.create(requestAccountReceivable)
 
-    const accountReceivable =
-      await this.accountReceivableRepository.upsert(account)
+    await this.accountReceivableRepository.upsert(account)
 
     this.logger.info(`CreateAccountReceivable finish`)
   }

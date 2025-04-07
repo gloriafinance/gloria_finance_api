@@ -35,6 +35,12 @@ export class CreateOrUpdateMember {
     member.setBaptismDate(request.baptismDate)
     member.setConversionDate(request.conversionDate)
 
+    if (request.active) {
+      member.enable()
+    } else {
+      member.disable()
+    }
+
     this.logger.info(`Finished updating member`)
 
     return await this.memberRepository.upsert(member)

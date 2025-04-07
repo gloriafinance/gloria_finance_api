@@ -9,4 +9,5 @@ export type MemberRequest = {
   isTreasurer: boolean
   churchId: string
   birthdate: Date
+  active: boolean
 }

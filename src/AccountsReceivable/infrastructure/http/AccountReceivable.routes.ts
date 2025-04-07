@@ -13,12 +13,18 @@ import { AmountValue } from "@/Shared/domain"
 const accountReceivableRoutes = Router()
 
 accountReceivableRoutes.post("/", PermissionMiddleware, async (req, res) => {
-  await CreateAccountReceivableController(req.body, res)
+  await CreateAccountReceivableController(
+    { ...req.body, churchId: req["user"].churchId },
+    res
+  )
 })
 
 accountReceivableRoutes.get("", PermissionMiddleware, async (req, res) => {
   await ListAccountReceivableController(
-    { ...(req.query as unknown as FilterAccountReceivableRequest) },
+    {
+      ...(req.query as unknown as FilterAccountReceivableRequest),
+      churchId: req["user"].churchId,
+    },
     res
   )
 })
