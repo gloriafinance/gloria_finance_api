@@ -1,6 +1,6 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
+import { MongoRepository } from "@/Shared/infrastructure"
 import { IMemberRepository, Member } from "../../domain"
-import { Criteria, Paginate } from "../../../Shared/domain"
+import { Criteria, Paginate } from "@/Shared/domain"
 
 export class MemberMongoRepository
   extends MongoRepository<any>
@@ -41,5 +41,17 @@ export class MemberMongoRepository
           id: result._id.toString(),
         })
       : undefined
+  }
+
+  async all(churchId: string): Promise<Member[]> {
+    const collection = await this.collection()
+    const result = await collection.find({ churchId }).toArray()
+
+    return result.map((item) =>
+      Member.fromPrimitives({
+        ...item,
+        id: item._id.toString(),
+      })
+    )
   }
 }

@@ -1,6 +1,7 @@
 import { MemberPaginateRequest, MemberRequest } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
+  AllMember,
   CreateOrUpdateMember,
   FindMemberById,
   SearchMembers,
@@ -12,6 +13,7 @@ import {
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 import { Response } from "express"
+import { CacheController } from "@/Shared/decorators"
 
 export class MemberController {
   static async createOrUpdate(memberRequest: MemberRequest, res: Response) {
@@ -49,6 +51,19 @@ export class MemberController {
       ).execute(memberId)
 
       res.status(HttpStatus.OK).send(member)
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @CacheController("members", 600)
+  static async all(churchId: string, res: Response) {
+    try {
+      const members = await new AllMember(
+        MemberMongoRepository.getInstance()
+      ).execute(churchId)
+
+      res.status(HttpStatus.OK).send(members)
     } catch (e) {
       domainResponse(e, res)
     }
