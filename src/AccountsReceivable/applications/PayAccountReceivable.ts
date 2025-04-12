@@ -7,12 +7,18 @@ import {
   PayAccountReceivableNotFound,
   PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
+import { IQueueService } from "@/Shared/domain"
+import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
+import { TypeOperationMoney } from "@/Financial/domain"
+import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 
 export class PayAccountReceivable {
   private logger = Logger("PayAccountReceivable")
 
   constructor(
-    private readonly accountReceivableRepository: IAccountsReceivableRepository
+    private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
+    private readonly accountReceivableRepository: IAccountsReceivableRepository,
+    private readonly queueService: IQueueService
   ) {}
 
   async execute(req: PayAccountReceivableRequest) {
@@ -48,6 +54,18 @@ export class PayAccountReceivable {
     )
 
     await this.accountReceivableRepository.upsert(accountReceivable)
+
+    this.logger.info(`Account Receivable ${req.accountReceivableId} updated`)
+
+    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+      operationType: TypeOperationMoney.MONEY_OUT,
+      availabilityAccount:
+        await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
+          req.availabilityAccountId
+        ),
+      concept: req.concept.getDescription(),
+      amount: req.amount.getValue(),
+    })
 
     this.logger.info(`Finish Pay Account Receivable`)
   }

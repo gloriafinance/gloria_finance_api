@@ -4,13 +4,13 @@ import domainResponse from "@/Shared/helpers/domainResponse"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
 import { AccountsReceivableMongoRepository } from "../../persistence/AccountsReceivableMongoRepository"
 import { HttpStatus } from "@/Shared/domain"
-import { StorageGCP } from "@/Shared/infrastructure"
+import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
   FinancialConceptMongoRepository,
 } from "@/Financial/infrastructure/persistence"
-import { RegisterFinancialRecord } from "@/Financial/applications/financeRecord/RegisterFinancialRecord"
+import { RegisterFinancialRecord } from "@/Financial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 /**
@@ -32,7 +32,9 @@ export const PayAccountReceivableController = async (
     await makeFinanceRecord(req)
 
     await new PayAccountReceivable(
-      AccountsReceivableMongoRepository.getInstance()
+      AvailabilityAccountMongoRepository.getInstance(),
+      AccountsReceivableMongoRepository.getInstance(),
+      QueueService.getInstance()
     ).execute(req)
 
     res
@@ -52,6 +54,11 @@ const makeFinanceRecord = async (req: PayAccountReceivableRequest) => {
     )
   }
 
+  req.concept = await FinancialConceptMongoRepository.getInstance().one({
+    name: "Conta a Receber",
+    churchId: req.churchId,
+  })
+
   req.financialTransactionId = (
     await new RegisterFinancialRecord(
       FinancialYearMongoRepository.getInstance(),
@@ -66,10 +73,7 @@ const makeFinanceRecord = async (req: PayAccountReceivableRequest) => {
         amount: req.amount.getValue(),
         date: new Date(),
       },
-      await FinancialConceptMongoRepository.getInstance().one({
-        name: "Conta a Receber",
-        churchId: req.churchId,
-      })
+      req.concept
     )
   ).getFinancialRecordId()
 }

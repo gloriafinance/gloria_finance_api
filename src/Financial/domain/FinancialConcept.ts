@@ -77,6 +77,10 @@ export class FinancialConcept extends AggregateRoot {
     return this.name
   }
 
+  getDescription(): string {
+    return this.description
+  }
+
   toPrimitives(): any {
     return {
       financialConceptId: this.financialConceptId,

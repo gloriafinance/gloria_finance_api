@@ -30,5 +30,7 @@ export class MovementBankRecord implements IQueue {
     )
 
     await this.movementBankRepository.upsert(movementBank)
+
+    this.logger.info(`MovementBankRecord created`)
   }
 }
