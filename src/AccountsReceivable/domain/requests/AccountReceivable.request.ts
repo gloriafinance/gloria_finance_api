@@ -5,6 +5,7 @@ export type AccountReceivableRequest = {
     debtorType: DebtorType
     debtorDNI?: string
     name: string
+    phone: string
   }
   churchId: string
   description: string
