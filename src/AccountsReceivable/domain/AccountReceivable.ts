@@ -15,6 +15,7 @@ export class AccountReceivable extends AggregateRoot {
     debtorType: DebtorType
     debtorDNI: string
     name: string
+    phone: string
   }
   private accountReceivableId: string
   private churchId: string
@@ -66,6 +67,7 @@ export class AccountReceivable extends AggregateRoot {
 
     if (debtor) {
       accountReceivable.debtor = {
+        phone: debtor.phone,
         debtorType: debtor.debtorType,
         debtorDNI: debtor.debtorDNI || IdentifyEntity.get(`debtor`),
         name: debtor.name,
@@ -126,9 +128,7 @@ export class AccountReceivable extends AggregateRoot {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       debtor: {
-        debtorType: this.debtor.debtorType,
-        debtorDNI: this.debtor.debtorDNI,
-        name: this.debtor.name,
+        ...this.debtor,
       },
       accountReceivableId: this.accountReceivableId,
       churchId: this.churchId,
