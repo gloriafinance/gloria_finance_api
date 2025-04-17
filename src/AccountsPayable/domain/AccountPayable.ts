@@ -13,7 +13,7 @@ export class AccountPayable extends AggregateRoot {
   private id?: string
   private provider: {
     providerType: ProviderType
-    providerId: string
+    providerDNI: string
     name: string
     phone: string
   }
@@ -27,14 +27,7 @@ export class AccountPayable extends AggregateRoot {
   private updatedAt: Date
 
   static create(params: Partial<ICreateAccountPayable>): AccountPayable {
-    const {
-      provider,
-      churchId,
-      description,
-      amountPaid,
-      amountPending,
-      installments,
-    } = params
+    const { provider, churchId, description, amountPaid, installments } = params
 
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.accountPayableId = IdentifyEntity.get(`accountPayable`)
@@ -42,7 +35,6 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.description = description
 
     accountPayable.amountPaid = amountPaid
-    accountPayable.amountPending = amountPending
     accountPayable.status = AccountPayableStatus.PENDING
 
     let amountTotal: number = 0
@@ -64,14 +56,7 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.createdAt = DateBR()
     accountPayable.updatedAt = DateBR()
 
-    if (provider) {
-      accountPayable.provider = {
-        phone: provider.phone,
-        providerType: provider.providerType,
-        providerId: provider.providerId || IdentifyEntity.get(`provider`),
-        name: provider.name,
-      }
-    }
+    accountPayable.provider = provider
 
     return accountPayable
   }

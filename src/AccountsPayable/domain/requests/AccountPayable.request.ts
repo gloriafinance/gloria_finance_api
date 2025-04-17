@@ -3,7 +3,7 @@ import { ProviderType } from "@/AccountsPayable/domain"
 export type AccountPayableRequest = {
   provider: {
     providerType: ProviderType
-    providerId?: string
+    providerDNI: string
     name: string
     phone: string
   }
