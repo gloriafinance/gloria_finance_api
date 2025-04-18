@@ -103,8 +103,6 @@ export class AccountPayable extends AggregateRoot {
 
     if (this.amountPending === 0) {
       this.status = AccountPayableStatus.PAID
-    } else if (this.amountPaid > 0 && this.amountPending > 0) {
-      this.status = AccountPayableStatus.PARTIAL
     }
 
     this.updatedAt = DateBR()

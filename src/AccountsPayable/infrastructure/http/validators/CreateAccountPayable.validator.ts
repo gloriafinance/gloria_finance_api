@@ -7,23 +7,18 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   const payload = req.body
   const logger = Logger("CreateAccountPayableValidator")
 
-  logger.info(`Validating  ${JSON.stringify(payload)}`)
+  logger.info(`Validating`, payload)
 
   const rule = {
-    provider: "required|object",
-    "provider.providerType": "required|string|in:MEMBER,GROUP,EXTERNAL_ENTITY",
-    "provider.name": "required|string",
-    "provider.providerDNI": "required|string",
+    supplierId: "required|string",
     description: "required|string",
     installments: "required|array",
     "installments.*.amount": "required|numeric",
-    "installments.*.dueDate": "required|Date",
+    "installments.*.dueDate": "required|date",
   }
 
   const v = new Validator(payload, rule)
-
   const matched = await v.check()
-
   if (!matched) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }

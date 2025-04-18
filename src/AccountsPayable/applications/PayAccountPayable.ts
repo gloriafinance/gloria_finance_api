@@ -49,6 +49,15 @@ export class PayAccountPayable {
       )
     }
 
+    accountPayable.updateAmount(req.amount)
+
+    await this.accountPayableRepository.upsert(accountPayable)
+
+    this.logger.info(
+      `Account Payable ${req.accountPayableId} updated, amount pending ${accountPayable.getAmountPending()} 
+      status ${accountPayable.getStatus()}`
+    )
+
     new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       operationType: TypeOperationMoney.MONEY_OUT,
       availabilityAccount:

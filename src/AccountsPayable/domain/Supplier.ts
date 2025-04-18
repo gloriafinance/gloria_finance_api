@@ -1,7 +1,6 @@
 import { AggregateRoot } from "@/Shared/domain"
 import { SupplierType } from "@/AccountsPayable/domain/enums/SupplierType"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
-import { IdentifyEntity } from "@/Shared/adapter"
 
 export class Supplier extends AggregateRoot {
   private id?: string
@@ -23,14 +22,13 @@ export class Supplier extends AggregateRoot {
   private email?: string
 
   private createdAt: Date
-  private updatedAt: Date
 
   static create(params: Partial<ISupplier>) {
     const { churchId, type, dni, name, address, phone, email } = params
 
     const supplier: Supplier = new Supplier()
     supplier.churchId = churchId
-    supplier.supplierId = IdentifyEntity.get(`supplier`)
+    supplier.supplierId = `urn:supplier:${dni}`
     supplier.type = type
 
     supplier.dni = dni
@@ -41,7 +39,6 @@ export class Supplier extends AggregateRoot {
     supplier.email = email
 
     supplier.createdAt = new Date()
-    supplier.updatedAt = new Date()
 
     return supplier
   }
@@ -60,7 +57,6 @@ export class Supplier extends AggregateRoot {
     supplier.email = params.email
 
     supplier.createdAt = params.createdAt
-    supplier.updatedAt = params.updatedAt
 
     return supplier
   }
@@ -91,8 +87,8 @@ export class Supplier extends AggregateRoot {
 
   toPrimitives() {
     return {
+      supplierId: this.supplierId,
       churchId: this.churchId,
-      providerId: this.supplierId,
       type: this.type,
 
       dni: this.dni,
@@ -103,7 +99,6 @@ export class Supplier extends AggregateRoot {
       email: this.email,
 
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
     }
   }
 }
