@@ -1,5 +1,5 @@
-export enum ProviderType {
+export enum SupplierType {
   SUPPLIER = "SUPPLIER",
   SERVICE_PROVIDER = "SERVICE_PROVIDER",
-  EXTERNAL_ENTITY = "EXTERNAL_ENTITY",
+  NATURAL_PERSON = "NATURAL_PERSON",
 }

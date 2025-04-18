@@ -7,16 +7,17 @@ import {
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AccountPayableStatus } from "./enums/AccountPayableStatus"
-import { ProviderType } from "./enums/ProviderType"
+import { SupplierType } from "./enums/SupplierType"
 import { ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
 
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
   private id?: string
-  private provider: {
-    providerType: ProviderType
-    providerDNI: string
+  private supplier: {
+    supplierId: string
+    supplierType: SupplierType
+    supplierDNI: string
     name: string
     phone: string
   }
@@ -30,7 +31,7 @@ export class AccountPayable extends AggregateRoot {
   private updatedAt: Date
 
   static create(params: Partial<ICreateAccountPayable>): AccountPayable {
-    const { provider, churchId, description, amountPaid, installments } = params
+    const { supplier, churchId, description, amountPaid, installments } = params
 
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.accountPayableId = IdentifyEntity.get(`accountPayable`)
@@ -59,7 +60,13 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.createdAt = DateBR()
     accountPayable.updatedAt = DateBR()
 
-    accountPayable.provider = provider
+    accountPayable.supplier = {
+      supplierId: supplier.supplierId,
+      supplierType: supplier.supplierType,
+      supplierDNI: supplier.supplierDNI,
+      name: supplier.name,
+      phone: supplier.phone,
+    }
 
     return accountPayable
   }
@@ -77,7 +84,7 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.status = params.status
     accountPayable.createdAt = params.createdAt
     accountPayable.updatedAt = params.updatedAt
-    accountPayable.provider = params.provider
+    accountPayable.supplier = params.supplier
 
     return accountPayable
   }
@@ -116,9 +123,7 @@ export class AccountPayable extends AggregateRoot {
       status: this.status,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      provider: {
-        ...this.provider,
-      },
+      supplier: this.supplier,
       accountPayableId: this.accountPayableId,
       churchId: this.churchId,
       description: this.description,

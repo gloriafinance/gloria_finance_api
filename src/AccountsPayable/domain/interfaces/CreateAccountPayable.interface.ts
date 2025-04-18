@@ -1,10 +1,11 @@
-import { ProviderType } from "../enums/ProviderType"
+import { SupplierType } from "../enums/SupplierType"
 import { Installments } from "@/Shared/domain"
 
 export interface ICreateAccountPayable {
-  provider: {
-    providerType: ProviderType
-    providerDNI: string
+  supplier: {
+    supplierId: string
+    supplierType: SupplierType
+    supplierDNI: string
     name: string
     phone: string
   }

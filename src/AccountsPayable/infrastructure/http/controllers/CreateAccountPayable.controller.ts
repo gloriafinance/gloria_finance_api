@@ -1,11 +1,10 @@
 import { Response } from "express"
 import { AccountPayableRequest } from "@/AccountsPayable/domain"
 import { CreateAccountPayable } from "@/AccountsPayable/applications"
-import {
-  AccountsPayableMongoRepository,
-} from "@/AccountsPayable/infrastructure/persistence/AccountsPayableMongoRepository"
+
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
+import { AccountsPayableMongoRepository, SupplierMongoRepository } from "@/AccountsPayable/infrastructure/persistence"
 
 /**
  * @function CreateAccountPayableController
@@ -24,7 +23,8 @@ export const CreateAccountPayableController = async (
 ): Promise<void> => {
   try {
     await new CreateAccountPayable(
-      AccountsPayableMongoRepository.getInstance()
+      AccountsPayableMongoRepository.getInstance(),
+      SupplierMongoRepository.getInstance()
     ).execute(req)
     res
       .status(HttpStatus.CREATED)
