@@ -14,7 +14,7 @@ import reportsRouter from "@/Reports/infrastructure/http/routes"
 import purchaseRouter from "@/Purchases/infrastructure/http/routes"
 import { server, startServer } from "@/Shared/infrastructure/http/server"
 import accountsReceivableRoutes from "@/AccountsReceivable/infrastructure/http/AccountsReceivable.routes"
-import accountsPayableRoute from "@/AccountsPayable/infrastructure/http/routes/AccountsPayable.route"
+import accountsPayableRoute from "./AccountsPayable/infrastructure/http/routes"
 
 export const APP_DIR = __dirname
 

@@ -1,7 +1,7 @@
 import { AccountPayable, FilterAccountPayableRequest } from "@/AccountsPayable/domain"
 import { Response } from "express"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { ListAccountsPayable } from "@/AccountsPayable/applications/ListAccountsPayable"
+import { ListAccountsPayable } from "@/AccountsPayable/applications"
 import { Logger } from "@/Shared/adapter"
 import { HttpStatus, Paginate } from "@/Shared/domain"
 import {

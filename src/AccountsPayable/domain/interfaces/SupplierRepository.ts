@@ -7,4 +7,6 @@ export interface ISupplierRepository {
   list(criteria: Criteria): Promise<Paginate<Supplier>>
 
   one(filter: object): Promise<Supplier | null>
+
+  all(churchId: string): Promise<Supplier[]>
 }

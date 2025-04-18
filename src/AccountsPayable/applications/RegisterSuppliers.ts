@@ -1,5 +1,9 @@
 import { Logger } from "@/Shared/adapter"
-import { ISupplierRepository, Supplier } from "@/AccountsPayable/domain"
+import {
+  ISupplierRepository,
+  Supplier,
+  SupplierFound,
+} from "@/AccountsPayable/domain"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 
 export class RegisterSuppliers {
@@ -16,7 +20,7 @@ export class RegisterSuppliers {
       })
     ) {
       this.logger.info(`Supplier already exists`, req)
-      return
+      throw new SupplierFound()
     }
 
     const supplier = Supplier.create(req)

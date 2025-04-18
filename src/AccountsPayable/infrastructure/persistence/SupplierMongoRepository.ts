@@ -41,4 +41,17 @@ export class SupplierMongoRepository
         })
       : undefined
   }
+
+  async all(churchId: string): Promise<Supplier[]> {
+    const collection = await this.collection()
+
+    const result = await collection.find({ churchId }).toArray()
+
+    return result.map((item) =>
+      Supplier.fromPrimitives({
+        ...item,
+        id: item._id.toString(),
+      })
+    )
+  }
 }
