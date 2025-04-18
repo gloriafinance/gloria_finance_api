@@ -56,7 +56,7 @@ const makeFinanceRecord = async (req: PayAccountPayableRequest) => {
   }
 
   req.concept = await FinancialConceptMongoRepository.getInstance().one({
-    name: "Contas a pagar",
+    name: "Contas a Pagar",
     churchId: req.churchId,
   })
 

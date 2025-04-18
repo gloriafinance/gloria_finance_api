@@ -14,7 +14,7 @@ import reportsRouter from "@/Reports/infrastructure/http/routes"
 import purchaseRouter from "@/Purchases/infrastructure/http/routes"
 import { server, startServer } from "@/Shared/infrastructure/http/server"
 import accountsReceivableRoutes from "@/AccountsReceivable/infrastructure/http/AccountsReceivable.routes"
-import accountsPayableRoute from "./AccountsPayable/infrastructure/http/routes"
+import groupAccountsPayableRoutes from "@/AccountsPayable/infrastructure/http/routes"
 
 export const APP_DIR = __dirname
 
@@ -28,7 +28,7 @@ app.use("/api/v1/church/member", memberRouters)
 app.use("/api/v1/minister", ministerRoute)
 app.use("/api/v1/finance", financialRouter)
 app.use("/api/v1/account-receivable", accountsReceivableRoutes)
-app.use("/api/v1/account-payable", accountsPayableRoute)
+app.use("/api/v1/account-payable", groupAccountsPayableRoutes)
 app.use("/api/v1/user", userRoutes)
 app.use("/api/v1/world", worldRoute)
 app.use("/api/v1/reports", reportsRouter)

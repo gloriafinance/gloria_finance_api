@@ -7,19 +7,20 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   const payload = req.body
   const logger = Logger("RegisterSupplierValidator")
 
-  logger.info(`Validating  ${JSON.stringify(payload)}`)
+  logger.info(`Validating`, payload)
 
   const rule = {
     type: "required|string|in:SUPPLIER,SERVICE_PROVIDER,NATURAL_PERSON",
     dni: "required|string",
     name: "required|string",
-    address: {
-      street: "required|string",
-      number: "required|string",
-      city: "required|string",
-      state: "required|string",
-      zipCode: "required|string",
-    },
+    
+    address: "required|object",
+    "address.street": "required|string",
+    "address.number": "required|string",
+    "address.city": "required|string",
+    "address.state": "required|string",
+    "address.zipCode": "required|string",
+
     phone: "required|string",
   }
 
@@ -28,5 +29,6 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   if (!matched) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }
+
   next()
 }

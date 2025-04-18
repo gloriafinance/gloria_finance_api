@@ -7,7 +7,7 @@ import { ListSupplierController } from "@/AccountsPayable/infrastructure/http/co
 const supplierRoute = Router()
 
 supplierRoute.post(
-  "/supplier",
+  "/",
   [PermissionMiddleware, RegisterSupplierValidator],
   async (req: Request, res: Response) => {
     await RegisterSupplierController(
@@ -18,7 +18,7 @@ supplierRoute.post(
 )
 
 supplierRoute.get(
-  "/supplier",
+  "/",
   PermissionMiddleware,
   async (req: Request, res: Response) => {
     await ListSupplierController(req["user"].churchId, res)

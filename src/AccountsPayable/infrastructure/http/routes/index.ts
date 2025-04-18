@@ -2,9 +2,9 @@ import { Router } from "express"
 import AccountsPayableRoute from "./AccountsPayable.route"
 import supplierRoute from "./Supplier.route"
 
-const accountsPayableRoutes = Router()
+const groupAccountsPayableRoutes = Router()
 
-accountsPayableRoutes.use("/", AccountsPayableRoute)
-accountsPayableRoutes.use("/supplier", supplierRoute)
+groupAccountsPayableRoutes.use("/", AccountsPayableRoute)
+groupAccountsPayableRoutes.use("/supplier", supplierRoute)
 
-export default accountsPayableRoutes
+export default groupAccountsPayableRoutes
