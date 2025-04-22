@@ -11,5 +11,5 @@ export interface IExcelExportAdapter {
    * @param sheetName - El nombre de la hoja de Excel
    * @returns Un buffer con el archivo Excel
    */
-  export(data: any[], sheetName: string): Buffer
+  export(data: any[], sheetName: string): Promise<Buffer>
 }

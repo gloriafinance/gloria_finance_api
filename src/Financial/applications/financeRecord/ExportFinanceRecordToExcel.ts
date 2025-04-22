@@ -62,7 +62,7 @@ export class ExportFinanceRecordToExcel {
     this.logger.info(`Exportando ${worksheetData.length} registros a Excel`)
 
     // Usar el adaptador para exportar los datos
-    return this.excelExportAdapter.export(
+    return await this.excelExportAdapter.export(
       worksheetData,
       "Registros Financieros"
     )

@@ -1,8 +1,8 @@
-import * as XLSX from "xlsx"
-import { IExcelExportAdapter } from "../domain/interfaces/ExcelExport.interface"
+import * as ExcelJS from "exceljs"
+import { GenericException, IExcelExportAdapter } from "@/Shared/domain"
 
 /**
- * Implementación del adaptador de exportación a Excel usando la librería xlsx
+ * Implementing the Excel Export Adapter using ExcelJS
  */
 export class XlsxExportAdapter implements IExcelExportAdapter {
   /**
@@ -12,20 +12,44 @@ export class XlsxExportAdapter implements IExcelExportAdapter {
    * @param sheetName - El nombre de la hoja de Excel
    * @returns Un buffer con el archivo Excel
    */
-  export(data: any[], sheetName: string): Buffer {
-    // Crear el libro de trabajo y la hoja
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
+  async export(data: any[], sheetName: string): Promise<Buffer> {
+    if (!Array.isArray(data)) {
+      throw new GenericException("Not a valid data")
+    }
 
-    // Añadir la hoja al libro
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
+    const workbook = new ExcelJS.Workbook()
 
-    // Escribir a buffer
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "buffer",
+    const worksheet = workbook.addWorksheet(sheetName)
+
+    if (data.length === 0) {
+      return (await workbook.xlsx.writeBuffer()) as Buffer
+    }
+
+    const headers = Object.keys(data[0])
+
+    worksheet.addRow(headers)
+
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true }
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      }
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      }
     })
 
-    return excelBuffer
+    data.forEach((item) => {
+      const rowValues = headers.map((header) => item[header])
+      worksheet.addRow(rowValues)
+    })
+
+    return (await workbook.xlsx.writeBuffer()) as Buffer
   }
 }
