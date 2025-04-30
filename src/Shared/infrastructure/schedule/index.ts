@@ -1,6 +1,6 @@
-import { ChurchMongoRepository } from "../../../Church/infrastructure"
-import { CloseFinancialMonth } from "../../../ConsolidatedFinancial/applications"
-import { FinancialYearMongoRepository } from "../../../ConsolidatedFinancial/infrastructure"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { CloseFinancialMonth } from "@/ConsolidatedFinancial/applications"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 export const closeFinancialMonth = async (): Promise<void> => {
   const churches = await ChurchMongoRepository.getInstance().all()
@@ -11,7 +11,7 @@ export const closeFinancialMonth = async (): Promise<void> => {
     ).execute({
       churchId: church.getChurchId(),
       closed: true,
-      month: new Date().getMonth() + 1,
+      month: new Date().getMonth(),
       year: new Date().getFullYear(),
     })
   }

@@ -18,7 +18,7 @@ import groupAccountsPayableRoutes from "@/AccountsPayable/infrastructure/http/ro
 
 export const APP_DIR = __dirname
 
-const port = Number(process.env.APP_PORT) || 8080
+const port = Number(process.env.APP_PORT || 8080)
 const app: Express = server(port)
 
 StartQueueService(app, Queues)

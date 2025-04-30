@@ -1,6 +1,6 @@
 import helmet from "helmet"
 import rateLimit from "express-rate-limit"
-import { Logger, RequestContext } from "../../adapter/CustomLogger"
+import { Logger, RequestContext } from "@/Shared/adapter"
 import { v4 } from "uuid"
 import { Express } from "express"
 import { MongoClientFactory } from "@/Shared/infrastructure"
