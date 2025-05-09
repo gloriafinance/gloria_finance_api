@@ -111,7 +111,7 @@ export class StorageGCP implements IStorageService {
       return key // Return the file name in GCP Storage
     } catch (error) {
       this.logger.error("Error uploading file to GCP Storage:", error)
-      throw new GenericException("Error uploading file to GCP Storage.")
+      throw new Error("Error uploading file to GCP Storage.")
     }
   }
 
@@ -128,7 +128,7 @@ export class StorageGCP implements IStorageService {
       this.logger.info(`File ${path} deleted successfully from GCP Storage.`)
     } catch (error) {
       this.logger.error("Error deleting file from GCP Storage:", error)
-      throw new GenericException("Error deleting file from GCP Storage.")
+      throw new Error("Error deleting file from GCP Storage.")
     }
   }
 
