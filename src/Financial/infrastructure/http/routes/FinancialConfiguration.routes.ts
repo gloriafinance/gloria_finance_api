@@ -100,7 +100,10 @@ financialConfigurationRoute.post(
   [PermissionMiddleware, AvailabilityAccountValidator],
   async (req, res) => {
     await createOrUpdateAvailabilityAccount(
-      req.body as AvailabilityAccountRequest,
+      {
+        ...(req.body as AvailabilityAccountRequest),
+        churchId: req["user"].churchId,
+      },
       res
     )
   }
