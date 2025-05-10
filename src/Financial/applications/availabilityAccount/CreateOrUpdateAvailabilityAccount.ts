@@ -43,6 +43,7 @@ export class CreateOrUpdateAvailabilityAccount {
       requestAvailabilityAccount.accountName,
       requestAvailabilityAccount.active,
       requestAvailabilityAccount.accountType,
+      requestAvailabilityAccount.symbol,
       requestAvailabilityAccount.source
     )
     await this.availabilityAccountRepository.upsert(availabilityAccount)
