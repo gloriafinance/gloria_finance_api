@@ -2,11 +2,8 @@ import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
 import * as handlebars from "handlebars"
 import fs from "node:fs"
 import { APP_DIR } from "@/app"
-import puppeteer from "puppeteer"
-import path from "node:path"
-import { v4 } from "uuid"
 
-export class GenerateHTMLAdapter implements IHTMLAdapter {
+export class HandlebarsHTMLAdapter implements IHTMLAdapter {
   constructor() {
     handlebars.registerHelper("ifEquals", function (arg1, arg2, options) {
       return arg1 === arg2 ? options.fn(this) : options.inverse(this)
@@ -31,30 +28,5 @@ export class GenerateHTMLAdapter implements IHTMLAdapter {
     const template = handlebars.compile(htmlTemplate)
 
     return template(data)
-  }
-
-  async toPDF(html: string): Promise<string> {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage()
-
-    await page.setContent(html)
-
-    const pdfPath = path.join("/tmp/", `${v4()}.pdf`)
-
-    await page.pdf({
-      path: pdfPath,
-      format: "A4",
-      printBackground: true,
-      margin: {
-        top: "0.5in",
-        bottom: "0.5in",
-        left: "1in",
-        right: "1in",
-      },
-    })
-
-    await browser.close()
-
-    return pdfPath
   }
 }

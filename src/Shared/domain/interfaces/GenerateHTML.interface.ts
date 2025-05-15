@@ -7,12 +7,4 @@ export interface IHTMLAdapter {
    * @returns Un buffer con el archivo HTML generado
    */
   generateHTML(templateName: string, data: any): string
-
-  /**
-   * Convierte un HTML a PDF
-   *
-   * @param html - HTML a convertir
-   * @returns Path al archivo PDF generado
-   */
-  toPDF(html: string): Promise<string>
 }

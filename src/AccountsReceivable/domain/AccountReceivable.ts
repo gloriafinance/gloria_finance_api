@@ -34,6 +34,7 @@ export class AccountReceivable extends AggregateRoot {
   private token: string
   private createdAt: Date
   private updatedAt: Date
+  private contract?: string
 
   static create(params: Partial<ICreateAccountReceivable>): AccountReceivable {
     const {
@@ -164,6 +165,14 @@ export class AccountReceivable extends AggregateRoot {
     this.updatedAt = DateBR()
   }
 
+  setContract(contract: string) {
+    this.contract = contract
+  }
+
+  getContract(): string {
+    return this.contract
+  }
+
   toPrimitives() {
     return {
       status: this.status,
@@ -180,6 +189,7 @@ export class AccountReceivable extends AggregateRoot {
       amountPending: this.amountPending,
       installments: this.installments,
       token: this.token,
+      contract: this.contract,
     }
   }
 }

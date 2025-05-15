@@ -1,4 +1,4 @@
-import { Router } from "express"
+import { Request, Router } from "express"
 import { PermissionMiddleware } from "../../../../Shared/infrastructure"
 import ContributionValidator from "../validators/Contribution.validator"
 import {
@@ -17,7 +17,7 @@ const financeContribution = Router()
 financeContribution.post(
   "/",
   [PermissionMiddleware, ContributionValidator],
-  async (req, res) => {
+  async (req: Request, res) => {
     const file = req.files?.file ?? null
 
     await onlineContributionsController(
