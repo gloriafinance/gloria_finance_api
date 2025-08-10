@@ -20,8 +20,9 @@ export class UpdateCostCenterMaster implements IQueue {
     churchId: string
     costCenterId: string
     amount: number
+    operation?: "add" | "subtract"
   }) {
-    const { churchId, costCenterId, amount } = args
+    const { churchId, costCenterId, amount, operation } = args
 
     this.logger.info(`UpdateCostCenterMaster`, {
       churchId,
@@ -43,7 +44,7 @@ export class UpdateCostCenterMaster implements IQueue {
       costCenterMaster = CostCenterMaster.create(costCenter)
     }
 
-    costCenterMaster.updateMaster(amount)
+    costCenterMaster.updateMaster(amount, operation)
 
     await this.costCenterMasterRepository.upsert(costCenterMaster)
 

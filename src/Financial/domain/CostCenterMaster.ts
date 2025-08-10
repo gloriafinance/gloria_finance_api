@@ -48,8 +48,13 @@ export class CostCenterMaster extends AggregateRoot {
     return costCenterMaster
   }
 
-  updateMaster(total: number) {
-    this.total += Number(total)
+  updateMaster(total: number, operation: "add" | "subtract" = "add") {
+    if (operation === "subtract") {
+      this.total -= Number(total)
+    } else {
+      this.total += Number(total)
+    }
+
     this.lastMove = DateBR()
   }
 

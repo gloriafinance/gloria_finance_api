@@ -14,7 +14,10 @@ import {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
-import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
+import {
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
+} from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 
 /**
@@ -73,6 +76,13 @@ export class CancelFinancialRecord {
         type: ConceptType.REVERSAL,
       },
       operation: TypeOperationMoney.MONEY_IN,
+    })
+
+    new DispatchUpdateCostCenterMaster(this.queueService).execute({
+      costCenterId: movement.getCostCenterId(),
+      amount: movement.getAmount(),
+      churchId: movement.getChurchId(),
+      operation: "subtract",
     })
   }
 

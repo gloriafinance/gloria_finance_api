@@ -109,6 +109,10 @@ export class FinanceRecord extends AggregateRoot {
     return this.date
   }
 
+  getCostCenterId(): string | undefined {
+    return this.costCenter?.costCenterId
+  }
+
   toPrimitives() {
     return {
       financialConcept: this.financialConcept?.toPrimitives(),

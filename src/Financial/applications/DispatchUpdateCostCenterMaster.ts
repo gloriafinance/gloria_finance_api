@@ -6,13 +6,19 @@ export class DispatchUpdateCostCenterMaster {
 
   constructor(private readonly queueService: IQueueService) {}
 
-  execute(args: { churchId: string; costCenterId: string; amount: number }) {
+  execute(args: {
+    churchId: string
+    costCenterId: string
+    amount: number
+    operation?: "add" | "subtract"
+  }) {
     this.logger.info(`DispatchUpdateCostCenterMaster`, args)
 
     this.queueService.dispatch(QueueName.UpdateCostCenterMaster, {
       churchId: args.churchId,
       amount: args.amount,
       costCenterId: args.costCenterId,
+      operation: args.operation,
     })
   }
 }
