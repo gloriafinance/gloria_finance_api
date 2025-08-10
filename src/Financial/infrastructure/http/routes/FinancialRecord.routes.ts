@@ -2,7 +2,10 @@ import { Router } from "express"
 import { PermissionMiddleware } from "@/Shared/infrastructure"
 import { FilterFinanceRecordRequest } from "../../../domain"
 import FinancialRecordValidator from "../validators/FinancialRecord.validator"
-import { FinancialRecordController } from "../controllers/FinancialRecord.controller"
+import {
+  CancelFinancialRecordController,
+  FinancialRecordController,
+} from "../controllers/FinancialRecord.controller"
 import { FinanceRecordListController } from "../controllers/FinanceRecordList.controller"
 import { ExportFinanceRecordToExcelController } from "../controllers/ExportFinanceRecordToExcel.controller"
 
@@ -17,6 +20,20 @@ financialRecordRoutes.post(
         ...req.body,
         churchId: req["user"].churchId,
         file: req?.files?.file,
+      },
+      res
+    )
+  }
+)
+
+financialRecordRoutes.patch(
+  "/cancel/:financialRecordId",
+  [PermissionMiddleware, FinancialRecordValidator],
+  async (req, res) => {
+    await CancelFinancialRecordController(
+      {
+        financialRecordId: req.params.financialRecordId,
+        churchId: req["user"].churchId,
       },
       res
     )

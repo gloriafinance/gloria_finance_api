@@ -1,6 +1,6 @@
 import { IAvailabilityAccountRepository } from "../../domain/interfaces"
 import { AvailabilityAccountNotFound } from "../../domain"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {
   private logger = Logger("FindAvailabilityAccountByAvailabilityAccountId")
@@ -13,10 +13,9 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`
     )
-    const account =
-      await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
-        availabilityAccountId
-      )
+    const account = await this.availabilityAccountRepository.one({
+      availabilityAccountId,
+    })
 
     if (!account) {
       this.logger.info(`Availability account not found`)

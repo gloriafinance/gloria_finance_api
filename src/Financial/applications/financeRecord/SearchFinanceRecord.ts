@@ -6,7 +6,7 @@ import {
   Order,
   OrderTypes,
   Paginate,
-} from "../../../Shared/domain"
+} from "@/Shared/domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { FinanceRecord } from "../../domain/FinanceRecord"
 

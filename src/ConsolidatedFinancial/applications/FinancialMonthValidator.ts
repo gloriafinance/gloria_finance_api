@@ -11,9 +11,11 @@ export class FinancialMonthValidator {
     private readonly financialYearRepository: IFinancialYearRepository
   ) {}
 
-  async validate(churchId: string) {
-    const currentYear = new Date().getFullYear()
-    const currentMonth = new Date().getMonth() + 1
+  async validate(params: { churchId: string; month?: number; year?: number }) {
+    const { churchId, year, month } = params
+
+    const currentYear = year ? year : new Date().getFullYear()
+    const currentMonth = month ? month : new Date().getMonth() + 1
 
     this.logger.info(
       `Validating financial month ${currentMonth} ${currentYear} ${churchId}`

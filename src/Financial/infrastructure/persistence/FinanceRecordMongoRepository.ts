@@ -32,6 +32,16 @@ export class FinanceRecordMongoRepository
     return this.dbCollectionName
   }
 
+  async one(filter: object): Promise<FinanceRecord | undefined> {
+    const collection = await this.collection()
+    const result = await collection.findOne(filter)
+    if (!result) {
+      return undefined
+    }
+
+    return FinanceRecord.fromPrimitives(result)
+  }
+
   async fetch(criteria: Criteria): Promise<Paginate<FinanceRecord>> {
     this.dbCollectionName = "financial_records"
     const result: FinanceRecord[] =

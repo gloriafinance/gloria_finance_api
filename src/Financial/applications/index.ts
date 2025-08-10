@@ -18,6 +18,7 @@ export { FindFinancialConceptsByChurchIdAndTypeConcept } from "./financialConcep
 export { SearchFinanceRecord } from "./financeRecord/SearchFinanceRecord"
 export { ExportFinanceRecordToExcel } from "./financeRecord/ExportFinanceRecordToExcel"
 export { RegisterFinancialRecord } from "./financeRecord/RegisterFinancialRecord"
+export * from "./financeRecord/CancelFinancialRecord"
 
 export { CreateOrUpdateAvailabilityAccount } from "./availabilityAccount/CreateOrUpdateAvailabilityAccount"
 export { SearchAvailabilityAccountByChurchId } from "./availabilityAccount/SearchAvailabilityAccountByChurchId"

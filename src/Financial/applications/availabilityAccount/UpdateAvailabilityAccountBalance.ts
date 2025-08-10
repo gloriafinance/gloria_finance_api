@@ -1,4 +1,4 @@
-import { IQueue } from "../../../Shared/domain"
+import { IQueue } from "@/Shared/domain"
 import {
   IAvailabilityAccountMasterRepository,
   IAvailabilityAccountRepository,
@@ -23,9 +23,9 @@ export class UpdateAvailabilityAccountBalance implements IQueue {
   async handle(args: UpdateAvailabilityAccountBalanceRequest): Promise<void> {
     this.logger.info(`UpdateAvailabilityAccountBalance`, args)
     const account: AvailabilityAccount =
-      await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
-        args.availabilityAccountId
-      )
+      await this.availabilityAccountRepository.one({
+        availabilityAccountId: args.availabilityAccountId,
+      })
 
     if (args.operationType === TypeOperationMoney.MONEY_IN) {
       account.increaseBalance(Number(args.amount))

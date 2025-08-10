@@ -45,9 +45,9 @@ export const onlineContributionsController = async (
       ).execute(member.getChurchId(), request.financialConceptId)
 
     const availabilityAccount =
-      await AvailabilityAccountMongoRepository.getInstance().findAvailabilityAccountByAvailabilityAccountId(
-        request.availabilityAccountId
-      )
+      await AvailabilityAccountMongoRepository.getInstance().one({
+        availabilityAccountId: request.availabilityAccountId,
+      })
 
     if (!availabilityAccount) {
       throw new AvailabilityAccountNotFound()

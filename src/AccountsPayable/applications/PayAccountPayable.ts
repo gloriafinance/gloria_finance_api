@@ -60,10 +60,9 @@ export class PayAccountPayable {
 
     new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       operationType: TypeOperationMoney.MONEY_OUT,
-      availabilityAccount:
-        await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
-          req.availabilityAccountId
-        ),
+      availabilityAccount: await this.availabilityAccountRepository.one({
+        availabilityAccountId: req.availabilityAccountId,
+      }),
       concept: req.concept.getDescription(),
       amount: req.amount.getValue(),
     })

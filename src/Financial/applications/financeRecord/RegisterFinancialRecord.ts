@@ -1,6 +1,6 @@
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { IQueue } from "@/Shared/domain"
-import { FinanceRecord } from "../../domain/FinanceRecord"
+import { FinanceRecord } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import {
   IAvailabilityAccountRepository,
@@ -33,14 +33,13 @@ export class RegisterFinancialRecord implements IQueue {
   ): Promise<FinanceRecord> {
     this.logger.info(`Record financial movement`, args)
 
-    await new FinancialMonthValidator(this.financialYearRepository).validate(
-      args.churchId
-    )
+    await new FinancialMonthValidator(this.financialYearRepository).validate({
+      churchId: args.churchId,
+    })
 
-    const availabilityAccount =
-      await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
-        args.availabilityAccountId
-      )
+    const availabilityAccount = await this.availabilityAccountRepository.one({
+      availabilityAccountId: args.availabilityAccountId,
+    })
 
     if (!availabilityAccount) {
       this.logger.debug(`Availability account not found`)
@@ -58,7 +57,7 @@ export class RegisterFinancialRecord implements IQueue {
     }
 
     const financialRecord = FinanceRecord.create({
-      financialConcept: FinancialConcept.fromPrimitives(financialConcept),
+      financialConcept: financialConcept,
       churchId: args.churchId,
       amount: args.amount,
       date: new Date(args.date),
@@ -66,6 +65,7 @@ export class RegisterFinancialRecord implements IQueue {
       description: args.description,
       voucher: args.voucher,
       costCenter,
+      type: financialConcept.getType(),
     })
 
     await this.financialRecordRepository.upsert(financialRecord)

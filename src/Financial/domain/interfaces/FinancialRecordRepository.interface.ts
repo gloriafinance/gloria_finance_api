@@ -8,6 +8,8 @@ export interface IFinancialRecordRepository {
 
   fetch(criteria: Criteria): Promise<Paginate<FinanceRecord>>
 
+  one(filter: object): Promise<FinanceRecord | undefined>
+
   titheList(
     filter: BaseReportRequest
   ): Promise<{ total: number; tithesOfTithes: number; records: any[] }>

@@ -30,11 +30,9 @@ export class AvailabilityAccountMongoRepository
     )
   }
 
-  async findAvailabilityAccountByAvailabilityAccountId(
-    availabilityAccountId: string
-  ): Promise<AvailabilityAccount | undefined> {
+  async one(filter: object): Promise<AvailabilityAccount | undefined> {
     const collection = await this.collection()
-    const document = await collection.findOne({ availabilityAccountId })
+    const document = await collection.findOne(filter)
 
     if (!document) {
       return undefined

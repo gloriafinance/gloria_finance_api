@@ -3,6 +3,7 @@ export { AvailabilityAccountNotFound } from "./exceptions/AvailabilityAccountNot
 
 export { Bank } from "./Bank"
 export { CostCenter } from "./CostCenter"
+export * from "./FinanceRecord"
 
 export { FinancialConcept } from "./FinancialConcept"
 export { OnlineContributions } from "./OnlineContributions"
@@ -14,6 +15,7 @@ export { BankNotFound } from "./exceptions/BankNotFound.exception"
 export { CostCenterNotFound } from "./exceptions/CostCenterNotFound.exception"
 export { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
+export * from "./exceptions/FinancialMovementNotFound.exception"
 
 export { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 export { ConceptType } from "./enums/ConcepType.enum"
@@ -38,3 +40,5 @@ export { UpdateAvailabilityAccountBalanceRequest } from "./requests/UpdateAvaila
 export { FinancialConceptRequest } from "./requests/FinancialConcept.request"
 
 export { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
+
+export * from "./types/CreateFinanceRecord.type"

@@ -22,9 +22,9 @@ export class CreateOrUpdateAvailabilityAccount {
     }
 
     const availabilityAccount: AvailabilityAccount =
-      await this.availabilityAccountRepository.findAvailabilityAccountByAvailabilityAccountId(
-        requestAvailabilityAccount.availabilityAccountId
-      )
+      await this.availabilityAccountRepository.one({
+        availabilityAccountId: requestAvailabilityAccount.availabilityAccountId,
+      })
 
     availabilityAccount.setAccountName(requestAvailabilityAccount.accountName)
 

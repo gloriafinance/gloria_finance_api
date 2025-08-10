@@ -30,9 +30,9 @@ export class RegisterContributionsOnline {
       `RegisterContributionsOnline contributionRequest: ${JSON.stringify(contributionRequest)} member: ${member.getName()} financialConcept: ${financialConcept.getName()}`
     )
 
-    await new FinancialMonthValidator(this.financialYearRepository).validate(
-      member.getChurchId()
-    )
+    await new FinancialMonthValidator(this.financialYearRepository).validate({
+      churchId: member.getChurchId(),
+    })
 
     const voucher = await this.storageService.uploadFile(
       contributionRequest.bankTransferReceipt

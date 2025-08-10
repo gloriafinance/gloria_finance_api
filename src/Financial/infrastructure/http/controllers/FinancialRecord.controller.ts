@@ -8,7 +8,15 @@ import {
   FinancialRecordRequest,
   TypeOperationMoney,
 } from "../../../domain"
-import { RegisterFinancialRecord } from "../../../applications/financeRecord/RegisterFinancialRecord"
+import {
+  CancelFinancialRecord,
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
+  FindAvailabilityAccountByAvailabilityAccountId,
+  FindCostCenterByCostCenterId,
+  FindFinancialConceptByChurchIdAndFinancialConceptId,
+  RegisterFinancialRecord,
+} from "@/Financial/applications"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
@@ -17,13 +25,6 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
-import {
-  DispatchUpdateAvailabilityAccountBalance,
-  DispatchUpdateCostCenterMaster,
-  FindAvailabilityAccountByAvailabilityAccountId,
-  FindCostCenterByCostCenterId,
-  FindFinancialConceptByChurchIdAndFinancialConceptId,
-} from "@/Financial/applications"
 import { Response } from "express"
 
 export const FinancialRecordController = async (
@@ -140,4 +141,24 @@ const searchFinancialConcept = async (request: FinancialRecordRequest) => {
   }
 
   return financialConcept
+}
+
+export const CancelFinancialRecordController = async (
+  req: { financialRecordId: string; churchId: string },
+  res: Response
+) => {
+  try {
+    await new CancelFinancialRecord(
+      FinancialYearMongoRepository.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      AvailabilityAccountMongoRepository.getInstance(),
+      QueueService.getInstance()
+    ).execute(req)
+
+    res.status(HttpStatus.OK).send({
+      message: "successful financial record cancellation",
+    })
+  } catch (e) {
+    domainResponse(e, res)
+  }
 }
