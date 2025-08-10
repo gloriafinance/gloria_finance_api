@@ -1,191 +1,201 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <title>E-mail</title>
-  <style type="text/css">
-    /* Fonte Lato embutida */
-    @font-face {
-      font-family: 'Lato';
-      font-style: normal;
-      font-weight: 400;
-      src: url('https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wWw.ttf') format('truetype');
-    }
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>E-mail</title>
+    <style type="text/css">
+      /* Fonte Lato embutida */
+      @font-face {
+        font-family: "Lato";
+        font-style: normal;
+        font-weight: 400;
+        src: url("https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wWw.ttf")
+          format("truetype");
+      }
 
-    /* Estilos gerais */
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      font-family: 'Lato', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-    }
+      /* Estilos gerais */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        font-family: "Lato", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+      }
 
-    table {
-      margin: 0 auto;
-      width: 100%;
-      max-width: 600px;
-      border-spacing: 0;
-      background-color: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 5px;
-    }
+      table {
+        margin: 0 auto;
+        width: 100%;
+        max-width: 600px;
+        border-spacing: 0;
+        background-color: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 5px;
+      }
 
-    h1 {
-      font-size: 22px;
-      color: #7528E9;
-      margin-bottom: 15px;
-      font-weight: 600;
-    }
+      h1 {
+        font-size: 22px;
+        color: #7528e9;
+        margin-bottom: 15px;
+        font-weight: 600;
+      }
 
-    p {
-      font-size: 16px;
-      margin: 0;
-      padding: 0;
-    }
+      p {
+        font-size: 16px;
+        margin: 0;
+        padding: 0;
+      }
 
-    a {
-      color: #7528E9;
-      text-decoration: none;
-    }
+      a {
+        color: #7528e9;
+        text-decoration: none;
+      }
 
-    /* Cabeçalho */
-    .header {
-      background-color: #fff;
-      padding: 20px 0;
-      text-align: center;
-      border-bottom: 1px solid #e6e6e6;
-    }
+      /* Cabeçalho */
+      .header {
+        background-color: #fff;
+        padding: 20px 0;
+        text-align: center;
+        border-bottom: 1px solid #e6e6e6;
+      }
 
-    .header img {
-      width: 170px;
-    }
+      .header img {
+        width: 170px;
+      }
 
-    /* Conteúdo */
-    .content {
-      padding: 30px 20px;
-    }
+      /* Conteúdo */
+      .content {
+        padding: 30px 20px;
+      }
 
-    /* Botão de ação */
-    .cta {
-      text-align: center;
-      margin-top: 20px;
-    }
+      /* Botão de ação */
+      .cta {
+        text-align: center;
+        margin-top: 20px;
+      }
 
-    .cta a {
-      display: inline-block;
-      background-color: #7528E9;
-      color: #fff;
-      text-transform: uppercase;
-      padding: 12px 20px;
-      font-size: 14px;
-      border-radius: 3px;
-      font-weight: bold;
-    }
+      .cta a {
+        display: inline-block;
+        background-color: #7528e9;
+        color: #fff;
+        text-transform: uppercase;
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 3px;
+        font-weight: bold;
+      }
 
-    .cta a:hover {
-      background-color: #5f20b6;
-    }
+      .cta a:hover {
+        background-color: #5f20b6;
+      }
 
-    /* Rodapé */
-    .footer {
-      background-color: #ffffff;
-      padding: 20px 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #727f80;
-      border-top: 1px solid #e6e6e6;
-    }
+      /* Rodapé */
+      .footer {
+        background-color: #ffffff;
+        padding: 20px 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #727f80;
+        border-top: 1px solid #e6e6e6;
+      }
 
-    .footer a {
-      color: #7528E9;
-    }
+      .footer a {
+        color: #7528e9;
+      }
 
-    .footer img {
-      display: inline-block;
-      margin: 5px;
-    }
+      .footer img {
+        display: inline-block;
+        margin: 5px;
+      }
 
-    .button {
-      display: block;
-      width: 80%;
-      margin: 25px auto;
-      padding: 12px 20px;
-      background-color: #7528E9;
-      color: white;
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 5px;
-      font-size: 16px;
-    }
+      .button {
+        display: block;
+        width: 80%;
+        margin: 25px auto;
+        padding: 12px 20px;
+        background-color: #7528e9;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 5px;
+        font-size: 16px;
+      }
 
-    .button:hover {
-      background-color: #3a76d8;
-    }
-  </style>
-</head>
-<body>
-<!-- Container Principal -->
-<table>
-  <!-- Cabeçalho -->
-  <tr>
-    <td class="header">
-      <img src="https://storage.googleapis.com/noba-dev/logo.png" alt="Logo Gloria Finance">
-    </td>
-  </tr>
+      .button:hover {
+        background-color: #3a76d8;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Container Principal -->
+    <table>
+      <!-- Cabeçalho -->
+      <tr>
+        <td class="header">
+          <img
+            src="https://storage.googleapis.com/noba-dev/logo.png"
+            alt="Logo Gloria Finance"
+          />
+        </td>
+      </tr>
 
-  <!-- Conteúdo do e-mail -->
-  <tr>
-    <td class="content">
-      <h1>Prezado(a) Sr(a). {{ client }}</h1>
+      <!-- Conteúdo do e-mail -->
+      <tr>
+        <td class="content">
+          <h1>Prezado(a) Sr(a). {{client}}</h1>
 
-      <br>
-      {{{body}}}
+          <br />
+          {{{body}}}
 
+          <!--            <div class="cta">-->
+          <!--                <a href="https://finance.jaspesoft.com">Ver mais detalhes</a>-->
+          <!--            </div>-->
+        </td>
+      </tr>
 
+      <!-- Aplicativos -->
+      <tr>
+        <td class="content" style="text-align: center;">
+          <p>Baixe nosso aplicativo:</p>
+          <div style="display: inline-block; margin: 10px 0;">
+            <a href="#" style="margin-right: 10px;">
+              <img
+                src="https://storage.googleapis.com/noba-dev/apple.png"
+                alt="Download no App Store"
+                width="120"
+              />
+            </a>
+            <a href="#">
+              <img
+                src="https://storage.googleapis.com/noba-dev/google.png"
+                alt="Baixar no Google Play"
+                width="120"
+              />
+            </a>
+          </div>
+        </td>
+      </tr>
 
-      <!--            <div class="cta">-->
-      <!--                <a href="https://finance.jaspesoft.com">Ver mais detalhes</a>-->
-      <!--            </div>-->
-    </td>
-  </tr>
-
-  <!-- Aplicativos -->
-  <tr>
-    <td class="content" style="text-align: center;">
-      <p>Baixe nosso aplicativo:</p>
-      <div style="display: inline-block; margin: 10px 0;">
-        <a href="#" style="margin-right: 10px;">
-          <img src="https://storage.googleapis.com/noba-dev/apple.png"
-               alt="Download no App Store" width="120">
-        </a>
-        <a href="#">
-          <img src="https://storage.googleapis.com/noba-dev/google.png"
-               alt="Baixar no Google Play" width="120">
-        </a>
-      </div>
-    </td>
-  </tr>
-
-  <!-- Rodapé -->
-  <tr>
-    <td class="footer">
-      <p>Gestão administrativa e financeira focada em igrejas.</p>
-      <p>
-        <a
-          href="https://api.whatsapp.com/send?phone=5511965990791&text=Ol%C3%A1%2C%20t%C3%B4%20precisando%20de%20ajuda%20com%20o%20sistema%20Gloria%20finance">
-          Ajuda no WhatsApp!
-        </a>
-      </p>
-      <p><b>© {{year}} Jaspesoft CNPJ 43.716.343/0001-60, Todos os direitos reservados</b></p>
-    </td>
-  </tr>
-</table>
-</body>
+      <!-- Rodapé -->
+      <tr>
+        <td class="footer">
+          <p>Gestão administrativa e financeira focada em igrejas.</p>
+          <p>
+            <a
+              href="https://api.whatsapp.com/send?phone=5511965990791&text=Ol%C3%A1%2C%20t%C3%B4%20precisando%20de%20ajuda%20com%20o%20sistema%20Gloria%20finance"
+            >
+              Ajuda no WhatsApp!
+            </a>
+          </p>
+          <p><b>©
+              {{year}}
+              Jaspesoft CNPJ 43.716.343/0001-60, Todos os direitos reservados</b></p>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

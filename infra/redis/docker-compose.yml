@@ -1,5 +1,4 @@
 services:
-
   redis:
     image: redis:latest
     container_name: church_finance_redis
@@ -7,11 +6,11 @@ services:
       - "6379:6379"
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     networks:
-      - church_sion  # Asegúrate de que esté en la red correcta
+      - church_sion # Asegúrate de que esté en la red correcta
     restart: unless-stopped
 
 networks:
   church_sion:
-    external: true  # Si ya tienes esta red creada en Docker, usa esta opción.
+    external: true # Si ya tienes esta red creada en Docker, usa esta opción.

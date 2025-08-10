@@ -30,8 +30,6 @@ jobs:
     needs: verify-code
     runs-on: ubuntu-latest
 
-
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -41,38 +39,38 @@ jobs:
           echo "$SSH_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP "          
           cd church_finance_api          
-          
+
           git fetch origin
           git reset --hard origin/main
           git pull
           rm -rf dist node_modules
-          
+
           npm ci
           npm run build
-          
+
           # Instalar PM2 globalmente si no está instalado
           if ! command -v pm2 &> /dev/null; then
             npm install -g pm2
           fi
-          
+
           # Crear un script de inicio que use tsconfig-paths
           cat > start.js << 'EOL'
             // Este script simplemente carga tsconfig-paths y luego el app principal
             require('tsconfig-paths/register');
             require('./dist/app.js');
           EOL
-          
+
           # Configurar PM2 para ejecutar la aplicación
           pm2 stop church_financial_api --wait-time 10000 || true
           pm2 delete church_financial_api || true
-          
+
           # Iniciar la aplicación con PM2
           pm2 start start.js --name church_financial_api --env production
-          
+
           # Configurar PM2 para reiniciar la aplicación automáticamente en caso de reinicio del servidor
           pm2 save
           pm2 startup | bash
-          
+
           "
 
     env:

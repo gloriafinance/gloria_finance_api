@@ -1,187 +1,197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta content="IE=edge" http-equiv="X-UA-Compatible">
-  <meta content="width=device-width, initial-scale=1" name="viewport">
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
-  <title>E-mail</title>
-  <style type="text/css">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
+    <title>E-mail</title>
+    <style type="text/css">
       /* Fonte Lato embutida */
       @font-face {
-          font-family: 'Lato';
-          font-style: normal;
-          font-weight: 400;
-          src: url('https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wWw.ttf') format('truetype');
+        font-family: "Lato";
+        font-style: normal;
+        font-weight: 400;
+        src: url("https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wWw.ttf")
+          format("truetype");
       }
-
 
       /* Estilos gerais */
       body {
-          margin: 0;
-          padding: 0;
-          background-color: #f5f5f5;
-          font-family: 'Lato', Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        font-family: "Lato", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
       }
 
       table {
-          margin: 0 auto;
-          width: 100%;
-          max-width: 600px;
-          border-spacing: 0;
-          background-color: #fff;
-          border: 1px solid #e6e6e6;
-          border-radius: 5px;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 600px;
+        border-spacing: 0;
+        background-color: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 5px;
       }
 
       h1 {
-          font-size: 22px;
-          color: #7528E9;
-          margin-bottom: 15px;
-          font-weight: 600;
+        font-size: 22px;
+        color: #7528e9;
+        margin-bottom: 15px;
+        font-weight: 600;
       }
 
       p {
-          font-size: 16px;
-          margin: 0;
-          padding: 0;
+        font-size: 16px;
+        margin: 0;
+        padding: 0;
       }
 
       a {
-          color: #7528E9;
-          text-decoration: none;
+        color: #7528e9;
+        text-decoration: none;
       }
-
 
       /* Cabeçalho */
       .header {
-          background-color: #fff;
-          padding: 20px 0;
-          text-align: center;
-          border-bottom: 1px solid #e6e6e6;
+        background-color: #fff;
+        padding: 20px 0;
+        text-align: center;
+        border-bottom: 1px solid #e6e6e6;
       }
 
       .header img {
-          width: 120px;
+        width: 120px;
       }
-
 
       /* Conteúdo */
       .content {
-          padding: 30px 20px;
+        padding: 30px 20px;
       }
-
 
       /* Botão de ação */
       .cta {
-          text-align: center;
-          margin-top: 20px;
+        text-align: center;
+        margin-top: 20px;
       }
 
       .cta a {
-          display: inline-block;
-          background-color: #7528E9;
-          color: #fff;
-          text-transform: uppercase;
-          padding: 12px 20px;
-          font-size: 14px;
-          border-radius: 3px;
-          font-weight: bold;
+        display: inline-block;
+        background-color: #7528e9;
+        color: #fff;
+        text-transform: uppercase;
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 3px;
+        font-weight: bold;
       }
 
       .cta a:hover {
-          background-color: #5f20b6;
+        background-color: #5f20b6;
       }
-
 
       /* Rodapé */
       .footer {
-          background-color: #ffffff;
-          padding: 20px 20px;
-          text-align: center;
-          font-size: 12px;
-          color: #727f80;
-          border-top: 1px solid #e6e6e6;
+        background-color: #ffffff;
+        padding: 20px 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #727f80;
+        border-top: 1px solid #e6e6e6;
       }
 
       .footer a {
-          color: #7528E9;
+        color: #7528e9;
       }
 
       .footer img {
-          display: inline-block;
-          margin: 5px;
+        display: inline-block;
+        margin: 5px;
       }
-  </style>
-</head>
-<body>
-<!-- Container Principal -->
-<table>
-  <!-- Cabeçalho -->
-  <tr>
-    <td class="header">
-      <img alt="Logo Gloria Finance" src="https://storage.googleapis.com/noba-dev/logo.png">
-    </td>
-  </tr>
+    </style>
+  </head>
+  <body>
+    <!-- Container Principal -->
+    <table>
+      <!-- Cabeçalho -->
+      <tr>
+        <td class="header">
+          <img
+            alt="Logo Gloria Finance"
+            src="https://storage.googleapis.com/noba-dev/logo.png"
+          />
+        </td>
+      </tr>
 
-  <!-- Conteúdo do e-mail -->
-  <tr>
-    <td class="content">
-      <h1>Prezado(a) Sr(a). {{ client }}</h1>
-      {{{body}}}
+      <!-- Conteúdo do e-mail -->
+      <tr>
+        <td class="content">
+          <h1>Prezado(a) Sr(a). {{ client }}</h1>
+          {{{body}}}
 
+          <div style="width: 100%; margin: 0 auto; text-align: left">
+            <p style="font-size: 15px; margin-top: 20px; text-align: justify">
+              Criámos uma senha temporária aleatória para que possa aceder à
+              nossa aplicação.
+            </p>
+            <p style="font-size: 15px; margin-top: 20px; text-align: justify">
+              A senha temporária é: <b>{{ temporal_password }}</b>
+            </p>
+          </div>
 
-      <div style="   width: 100%;margin: 0 auto; text-align: left;">
-        <p style="   font-size: 15px; margin-top: 20px;text-align:justify;">
-          Criámos uma senha temporária aleatória para que possa aceder à nossa aplicação.
-        </p>
-        <p style="   font-size: 15px; margin-top: 20px;text-align:justify;">
-          A senha temporária é: <b>{{ temporal_password }}</b>
-        </p>
-      </div>
+          <br />
 
-      <br>
+          <!--            <div class="cta">-->
+          <!--                <a href="https://finance.jaspesoft.com">Ver mais detalhes</a>-->
+          <!--            </div>-->
+        </td>
+      </tr>
 
+      <!-- Aplicativos -->
+      <tr>
+        <td class="content" style="text-align: center">
+          <p>Baixe nosso aplicativo:</p>
+          <div style="display: inline-block; margin: 10px 0">
+            <a href="#" style="margin-right: 10px">
+              <img
+                alt="Download no App Store"
+                src="https://storage.googleapis.com/noba-dev/apple.png"
+                width="120"
+              />
+            </a>
+            <a href="#">
+              <img
+                alt="Baixar no Google Play"
+                src="https://storage.googleapis.com/noba-dev/google.png"
+                width="120"
+              />
+            </a>
+          </div>
+        </td>
+      </tr>
 
-      <!--            <div class="cta">-->
-      <!--                <a href="https://finance.jaspesoft.com">Ver mais detalhes</a>-->
-      <!--            </div>-->
-    </td>
-  </tr>
-
-  <!-- Aplicativos -->
-  <tr>
-    <td class="content" style="   text-align: center;">
-      <p>Baixe nosso aplicativo:</p>
-      <div style="   display: inline-block; margin: 10px 0;">
-        <a href="#" style="   margin-right: 10px;">
-          <img alt="Download no App Store"
-               src="https://storage.googleapis.com/noba-dev/apple.png" width="120">
-        </a>
-        <a href="#">
-          <img alt="Baixar no Google Play"
-               src="https://storage.googleapis.com/noba-dev/google.png" width="120">
-        </a>
-      </div>
-    </td>
-  </tr>
-
-  <!-- Rodapé -->
-  <tr>
-    <td class="footer">
-      <p>Gestão administrativa e financeira focada em igrejas.</p>
-      <p>
-        <a
-          href="https://api.whatsapp.com/send?phone=5511965990791&text=Ol%C3%A1%2C%20t%C3%B4%20precisando%20de%20ajuda%20com%20o%20sistema%20Gloria%20finance">
-          Ajuda no WhatsApp!
-        </a>
-      </p>
-      <p><b>© {{year}} Jaspesoft CNPJ 43.716.343/0001-60, Todos os direitos reservados</b></p>
-    </td>
-  </tr>
-</table>
-</body>
+      <!-- Rodapé -->
+      <tr>
+        <td class="footer">
+          <p>Gestão administrativa e financeira focada em igrejas.</p>
+          <p>
+            <a
+              href="https://api.whatsapp.com/send?phone=5511965990791&text=Ol%C3%A1%2C%20t%C3%B4%20precisando%20de%20ajuda%20com%20o%20sistema%20Gloria%20finance"
+            >
+              Ajuda no WhatsApp!
+            </a>
+          </p>
+          <p>
+            <b
+              >© {{year}} Jaspesoft CNPJ 43.716.343/0001-60, Todos os direitos
+              reservados</b
+            >
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

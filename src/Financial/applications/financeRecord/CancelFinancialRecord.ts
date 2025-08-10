@@ -9,7 +9,10 @@ import {
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { IAvailabilityAccountRepository, IFinancialRecordRepository, } from "@/Financial/domain/interfaces"
+import {
+  IAvailabilityAccountRepository,
+  IFinancialRecordRepository,
+} from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
