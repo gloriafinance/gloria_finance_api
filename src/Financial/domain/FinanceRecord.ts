@@ -111,7 +111,7 @@ export class FinanceRecord extends AggregateRoot {
 
   toPrimitives() {
     return {
-      financialConcept: this.financialConcept.toPrimitives(),
+      financialConcept: this.financialConcept?.toPrimitives(),
       financialRecordId: this.financialRecordId,
       churchId: this.churchId,
       amount: this.amount,

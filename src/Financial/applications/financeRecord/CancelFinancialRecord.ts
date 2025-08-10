@@ -48,7 +48,7 @@ export class CancelFinancialRecord {
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: movement.getChurchId(),
-      month: movement.getDate().getMonth(),
+      month: movement.getDate().getMonth() + 1,
       year: movement.getDate().getFullYear(),
     })
 
@@ -62,21 +62,27 @@ export class CancelFinancialRecord {
       availabilityAccountId: movement.getAvailabilityAccountId(),
     })
 
-    await this.financeRecordReversal(availabilityAccount, {
-      churchId: movement.getChurchId(),
-      amount: movement.getAmount(),
-      date: DateBR(),
+    await this.financeRecordReversal({
       availabilityAccount,
-      description: "Reversão do movimento " + movement.getFinancialRecordId(),
-      type: ConceptType.REVERSAL,
+      financeRecordReversal: {
+        churchId: movement.getChurchId(),
+        amount: movement.getAmount(),
+        date: DateBR(),
+        availabilityAccount,
+        description: "Reversão do movimento " + movement.getFinancialRecordId(),
+        type: ConceptType.REVERSAL,
+      },
+      operation: TypeOperationMoney.MONEY_IN,
     })
   }
 
-  private async financeRecordReversal(
-    availabilityAccount: AvailabilityAccount,
+  private async financeRecordReversal(params: {
+    availabilityAccount: AvailabilityAccount
     financeRecordReversal: CreateFinanceRecord
-  ) {
-    this.logger.info(`Reversing financial record`, financeRecordReversal)
+    operation: TypeOperationMoney
+  }) {
+    this.logger.info(`Reversing financial record`, params)
+    const { availabilityAccount, financeRecordReversal, operation } = params
 
     await this.financialRecordRepository.upsert(
       FinanceRecord.create(financeRecordReversal)
@@ -86,7 +92,7 @@ export class CancelFinancialRecord {
       availabilityAccount: availabilityAccount,
       amount: financeRecordReversal.amount,
       concept: financeRecordReversal.description,
-      operationType: TypeOperationMoney.MONEY_OUT,
+      operationType: operation,
       createdAt: financeRecordReversal.date,
     })
 

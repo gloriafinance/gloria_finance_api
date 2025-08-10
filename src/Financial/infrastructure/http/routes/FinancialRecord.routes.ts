@@ -28,7 +28,7 @@ financialRecordRoutes.post(
 
 financialRecordRoutes.patch(
   "/cancel/:financialRecordId",
-  [PermissionMiddleware, FinancialRecordValidator],
+  [PermissionMiddleware],
   async (req, res) => {
     await CancelFinancialRecordController(
       {
