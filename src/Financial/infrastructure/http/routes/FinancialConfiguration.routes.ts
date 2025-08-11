@@ -64,12 +64,16 @@ financialConfigurationRoute.get(
   }
 )
 
-financialConfigurationRoute.get("/bank/data/:bankId", async (req, res) => {
-  await FinancialConfigurationController.findBankByBankId(
-    req.params.bankId,
-    res
-  )
-})
+financialConfigurationRoute.get(
+  "/bank/data/:bankId",
+  PermissionMiddleware,
+  async (req, res) => {
+    await FinancialConfigurationController.findBankByBankId(
+      req.params.bankId,
+      res
+    )
+  }
+)
 
 financialConfigurationRoute.post(
   "/availability-account",

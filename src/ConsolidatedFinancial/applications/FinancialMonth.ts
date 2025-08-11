@@ -1,12 +1,16 @@
 import {
+  ActionsFinancialMonth,
   IFinancialYearRepository,
   UpdateFinancialMonthRequest,
 } from "../domain"
 import { FinancialMontNotFound } from "../domain/exceptions"
-import { Logger } from "../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
-export class CloseFinancialMonth {
-  private logger = Logger("CloseFinancialMonth")
+/**
+ * Este caso de uso se encarga de cerrar o abrir un mes financiero.
+ */
+export class UpdateFinancialMonth {
+  private logger = Logger(UpdateFinancialMonth.name)
 
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository
@@ -26,7 +30,11 @@ export class CloseFinancialMonth {
       throw new FinancialMontNotFound()
     }
 
-    financialMonth.close()
+    if (args.action === ActionsFinancialMonth.CLOSE) {
+      financialMonth.close()
+    } else {
+      financialMonth.open()
+    }
 
     await this.financialYearRepository.upsert(financialMonth)
   }
