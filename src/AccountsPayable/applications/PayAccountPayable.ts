@@ -7,7 +7,10 @@ import {
 import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
 import { AccountPayableNotFound } from "@/AccountsPayable/domain/exceptions/AccountPayableNotFound"
-import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
+import {
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
+} from "@/Financial/applications"
 import { TypeOperationMoney } from "@/Financial/domain"
 import { PayInstallment } from "@/Shared/applications"
 
@@ -65,6 +68,13 @@ export class PayAccountPayable {
       }),
       concept: req.concept.getDescription(),
       amount: req.amount.getValue(),
+    })
+
+    new DispatchUpdateCostCenterMaster(this.queueService).execute({
+      churchId: accountPayable.getChurchId(),
+      costCenterId: accountPayable.getCostCenterId(),
+      amount: req.amount.getValue(),
+      createdAt: new Date(req.createdAt),
     })
 
     this.logger.info(`Finished Pay Account Payable`)
