@@ -8,7 +8,7 @@ import {
   Paginate,
 } from "@/Shared/domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
-import { FinanceRecord } from "../../domain/FinanceRecord"
+import { FinanceRecord } from "@/Financial/domain"
 
 export class SearchFinanceRecord {
   constructor(
@@ -25,6 +25,16 @@ export class SearchFinanceRecord {
 
   private prepareCriteria(request: FilterFinanceRecordRequest) {
     const filters = []
+
+    if (request.conceptType) {
+      filters.push(
+        new Map([
+          ["field", "type"],
+          ["operator", Operator.EQUAL],
+          ["value", request.conceptType],
+        ])
+      )
+    }
 
     if (request.availabilityAccountId) {
       filters.push(
