@@ -16,16 +16,36 @@ miembros, donaciones, conceptos financieros y notificaciones de manera eficiente
 
 # Ejecutar el proyecto en local
 
-Debe tener instalado docker y nodejs en la version 20
+Debe tener instalado docker y nodejs en la version 22
 
-- Crear la red docker-network (sino existe)
-
-```
-docker network create church_sion
-```
-
-- Crear una instancia de redis en local
+- Crear .env en la raiz del proyecto
 
 ```
-docker run --name church_finance_redis -d --network=church_sion -p 6379:6379 --restart always redis
+NODE_ENV=local
+APP_PORT=5200
+
+MONGO_PASS=
+MONGO_USER=
+MONGO_DB=
+MONGO_SERVER=
+
+JWT_SECRET=
+
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+BUCKET_FILES=
+
+REDIS_HOST=
+REDIS_PORT=
+
+BULL_USER=
+BULL_PASS=
+```
+
+- ejecutar el proyecto
+
+```
+npm i
+npm run dev
 ```
