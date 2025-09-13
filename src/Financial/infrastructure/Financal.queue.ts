@@ -9,12 +9,12 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "./persistence"
-import { RegisterFinancialRecord } from "../applications/financeRecord/RegisterFinancialRecord"
+import { RegisterFinancialRecord } from "@/Financial/applications"
 import { UpdateAvailabilityAccountBalance } from "../applications"
 import { UpdateCostCenterMaster } from "../applications/costCenter/UpdateCostCenterMaster"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
-export const FinancialQueue: IDefinitionQueue[] = [
+export const FinancialQueue = (): IDefinitionQueue[] => [
   {
     useClass: UpdateCostCenterMaster,
     inject: [

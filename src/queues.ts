@@ -11,8 +11,8 @@ import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
 import { SendMail } from "./SendMail/SendMail"
 import { TelegramNotification } from "./Shared/infrastructure"
 
-export const Queues: IDefinitionQueue[] = [
-  ...FinancialQueue,
+export const Queues = (): IDefinitionQueue[] => [
+  ...FinancialQueue(),
   {
     useClass: CreateUserForMember,
     inject: [UserMongoRepository.getInstance(), new PasswordAdapter()],

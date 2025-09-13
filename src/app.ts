@@ -21,7 +21,7 @@ export const APP_DIR = __dirname
 const port = Number(process.env.APP_PORT || 8080)
 const app: Express = server(port)
 
-StartQueueService(app, Queues)
+StartQueueService(app, Queues())
 
 app.use("/api/v1/church", churchRouters)
 app.use("/api/v1/church/member", memberRouters)
