@@ -1,7 +1,7 @@
 import { AccountType } from "./enums/AccountType.enum"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class AvailabilityAccount extends AggregateRoot {
   private id?: string

@@ -6,7 +6,7 @@ import {
   Order,
   OrderTypes,
   Paginate,
-} from "../../../Shared/domain"
+} from "@abejarano/ts-mongodb-criteria"
 
 export class FetchAllUsers {
   constructor(private readonly userRepository: IUserRepository) {}

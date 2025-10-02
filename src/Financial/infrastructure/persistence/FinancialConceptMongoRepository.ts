@@ -1,4 +1,4 @@
-import { MongoRepository } from "@/Shared/infrastructure"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { FinancialConcept } from "../../domain"
 import { IFinancialConceptRepository } from "../../domain/interfaces"
 

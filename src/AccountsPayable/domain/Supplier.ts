@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { SupplierType } from "@/AccountsPayable/domain/enums/SupplierType"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 

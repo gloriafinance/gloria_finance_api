@@ -14,7 +14,7 @@ import {
   RegisterContributionsOnline,
   UpdateContributionStatus,
 } from "../../../applications"
-import { HttpStatus, Paginate } from "@/Shared/domain"
+import { HttpStatus } from "@/Shared/domain"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import MemberContributionsDTO from "../dto/MemberContributions.dto"
 import {
@@ -25,6 +25,7 @@ import {
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { Logger } from "@/Shared/adapter"
 import { Response } from "express"
+import { Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export const onlineContributionsController = async (
   request: ContributionRequest,

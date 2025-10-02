@@ -7,7 +7,7 @@ import {
   Order,
   OrderTypes,
   Paginate,
-} from "../../Shared/domain"
+} from "@abejarano/ts-mongodb-criteria"
 import { Purchase } from "../domain/models"
 
 export class SearchPurchase {
@@ -30,7 +30,7 @@ export class SearchPurchase {
       )
     }
 
-    if (request.startDate && !request.endDate) {
+    if (request.startDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "purchaseDate"],
@@ -40,28 +40,12 @@ export class SearchPurchase {
       )
     }
 
-    if (!request.startDate && request.endDate) {
+    if (request.endDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "purchaseDate"],
           ["operator", Operator.LTE],
           ["value", new Date(request.endDate)],
-        ])
-      )
-    }
-
-    if (request.startDate && request.endDate) {
-      filters.push(
-        new Map<string, string | any>([
-          ["field", "purchaseDate"],
-          ["operator", Operator.DATE_RANGE],
-          [
-            "value",
-            {
-              startDate: request.startDate,
-              endDate: request.endDate,
-            },
-          ],
         ])
       )
     }

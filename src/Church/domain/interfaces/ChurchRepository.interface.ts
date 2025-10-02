@@ -1,6 +1,5 @@
-import { Church } from "../Church"
-import { Criteria, Paginate } from "../../../Shared/domain"
-import { ChurchDTO } from "../type/Church.dto.type"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { Church, ChurchDTO } from "@/Church/domain"
 
 export interface IChurchRepository {
   one(churchId: string): Promise<Church | undefined>

@@ -1,4 +1,4 @@
-import { MongoRepository } from "@/Shared/infrastructure"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { CostCenterMaster } from "../../domain"
 import { ICostCenterMasterRepository } from "../../domain/interfaces"
 

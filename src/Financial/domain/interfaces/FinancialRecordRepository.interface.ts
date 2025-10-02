@@ -1,5 +1,5 @@
 import { FinanceRecord } from "../FinanceRecord"
-import { Criteria, Paginate } from "@/Shared/domain"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { BaseReportRequest } from "@/Reports/domain"
 import { AvailabilityAccountMaster, CostCenterMaster } from "@/Financial/domain"
 

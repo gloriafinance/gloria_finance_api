@@ -1,5 +1,5 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { IMovementBankRepository, MovementBank } from "../../domain"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 export class MovementBankMongoRepository
   extends MongoRepository<MovementBank>

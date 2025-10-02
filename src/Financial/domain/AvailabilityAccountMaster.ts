@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import IdentifyAvailabilityAccountMaster from "../applications/helpers/MasterBalanceIdentifier"
 import { AvailabilityAccount } from "./AvailabilityAccount"
 

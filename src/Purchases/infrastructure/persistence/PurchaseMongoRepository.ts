@@ -1,8 +1,11 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { Purchase } from "../../domain"
 import { IPurchaseRepository } from "../../domain/interfaces"
-import { Criteria, Paginate } from "../../../Shared/domain"
 import { Purchase as PurchaseModel } from "../../domain/models"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class PurchaseMongoRepository
   extends MongoRepository<Purchase>
@@ -28,6 +31,6 @@ export class PurchaseMongoRepository
   async fetch(criteria: Criteria): Promise<Paginate<PurchaseModel>> {
     const result = await this.searchByCriteria<PurchaseModel>(criteria)
 
-    return this.buildPaginate<PurchaseModel>(result)
+    return this.paginate<PurchaseModel>(result)
   }
 }

@@ -1,5 +1,5 @@
 import { Minister } from "../Minister"
-import { Criteria, Paginate } from "../../../Shared/domain"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface IMinisterRepository {
   upsert(minister: Minister): Promise<void>

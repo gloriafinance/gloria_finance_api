@@ -1,13 +1,16 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
-import { FinanceRecord } from "../../domain/FinanceRecord"
+import { FinanceRecord } from "@/Financial/domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
-import { Criteria, Paginate } from "../../../Shared/domain"
 import {
   AvailabilityAccountMaster,
   ConceptType,
   CostCenterMaster,
 } from "../../domain"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class FinanceRecordMongoRepository
   extends MongoRepository<FinanceRecord>
@@ -47,7 +50,7 @@ export class FinanceRecordMongoRepository
     const result: FinanceRecord[] =
       await this.searchByCriteria<FinanceRecord>(criteria)
 
-    return this.buildPaginate<FinanceRecord>(result)
+    return this.paginate<FinanceRecord>(result)
   }
 
   async upsert(financialRecord: FinanceRecord): Promise<void> {

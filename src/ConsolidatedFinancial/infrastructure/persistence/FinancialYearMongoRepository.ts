@@ -1,5 +1,5 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { FinancialMonth, IFinancialYearRepository } from "../../domain"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 export class FinancialYearMongoRepository
   extends MongoRepository<FinancialMonth>

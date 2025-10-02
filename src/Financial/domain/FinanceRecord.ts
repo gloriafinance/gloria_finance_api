@@ -1,10 +1,8 @@
 import { FinancialConcept } from "./FinancialConcept"
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { ConceptType } from "./enums/ConcepType.enum"
-import { AvailabilityAccount } from "./AvailabilityAccount"
 import { AccountType } from "./enums/AccountType.enum"
-import { CostCenter } from "./CostCenter"
 import { CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 
 export class FinanceRecord extends AggregateRoot {

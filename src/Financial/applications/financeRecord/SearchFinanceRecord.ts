@@ -6,7 +6,7 @@ import {
   Order,
   OrderTypes,
   Paginate,
-} from "@/Shared/domain"
+} from "@abejarano/ts-mongodb-criteria"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { FinanceRecord } from "@/Financial/domain"
 
@@ -66,7 +66,7 @@ export class SearchFinanceRecord {
       )
     }
 
-    if (request.startDate && !request.endDate) {
+    if (request.startDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "date"],
@@ -76,28 +76,12 @@ export class SearchFinanceRecord {
       )
     }
 
-    if (!request.startDate && request.endDate) {
+    if (request.endDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "date"],
           ["operator", Operator.LTE],
           ["value", request.endDate],
-        ])
-      )
-    }
-
-    if (request.startDate && request.endDate) {
-      filters.push(
-        new Map<string, string | any>([
-          ["field", "date"],
-          ["operator", Operator.DATE_RANGE],
-          [
-            "value",
-            {
-              startDate: request.startDate,
-              endDate: request.endDate,
-            },
-          ],
         ])
       )
     }

@@ -1,7 +1,7 @@
-import { AggregateRoot } from "../../Shared/domain"
-import { IdentifyEntity } from "../../Shared/adapter"
-import { DateBR } from "../../Shared/helpers"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { DateBR } from "@/Shared/helpers"
 import { Profile } from "./types/profile.type"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class User extends AggregateRoot {
   isActive: boolean

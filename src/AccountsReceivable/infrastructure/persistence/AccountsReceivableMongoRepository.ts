@@ -1,6 +1,9 @@
-import { MongoRepository } from "@/Shared/infrastructure"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivable, IAccountsReceivableRepository } from "../../domain"
-import { Criteria, Paginate } from "@/Shared/domain"
 
 export class AccountsReceivableMongoRepository
   extends MongoRepository<AccountReceivable>
@@ -23,7 +26,7 @@ export class AccountsReceivableMongoRepository
 
   async list(criteria: Criteria): Promise<Paginate<AccountReceivable>> {
     const result = await this.searchByCriteria<AccountReceivable>(criteria)
-    return this.buildPaginate<AccountReceivable>(result)
+    return this.paginate<AccountReceivable>(result)
   }
 
   async one(filter: object): Promise<AccountReceivable | undefined> {

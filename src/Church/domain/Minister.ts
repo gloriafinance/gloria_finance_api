@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Church } from "./Church"
 import { MinisterType } from "./enums/MinisterType.enum"

@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class FinancialMonth extends AggregateRoot {
   private id?: string

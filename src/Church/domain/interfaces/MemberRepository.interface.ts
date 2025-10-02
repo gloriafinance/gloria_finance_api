@@ -1,4 +1,4 @@
-import { Criteria, Paginate } from "@/Shared/domain"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { Member } from "../Member"
 
 export interface IMemberRepository {

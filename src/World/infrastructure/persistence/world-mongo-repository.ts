@@ -1,5 +1,5 @@
 import { IWorldRepository, States } from "../../domain"
-import { MongoRepository } from "../../../Shared/infrastructure"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 export class WorldMongoRepository
   extends MongoRepository<any>

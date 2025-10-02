@@ -5,7 +5,7 @@ import {
   Operator,
   Order,
   OrderTypes,
-} from "../../../Shared/domain"
+} from "@abejarano/ts-mongodb-criteria"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 
 export class ListContributions {
@@ -22,7 +22,7 @@ export class ListContributions {
   private prepareFilter(reqFilters: FilterContributionsRequest) {
     const filters = []
 
-    if (reqFilters.startDate && !reqFilters.endDate) {
+    if (reqFilters.startDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "createdAt"],
@@ -32,28 +32,12 @@ export class ListContributions {
       )
     }
 
-    if (reqFilters.endDate && !reqFilters.startDate) {
+    if (reqFilters.endDate) {
       filters.push(
         new Map<string, string | Date>([
           ["field", "createdAt"],
           ["operator", Operator.LTE],
           ["value", new Date(reqFilters.endDate)],
-        ])
-      )
-    }
-
-    if (reqFilters.startDate && reqFilters.endDate) {
-      filters.push(
-        new Map<string, string | any>([
-          ["field", "createdAt"],
-          ["operator", Operator.DATE_RANGE],
-          [
-            "value",
-            {
-              startDate: reqFilters.startDate,
-              endDate: reqFilters.endDate,
-            },
-          ],
         ])
       )
     }

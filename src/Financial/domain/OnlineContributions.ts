@@ -1,11 +1,12 @@
-import { AggregateRoot, AmountValue } from "../../Shared/domain"
 import { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
-import { IdentifyEntity } from "../../Shared/adapter"
-import { Member } from "../../Church/domain"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { Member } from "@/Church/domain"
 import { FinancialConcept } from "./FinancialConcept"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
-import { DateBR } from "../../Shared/helpers"
+import { DateBR } from "@/Shared/helpers"
 import { AvailabilityAccount } from "./AvailabilityAccount"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { AmountValue } from "@/Shared/domain"
 
 export class OnlineContributions extends AggregateRoot {
   private id?: string

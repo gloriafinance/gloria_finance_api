@@ -1,6 +1,9 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { IMinisterRepository, Minister } from "../../domain"
-import { Criteria, Paginate } from "../../../Shared/domain"
 
 export class MinisterMongoRepository
   extends MongoRepository<Minister>
@@ -34,7 +37,7 @@ export class MinisterMongoRepository
   async list(criteria: Criteria): Promise<Paginate<Minister>> {
     const documents: Minister[] =
       await this.searchByCriteria<Minister>(criteria)
-    return this.buildPaginate<Minister>(documents)
+    return this.paginate<Minister>(documents)
   }
 
   async upsert(minister: Minister): Promise<void> {

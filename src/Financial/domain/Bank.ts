@@ -1,7 +1,8 @@
 import { TypeBankAccount } from "./enums/TypeBankAccount.enum"
-import { AggregateRoot } from "../../Shared/domain"
-import { Church } from "../../Church/domain"
-import { IdentifyEntity } from "../../Shared/adapter"
+
+import { Church } from "@/Church/domain"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class Bank extends AggregateRoot {
   private id?: string

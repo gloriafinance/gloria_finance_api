@@ -1,5 +1,3 @@
-export * from "./mongodb/index"
-
 export { PermissionMiddleware } from "./middleware/Permission.middleware"
 
 export { QueueService } from "./queue/QueueService"

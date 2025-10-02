@@ -1,7 +1,10 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { IUserRepository, User } from "../../domain"
-import { Criteria, Paginate } from "../../../Shared/domain"
 import { ObjectId } from "mongodb"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class UserMongoRepository
   extends MongoRepository<User>
@@ -46,7 +49,7 @@ export class UserMongoRepository
 
   async fetchCriteria(payload: Criteria): Promise<Paginate<User>> {
     const documents = await this.searchByCriteria<User>(payload)
-    return this.buildPaginate<User>(documents)
+    return this.paginate<User>(documents)
   }
 
   async updatePassword(user: User): Promise<void> {

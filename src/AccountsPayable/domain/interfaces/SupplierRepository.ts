@@ -1,5 +1,5 @@
 import { Supplier } from "../Supplier"
-import { Criteria, Paginate } from "@/Shared/domain"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface ISupplierRepository {
   upsert(supplier: Supplier): Promise<void>

@@ -1,14 +1,10 @@
-import {
-  AggregateRoot,
-  AmountValue,
-  Installments,
-  InstallmentsStatus,
-} from "@/Shared/domain"
+import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AccountPayableStatus } from "./enums/AccountPayableStatus"
 import { SupplierType } from "./enums/SupplierType"
 import { ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number

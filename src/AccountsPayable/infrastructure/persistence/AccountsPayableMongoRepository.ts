@@ -1,9 +1,12 @@
-import { MongoRepository } from "@/Shared/infrastructure"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import {
   AccountPayable,
   IAccountPayableRepository,
 } from "@/AccountsPayable/domain"
-import { Criteria, Paginate } from "@/Shared/domain"
 
 export class AccountsPayableMongoRepository
   extends MongoRepository<AccountPayable>
@@ -26,7 +29,7 @@ export class AccountsPayableMongoRepository
 
   async list(criteria: Criteria): Promise<Paginate<AccountPayable>> {
     const result = await this.searchByCriteria<AccountPayable>(criteria)
-    return this.buildPaginate<AccountPayable>(result)
+    return this.paginate<AccountPayable>(result)
   }
 
   async one(criteria: object): Promise<AccountPayable | null> {

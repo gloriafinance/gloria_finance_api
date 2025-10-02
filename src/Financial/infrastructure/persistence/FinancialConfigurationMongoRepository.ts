@@ -1,4 +1,4 @@
-import { MongoRepository } from "@/Shared/infrastructure"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Bank, CostCenter, FinancialConcept } from "../../domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
 
@@ -25,12 +25,13 @@ export class FinancialConfigurationMongoRepository
   }
 
   async searchBanksByChurchId(churchId: string): Promise<Bank[]> {
-    const collection = await this.collection<{
+    /*const collection = await this.collection<{
       banks: Bank[]
       churchId: string
-    }>()
+    }>()*/
+    const collection = await this.collection()
 
-    const result = await collection.findOne(
+    const result = await collection.findOne<any>(
       {
         churchId,
       },
@@ -73,6 +74,7 @@ export class FinancialConfigurationMongoRepository
 
   async upsertFinancialConcept(concept: FinancialConcept): Promise<void> {
     const collection = await this.collection()
+
     await collection.updateOne(
       { churchId: concept.getChurchId() },
       {
@@ -118,11 +120,13 @@ export class FinancialConfigurationMongoRepository
     costCenterId: string,
     churchId: string
   ): Promise<CostCenter> {
-    const collection = await this.collection<{
+    /*const collection = await this.collection<{
       costCenters: CostCenter[]
       churchId: string
-    }>()
-    const result = await collection.findOne(
+    }>()*/
+    const collection = await this.collection()
+
+    const result = await collection.findOne<any>(
       { "costCenters.costCenterId": costCenterId, churchId },
       { projection: { _id: 1, churchId: 1, costCenters: 1 } }
     )
@@ -138,12 +142,14 @@ export class FinancialConfigurationMongoRepository
   }
 
   async findBankByBankId(bankId: string): Promise<Bank> {
-    const collection = await this.collection<{
+    /*const collection = await this.collection<{
       banks: Bank[]
       churchId: string
-    }>()
+    }>()*/
 
-    const result = await collection.findOne(
+    const collection = await this.collection()
+
+    const result = await collection.findOne<any>(
       { "banks.bankId": bankId },
       { projection: { _id: 1, churchId: 1, "banks.$": 1 } }
     )
@@ -160,10 +166,13 @@ export class FinancialConfigurationMongoRepository
   }
 
   async searchCenterCostsByChurchId(churchId: string): Promise<CostCenter[]> {
-    const collection = await this.collection<{
+    /*const collection = await this.collection<{
       costCenters: { bankId }[]
-    }>()
-    const result = await collection.findOne(
+    }>()*/
+
+    const collection = await this.collection()
+
+    const result = await collection.findOne<any>(
       { churchId },
       { projection: { _id: 1, costCenters: 1 } }
     )

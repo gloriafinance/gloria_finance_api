@@ -1,10 +1,5 @@
-export * from "./criteria"
-
-export { Paginate } from "./types/paginate"
 export { ListParams } from "./types/params"
 export { Installments } from "./types/Installments.type"
-
-export { AggregateRoot } from "./aggregate-root"
 
 export { DomainException } from "./exceptions/domain-exception"
 export { GenericException } from "./exceptions/generic-exception"

@@ -1,6 +1,6 @@
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Bank } from "@/Financial/domain"
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import {
   OperationImpactType,
   TypeBankingOperation,

@@ -2,7 +2,13 @@ import {
   FilterAccountPayableRequest,
   IAccountPayableRepository,
 } from "@/AccountsPayable/domain"
-import { Criteria, Filters, Operator, Order, OrderTypes } from "@/Shared/domain"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  Order,
+  OrderTypes,
+} from "@abejarano/ts-mongodb-criteria"
 import { Logger } from "@/Shared/adapter"
 
 export class ListAccountsPayable {

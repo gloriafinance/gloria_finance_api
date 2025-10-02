@@ -1,10 +1,10 @@
-import { AggregateRoot } from "../../Shared/domain"
 import {
   AccountType,
   AvailabilityAccount,
   CostCenter,
-} from "../../Financial/domain"
-import { IdentifyEntity } from "../../Shared/adapter"
+} from "@/Financial/domain"
+import { IdentifyEntity } from "@/Shared/adapter"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class Purchase extends AggregateRoot {
   private id?: string

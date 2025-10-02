@@ -1,6 +1,9 @@
-import { Criteria, Paginate } from "src/Shared/domain"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { OnlineContributions } from "../../domain"
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 
 export class OnlineContributionsMongoRepository
@@ -33,7 +36,7 @@ export class OnlineContributionsMongoRepository
     criteria: Criteria
   ): Promise<Paginate<OnlineContributions>> {
     const documents = await this.searchByCriteria<OnlineContributions>(criteria)
-    return this.buildPaginate<OnlineContributions>(documents)
+    return this.paginate<OnlineContributions>(documents)
   }
 
   async findByMemberId(

@@ -1,5 +1,5 @@
 import { User } from "../User"
-import { Criteria, Paginate } from "../../../Shared/domain"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | undefined>

@@ -1,7 +1,7 @@
-import { AggregateRoot } from "../../Shared/domain"
 import { CostCenter } from "./CostCenter"
-import { DateBR } from "../../Shared/helpers"
+import { DateBR } from "@/Shared/helpers"
 import MasterBalanceIdentifier from "../applications/helpers/MasterBalanceIdentifier"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class CostCenterMaster extends AggregateRoot {
   private id?: string

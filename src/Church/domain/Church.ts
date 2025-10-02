@@ -1,9 +1,9 @@
-import { AggregateRoot } from "../../Shared/domain"
 //import { Minister, Region } from "../../OrganizacionalStructure/domain";
-import { IdentifyEntity } from "../../Shared/adapter"
+import { IdentifyEntity } from "@/Shared/adapter"
 import { ChurchStatus } from "./enums/ChurchStatus.enum"
 import { Minister } from "./Minister"
-import { DateBR } from "../../Shared/helpers"
+import { DateBR } from "@/Shared/helpers"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class Church extends AggregateRoot {
   private id?: string

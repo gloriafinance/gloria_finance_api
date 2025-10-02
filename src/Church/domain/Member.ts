@@ -1,7 +1,7 @@
 import { IdentifyEntity } from "../../Shared/adapter"
 import { Church } from "./Church"
-import { DateBR } from "../../Shared/helpers"
-import { AggregateRoot } from "../../Shared/domain"
+import { DateBR } from "@/Shared/helpers"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class Member extends AggregateRoot {
   public isTreasurer: boolean

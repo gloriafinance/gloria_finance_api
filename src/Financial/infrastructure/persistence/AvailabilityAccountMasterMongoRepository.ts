@@ -1,6 +1,6 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
 import { IAvailabilityAccountMasterRepository } from "../../domain/interfaces"
 import { AvailabilityAccountMaster } from "../../domain"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 export class AvailabilityAccountMasterMongoRepository
   extends MongoRepository<AvailabilityAccountMaster>

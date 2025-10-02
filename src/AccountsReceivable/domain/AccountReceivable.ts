@@ -5,12 +5,8 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 
-import {
-  AggregateRoot,
-  AmountValue,
-  Installments,
-  InstallmentsStatus,
-} from "@/Shared/domain"
+import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 type Debtor = {
   debtorType: DebtorType

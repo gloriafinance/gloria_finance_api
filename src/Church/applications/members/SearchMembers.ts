@@ -1,12 +1,12 @@
 import { IMemberRepository } from "../../domain"
-import { MemberPaginateRequest } from "../../domain/requests/MemberPaginate.request"
+import { MemberPaginateRequest } from "@/Church/domain"
 import {
   Criteria,
   Filters,
   Operator,
   Order,
   OrderTypes,
-} from "../../../Shared/domain"
+} from "@abejarano/ts-mongodb-criteria"
 
 export class SearchMembers {
   constructor(private readonly memberRepository: IMemberRepository) {}

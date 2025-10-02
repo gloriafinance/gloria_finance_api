@@ -1,6 +1,9 @@
-import { MongoRepository } from "../../../Shared/infrastructure"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { Church, ChurchDTO, IChurchRepository } from "../../domain"
-import { Criteria, Paginate } from "../../../Shared/domain"
 
 export class ChurchMongoRepository
   extends MongoRepository<Church>
@@ -47,7 +50,7 @@ export class ChurchMongoRepository
       criteria,
       ["financialConcepts", "members"]
     )
-    return this.buildPaginate<ChurchDTO>(result)
+    return this.paginate<ChurchDTO>(result)
   }
 
   async hasAnAssignedMinister(

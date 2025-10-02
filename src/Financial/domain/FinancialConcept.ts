@@ -1,4 +1,4 @@
-import { AggregateRoot } from "@/Shared/domain"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { ConceptType } from "./enums/ConcepType.enum"
 import { Church } from "@/Church/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
