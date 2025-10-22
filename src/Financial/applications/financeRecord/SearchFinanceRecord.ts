@@ -71,7 +71,7 @@ export class SearchFinanceRecord {
         new Map<string, string | Date>([
           ["field", "date"],
           ["operator", Operator.GTE],
-          ["value", request.startDate],
+          ["value", new Date(request.startDate)],
         ])
       )
     }
@@ -81,7 +81,7 @@ export class SearchFinanceRecord {
         new Map<string, string | Date>([
           ["field", "date"],
           ["operator", Operator.LTE],
-          ["value", request.endDate],
+          ["value", new Date(request.endDate)],
         ])
       )
     }
