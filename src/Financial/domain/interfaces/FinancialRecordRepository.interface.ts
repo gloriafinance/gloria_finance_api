@@ -1,7 +1,11 @@
 import { FinanceRecord } from "../FinanceRecord"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { BaseReportRequest } from "@/Reports/domain"
-import { AvailabilityAccountMaster, CostCenterMaster } from "@/Financial/domain"
+import {
+  AvailabilityAccountMaster,
+  CostCenterMaster,
+  StatementCategorySummary,
+} from "@/Financial/domain"
 
 export interface IFinancialRecordRepository {
   upsert(financialRecord: FinanceRecord): Promise<void>
@@ -25,4 +29,10 @@ export interface IFinancialRecordRepository {
     year: number
     month?: number
   }): Promise<CostCenterMaster[]>
+
+  fetchStatementCategories(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<StatementCategorySummary[]>
 }

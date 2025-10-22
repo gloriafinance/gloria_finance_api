@@ -1,18 +1,47 @@
 import {
   AvailabilityAccountMaster,
   CostCenterMaster,
+  StatementCategory,
 } from "../../../Financial/domain"
 
-export type IncomeStatementResponse = {
-  assets: {
+export type IncomeStatementCategoryBreakdown = {
+  category: StatementCategory
+  income: number
+  expenses: number
+  net: number
+}
+
+export type IncomeStatementSummary = {
+  revenue: number
+  cogs: number
+  grossProfit: number
+  operatingExpenses: number
+  operatingIncome: number
+  otherIncome: number
+  otherExpenses: number
+  otherNet: number
+  netIncome: number
+}
+
+export type IncomeStatementCashFlowSnapshot = {
+  availabilityAccounts: {
     accounts: AvailabilityAccountMaster[]
     total: number
-    totalAssetIncome: number
-    totalAssetExpenses: number
+    income: number
+    expenses: number
   }
-  liabilities: {
+  costCenters: {
     costCenters: CostCenterMaster[]
     total: number
   }
-  result: number
+}
+
+export type IncomeStatementResponse = {
+  period: {
+    year: number
+    month?: number
+  }
+  breakdown: IncomeStatementCategoryBreakdown[]
+  summary: IncomeStatementSummary
+  cashFlowSnapshot: IncomeStatementCashFlowSnapshot
 }

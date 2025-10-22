@@ -43,3 +43,4 @@ export { FinancialConceptRequest } from "./requests/FinancialConcept.request"
 export { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
 
 export * from "./types/CreateFinanceRecord.type"
+export { StatementCategorySummary } from "./types/StatementCategorySummary.type"
