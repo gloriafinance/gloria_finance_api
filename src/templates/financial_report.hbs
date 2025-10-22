@@ -131,22 +131,22 @@
       <div class="summary-grid">
         <div class="summary-card">
           <span class="label">Receita Líquida</span>
-          <span class="value">{{summary.revenue}}</span>
+          <span class="value">{{formatCurrency summary.revenue}}</span>
           <span class="caption">Entradas provenientes das atividades regulares.</span>
         </div>
         <div class="summary-card">
           <span class="label">Despesas Operacionais</span>
-          <span class="value">{{summary.operatingExpenses}}</span>
+          <span class="value">{{formatCurrency summary.operatingExpenses}}</span>
           <span class="caption">Custos necessários para manter a igreja ativa.</span>
         </div>
         <div class="summary-card">
           <span class="label">Resultado Operacional</span>
-          <span class="value">{{summary.operatingIncome}}</span>
+          <span class="value">{{formatCurrency summary.operatingIncome}}</span>
           <span class="caption">Receitas menos despesas operacionais.</span>
         </div>
         <div class="summary-card">
           <span class="label">Resultado Líquido</span>
-          <span class="value">{{summary.netIncome}}</span>
+          <span class="value">{{formatCurrency summary.netIncome}}</span>
           <span class="caption">Saldo final após itens extraordinários.</span>
         </div>
       </div>
@@ -168,10 +168,10 @@
         <tbody>
           {{#each breakdown}}
             <tr>
-              <td>{{category}}</td>
-              <td>{{income}}</td>
-              <td>{{expenses}}</td>
-              <td>{{net}}</td>
+              <td>{{translateCategory category}}</td>
+              <td>{{formatCurrency income}}</td>
+              <td>{{formatCurrency expenses}}</td>
+              <td>{{formatCurrency net}}</td>
             </tr>
           {{/each}}
         </tbody>
@@ -184,11 +184,11 @@
       <h2>Fluxo de Caixa por Conta de Disponibilidade</h2>
       <p class="totals">
         Entradas totais:
-        {{income}}
+        {{formatCurrency income}}
         | Saídas totais:
-        {{expenses}}
+        {{formatCurrency expenses}}
         | Saldo consolidado:
-        {{total}}
+        {{formatCurrency total}}
       </p>
       {{#if accounts}}
         <table>
@@ -204,10 +204,9 @@
             {{#each accounts}}
               <tr>
                 <td>{{availabilityAccount.accountName}}</td>
-                <td>{{availabilityAccount.symbol}} {{totalInput}}</td>
-                <td>{{availabilityAccount.symbol}} {{totalOutput}}</td>
-                <td>{{availabilityAccount.symbol}}
-                  {{subtract totalInput totalOutput}}</td>
+                <td>{{formatCurrency totalInput}}</td>
+                <td>{{formatCurrency totalOutput}}</td>
+                <td>{{formatCurrency (subtract totalInput totalOutput)}}</td>
               </tr>
             {{/each}}
           </tbody>
@@ -220,7 +219,7 @@
     {{#if costCenters}}
       <section>
         <h2>Uso dos Centros de Custo</h2>
-        <p class="totals">Total aplicado: {{total}}</p>
+        <p class="totals">Total aplicado: {{formatCurrency total}}</p>
         <table>
           <thead>
             <tr>
@@ -233,7 +232,7 @@
             {{#each costCenters}}
               <tr>
                 <td>{{costCenter.costCenterName}}</td>
-                <td>{{total}}</td>
+                <td>{{formatCurrency total}}</td>
                 <td>{{lastMove}}</td>
               </tr>
             {{/each}}

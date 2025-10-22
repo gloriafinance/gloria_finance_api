@@ -52,6 +52,7 @@ export class IncomeStatement {
       StatementCategory.REVENUE,
       StatementCategory.COGS,
       StatementCategory.OPEX,
+      StatementCategory.CAPEX,
       StatementCategory.OTHER,
     ]
 
@@ -112,6 +113,12 @@ export class IncomeStatement {
       expenses: 0,
       net: 0,
     }
+    const capex = breakdownMap.get(StatementCategory.CAPEX) ?? {
+      category: StatementCategory.CAPEX,
+      income: 0,
+      expenses: 0,
+      net: 0,
+    }
     const other = breakdownMap.get(StatementCategory.OTHER) ?? {
       category: StatementCategory.OTHER,
       income: 0,
@@ -122,7 +129,7 @@ export class IncomeStatement {
     const grossProfit = revenue.net + cogs.net
     const operatingIncome = grossProfit + opex.net
     const otherNet = other.net
-    const netIncome = operatingIncome + otherNet
+    const netIncome = operatingIncome + capex.net + otherNet
 
     return {
       period: {
@@ -136,6 +143,7 @@ export class IncomeStatement {
         grossProfit,
         operatingExpenses: opex.expenses - opex.income,
         operatingIncome,
+        capitalExpenditures: capex.expenses - capex.income,
         otherIncome: other.income,
         otherExpenses: other.expenses,
         otherNet,

@@ -17,6 +17,7 @@ export type IncomeStatementSummary = {
   grossProfit: number
   operatingExpenses: number
   operatingIncome: number
+  capitalExpenditures: number
   otherIncome: number
   otherExpenses: number
   otherNet: number

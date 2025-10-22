@@ -4,6 +4,21 @@ import * as fs from "fs"
 import { APP_DIR } from "@/app"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 
+const categoryLabels: Record<string, string> = {
+  REVENUE: "Entradas operacionais e doações recorrentes",
+  COGS: "Custos diretos para entregar serviços ou projetos",
+  OPEX: "Despesas operacionais do dia a dia",
+  CAPEX: "Investimentos e gastos de capital de longo prazo",
+  OTHER: "Receitas ou despesas extraordinárias",
+}
+
+const brlFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 export class HandlebarsHTMLAdapter implements IHTMLAdapter {
   private logger = Logger(HandlebarsHTMLAdapter.name)
 
@@ -23,6 +38,30 @@ export class HandlebarsHTMLAdapter implements IHTMLAdapter {
       const right = Number(b) || 0
 
       return (left - right).toFixed(2)
+    })
+
+    handlebars.registerHelper("formatCurrency", (value: unknown) => {
+      const numericValue = Number(value)
+      const safeValue = Number.isFinite(numericValue) ? numericValue : 0
+
+      return brlFormatter.format(safeValue)
+    })
+
+    handlebars.registerHelper("translateCategory", (category: string) => {
+      if (!category) {
+        return ""
+      }
+
+      if (categoryLabels[category]) {
+        return categoryLabels[category]
+      }
+
+      return category
+        .toLowerCase()
+        .split(/[_\s-]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
     })
   }
 
