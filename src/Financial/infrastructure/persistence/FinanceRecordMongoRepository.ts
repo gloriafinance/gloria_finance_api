@@ -4,6 +4,8 @@ import {
   AvailabilityAccountMaster,
   ConceptType,
   CostCenterMaster,
+  StatementCategory,
+  StatementCategorySummary,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import {
@@ -190,5 +192,103 @@ export class FinanceRecordMongoRepository
       .toArray()
 
     return result.map((r) => CostCenterMaster.fromPrimitives(r))
+  }
+
+  async fetchStatementCategories(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<StatementCategorySummary[]> {
+    this.logger.info(
+      `Fetch statement categories params: ${JSON.stringify(filter)}`
+    )
+
+    this.dbCollectionName = "financial_records"
+
+    const { churchId, year, month } = filter
+
+    const collection = await this.collection()
+
+    const startDate = month
+      ? new Date(year, month - 1, 1)
+      : new Date(year, 0, 1)
+    const endDate = month ? new Date(year, month, 1) : new Date(year + 1, 0, 1)
+
+    const matchFilter: Record<string, unknown> = {
+      churchId,
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    }
+
+    const result = await collection
+      .aggregate([
+        {
+          $match: matchFilter,
+        },
+        {
+          $group: {
+            _id: {
+              category: {
+                $ifNull: [
+                  "$financialConcept.statementCategory",
+                  StatementCategory.OTHER,
+                ],
+              },
+              type: "$type",
+            },
+            total: { $sum: "$amount" },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.category",
+            income: {
+              $sum: {
+                $cond: [
+                  {
+                    $in: [
+                      "$_id.type",
+                      [ConceptType.INCOME, ConceptType.REVERSAL],
+                    ],
+                  },
+                  "$total",
+                  0,
+                ],
+              },
+            },
+            expenses: {
+              $sum: {
+                $cond: [
+                  {
+                    $in: [
+                      "$_id.type",
+                      [ConceptType.DISCHARGE, ConceptType.PURCHASE],
+                    ],
+                  },
+                  "$total",
+                  0,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            category: "$_id",
+            income: 1,
+            expenses: 1,
+          },
+        },
+      ])
+      .toArray()
+
+    return result.map((item) => ({
+      category: item.category as StatementCategory,
+      income: item.income ?? 0,
+      expenses: item.expenses ?? 0,
+    }))
   }
 }
