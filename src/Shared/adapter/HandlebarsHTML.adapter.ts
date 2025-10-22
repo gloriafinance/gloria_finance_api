@@ -17,6 +17,13 @@ export class HandlebarsHTMLAdapter implements IHTMLAdapter {
     handlebars.registerHelper("formatDate", (date: string) => {
       return new Intl.DateTimeFormat("es-ES").format(new Date(date))
     })
+
+    handlebars.registerHelper("subtract", (a: number, b: number) => {
+      const left = Number(a) || 0
+      const right = Number(b) || 0
+
+      return (left - right).toFixed(2)
+    })
   }
 
   generateHTML(templateName: string, data: any): string {
