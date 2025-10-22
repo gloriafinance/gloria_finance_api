@@ -1,0 +1,250 @@
+<style>
+  :root {
+    color-scheme: light;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .report {
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    color: #1f2933;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    margin: 0;
+    color: #20364b;
+  }
+
+  .header p {
+    margin: 4px 0;
+    color: #52606d;
+    font-size: 15px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    padding: 12px;
+    background: #f7f9fc;
+  }
+
+  .summary-card .label {
+    display: block;
+    font-size: 13px;
+    color: #52606d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .summary-card .value {
+    display: block;
+    font-size: 20px;
+    font-weight: 600;
+    color: #20364b;
+  }
+
+  .summary-card .caption {
+    display: block;
+    font-size: 12px;
+    color: #7b8794;
+    margin-top: 6px;
+  }
+
+  section {
+    margin-bottom: 36px;
+  }
+
+  section h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: #20364b;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  th,
+  td {
+    border: 1px solid #d9e2ec;
+    padding: 10px;
+    text-align: left;
+  }
+
+  th {
+    background: #e4ebf5;
+    color: #334e68;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  tr:nth-child(even) td {
+    background: #f7f9fc;
+  }
+
+  .totals {
+    font-size: 14px;
+    color: #334e68;
+    margin-bottom: 8px;
+  }
+
+  .footnote {
+    font-size: 12px;
+    color: #7b8794;
+    text-align: center;
+  }
+</style>
+
+<div class="report">
+  <header class="header">
+    <h1>Relatório Financeiro Mensal</h1>
+    <p>Período analisado: {{period.month}}/{{period.year}}</p>
+    {{#if summary}}
+      <p>O relatório consolida entradas, saídas e saldos para informar a
+        congregação.</p>
+    {{/if}}
+  </header>
+
+  {{#if summary}}
+    <section>
+      <h2>Painel Resumido</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="label">Receita Líquida</span>
+          <span class="value">{{summary.revenue}}</span>
+          <span class="caption">Entradas provenientes das atividades regulares.</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Despesas Operacionais</span>
+          <span class="value">{{summary.operatingExpenses}}</span>
+          <span class="caption">Custos necessários para manter a igreja ativa.</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Resultado Operacional</span>
+          <span class="value">{{summary.operatingIncome}}</span>
+          <span class="caption">Receitas menos despesas operacionais.</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Resultado Líquido</span>
+          <span class="value">{{summary.netIncome}}</span>
+          <span class="caption">Saldo final após itens extraordinários.</span>
+        </div>
+      </div>
+    </section>
+  {{/if}}
+
+  {{#if breakdown}}
+    <section>
+      <h2>Receitas e Despesas por Categoria</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Entradas</th>
+            <th>Saídas</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each breakdown}}
+            <tr>
+              <td>{{category}}</td>
+              <td>{{income}}</td>
+              <td>{{expenses}}</td>
+              <td>{{net}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </section>
+  {{/if}}
+
+  {{#with cashFlowSnapshot.availabilityAccounts}}
+    <section>
+      <h2>Fluxo de Caixa por Conta de Disponibilidade</h2>
+      <p class="totals">
+        Entradas totais:
+        {{income}}
+        | Saídas totais:
+        {{expenses}}
+        | Saldo consolidado:
+        {{total}}
+      </p>
+      {{#if accounts}}
+        <table>
+          <thead>
+            <tr>
+              <th>Conta</th>
+              <th>Entradas</th>
+              <th>Saídas</th>
+              <th>Saldo do Período</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each accounts}}
+              <tr>
+                <td>{{availabilityAccount.accountName}}</td>
+                <td>{{availabilityAccount.symbol}} {{totalInput}}</td>
+                <td>{{availabilityAccount.symbol}} {{totalOutput}}</td>
+                <td>{{availabilityAccount.symbol}}
+                  {{subtract totalInput totalOutput}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      {{/if}}
+    </section>
+  {{/with}}
+
+  {{#with cashFlowSnapshot.costCenters}}
+    {{#if costCenters}}
+      <section>
+        <h2>Uso dos Centros de Custo</h2>
+        <p class="totals">Total aplicado: {{total}}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Centro de Custo</th>
+              <th>Total Aplicado</th>
+              <th>Último Movimento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each costCenters}}
+              <tr>
+                <td>{{costCenter.costCenterName}}</td>
+                <td>{{total}}</td>
+                <td>{{lastMove}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </section>
+    {{/if}}
+  {{/with}}
+
+  <p class="footnote">
+    Este relatório foi preparado para prestar contas aos membros da igreja sobre
+    o movimento financeiro do período informado.
+  </p>
+</div>
