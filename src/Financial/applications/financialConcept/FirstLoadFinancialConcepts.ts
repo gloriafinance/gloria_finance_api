@@ -2,11 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { IFinancialConceptRepository } from "../../domain/interfaces"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import {
-  ConceptType,
-  FinancialConcept,
-  StatementCategory,
-} from "../../domain"
+import { ConceptType, FinancialConcept, StatementCategory } from "../../domain"
 
 type rawFinancialConcept = {
   name: string
