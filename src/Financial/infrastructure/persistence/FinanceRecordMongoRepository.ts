@@ -68,8 +68,8 @@ export class FinanceRecordMongoRepository
     this.dbCollectionName = "financial_records"
     const { churchId, year, month } = filter
 
-    const startDate = new Date(year, month - 1, 1)
-    const endDate = new Date(year, month, 1)
+    const startDate = new Date(Date.UTC(year, month - 1, 1))
+    const endDate = new Date(Date.UTC(year, month, 1))
 
     const filters = {
       churchId,
@@ -210,9 +210,11 @@ export class FinanceRecordMongoRepository
     const collection = await this.collection()
 
     const startDate = month
-      ? new Date(year, month - 1, 1)
-      : new Date(year, 0, 1)
-    const endDate = month ? new Date(year, month, 1) : new Date(year + 1, 0, 1)
+      ? new Date(Date.UTC(year, month - 1, 1))
+      : new Date(Date.UTC(year, 0, 1))
+    const endDate = month
+      ? new Date(Date.UTC(year, month, 1))
+      : new Date(Date.UTC(year + 1, 0, 1))
 
     const matchFilter: Record<string, unknown> = {
       churchId,
