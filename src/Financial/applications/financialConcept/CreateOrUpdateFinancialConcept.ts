@@ -39,6 +39,7 @@ export class CreateOrUpdateFinancialConcept {
       financialConcept.setType(params.type)
       financialConcept.setName(params.name)
       financialConcept.setDescription(params.description)
+      financialConcept.setStatementCategory(params.statementCategory)
 
       await this.financialConceptRepository.upsert(financialConcept)
     }
@@ -50,6 +51,7 @@ export class CreateOrUpdateFinancialConcept {
       params.description,
       params.active,
       params.type,
+      params.statementCategory,
       church
     )
 

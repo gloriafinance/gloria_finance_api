@@ -2,12 +2,17 @@ import * as fs from "fs"
 import * as path from "path"
 import { IFinancialConceptRepository } from "../../domain/interfaces"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { ConceptType, FinancialConcept } from "../../domain"
+import {
+  ConceptType,
+  FinancialConcept,
+  StatementCategory,
+} from "../../domain"
 
 type rawFinancialConcept = {
   name: string
   description: string
   type: ConceptType
+  statementCategory: StatementCategory
   active: boolean
 }
 
@@ -32,6 +37,7 @@ export class FirstLoadFinancialConcepts {
           concept.description,
           concept.active,
           concept.type,
+          concept.statementCategory,
           church
         )
       )

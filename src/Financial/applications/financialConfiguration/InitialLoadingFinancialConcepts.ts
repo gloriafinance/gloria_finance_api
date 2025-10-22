@@ -1,4 +1,4 @@
-import { ConceptType, FinancialConcept } from "../../domain"
+import { ConceptType, FinancialConcept, StatementCategory } from "../../domain"
 import { Church, ChurchNotFound, IChurchRepository } from "@/Church/domain"
 import { IQueue } from "@/Shared/domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
@@ -30,6 +30,7 @@ export class InitialLoadingFinancialConcepts implements IQueue {
           c.description,
           c.active,
           c.type as ConceptType,
+          c.statementCategory as StatementCategory,
           church
         )
       )

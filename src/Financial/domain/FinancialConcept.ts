@@ -1,5 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { ConceptType } from "./enums/ConcepType.enum"
+import { StatementCategory } from "./enums/StatementCategory.enum"
 import { Church } from "@/Church/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
@@ -11,6 +12,7 @@ export class FinancialConcept extends AggregateRoot {
   private description: string
   private active: boolean
   private type: ConceptType
+  private statementCategory: StatementCategory
   private churchId: string
   private createdAt: Date
 
@@ -19,6 +21,7 @@ export class FinancialConcept extends AggregateRoot {
     description: string,
     active: boolean,
     type: ConceptType,
+    statementCategory: StatementCategory,
     church: Church
   ): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
@@ -27,6 +30,7 @@ export class FinancialConcept extends AggregateRoot {
     concept.description = description
     concept.active = active
     concept.type = type
+    concept.statementCategory = statementCategory
     concept.churchId = church.getChurchId()
     concept.createdAt = DateBR()
     return concept
@@ -40,6 +44,8 @@ export class FinancialConcept extends AggregateRoot {
     concept.description = plainData.description
     concept.active = plainData.active
     concept.type = plainData.type
+    concept.statementCategory =
+      plainData.statementCategory ?? StatementCategory.OTHER
     concept.createdAt = plainData.createdAt
     concept.churchId = plainData.churchId
     return concept
@@ -93,6 +99,14 @@ export class FinancialConcept extends AggregateRoot {
     this.type = type
   }
 
+  getStatementCategory(): StatementCategory {
+    return this.statementCategory
+  }
+
+  setStatementCategory(statementCategory: StatementCategory): void {
+    this.statementCategory = statementCategory
+  }
+
   toPrimitives(): any {
     return {
       financialConceptId: this.financialConceptId,
@@ -101,6 +115,7 @@ export class FinancialConcept extends AggregateRoot {
       description: this.description,
       active: this.active,
       type: this.type,
+      statementCategory: this.statementCategory,
       createdAt: this.createdAt,
     }
   }
