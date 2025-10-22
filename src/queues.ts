@@ -5,11 +5,11 @@ import {
   UserMongoRepository,
 } from "./SecuritySystem/infrastructure"
 import { InitialLoadingFinancialConcepts } from "./Financial/applications"
-import { FinancialConfigurationMongoRepository } from "./Financial/infrastructure"
 import { ChurchMongoRepository } from "./Church/infrastructure"
 import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
 import { SendMail } from "./SendMail/SendMail"
 import { TelegramNotification } from "./Shared/infrastructure"
+import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
 
 export const Queues = (): IDefinitionQueue[] => [
   ...FinancialQueue(),
@@ -20,7 +20,7 @@ export const Queues = (): IDefinitionQueue[] => [
   {
     useClass: InitialLoadingFinancialConcepts,
     inject: [
-      FinancialConfigurationMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
       ChurchMongoRepository.getInstance(),
     ],
   },
