@@ -1,0 +1,6 @@
+export enum AccountPayableTaxStatus {
+  TAXED = "TAXED",
+  EXEMPT = "EXEMPT",
+  SUBSTITUTION = "SUBSTITUTION",
+  NOT_APPLICABLE = "NOT_APPLICABLE",
+}

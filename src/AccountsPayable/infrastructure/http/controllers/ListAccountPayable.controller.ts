@@ -32,6 +32,7 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
  * {
  *   "nextPag": 2,
  *   "count": 25,
+ *   // Possible statuses: PENDING (open), PARTIAL (partially paid), PAID (fully settled)
  *   "results": [
  *   {
  *   "status": "PENDING",
@@ -49,6 +50,14 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
  *   "amountTotal": 500,
  *   "amountPaid": 0,
  *   "amountPending": 500,
+ *   "taxAmountTotal": 0,
+ *   "taxMetadata": {
+ *        "status": "EXEMPT",
+ *        "taxExempt": true,
+ *        "observation": "Serviço vinculado à finalidade essencial da igreja"
+ *   },
+ *   "taxes": [],
+ *   // Cada linha de imposto pode trazer o status fiscal (TAXED, SUBSTITUTION, NOT_APPLICABLE)
  *   "installments": [
  *        {
  *          "installmentId": "inst123",
@@ -56,7 +65,7 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
  *          "dueDate": "2023-06-01T00:00:00.000Z",
  *          "status": "PENDING"
  *        }
- *    ]
+ *    ] // para cenários B (uma NF por conta) este array pode estar vazio
  * }
  *
  */

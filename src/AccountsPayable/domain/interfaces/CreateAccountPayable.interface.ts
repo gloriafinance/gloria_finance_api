@@ -1,5 +1,9 @@
 import { SupplierType } from "../enums/SupplierType"
 import { Installments } from "@/Shared/domain"
+import {
+  AccountPayableTaxInput,
+  AccountPayableTaxMetadata,
+} from "../types/AccountPayableTax.type"
 
 export interface ICreateAccountPayable {
   supplier: {
@@ -16,4 +20,7 @@ export interface ICreateAccountPayable {
   amountPaid?: number
   amountPending?: number
   installments?: Installments[]
+  taxes?: AccountPayableTaxInput[]
+  taxAmountTotal?: number
+  taxMetadata?: AccountPayableTaxMetadata
 }
