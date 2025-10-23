@@ -69,7 +69,7 @@ jobs:
           cat > start.js << 'EOL'
             // Este script simplemente carga tsconfig-paths y luego el app principal
             require('tsconfig-paths/register');
-            require('./dist/app.js');
+            require('./dist/src/app.js');
           EOL
 
           # Configurar PM2 para ejecutar la aplicación
