@@ -1,4 +1,4 @@
-import { PayAccountPayable } from "../PayAccountPayable"
+import { PayAccountPayable } from "@/AccountsPayable/applications/PayAccountPayable"
 import {
   AccountPayable,
   AccountPayableChurchMismatch,
@@ -10,14 +10,14 @@ import {
   SupplierType,
 } from "@/AccountsPayable/domain"
 import {
+  AccountType,
   AvailabilityAccount,
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
-  AccountType,
-  FinancialConcept,
   ConceptType,
   CostCenter,
   CostCenterCategory,
+  FinancialConcept,
   StatementCategory,
 } from "@/Financial/domain"
 import {
@@ -27,7 +27,12 @@ import {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import { AmountValue, IQueueService, IStorageService, InstallmentsStatus } from "@/Shared/domain"
+import {
+  AmountValue,
+  InstallmentsStatus,
+  IQueueService,
+  IStorageService,
+} from "@/Shared/domain"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   id?: string
@@ -213,14 +218,18 @@ describe("PayAccountPayable", () => {
     ;(
       financialConfigurationRepository.findCostCenterByCostCenterId as jest.Mock
     ).mockResolvedValue(createCostCenter())
-    ;(financialRecordRepository.upsert as jest.Mock).mockResolvedValue(undefined)
+    ;(financialRecordRepository.upsert as jest.Mock).mockResolvedValue(
+      undefined
+    )
     ;(
       financialRecordRepository.deleteByFinancialRecordId as jest.Mock
     ).mockResolvedValue(undefined)
     financialYearRepository.one.mockResolvedValue({
       isClosed: () => false,
     } as any)
-    availabilityAccountRepository.one.mockResolvedValue(createAvailabilityAccount())
+    availabilityAccountRepository.one.mockResolvedValue(
+      createAvailabilityAccount()
+    )
     storageService.uploadFile.mockResolvedValue("uploaded-voucher")
     storageService.deleteFile.mockResolvedValue(undefined)
     storageService.downloadFile.mockResolvedValue("download")

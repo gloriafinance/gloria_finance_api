@@ -75,8 +75,6 @@ export class PayAccountPayable {
       accountPayable.toPrimitives()
     )
 
-    let committed = false
-
     try {
       const { concept, financialRecordId, voucher } =
         await this.makeFinanceRecord(req, unitOfWork)
@@ -110,33 +108,30 @@ export class PayAccountPayable {
       })
 
       this.logger.info(
-        `Account Payable ${req.accountPayableId} updated, amount pending ${accountPayable.getAmountPending()}`,
-        `status ${accountPayable.getStatus()}`
+        `Account Payable ${req.accountPayableId} updated, amount pending ${accountPayable.getAmountPending()} 
+        status ${accountPayable.getStatus()}`
       )
 
       await unitOfWork.commit()
-      committed = true
+
+      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+        operationType: TypeOperationMoney.MONEY_OUT,
+        availabilityAccount: availabilityAccount,
+        concept: req.concept.getDescription(),
+        amount: req.amount.getValue(),
+      })
+
+      new DispatchUpdateCostCenterMaster(this.queueService).execute({
+        churchId: accountPayable.getChurchId(),
+        costCenterId: req.costCenterId,
+        amount: req.amount.getValue(),
+      })
+
+      this.logger.info(`Finished Pay Account Payable`)
     } catch (error) {
-      if (!committed) {
-        await unitOfWork.rollback()
-      }
+      await unitOfWork.rollback()
       throw error
     }
-
-    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
-      operationType: TypeOperationMoney.MONEY_OUT,
-      availabilityAccount: availabilityAccount,
-      concept: req.concept.getDescription(),
-      amount: req.amount.getValue(),
-    })
-
-    new DispatchUpdateCostCenterMaster(this.queueService).execute({
-      churchId: accountPayable.getChurchId(),
-      costCenterId: req.costCenterId,
-      amount: req.amount.getValue(),
-    })
-
-    this.logger.info(`Finished Pay Account Payable`)
   }
 
   private async makeFinanceRecord(
