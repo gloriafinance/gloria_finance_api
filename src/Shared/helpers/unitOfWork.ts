@@ -30,19 +30,17 @@ export class UnitOfWork {
   async rollback(): Promise<void> {
     const errors: unknown[] = []
 
-    while (this.rollbackActions.length) {
-      const action = this.rollbackActions.pop()
-      if (!action) {
-        continue
-      }
+    const actions = this.rollbackActions.splice(0, this.rollbackActions.length)
+    const results = await Promise.allSettled(
+      actions.map((action) => Promise.resolve().then(() => action()))
+    )
 
-      try {
-        await action()
-      } catch (error) {
-        errors.push(error)
-        this.logger.error("Rollback action failed", error)
+    results.forEach((result, idx) => {
+      if (result.status === "rejected") {
+        errors.push(result.reason)
+        this.logger.error("Rollback action failed", result.reason)
       }
-    }
+    })
 
     this.postCommitActions.length = 0
 
