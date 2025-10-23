@@ -27,7 +27,7 @@ import {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import { AmountValue, InstallmentsStatus, IQueueService, IStorageService, } from "@/Shared/domain"
+import { AmountValue, InstallmentsStatus, IQueueService, IStorageService } from "@/Shared/domain"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   id?: string
