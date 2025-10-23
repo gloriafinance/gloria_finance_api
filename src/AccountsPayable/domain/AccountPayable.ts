@@ -5,6 +5,12 @@ import { AccountPayableStatus } from "./enums/AccountPayableStatus"
 import { SupplierType } from "./enums/SupplierType"
 import { ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AccountPayableTax,
+  AccountPayableTaxInput,
+  AccountPayableTaxMetadata,
+  AccountPayableTaxStatus,
+} from "./types/AccountPayableTax.type"
 
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number
@@ -23,11 +29,22 @@ export class AccountPayable extends AggregateRoot {
   private amountPending: number
   private status: AccountPayableStatus
   private installments: Installments[]
+  private taxes: AccountPayableTax[]
+  private taxAmountTotal: number
+  private taxMetadata?: AccountPayableTaxMetadata
   private createdAt: Date
   private updatedAt: Date
 
   static create(params: Partial<ICreateAccountPayable>): AccountPayable {
-    const { supplier, churchId, description, amountPaid, installments } = params
+    const {
+      supplier,
+      churchId,
+      description,
+      amountPaid,
+      installments,
+      taxes = [],
+      taxMetadata,
+    } = params
 
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.accountPayableId = IdentifyEntity.get(`accountPayable`)
@@ -52,6 +69,20 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.amountTotal = amountTotal
     accountPayable.amountPaid = 0
     accountPayable.amountPending = accountPayable.amountTotal
+
+    const normalizedTaxes = AccountPayable.normalizeTaxes(
+      amountTotal,
+      taxes
+    )
+    accountPayable.taxes = normalizedTaxes
+    accountPayable.taxAmountTotal = normalizedTaxes.reduce(
+      (acc, tax) => acc + tax.amount,
+      0
+    )
+    accountPayable.taxMetadata = AccountPayable.normalizeTaxMetadata(
+      taxMetadata,
+      normalizedTaxes.length > 0
+    )
 
     accountPayable.createdAt = DateBR()
     accountPayable.updatedAt = DateBR()
@@ -81,6 +112,17 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.createdAt = params.createdAt
     accountPayable.updatedAt = params.updatedAt
     accountPayable.supplier = params.supplier
+    const taxes = params.taxes || []
+    accountPayable.taxes = taxes.map((tax) => ({
+      taxType: tax.taxType,
+      percentage: Number(tax.percentage),
+      amount: Number(tax.amount),
+    }))
+    accountPayable.taxAmountTotal = Number(params.taxAmountTotal || 0)
+    accountPayable.taxMetadata = AccountPayable.normalizeTaxMetadata(
+      params.taxMetadata,
+      taxes.length > 0
+    )
 
     return accountPayable
   }
@@ -91,6 +133,18 @@ export class AccountPayable extends AggregateRoot {
 
   getInstallment(installmentId: string): Installments {
     return this.installments.find((i) => i.installmentId === installmentId)
+  }
+
+  getTaxes(): AccountPayableTax[] {
+    return this.taxes
+  }
+
+  getTaxAmountTotal(): number {
+    return this.taxAmountTotal
+  }
+
+  getTaxMetadata(): AccountPayableTaxMetadata | undefined {
+    return this.taxMetadata
   }
 
   updateAmount(amountPaid: AmountValue) {
@@ -129,6 +183,70 @@ export class AccountPayable extends AggregateRoot {
       amountPaid: this.amountPaid,
       amountPending: this.amountPending,
       installments: this.installments,
+      taxes: this.taxes,
+      taxAmountTotal: this.taxAmountTotal,
+      taxMetadata: this.taxMetadata,
+    }
+  }
+
+  private static normalizeTaxes(
+    baseAmount: number,
+    taxes: AccountPayableTaxInput[]
+  ): AccountPayableTax[] {
+    if (!taxes?.length) {
+      return []
+    }
+
+    return taxes.map((tax) => {
+      const percentage = Number(tax.percentage)
+      const providedAmount =
+        tax.amount !== undefined ? Number(tax.amount) : undefined
+      const calculatedAmount =
+        providedAmount !== undefined
+          ? providedAmount
+          : Number(((baseAmount * percentage) / 100).toFixed(2))
+
+      return {
+        taxType: tax.taxType,
+        percentage,
+        amount: calculatedAmount,
+      }
+    })
+  }
+
+  private static normalizeTaxMetadata(
+    metadata: AccountPayableTaxMetadata | undefined,
+    hasTaxes: boolean
+  ): AccountPayableTaxMetadata | undefined {
+    if (!metadata) {
+      if (!hasTaxes) {
+        return { status: "NOT_APPLICABLE" }
+      }
+
+      return undefined
+    }
+
+    const status = metadata.status
+      ? (metadata.status.toUpperCase() as AccountPayableTaxStatus)
+      : undefined
+    const allowedStatuses: AccountPayableTaxStatus[] = [
+      "TAXED",
+      "EXEMPT",
+      "SUBSTITUTION",
+      "NOT_APPLICABLE",
+    ]
+    const normalizedStatus = status && allowedStatuses.includes(status)
+      ? status
+      : hasTaxes
+        ? "TAXED"
+        : "NOT_APPLICABLE"
+
+    return {
+      status: normalizedStatus,
+      exemptionReason: metadata.exemptionReason?.trim() || undefined,
+      cstCode: metadata.cstCode?.trim() || undefined,
+      cfop: metadata.cfop?.trim() || undefined,
+      observation: metadata.observation?.trim() || undefined,
     }
   }
 }

@@ -1,3 +1,5 @@
+import { AccountPayableTaxMetadata } from "../types/AccountPayableTax.type"
+
 export type AccountPayableRequest = {
   supplierId: string
   churchId: string
@@ -6,4 +8,10 @@ export type AccountPayableRequest = {
     amount: number
     dueDate: Date
   }[]
+  taxes?: {
+    taxType: string
+    percentage: number
+    amount?: number
+  }[]
+  taxMetadata?: AccountPayableTaxMetadata
 }

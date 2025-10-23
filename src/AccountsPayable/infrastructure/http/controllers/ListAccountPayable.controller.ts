@@ -49,6 +49,20 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
  *   "amountTotal": 500,
  *   "amountPaid": 0,
  *   "amountPending": 500,
+ *   "taxAmountTotal": 25,
+ *   "taxMetadata": {
+ *        "status": "TAXED",
+ *        "cstCode": "101",
+ *        "cfop": "5933",
+ *        "observation": "Retenção padrão"
+ *   },
+ *   "taxes": [
+ *        {
+ *          "taxType": "ISS",
+ *          "percentage": 5,
+ *          "amount": 25
+ *        }
+ *    ],
  *   "installments": [
  *        {
  *          "installmentId": "inst123",
