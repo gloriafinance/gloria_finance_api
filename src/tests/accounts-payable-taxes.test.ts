@@ -3,6 +3,7 @@ import {
   AccountPayable,
   AccountPayableRequest,
   AccountPayableStatus,
+  AccountPayableTaxStatus,
   IAccountPayableRepository,
   ISupplierRepository,
   Supplier,
@@ -160,7 +161,7 @@ async function testCreateAccountPayablePersistsTaxes(): Promise<void> {
   assert.strictEqual(persisted.taxAmountTotal, expectedTotal)
   assert.strictEqual(persisted.taxes.length, 2)
   assert.deepStrictEqual(persisted.taxMetadata, {
-    status: "TAXED",
+    status: AccountPayableTaxStatus.TAXED,
     taxExempt: false,
     exemptionReason: undefined,
     cstCode: undefined,
@@ -196,7 +197,7 @@ function testAccountPayableSupportsExemptInvoices(): void {
       },
     ],
     taxMetadata: {
-      status: "EXEMPT",
+      status: AccountPayableTaxStatus.EXEMPT,
       taxExempt: true,
       exemptionReason: "Serviço enquadrado no art. 150, VI, b da CF",
       cstCode: "041",
@@ -209,7 +210,7 @@ function testAccountPayableSupportsExemptInvoices(): void {
 
   const metadata = account.getTaxMetadata()
   assert.ok(metadata, "Tax metadata should be stored for exempt invoices")
-  assert.strictEqual(metadata!.status, "EXEMPT")
+  assert.strictEqual(metadata!.status, AccountPayableTaxStatus.EXEMPT)
   assert.strictEqual(metadata!.taxExempt, true)
   assert.strictEqual(metadata!.cstCode, "041")
   assert.strictEqual(metadata!.cfop, undefined)
@@ -218,7 +219,7 @@ function testAccountPayableSupportsExemptInvoices(): void {
   assert.strictEqual(persisted.taxAmountTotal, 0)
   assert.deepStrictEqual(persisted.taxes, [])
   assert.deepStrictEqual(persisted.taxMetadata, {
-    status: "EXEMPT",
+    status: AccountPayableTaxStatus.EXEMPT,
     taxExempt: true,
     exemptionReason: "Serviço enquadrado no art. 150, VI, b da CF",
     cstCode: "041",
@@ -250,7 +251,7 @@ function testAccountPayableDefaultsTaxMetadataForUntaxedInvoices(): void {
   assert.strictEqual(account.getTaxes().length, 0)
   assert.strictEqual(account.getTaxAmountTotal(), 0)
   assert.deepStrictEqual(account.getTaxMetadata(), {
-    status: "EXEMPT",
+    status: AccountPayableTaxStatus.EXEMPT,
     taxExempt: true,
     exemptionReason: undefined,
     cstCode: undefined,
@@ -282,7 +283,7 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
     ],
     taxMetadata: {
       taxExempt: true,
-      status: "EXEMPT",
+      status: AccountPayableTaxStatus.EXEMPT,
       exemptionReason: "Serviço vinculado à finalidade essencial",
     },
   })
@@ -298,7 +299,7 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
     "Explicitly exempt invoices must not accumulate tax totals"
   )
   assert.deepStrictEqual(account.getTaxMetadata(), {
-    status: "EXEMPT",
+    status: AccountPayableTaxStatus.EXEMPT,
     taxExempt: true,
     exemptionReason: "Serviço vinculado à finalidade essencial",
     cstCode: undefined,
@@ -333,7 +334,10 @@ function testAccountPayableSupportsScenarioBWithoutInstallments(): void {
   assert.strictEqual(account.getAmountPending(), amountTotal)
   assert.deepStrictEqual(account.toPrimitives().installments, [])
   assert.strictEqual(account.getTaxMetadata().taxExempt, false)
-  assert.strictEqual(account.getTaxMetadata().status, "TAXED")
+  assert.strictEqual(
+    account.getTaxMetadata().status,
+    AccountPayableTaxStatus.TAXED
+  )
 }
 
 function testAccountPayableRequiresAmountTotalForScenarioB(): void {

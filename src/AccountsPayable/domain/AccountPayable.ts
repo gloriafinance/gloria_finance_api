@@ -9,9 +9,9 @@ import {
   AccountPayableTax,
   AccountPayableTaxInput,
   AccountPayableTaxMetadata,
-  AccountPayableTaxStatus,
 } from "./types/AccountPayableTax.type"
 import { InvalidInstallmentsConfiguration } from "./exceptions/InvalidInstallmentsConfiguration"
+import { AccountPayableTaxStatus } from "./enums/AccountPayableTaxStatus.enum"
 
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number
@@ -296,20 +296,17 @@ export class AccountPayable extends AggregateRoot {
     hasTaxes: boolean,
     forceExempt: boolean = false
   ): AccountPayableTaxMetadata {
-    const allowedStatuses: AccountPayableTaxStatus[] = [
-      "TAXED",
-      "EXEMPT",
-      "SUBSTITUTION",
-      "NOT_APPLICABLE",
-    ]
+    const allowedStatuses = Object.values(
+      AccountPayableTaxStatus
+    ) as AccountPayableTaxStatus[]
 
     const normalizedStatus = metadata?.status
       ? (metadata.status.toString().toUpperCase() as AccountPayableTaxStatus)
       : undefined
 
-    const defaultStatus: AccountPayableTaxStatus = hasTaxes
-      ? "TAXED"
-      : "EXEMPT"
+    const defaultStatus = hasTaxes
+      ? AccountPayableTaxStatus.TAXED
+      : AccountPayableTaxStatus.EXEMPT
 
     let status = normalizedStatus && allowedStatuses.includes(normalizedStatus)
       ? normalizedStatus
@@ -327,7 +324,7 @@ export class AccountPayable extends AggregateRoot {
         : !hasTaxes
 
     if (taxExempt) {
-      status = "EXEMPT"
+      status = AccountPayableTaxStatus.EXEMPT
     }
 
     return {

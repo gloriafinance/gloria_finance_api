@@ -6,6 +6,7 @@ export * from "./interfaces/CreateAccountPayable.interface"
 export * from "./interfaces/SupplierRepository"
 
 export * from "./enums/AccountPayableStatus"
+export * from "./enums/AccountPayableTaxStatus.enum"
 export * from "./enums/SupplierType"
 export * from "./enums/InstallmentStatus"
 

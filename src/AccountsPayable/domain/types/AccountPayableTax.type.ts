@@ -1,3 +1,5 @@
+import { AccountPayableTaxStatus } from "../enums/AccountPayableTaxStatus.enum"
+
 export type AccountPayableTax = {
   taxType: string
   percentage: number
@@ -7,12 +9,6 @@ export type AccountPayableTax = {
 export type AccountPayableTaxInput = Omit<AccountPayableTax, "amount"> & {
   amount?: number
 }
-
-export type AccountPayableTaxStatus =
-  | "TAXED"
-  | "EXEMPT"
-  | "SUBSTITUTION"
-  | "NOT_APPLICABLE"
 
 export type AccountPayableTaxMetadata = {
   status?: AccountPayableTaxStatus
