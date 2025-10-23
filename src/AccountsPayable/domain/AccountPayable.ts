@@ -58,48 +58,58 @@ export class AccountPayable extends AggregateRoot {
     const normalizedInstallments = Array.isArray(installments)
       ? installments
       : []
-
-    if (!normalizedInstallments.length) {
-      throw new InvalidInstallmentsConfiguration(
-        "At least one installment must be provided. For invoices issued separately (scenario B), register each note as its own account payable."
-      )
-    }
+    const hasInstallments = normalizedInstallments.length > 0
 
     let installmentsTotal: number = 0
-    accountPayable.installments = normalizedInstallments.map((i) => {
-      const normalizedAmount = Number(Number(i.amount).toFixed(2))
-      installmentsTotal += normalizedAmount
+    if (hasInstallments) {
+      accountPayable.installments = normalizedInstallments.map((i) => {
+        const normalizedAmount = Number(Number(i.amount).toFixed(2))
+        installmentsTotal += normalizedAmount
 
-      return {
-        ...i,
-        amount: normalizedAmount,
-        dueDate: new Date(i.dueDate),
-        installmentId: i.installmentId || IdentifyEntity.get(`installment`),
-        status: InstallmentsStatus.PENDING,
-      }
-    })
+        return {
+          ...i,
+          amount: normalizedAmount,
+          dueDate: new Date(i.dueDate),
+          installmentId: i.installmentId || IdentifyEntity.get(`installment`),
+          status: InstallmentsStatus.PENDING,
+        }
+      })
+    } else {
+      accountPayable.installments = []
+    }
 
     const declaredAmount =
       params.amountTotal !== undefined ? Number(params.amountTotal) : undefined
 
     if (declaredAmount !== undefined && !Number.isFinite(declaredAmount)) {
       throw new InvalidInstallmentsConfiguration(
-        "The declared payable amount must be a numeric value."
+        "Informe um valor total numérico da nota fiscal."
       )
     }
 
-    if (
-      declaredAmount !== undefined &&
-      Math.abs(Number(declaredAmount.toFixed(2)) - Number(installmentsTotal.toFixed(2))) >
-        0.01
-    ) {
-      throw new InvalidInstallmentsConfiguration(
-        "Installment amounts must match the declared payable total within a tolerance of 0.01."
-      )
+    if (!hasInstallments) {
+      if (declaredAmount === undefined) {
+        throw new InvalidInstallmentsConfiguration(
+          "Para notas fiscais registradas individualmente (cenário B), informe o valor total da NF em amountTotal e não envie parcelas."
+        )
+      }
+    } else if (declaredAmount !== undefined) {
+      const declaredRounded = Number(declaredAmount.toFixed(2))
+      const installmentsRounded = Number(installmentsTotal.toFixed(2))
+      const difference = Math.abs(declaredRounded - installmentsRounded)
+
+      if (difference > 0.01) {
+        throw new InvalidInstallmentsConfiguration(
+          "A soma das parcelas (cenário A) deve coincidir com o valor total informado da NF. Ajuste os valores ou cadastre cada NF individualmente (cenário B). Diferença máxima permitida: R$ 0,01."
+        )
+      }
     }
 
-    const normalizedTotal =
-      declaredAmount !== undefined ? declaredAmount : installmentsTotal
+    const normalizedTotal = hasInstallments
+      ? declaredAmount !== undefined
+        ? declaredAmount
+        : installmentsTotal
+      : (declaredAmount as number)
 
     accountPayable.amountTotal = Number(normalizedTotal.toFixed(2))
     accountPayable.amountPaid = 0

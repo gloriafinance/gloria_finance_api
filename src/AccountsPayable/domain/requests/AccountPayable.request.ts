@@ -5,7 +5,7 @@ export type AccountPayableRequest = {
   churchId: string
   description: string
   amountTotal?: number
-  installments: {
+  installments?: {
     amount: number
     dueDate: Date
   }[]

@@ -307,6 +307,51 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
   })
 }
 
+function testAccountPayableSupportsScenarioBWithoutInstallments(): void {
+  const amountTotal = 3500
+  const account = AccountPayable.create({
+    supplier: {
+      supplierId: "supplier-007",
+      supplierType: SupplierType.COMPANY,
+      supplierDNI: "98765432100",
+      name: "Engenharia Estrutural", 
+      phone: "11933332222",
+    },
+    churchId: "church-008",
+    description: "Montagem de estrutura metálica",
+    amountTotal,
+    taxes: [
+      { taxType: "ISS", percentage: 3 },
+    ],
+  })
+
+  const expectedIss = Number(((amountTotal * 3) / 100).toFixed(2))
+
+  assert.strictEqual(account.getTaxes().length, 1)
+  assert.strictEqual(account.getTaxAmountTotal(), expectedIss)
+  assert.strictEqual(account.getStatus(), AccountPayableStatus.PENDING)
+  assert.strictEqual(account.getAmountPending(), amountTotal)
+  assert.deepStrictEqual(account.toPrimitives().installments, [])
+  assert.strictEqual(account.getTaxMetadata().taxExempt, false)
+  assert.strictEqual(account.getTaxMetadata().status, "TAXED")
+}
+
+function testAccountPayableRequiresAmountTotalForScenarioB(): void {
+  assert.throws(() => {
+    AccountPayable.create({
+      supplier: {
+        supplierId: "supplier-008",
+        supplierType: SupplierType.COMPANY,
+        supplierDNI: "98765432100",
+        name: "Serviços Técnicos", 
+        phone: "11933335555",
+      },
+      churchId: "church-009",
+      description: "Consultoria estrutural",
+    })
+  }, InvalidInstallmentsConfiguration)
+}
+
 function testAccountPayableRejectsMismatchedInstallments(): void {
   assert.throws(() => {
     AccountPayable.create({
@@ -389,6 +434,14 @@ async function runTests() {
     {
       name: "AccountPayable.create drops taxes when metadata enforces exemption",
       run: testAccountPayableDropsTaxesWhenExplicitlyExempt,
+    },
+    {
+      name: "AccountPayable.create supports scenario B without installments",
+      run: testAccountPayableSupportsScenarioBWithoutInstallments,
+    },
+    {
+      name: "AccountPayable.create requires amountTotal when no installments are provided",
+      run: testAccountPayableRequiresAmountTotalForScenarioB,
     },
     {
       name: "AccountPayable.create validates installment totals",

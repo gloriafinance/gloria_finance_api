@@ -17,13 +17,24 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     payload.taxMetadata = undefined
   }
 
+  if (payload.installments === null) {
+    payload.installments = []
+  }
+
   const rule: Record<string, string> = {
     supplierId: "required|string",
     description: "required|string",
     amountTotal: "sometimes|numeric",
-    installments: "required|array",
-    "installments.*.amount": "required|numeric",
-    "installments.*.dueDate": "required|date",
+    installments: "sometimes|array",
+  }
+
+  const hasInstallmentsArray = Array.isArray(payload.installments)
+
+  if (hasInstallmentsArray) {
+    Object.assign(rule, {
+      "installments.*.amount": "required|numeric",
+      "installments.*.dueDate": "required|date",
+    })
   }
 
   if (Array.isArray(payload.taxes)) {
@@ -58,12 +69,15 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }
 
-  if (!Array.isArray(payload.installments) || payload.installments.length === 0) {
+  const hasInstallments =
+    Array.isArray(payload.installments) && payload.installments.length > 0
+
+  if (!hasInstallments && payload.amountTotal === undefined) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
-      installments: {
+      amountTotal: {
         message:
-          "At least one installment must be provided. Register invoices issued separately as individual accounts payable (scenario B).",
-        rule: "minLength",
+          "Informe o valor total da nota fiscal quando optar por cadastrar cada NF individualmente (cenário B).",
+        rule: "required_when_no_installments",
       },
     })
   }
@@ -74,7 +88,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   if (taxExemptFlag === true && hasTaxes) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
       taxes: {
-        message: "Tax lines must be empty when taxMetadata.taxExempt is true.",
+        message:
+          "Remova as linhas de imposto quando taxMetadata.taxExempt for true (conta isenta).",
         rule: "forbidden_when_exempt",
       },
     })
@@ -84,7 +99,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
       taxes: {
         message:
-          "Provide at least one tax line when the payable is not marked as tax-exempt.",
+          "Forneça ao menos uma linha de imposto quando a conta não estiver marcada como isenta (taxMetadata.taxExempt = false).",
         rule: "required_when_taxable",
       },
     })

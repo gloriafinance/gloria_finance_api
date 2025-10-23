@@ -64,7 +64,7 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
  *          "dueDate": "2023-06-01T00:00:00.000Z",
  *          "status": "PENDING"
  *        }
- *    ]
+ *    ] // para cenários B (uma NF por conta) este array pode estar vazio
  * }
  *
  */
