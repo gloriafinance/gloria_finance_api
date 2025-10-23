@@ -36,8 +36,6 @@ export class UnitOfWork {
         await action()
       }
       this.rollbackActions.length = 0
-    } catch (error) {
-      throw error
     } finally {
       this.postCommitActions.length = 0
     }
