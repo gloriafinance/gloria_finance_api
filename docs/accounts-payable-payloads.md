@@ -66,6 +66,25 @@ El `PermissionMiddleware` incorpora automáticamente el `churchId` a partir del 
 }
 ```
 
+### A4. Compromisso parcelado sem nota fiscal (compra de ativo de pessoa física)
+```json
+{
+  "supplierId": "urn:supplier:135791357",
+  "description": "Compra de veículo seminovo",
+  "installments": [
+    { "amount": 20000, "dueDate": "2024-08-10" },
+    { "amount": 20000, "dueDate": "2024-09-10" },
+    { "amount": 20000, "dueDate": "2024-10-10" }
+  ],
+  "taxMetadata": {
+    "status": "NOT_APPLICABLE",
+    "taxExempt": true,
+    "observation": "Contrato particular assinado com o proprietário do veículo"
+  }
+}
+```
+> Use `observation` para registrar o número do contrato, recibo ou outro documento que comprove o compromisso firmado com a pessoa física.
+
 ## Escenario B · Uma NF por registro (sem parcelas)
 
 ### B1. NF individual isenta
@@ -124,3 +143,4 @@ El `PermissionMiddleware` incorpora automáticamente el `churchId` a partir del 
 - Se `taxMetadata.taxExempt` for `false`, pelo menos uma entrada em `taxes` deve estar presente e o sistema calculará `taxAmountTotal` automaticamente.
 - No cenário B (`installments` omitido), `amountTotal` é obrigatório. Caso envie parcelas, o total é deduzido da soma das parcelas.
 - Os campos opcionais `exemptionReason`, `cstCode`, `cfop` e `observation` ajudam a documentação de auditoria, mas podem ser omitidos quando não se aplicam.
+- Utilize `taxMetadata.status = "NOT_APPLICABLE"` quando o compromisso não possuir nota fiscal (por exemplo, aquisição de bem de pessoa física) e mantenha `taxMetadata.taxExempt = true` para indicar que não há impostos a reter.

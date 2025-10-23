@@ -5,4 +5,5 @@ export enum SupplierType {
   LOGISTICS_PROVIDER = "LOGISTICS_PROVIDER", // Proveedores logísticos
   CONSULTING_PROVIDER = "CONSULTING_PROVIDER", // Proveedores de consultoría
   MAINTENANCE_PROVIDER = "MAINTENANCE_PROVIDER", // Proveedores de mantenimiento
+  INDIVIDUAL = "INDIVIDUAL",
 }

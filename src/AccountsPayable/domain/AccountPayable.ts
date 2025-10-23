@@ -121,7 +121,10 @@ export class AccountPayable extends AggregateRoot {
       ? []
       : AccountPayable.normalizeTaxes(accountPayable.amountTotal, taxesInput)
     accountPayable.taxes = normalizedTaxes
-    const taxTotal = normalizedTaxes.reduce((total, tax) => total + tax.amount, 0)
+    const taxTotal = normalizedTaxes.reduce(
+      (total, tax) => total + tax.amount,
+      0
+    )
     accountPayable.taxAmountTotal = forceExempt
       ? 0
       : Number(taxTotal.toFixed(2))
@@ -169,10 +172,7 @@ export class AccountPayable extends AggregateRoot {
     const forceExempt = params.taxMetadata?.taxExempt === true
     const normalizedTaxes = forceExempt
       ? []
-      : AccountPayable.normalizeTaxes(
-          accountPayable.amountTotal,
-          taxes
-        )
+      : AccountPayable.normalizeTaxes(accountPayable.amountTotal, taxes)
     accountPayable.taxes = normalizedTaxes
     const persistedTaxTotal = normalizedTaxes.reduce(
       (total, tax) => total + Number(tax.amount),
@@ -333,8 +333,7 @@ export class AccountPayable extends AggregateRoot {
         (tax) => tax.status === AccountPayableTaxStatus.SUBSTITUTION
       )
       const hasTaxed = taxes.some(
-        (tax) =>
-          !tax.status || tax.status === AccountPayableTaxStatus.TAXED
+        (tax) => !tax.status || tax.status === AccountPayableTaxStatus.TAXED
       )
       const hasNotApplicable = taxes.some(
         (tax) => tax.status === AccountPayableTaxStatus.NOT_APPLICABLE
@@ -355,9 +354,10 @@ export class AccountPayable extends AggregateRoot {
       return AccountPayableTaxStatus.TAXED
     })()
 
-    let status = normalizedStatus && allowedStatuses.includes(normalizedStatus)
-      ? normalizedStatus
-      : defaultStatus
+    let status =
+      normalizedStatus && allowedStatuses.includes(normalizedStatus)
+        ? normalizedStatus
+        : defaultStatus
 
     const explicitExemptFlag =
       metadata && typeof metadata.taxExempt === "boolean"
@@ -371,7 +371,16 @@ export class AccountPayable extends AggregateRoot {
         : !hasTaxes
 
     if (taxExempt) {
-      status = AccountPayableTaxStatus.EXEMPT
+      const allowedExemptStatuses = new Set<AccountPayableTaxStatus>([
+        AccountPayableTaxStatus.EXEMPT,
+        AccountPayableTaxStatus.NOT_APPLICABLE,
+      ])
+
+      status = normalizedStatus
+        ? allowedExemptStatuses.has(normalizedStatus)
+          ? normalizedStatus
+          : AccountPayableTaxStatus.EXEMPT
+        : AccountPayableTaxStatus.EXEMPT
     }
 
     return {
@@ -383,5 +392,4 @@ export class AccountPayable extends AggregateRoot {
       observation: metadata?.observation?.trim() || undefined,
     }
   }
-
 }

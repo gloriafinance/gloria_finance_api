@@ -43,8 +43,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       "taxes.*.taxType": "required|string",
       "taxes.*.percentage": "required|numeric",
       "taxes.*.amount": "numeric",
-      "taxes.*.status":
-        "string|in:TAXED,EXEMPT,SUBSTITUTION,NOT_APPLICABLE",
+      "taxes.*.status": "string|in:TAXED,EXEMPT,SUBSTITUTION,NOT_APPLICABLE",
     })
   } else {
     rule.taxes = "sometimes|array"
