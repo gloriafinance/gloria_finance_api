@@ -1,5 +1,8 @@
 import { IAvailabilityAccountRepository } from "../../domain/interfaces"
-import { AvailabilityAccountNotFound } from "../../domain"
+import {
+  AvailabilityAccountChurchMismatch,
+  AvailabilityAccountNotFound,
+} from "../../domain"
 import { Logger } from "@/Shared/adapter"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {
@@ -9,7 +12,7 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository
   ) {}
 
-  async execute(availabilityAccountId: string) {
+  async execute(availabilityAccountId: string, churchId?: string) {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`
     )
@@ -20,6 +23,16 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
     if (!account) {
       this.logger.info(`Availability account not found`)
       throw new AvailabilityAccountNotFound()
+    }
+
+    if (churchId && account.getChurchId() !== churchId) {
+      this.logger.info(
+        `Availability account ${availabilityAccountId} belongs to church ${account.getChurchId()} but ${churchId} was provided`
+      )
+      throw new AvailabilityAccountChurchMismatch(
+        account.getChurchId(),
+        churchId
+      )
     }
 
     return account

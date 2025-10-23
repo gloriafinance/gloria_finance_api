@@ -1,15 +1,18 @@
 import { Logger } from "@/Shared/adapter"
 import {
   AccountPayable,
+  AccountPayableChurchMismatch,
+  AccountPayableNotFound,
   IAccountPayableRepository,
+  InstallmentNotFound,
   PayAccountPayableRequest,
 } from "@/AccountsPayable/domain"
 import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
-import { AccountPayableNotFound } from "@/AccountsPayable/domain/exceptions/AccountPayableNotFound"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,
+  FindAvailabilityAccountByAvailabilityAccountId,
 } from "@/Financial/applications"
 import { TypeOperationMoney } from "@/Financial/domain"
 import { PayInstallment } from "@/Shared/applications"
@@ -36,13 +39,29 @@ export class PayAccountPayable {
       throw new AccountPayableNotFound()
     }
 
+    if (accountPayable.getChurchId() !== req.churchId) {
+      this.logger.debug(`Account Payable church mismatch`, {
+        accountChurchId: accountPayable.getChurchId(),
+        requestChurchId: req.churchId,
+      })
+      throw new AccountPayableChurchMismatch(
+        accountPayable.getChurchId(),
+        req.churchId
+      )
+    }
+
+    const availabilityAccount =
+      await new FindAvailabilityAccountByAvailabilityAccountId(
+        this.availabilityAccountRepository
+      ).execute(req.availabilityAccountId, req.churchId)
+
     let amountPay = req.amount.getValue()
 
     for (const installmentId of req.installmentIds) {
       const installment = accountPayable.getInstallment(installmentId)
       if (!installment) {
         this.logger.debug(`Installment ${installmentId} not found`)
-        continue
+        throw new InstallmentNotFound(installmentId)
       }
       amountPay = PayInstallment(
         installment,
@@ -63,9 +82,7 @@ export class PayAccountPayable {
 
     new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       operationType: TypeOperationMoney.MONEY_OUT,
-      availabilityAccount: await this.availabilityAccountRepository.one({
-        availabilityAccountId: req.availabilityAccountId,
-      }),
+      availabilityAccount: availabilityAccount,
       concept: req.concept.getDescription(),
       amount: req.amount.getValue(),
     })
