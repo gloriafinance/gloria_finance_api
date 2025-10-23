@@ -1,4 +1,4 @@
-import { PayAccountPayable } from "../PayAccountPayable"
+import { PayAccountPayable } from "@/AccountsPayable/applications/PayAccountPayable"
 import {
   AccountPayable,
   AccountPayableChurchMismatch,
@@ -10,16 +10,24 @@ import {
   SupplierType,
 } from "@/AccountsPayable/domain"
 import {
+  AccountType,
   AvailabilityAccount,
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
-  AccountType,
-  FinancialConcept,
   ConceptType,
+  CostCenter,
+  CostCenterCategory,
+  FinancialConcept,
   StatementCategory,
 } from "@/Financial/domain"
-import { AmountValue, IQueueService, InstallmentsStatus } from "@/Shared/domain"
-import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import {
+  IAvailabilityAccountRepository,
+  IFinancialConceptRepository,
+  IFinancialConfigurationRepository,
+  IFinancialRecordRepository,
+} from "@/Financial/domain/interfaces"
+import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { AmountValue, InstallmentsStatus, IQueueService, IStorageService } from "@/Shared/domain"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   id?: string
@@ -107,6 +115,25 @@ const createAvailabilityAccount = (
   })
 }
 
+const createCostCenter = (
+  overrides: Partial<ReturnType<CostCenter["toPrimitives"]>> = {}
+): CostCenter =>
+  CostCenter.fromPrimitives({
+    costCenterId: "cost-center-1",
+    name: "Main cost center",
+    churchId: "church-1",
+    active: true,
+    category: CostCenterCategory.ESPECIAL_PROJECT,
+    createdAt: new Date(),
+    responsible: {
+      name: "Responsible",
+      email: "responsible@church.com",
+      phone: "551199999999",
+    },
+    description: "",
+    ...overrides,
+  })
+
 const createRequest = (
   overrides: Partial<PayAccountPayableRequest> = {}
 ): PayAccountPayableRequest => ({
@@ -114,7 +141,6 @@ const createRequest = (
   costCenterId: overrides.costCenterId ?? "cost-center-1",
   installmentId: overrides.installmentId ?? "installment-1",
   installmentIds: overrides.installmentIds ?? ["installment-1"],
-  financialTransactionId: overrides.financialTransactionId ?? "transaction-1",
   availabilityAccountId: overrides.availabilityAccountId ?? "availability-1",
   churchId: overrides.churchId ?? "church-1",
   amount: overrides.amount ?? AmountValue.create(100),
@@ -140,14 +166,80 @@ describe("PayAccountPayable", () => {
     dispatch: jest.fn(),
   } as jest.Mocked<IQueueService>
 
-  const useCase = new PayAccountPayable(
-    availabilityAccountRepository,
-    accountPayableRepository,
-    queueService
-  )
+  const financialConceptRepository = {
+    one: jest.fn(),
+    listByCriteria: jest.fn(),
+    upsert: jest.fn(),
+  } as jest.Mocked<IFinancialConceptRepository>
+
+  const financialConfigurationRepository = {
+    findBankByBankId: jest.fn(),
+    findCostCenterByCostCenterId: jest.fn(),
+    upsertBank: jest.fn(),
+    upsertCostCenter: jest.fn(),
+    upsertFinancialConcept: jest.fn(),
+    searchBanksByChurchId: jest.fn(),
+    searchCenterCostsByChurchId: jest.fn(),
+  } as unknown as jest.Mocked<IFinancialConfigurationRepository>
+
+  const financialRecordRepository = {
+    upsert: jest.fn(),
+    deleteByFinancialRecordId: jest.fn(),
+    fetch: jest.fn(),
+    one: jest.fn(),
+    titheList: jest.fn(),
+    fetchAvailableAccounts: jest.fn(),
+    fetchCostCenters: jest.fn(),
+    fetchStatementCategories: jest.fn(),
+  } as unknown as jest.Mocked<IFinancialRecordRepository>
+
+  const financialYearRepository = {
+    one: jest.fn(),
+    upsert: jest.fn(),
+  } as jest.Mocked<IFinancialYearRepository>
+
+  const storageService = {
+    uploadFile: jest.fn(),
+    deleteFile: jest.fn(),
+    downloadFile: jest.fn(),
+    setBucketName: jest.fn(),
+  } as jest.Mocked<IStorageService>
+
+  let useCase: PayAccountPayable
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    financialConceptRepository.one.mockResolvedValue(createConcept())
+    ;(
+      financialConfigurationRepository.findCostCenterByCostCenterId as jest.Mock
+    ).mockResolvedValue(createCostCenter())
+    ;(financialRecordRepository.upsert as jest.Mock).mockResolvedValue(
+      undefined
+    )
+    ;(
+      financialRecordRepository.deleteByFinancialRecordId as jest.Mock
+    ).mockResolvedValue(undefined)
+    financialYearRepository.one.mockResolvedValue({
+      isClosed: () => false,
+    } as any)
+    availabilityAccountRepository.one.mockResolvedValue(
+      createAvailabilityAccount()
+    )
+    storageService.uploadFile.mockResolvedValue("uploaded-voucher")
+    storageService.deleteFile.mockResolvedValue(undefined)
+    storageService.downloadFile.mockResolvedValue("download")
+
+    useCase = new PayAccountPayable(
+      availabilityAccountRepository,
+      accountPayableRepository,
+      queueService,
+      financialConceptRepository,
+      financialConfigurationRepository,
+      financialRecordRepository,
+      financialYearRepository,
+      storageService
+    )
   })
 
   it("throws AccountPayableNotFound when the account does not exist", async () => {

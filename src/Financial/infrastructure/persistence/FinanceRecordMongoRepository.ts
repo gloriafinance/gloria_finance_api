@@ -60,6 +60,12 @@ export class FinanceRecordMongoRepository
     await this.persist(financialRecord.getId(), financialRecord)
   }
 
+  async deleteByFinancialRecordId(financialRecordId: string): Promise<void> {
+    this.dbCollectionName = "financial_records"
+    const collection = await this.collection()
+    await collection.deleteOne({ financialRecordId })
+  }
+
   async titheList(filter: {
     churchId: string
     year: number

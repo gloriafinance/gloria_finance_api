@@ -10,6 +10,8 @@ import {
 export interface IFinancialRecordRepository {
   upsert(financialRecord: FinanceRecord): Promise<void>
 
+  deleteByFinancialRecordId(financialRecordId: string): Promise<void>
+
   fetch(criteria: Criteria): Promise<Paginate<FinanceRecord>>
 
   one(filter: object): Promise<FinanceRecord | undefined>

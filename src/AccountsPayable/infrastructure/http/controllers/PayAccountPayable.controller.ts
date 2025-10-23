@@ -8,10 +8,6 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/Financial/infrastructure/persistence"
-import {
-  FindCostCenterByCostCenterId,
-  RegisterFinancialRecord,
-} from "@/Financial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import { PayAccountPayable } from "@/AccountsPayable/applications/PayAccountPayable"
@@ -31,12 +27,15 @@ export const PayAccountPayableController = async (
   res: Response
 ): Promise<void> => {
   try {
-    await makeFinanceRecord(req)
-
     await new PayAccountPayable(
       AvailabilityAccountMongoRepository.getInstance(),
       AccountsPayableMongoRepository.getInstance(),
-      QueueService.getInstance()
+      QueueService.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
+      FinancialConfigurationMongoRepository.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      FinancialYearMongoRepository.getInstance(),
+      StorageGCP.getInstance(process.env.BUCKET_FILES)
     ).execute(req)
 
     res
@@ -44,52 +43,5 @@ export const PayAccountPayableController = async (
       .json({ message: "Account payable paid successfully" })
   } catch (e) {
     domainResponse(e, res)
-  }
-}
-
-const makeFinanceRecord = async (req: PayAccountPayableRequest) => {
-  let voucher: string
-
-  try {
-    if (req.file) {
-      voucher = await StorageGCP.getInstance(
-        process.env.BUCKET_FILES
-      ).uploadFile(req.file)
-    }
-
-    req.concept = await FinancialConceptMongoRepository.getInstance().one({
-      name: "Contas a Pagar",
-      churchId: req.churchId,
-    })
-
-    const costCenter = await new FindCostCenterByCostCenterId(
-      FinancialConfigurationMongoRepository.getInstance()
-    ).execute(req.churchId, req.costCenterId)
-
-    req.financialTransactionId = (
-      await new RegisterFinancialRecord(
-        FinancialYearMongoRepository.getInstance(),
-        FinanceRecordMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        AvailabilityAccountMongoRepository.getInstance()
-      ).handle(
-        {
-          churchId: req.churchId,
-          availabilityAccountId: req.availabilityAccountId,
-          voucher,
-          amount: req.amount.getValue(),
-          date: new Date(),
-          description: `pagamento de conta a pagar: parcela: ${req.installmentIds.join(",")}`,
-        },
-        req.concept,
-        costCenter
-      )
-    ).getFinancialRecordId()
-  } catch (e) {
-    if (voucher) {
-      await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(voucher)
-    }
-
-    throw new Error(e)
   }
 }
