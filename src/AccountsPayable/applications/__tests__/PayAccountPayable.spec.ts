@@ -18,11 +18,7 @@ import {
   ConceptType,
   StatementCategory,
 } from "@/Financial/domain"
-import {
-  AmountValue,
-  IQueueService,
-  InstallmentsStatus,
-} from "@/Shared/domain"
+import { AmountValue, IQueueService, InstallmentsStatus } from "@/Shared/domain"
 import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
@@ -31,7 +27,9 @@ type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   updatedAt: Date
 }
 
-type AvailabilityAccountPrimitives = ReturnType<AvailabilityAccount["toPrimitives"]> & {
+type AvailabilityAccountPrimitives = ReturnType<
+  AvailabilityAccount["toPrimitives"]
+> & {
   _id?: string
   lastMove?: Date
   createdAt: Date
