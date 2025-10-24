@@ -19,7 +19,7 @@ export class UpdateAsset {
   async execute(request: UpdateAssetRequest) {
     this.logger.info("Updating patrimony asset", request)
 
-    const asset = await this.repository.findById(request.assetId)
+    const asset = await this.repository.one({ assetId: request.assetId })
 
     if (!asset) {
       throw new AssetNotFoundException()

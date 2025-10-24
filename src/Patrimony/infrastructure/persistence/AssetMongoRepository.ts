@@ -1,3 +1,5 @@
+import { Criteria, MongoRepository, OrderTypes } from "@abejarano/ts-mongodb-criteria"
+import { Filter } from "mongodb"
 import { Asset } from "../../domain/Asset"
 import {
   AssetListFilters,
@@ -5,8 +7,6 @@ import {
   AssetModel,
   IAssetRepository,
 } from "../../domain"
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { Filter } from "mongodb"
 
 export class AssetMongoRepository
   extends MongoRepository<Asset>
@@ -34,24 +34,21 @@ export class AssetMongoRepository
     await this.persist(asset.getId(), asset)
   }
 
-  async list({
-    page,
-    perPage,
-    search,
-    ...filters
-  }: AssetListFilters & {
-    page: number
-    perPage: number
-    search?: string
-  }): Promise<AssetListResult> {
+  async list(
+    criteria: Criteria,
+    pagination: { page: number; perPage: number }
+  ): Promise<AssetListResult> {
+    const { filters, search } = this.parseCriteria(criteria)
+    const { page, perPage } = this.normalizePagination(pagination)
     const collection = await this.collection()
     const query = this.buildQuery(filters, search)
+    const sort = this.buildSort(criteria)
 
-    const skip = (Math.max(page, 1) - 1) * perPage
+    const skip = (page - 1) * perPage
 
     const documents = await collection
       .find(query)
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(perPage)
       .toArray()
@@ -71,12 +68,12 @@ export class AssetMongoRepository
     }
   }
 
-  async findById(assetId: string): Promise<Asset | null> {
+  async one(filter: object): Promise<Asset | undefined> {
     const collection = await this.collection()
-    const document = await collection.findOne({ assetId })
+    const document = await collection.findOne(filter)
 
     if (!document) {
-      return null
+      return undefined
     }
 
     return Asset.fromPrimitives(this.mapToPrimitives(document))
@@ -136,6 +133,113 @@ export class AssetMongoRepository
     }
 
     return query
+  }
+
+  private parseCriteria(criteria: Criteria): {
+    filters: AssetListFilters
+    search?: string
+  } {
+    const filters: AssetListFilters = {}
+    let search: string | undefined
+
+    const rawFilters =
+      ((criteria as unknown as { filters?: { filters?: Array<Map<string, unknown>> } })
+        ?.filters?.filters ?? []) as Array<Map<string, unknown>>
+
+    for (const filter of rawFilters) {
+      const field = filter?.get ? filter.get("field") : undefined
+      const value = filter?.get ? filter.get("value") : undefined
+
+      if (!field) {
+        continue
+      }
+
+      if (field === "congregationId") {
+        filters.congregationId = value as string
+        continue
+      }
+
+      if (field === "category") {
+        filters.category = value as string
+        continue
+      }
+
+      if (field === "status") {
+        filters.status = value as AssetListFilters["status"]
+        continue
+      }
+
+      if (field === "$or" && Array.isArray(value) && value.length > 0) {
+        const first = value.find((item) => item && typeof item === "object") as
+          | Record<string, unknown>
+          | undefined
+
+        if (!first) {
+          continue
+        }
+
+        const clauseValue = first[Object.keys(first)[0] ?? ""] as unknown
+
+        if (clauseValue instanceof RegExp) {
+          search = clauseValue.source
+          continue
+        }
+
+        if (
+          clauseValue &&
+          typeof clauseValue === "object" &&
+          "$regex" in (clauseValue as Record<string, unknown>)
+        ) {
+          const regexValue = (clauseValue as Record<string, unknown>)["$regex"]
+
+          if (typeof regexValue === "string") {
+            search = regexValue
+          }
+        }
+      }
+    }
+
+    return { filters, search }
+  }
+
+  private buildSort(criteria: Criteria): Record<string, 1 | -1> {
+    const rawOrder = (criteria as unknown as {
+      order?: {
+        orderBy?: { value?: string } | string
+        orderType?: { value?: string } | string
+      }
+    })?.order
+
+    const field =
+      (typeof rawOrder?.orderBy === "string"
+        ? rawOrder?.orderBy
+        : rawOrder?.orderBy?.value) ?? "createdAt"
+
+    const direction =
+      (typeof rawOrder?.orderType === "string"
+        ? rawOrder?.orderType
+        : rawOrder?.orderType?.value) ?? OrderTypes.DESC
+
+    const normalizedDirection = String(direction).toUpperCase()
+
+    return {
+      [field]: normalizedDirection === "ASC" ? 1 : -1,
+    }
+  }
+
+  private normalizePagination(pagination: {
+    page: number
+    perPage: number
+  }): { page: number; perPage: number } {
+    const parsedPerPage = Number(pagination.perPage)
+    const parsedPage = Number(pagination.page)
+
+    const perPage = Number.isFinite(parsedPerPage)
+      ? Math.max(parsedPerPage, 1)
+      : 20
+    const page = Number.isFinite(parsedPage) ? Math.max(parsedPage, 1) : 1
+
+    return { page, perPage }
   }
 
   private mapToModel(document: any): AssetModel {

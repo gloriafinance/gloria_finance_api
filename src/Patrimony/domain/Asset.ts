@@ -151,7 +151,6 @@ export class Asset extends AggregateRoot {
 
   toPrimitives(): AssetPrimitives {
     return {
-      id: this.id,
       assetId: this.assetId,
       code: this.code,
       name: this.name,

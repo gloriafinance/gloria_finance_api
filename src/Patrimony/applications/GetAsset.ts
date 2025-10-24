@@ -10,7 +10,7 @@ export class GetAsset {
   async execute(request: GetAssetRequest) {
     this.logger.info("Fetching patrimony asset details", request)
 
-    const asset = await this.repository.findById(request.assetId)
+    const asset = await this.repository.one({ assetId: request.assetId })
 
     if (!asset) {
       throw new AssetNotFoundException()
