@@ -20,7 +20,7 @@ export class CreateOrUpdateMember {
   ) {}
 
   async execute(request: MemberRequest) {
-    const member = await this.memberRepository.one(request.dni)
+    const member = await this.memberRepository.one({ dni: request.dni })
     if (!member) {
       await this.create(request)
       this.logger.info(`Finished creating member`)
@@ -58,7 +58,9 @@ export class CreateOrUpdateMember {
   private async create(request: MemberRequest) {
     this.logger.info(`Register member ${JSON.stringify(request)}`)
 
-    const memberExist: Member = await this.memberRepository.one(request.dni)
+    const memberExist: Member = await this.memberRepository.one({
+      dni: request.dni,
+    })
     if (memberExist) {
       throw new MemberExist()
     }

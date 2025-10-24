@@ -32,11 +32,9 @@ export class MemberMongoRepository
     return this.paginate<Member>(result)
   }
 
-  async one(memberId: string): Promise<Member | undefined> {
+  async one(filter: object): Promise<Member | undefined> {
     const collection = await this.collection()
-    const result = await collection.findOne({
-      memberId,
-    })
+    const result = await collection.findOne(filter)
 
     return result
       ? Member.fromPrimitives({

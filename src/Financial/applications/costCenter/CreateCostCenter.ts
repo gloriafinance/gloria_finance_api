@@ -38,7 +38,9 @@ export class CreateCostCenter {
   }
 
   private async findMember(responsibleMemberId: string) {
-    const member = await this.memberRepository.one(responsibleMemberId)
+    const member = await this.memberRepository.one({
+      memberId: responsibleMemberId,
+    })
 
     if (!member) {
       throw new MemberNotFound()
