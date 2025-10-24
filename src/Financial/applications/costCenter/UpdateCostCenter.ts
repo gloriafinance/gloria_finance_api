@@ -1,10 +1,6 @@
 import { CostCenter, CostCenterNotFound, CostCenterRequest } from "../../domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
-import {
-  IMemberRepository,
-  Member,
-  MemberNotFound,
-} from "../../../Church/domain"
+import { IMemberRepository, Member, MemberNotFound } from "@/Church/domain"
 
 export class UpdateCostCenter {
   constructor(

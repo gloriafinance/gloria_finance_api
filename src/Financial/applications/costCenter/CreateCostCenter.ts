@@ -1,12 +1,8 @@
 import { CostCenter, CostCenterExists, CostCenterRequest } from "../../domain"
 import { IFinancialConfigurationRepository } from "../../domain/interfaces"
-import {
-  IMemberRepository,
-  Member,
-  MemberNotFound,
-} from "../../../Church/domain"
+import { IMemberRepository, Member, MemberNotFound } from "@/Church/domain"
 
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class CreateCostCenter {
   private logger = Logger("CreateCostCenter")
@@ -33,8 +29,6 @@ export class CreateCostCenter {
     }
 
     await this.create(costCenterRequest, responsibleMember)
-
-    await this.financialConfigurationRepository.upsertCostCenter(costCenter)
   }
 
   private async findMember(responsibleMemberId: string) {
