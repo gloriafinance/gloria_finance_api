@@ -32,7 +32,7 @@ export class AccountsPayableMongoRepository
     return this.paginate<AccountPayable>(result)
   }
 
-  async one(criteria: object): Promise<AccountPayable | null> {
+  async one(criteria: object): Promise<AccountPayable | undefined> {
     const collection = await this.collection()
 
     const result = await collection.findOne(criteria)

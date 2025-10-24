@@ -4,7 +4,7 @@ import { AccountPayable } from "@/AccountsPayable/domain"
 export interface IAccountPayableRepository {
   upsert(accountPayable: AccountPayable): Promise<void>
 
-  one(criteria: object): Promise<AccountPayable | null>
+  one(criteria: object): Promise<AccountPayable | undefined>
 
   list(criteria: Criteria): Promise<Paginate<AccountPayable>>
 }
