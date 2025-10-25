@@ -24,7 +24,12 @@ export class CreateAsset {
   async execute(request: CreateAssetRequest) {
     this.logger.info("Creating patrimony asset", request)
 
-    const attachments = request.attachments ?? []
+    const attachments = (request.attachments ?? []).map((attachment) => ({
+      name: attachment.name,
+      url: attachment.url!,
+      mimetype: attachment.mimetype!,
+      size: attachment.size!,
+    }))
 
     if (attachments.length > MAX_ATTACHMENTS) {
       throw new AssetAttachmentLimitException()

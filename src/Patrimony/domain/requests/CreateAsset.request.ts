@@ -2,9 +2,10 @@ import { AssetStatus } from "../enums/AssetStatus.enum"
 
 export type CreateAssetAttachmentRequest = {
   name: string
-  url: string
-  mimetype: string
-  size: number
+  url?: string
+  mimetype?: string
+  size?: number
+  file?: any
 }
 
 export type CreateAssetRequest = {

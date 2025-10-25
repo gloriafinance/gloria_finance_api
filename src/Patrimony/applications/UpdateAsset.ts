@@ -35,9 +35,9 @@ export class UpdateAsset {
       attachments = request.attachments.map((attachment) => ({
         attachmentId: v4(),
         name: attachment.name,
-        url: attachment.url,
-        mimetype: attachment.mimetype,
-        size: attachment.size,
+        url: attachment.url!,
+        mimetype: attachment.mimetype!,
+        size: attachment.size!,
         uploadedAt: new Date(),
       }))
     }

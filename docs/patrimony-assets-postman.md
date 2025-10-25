@@ -1,6 +1,6 @@
 # Patrimony assets · Postman collection guide
 
-Este documento reúne ejemplos de peticiones para el módulo Patrimônio del Church Finance API. Puedes copiarlos en Postman o Insomnia y ajustar identificadores/datos según tu ambiente. Todos los endpoints están protegidos por `PermissionMiddleware`, por lo que debes enviar el header `Authorization: Bearer <token>` correspondiente. A menos que se indique lo contrario, establece también `Content-Type: application/json`.
+Este documento reúne ejemplos de peticiones para el módulo Patrimônio del Church Finance API. Puedes copiarlos en Postman o Insomnia y ajustar identificadores/datos según tu ambiente. Todos los endpoints están protegidos por `PermissionMiddleware`, por lo que debes enviar el header `Authorization: Bearer <token>` correspondiente. A menos que se indique lo contrario, establece también `Content-Type: application/json`. Cuando necesites adjuntar anexos en las operaciones de alta o edición cambia el body a `multipart/form-data` y agrega cada archivo en un campo `attachments`.
 
 ## Base URL sugerida
 
@@ -12,33 +12,23 @@ Configura una variable `{{baseUrl}}` apuntando al host de tu instancia (por ejem
 
 Carga la información principal del bien y (opcionalmente) hasta 3 anexos. El middleware completará campos como `performedBy` utilizando el usuario autenticado.
 
-```json
-{
-  "name": "Piano Yamaha C3",
-  "category": "instrument",
-  "value": 48000,
-  "acquisitionDate": "2024-04-15",
-  "congregationId": "urn:church:central",
-  "location": "Salón principal",
-  "responsibleId": "urn:user:music-director",
-  "status": "ACTIVE",
-  "attachments": [
-    {
-      "name": "Factura.pdf",
-      "url": "https://storage.example.com/assets/piano/factura.pdf",
-      "mimetype": "application/pdf",
-      "size": 524288
-    },
-    {
-      "name": "Foto-frontal.jpg",
-      "url": "https://storage.example.com/assets/piano/front.jpg",
-      "mimetype": "image/jpeg",
-      "size": 1048576
-    }
-  ],
-  "notes": "Donado por la familia González"
-}
-```
+Cuando adjuntes archivos configura el body en Postman como `form-data`. Los campos de texto se envían como `Text` y cada archivo se agrega en un campo `attachments` (puedes repetir la clave tantas veces como necesites):
+
+| Clave             | Tipo | Valor                              |
+| ----------------- | ---- | ---------------------------------- |
+| name              | Text | Piano Yamaha C3                    |
+| category          | Text | instrument                         |
+| value             | Text | 48000                              |
+| acquisitionDate   | Text | 2024-04-15                         |
+| congregationId    | Text | urn:church:central                 |
+| location          | Text | Salón principal                    |
+| responsibleId     | Text | urn:user:music-director            |
+| status            | Text | ACTIVE                             |
+| attachments       | File | factura.pdf                        |
+| attachments       | File | foto-frontal.jpg                   |
+| notes             | Text | Donado por la familia González     |
+
+El backend tomará el nombre, tipo y tamaño de cada archivo automáticamente. Si necesitas conservar anexos ya almacenados (por ejemplo, reusar una URL existente) agrega un campo adicional `attachments` de tipo `Text` con un JSON como `[{"name":"Factura.pdf","url":"https://storage.example.com/assets/piano/factura.pdf","mimetype":"application/pdf","size":524288]`; el orden del array debe coincidir con los archivos enviados para combinar metadatos con nuevos uploads.
 
 ## Listar bienes con filtros y búsqueda
 
@@ -122,23 +112,21 @@ GET {{baseUrl}}/patrimony/assets/asset-123
 
 Permite corregir información, mover el bien a otra congregación o cargar nuevos anexos (máximo 3). Cualquier cambio queda registrado en el historial con el usuario autenticado.
 
-```json
-{
-  "name": "Piano Yamaha C3X",
-  "location": "Auditorio",
-  "responsibleId": "urn:user:new-director",
-  "status": "ACTIVE",
-  "attachments": [
-    {
-      "name": "Inventario-2024.pdf",
-      "url": "https://storage.example.com/assets/piano/inventario.pdf",
-      "mimetype": "application/pdf",
-      "size": 734003
-    }
-  ],
-  "notes": "Traslado aprobado en comité 2024-Q3"
-}
-```
+Para actualizar anexos reutiliza el body `form-data`:
+
+* Envía los campos a modificar como entradas `Text` (por ejemplo `name`, `location`, `notes`).
+* Si quieres conservar documentos previamente almacenados, agrega un campo `attachments` de tipo `Text` con el JSON de cada archivo (`name`, `url`, `mimetype`, `size`).
+* Adjunta nuevos archivos repitiendo la clave `attachments` como tipo `File`.
+
+| Clave             | Tipo | Valor                                                                              |
+| ----------------- | ---- | ---------------------------------------------------------------------------------- |
+| location          | Text | Auditorio                                                                          |
+| responsibleId     | Text | urn:user:new-director                                                              |
+| notes             | Text | Traslado aprobado en comité 2024-Q3                                                |
+| attachments       | Text | [{"name":"Contrato-donacion.pdf","url":"https://storage.example.com/assets/piano/contrato.pdf","mimetype":"application/pdf","size":524288}] |
+| attachments       | File | inventario-2024.pdf                                                                 |
+
+> Consejo: si deseas eliminar todos los anexos existentes envía un campo `attachments` de tipo `Text` con el valor `[]` sin adjuntar archivos.
 
 ## Generar reporte de inventario
 
