@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inventário Patrimonial</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      margin: 24px;
+      color: #1f2937;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      margin-bottom: 24px;
+    }
+
+    .meta p {
+      margin: 4px 0;
+    }
+
+    .summary {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      min-width: 150px;
+      background: #f9fafb;
+    }
+
+    .summary-card h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+      color: #6b7280;
+    }
+
+    .summary-card strong {
+      font-size: 18px;
+      color: #111827;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    th {
+      background: #f3f4f6;
+      text-align: left;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #fafafa;
+    }
+
+    .status {
+      font-weight: 600;
+    }
+
+    .pending {
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+<h1>Inventário Patrimonial</h1>
+<div class="meta">
+  <p><strong>Gerado em:</strong> {{formatDate generatedAt}}</p>
+  {{#if filters.church}}
+    <p><strong>Congregação:</strong> {{filters.church}}</p>
+  {{/if}}
+  {{#if filters.category}}
+    <p><strong>Categoria:</strong> {{filters.category}}</p>
+  {{/if}}
+  {{#if filters.status}}
+    <p><strong>Status:</strong> {{filters.status}}</p>
+  {{/if}}
+</div>
+<br><br>
+
+<div class="summary">
+  <div class="summary-card">
+    <h2>Total de bens</h2>
+    <strong>{{summary.totalAssets}}</strong>
+  </div>
+  <div class="summary-card">
+    <h2>Valor estimado</h2>
+    <strong>{{summary.totalValueFormatted}}</strong>
+  </div>
+
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th>#</th>
+    <th>Código</th>
+    <th>Nome</th>
+    <th>Categoria</th>
+    <th>Status</th>
+    <th>Valor</th>
+    <th>Responsável</th>
+    <th>Localização</th>
+    <th>Aquisição</th>
+  </tr>
+  </thead>
+  <tbody>
+  {{#if assets.length}}
+    {{#each assets}}
+      <tr>
+        <td>{{index}}</td>
+        <td>{{code}}</td>
+        <td>{{name}}</td>
+        <td>{{category}}</td>
+        <td class="status">{{statusLabel}}</td>
+        <td>{{valueFormatted}}</td>
+        <td>{{responsibleId}}</td>
+        <td>{{location}}</td>
+        <td>{{acquisitionDateFormatted}}</td>
+
+      </tr>
+    {{/each}}
+  {{else}}
+    <tr>
+      <td colspan="11">
+        Nenhum bem cadastrado para os filtros informados.
+      </td>
+    </tr>
+  {{/if}}
+  </tbody>
+</table>
+</body>
+</html>
