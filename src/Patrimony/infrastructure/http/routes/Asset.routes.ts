@@ -6,7 +6,7 @@ import {
   getAssetController,
   listAssetsController,
   updateAssetController,
-} from "../controllers/Asset.controller"
+} from "../controllers"
 import CreateAssetValidator from "../validators/CreateAsset.validator"
 import UpdateAssetValidator from "../validators/UpdateAsset.validator"
 import ListAssetsValidator from "../validators/ListAssets.validator"
@@ -29,8 +29,6 @@ const resolveUserId = (request: Request) => {
 const collectAttachmentsFromRequest = (
   req: Request
 ): { attachments?: CreateAssetAttachmentRequest[]; provided: boolean } => {
-  console.log(req.files)
-
   const hasAttachmentsProp = Object.prototype.hasOwnProperty.call(
     req.body,
     "attachments"
@@ -146,6 +144,9 @@ router.put(
             : undefined,
         status: req.body.status as AssetStatus,
         attachments: provided ? (attachments ?? []) : undefined,
+        attachmentsToRemove: Array.isArray(req.body.attachmentsToRemove)
+          ? (req.body.attachmentsToRemove as string[])
+          : undefined,
         performedBy,
       } as UpdateAssetRequest,
       res
@@ -161,14 +162,8 @@ router.get(
 
     await generateInventoryReportController(
       {
-        churchId:
-          typeof req.query.churchId === "string"
-            ? req.query.churchId
-            : undefined,
-        category:
-          typeof req.query.category === "string"
-            ? req.query.category
-            : undefined,
+        ...req.query,
+        churchId: req["user"].churchId,
         format: req.query.format as "csv" | "pdf",
         status: req.query.status as AssetStatus,
         performedBy,

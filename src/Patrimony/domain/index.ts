@@ -16,7 +16,7 @@ export type {
 } from "./requests/InventoryReport.request"
 export type { GetAssetRequest } from "./requests/GetAsset.request"
 export { AssetNotFoundException } from "./exceptions/AssetNotFound.exception"
-export { AssetAttachmentLimitException } from "./exceptions/AssetAttachmentLimit.exception"
+
 export { type IAssetRepository } from "./interfaces/AssetRepository.interface"
 export type { AssetResponse } from "./responses"
 export { AssetCodeGenerator } from "./services/AssetCodeGenerator"

@@ -9,11 +9,11 @@ operaciones de alta o edición cambia el body a `multipart/form-data` y agrega c
 ## Base URL sugerida
 
 Configura una variable `{{baseUrl}}` apuntando al host de tu instancia (por ejemplo, `https://api.mi-iglesia.test`). Las
-rutas del módulo patrimonial cuelgan de `/patrimony/assets`.
+rutas del módulo patrimonial cuelgan de `/patrimony`.
 
 ## Crear un bien patrimonial
 
-`POST {{baseUrl}}/patrimony/assets`
+`POST {{baseUrl}}/patrimony`
 
 Carga la información principal del bien y (opcionalmente) hasta 3 anexos. El middleware completará campos como
 `performedBy` utilizando el usuario autenticado.
@@ -43,13 +43,13 @@ el orden del array debe coincidir con los archivos enviados para combinar metada
 
 ## Listar bienes con filtros y búsqueda
 
-`GET {{baseUrl}}/patrimony/assets`
+`GET {{baseUrl}}/patrimony`
 
 Usa query params para acotar los resultados. El patrón Criteria aplica paginación (`page`, `perPage`), filtros
 directos (`churchId`, `category`, `status`) y búsqueda textual (`search`) sobre nombre, código, responsable o ubicación.
 
 ```
-{{baseUrl}}/patrimony/assets?
+{{baseUrl}}/patrimony?
   page=1&
   perPage=10&
   churchId=urn:church:central&
@@ -90,9 +90,15 @@ La respuesta tiene formato de paginación estándar del proyecto:
           "performedAt": "2024-04-16T02:31:00.000Z",
           "notes": "Donado por la familia González",
           "changes": {
-            "name": { "current": "Piano Yamaha C3" },
-            "category": { "current": "instrument" },
-            "value": { "current": 48000 }
+            "name": {
+              "current": "Piano Yamaha C3"
+            },
+            "category": {
+              "current": "instrument"
+            },
+            "value": {
+              "current": 48000
+            }
           }
         }
       ],
@@ -110,21 +116,23 @@ La respuesta tiene formato de paginación estándar del proyecto:
 
 ## Consultar un bien específico
 
-`GET {{baseUrl}}/patrimony/assets/:assetId`
+`GET {{baseUrl}}/patrimony/:assetId`
 
 Solo necesitas sustituir `:assetId` por el identificador interno (`assetId`). Ideal para revisar la ficha completa
 durante auditorías.
 
 ```
-GET {{baseUrl}}/patrimony/assets/asset-123
+GET {{baseUrl}}/patrimony/asset-123
 ```
 
 ## Actualizar datos o anexos
 
-`PUT {{baseUrl}}/patrimony/assets/:assetId`
+`PUT {{baseUrl}}/patrimony/:assetId`
 
 Permite corregir información, mover el bien a otra congregación o cargar nuevos anexos (máximo 3). Cualquier cambio
-queda registrado en el historial con el usuario autenticado.
+queda registrado en el historial con el usuario autenticado. También puedes eliminar anexos existentes enviando sus
+identificadores en el arreglo `attachmentsToRemove`: el servicio los quita de la base de datos y borra los archivos del
+storage.
 
 Para actualizar anexos reutiliza el body `form-data`:
 
@@ -132,17 +140,22 @@ Para actualizar anexos reutiliza el body `form-data`:
 * Si quieres conservar documentos previamente almacenados, agrega un campo `attachments` de tipo `Text` con el JSON de
   cada archivo (`name`, `url`, `mimetype`, `size`).
 * Adjunta nuevos archivos repitiendo la clave `attachments` como tipo `File`.
+* Para eliminar anexos existentes agrega uno o más campos `attachmentsToRemove` (`Text`) con los `attachmentId`
+  originales (puedes consultarlos con `GET /patrimony/:assetId`). Repite la clave para cada id o envía un valor en JSON
+  como `["att-1","att-2"]` si estás usando `Content-Type: application/json`.
 
-| Clave         | Tipo | Valor                                                                                                                                       |
-|---------------|------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| location      | Text | Auditorio                                                                                                                                   |
-| responsibleId | Text | urn:user:new-director                                                                                                                       |
-| notes         | Text | Traslado aprobado en comité 2024-Q3                                                                                                         |
-| attachments   | Text | [{"name":"Contrato-donacion.pdf","url":"https://storage.example.com/assets/piano/contrato.pdf","mimetype":"application/pdf","size":524288}] |
-| attachments   | File | inventario-2024.pdf                                                                                                                         |
+| Clave                | Tipo | Valor                                                                                                                                       |
+|----------------------|------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| location             | Text | Auditorio                                                                                                                                   |
+| responsibleId        | Text | urn:user:new-director                                                                                                                       |
+| notes                | Text | Traslado aprobado en comité 2024-Q3                                                                                                         |
+| attachments          | Text | [{"name":"Contrato-donacion.pdf","url":"https://storage.example.com/assets/piano/contrato.pdf","mimetype":"application/pdf","size":524288}] |
+| attachments          | File | inventario-2024.pdf                                                                                                                         |
+| attachmentsToRemove  | Text | urn:attachment:1                                                                                                                            |
+| attachmentsToRemove  | Text | urn:attachment:2                                                                                                                            |
 
-> Consejo: si deseas eliminar todos los anexos existentes envía un campo `attachments` de tipo `Text` con el valor `[]`
-> sin adjuntar archivos.
+Cuando envíes `attachmentsToRemove` el backend eliminará esos registros y ejecutará `deleteFile` en cada URL
+correspondiente. Si no agregas nuevos archivos y dejas el campo vacío, los anexos restantes se mantienen sin cambios.
 
 ## Generar reporte de inventario
 

@@ -1,0 +1,5 @@
+export * from "./UpdateAsset.controller"
+export * from "./CreateAsset.controller"
+export * from "./ListAssets.controller"
+export * from "./GetAsset.controller"
+export * from "./GenerateInventoryReport.controller"

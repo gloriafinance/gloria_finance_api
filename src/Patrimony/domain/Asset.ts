@@ -187,15 +187,12 @@ export class Asset extends AggregateRoot {
   ): AssetHistoryEntry | undefined {
     const changes: AssetHistoryEntry["changes"] = {}
 
-    if (typeof payload.name === "string" && payload.name !== this.name) {
+    if (payload.name !== this.name) {
       changes.name = { previous: this.name, current: payload.name }
       this.name = payload.name
     }
 
-    if (
-      typeof payload.category === "string" &&
-      payload.category !== this.category
-    ) {
+    if (payload.category !== this.category) {
       changes.category = { previous: this.category, current: payload.category }
       this.category = payload.category
     }
@@ -211,34 +208,17 @@ export class Asset extends AggregateRoot {
       this.acquisitionDate = payload.acquisitionDate
     }
 
-    if (typeof payload.value === "number" && payload.value !== this.value) {
+    if (Number(payload.value) !== Number(this.value)) {
       changes.value = { previous: this.value, current: payload.value }
-      this.value = payload.value
+      this.value = Number(payload.value)
     }
 
-    if (
-      typeof payload.churchId === "string" &&
-      payload.churchId !== this.churchId
-    ) {
-      changes.churchId = {
-        previous: this.churchId,
-        current: payload.churchId,
-      }
-      this.churchId = payload.churchId
-    }
-
-    if (
-      typeof payload.location === "string" &&
-      payload.location !== this.location
-    ) {
+    if (payload.location !== this.location) {
       changes.location = { previous: this.location, current: payload.location }
       this.location = payload.location
     }
 
-    if (
-      typeof payload.responsibleId === "string" &&
-      payload.responsibleId !== this.responsibleId
-    ) {
+    if (payload.responsibleId !== this.responsibleId) {
       changes.responsibleId = {
         previous: this.responsibleId,
         current: payload.responsibleId,

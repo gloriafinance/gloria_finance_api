@@ -1,3 +1,7 @@
+<<<<<<< ours
+=======
+<!DOCTYPE html>
+>>>>>>> theirs
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -82,6 +86,7 @@
     <h1>Inventário Patrimonial</h1>
     <div class="meta">
       <p><strong>Gerado em:</strong> {{formatDate generatedAt}}</p>
+<<<<<<< ours
       {{#if filters.churchId}}
         <p><strong>Congregação:</strong> {{filters.churchId}}</p>
       {{/if}}
@@ -90,6 +95,16 @@
       {{/if}}
       {{#if filters.status}}
         <p><strong>Status:</strong> {{filters.status}}</p>
+=======
+      {{#if filters.congregationId}}
+      <p><strong>Congregação:</strong> {{filters.congregationId}}</p>
+      {{/if}}
+      {{#if filters.category}}
+      <p><strong>Categoria:</strong> {{filters.category}}</p>
+      {{/if}}
+      {{#if filters.status}}
+      <p><strong>Status:</strong> {{filters.status}}</p>
+>>>>>>> theirs
       {{/if}}
     </div>
 
@@ -126,6 +141,7 @@
       </thead>
       <tbody>
         {{#if assets.length}}
+<<<<<<< ours
           {{#each assets}}
             <tr>
               <td>{{index}}</td>
@@ -147,8 +163,33 @@
           <tr>
             <td colspan="11">Nenhum bem cadastrado para os filtros informados.</td>
           </tr>
+=======
+        {{#each assets}}
+        <tr>
+          <td>{{index}}</td>
+          <td>{{code}}</td>
+          <td>{{name}}</td>
+          <td>{{category}}</td>
+          <td class="status">{{statusLabel}}</td>
+          <td>{{valueFormatted}}</td>
+          <td>{{congregationId}}</td>
+          <td>{{responsibleId}}</td>
+          <td>{{location}}</td>
+          <td>{{acquisitionDateFormatted}}</td>
+          <td class="pending">{{#if documentsPending}}Sim{{else}}Não{{/if}}</td>
+        </tr>
+        {{/each}}
+        {{else}}
+        <tr>
+          <td colspan="11">Nenhum bem cadastrado para os filtros informados.</td>
+        </tr>
+>>>>>>> theirs
         {{/if}}
       </tbody>
     </table>
   </body>
+<<<<<<< ours
 </html>
+=======
+</html>
+>>>>>>> theirs

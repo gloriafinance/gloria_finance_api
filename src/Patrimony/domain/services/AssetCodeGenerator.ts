@@ -1,5 +1,4 @@
-import { IAssetRepository } from "../interfaces/AssetRepository.interface"
-import { AssetListFilters } from "../types/AssetListFilters.type"
+import { AssetListFilters, IAssetRepository } from "@/Patrimony"
 
 const CODE_PREFIX = "BEM-"
 const CODE_PAD_LENGTH = 6

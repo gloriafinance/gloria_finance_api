@@ -10,7 +10,6 @@ import {
 const logger = Logger("CreateAssetValidator")
 
 export default async (req, res, next) => {
-  console.log(req.files)
   const { attachments, provided } = normalizeAttachmentPayload(
     req.body.attachments,
     req.files?.attachments

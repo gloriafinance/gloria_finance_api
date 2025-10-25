@@ -23,6 +23,14 @@ export default async (req, res, next) => {
     delete payload.attachments
   }
 
+  if (Array.isArray(payload.attachmentsToRemove)) {
+    payload.attachmentsToRemove = payload.attachmentsToRemove
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter((value) => value.length > 0)
+  } else {
+    delete payload.attachmentsToRemove
+  }
+
   req.body = payload
 
   logger.info("Validating update asset payload", payload)
@@ -35,7 +43,6 @@ export default async (req, res, next) => {
     category: "string",
     value: "numeric",
     acquisitionDate: "dateFormat:YYYY-MM-DD",
-    churchId: "string",
     location: "string",
     responsibleId: "string",
     status: `in:${statusValues}`,
@@ -43,6 +50,8 @@ export default async (req, res, next) => {
     "attachments.*.name": "required|string",
     "attachments.*.mimetype": "required|string",
     "attachments.*.size": "required|integer",
+    attachmentsToRemove: "array",
+    "attachmentsToRemove.*": "string",
   }
 
   const validator = new Validator(payload, rules)

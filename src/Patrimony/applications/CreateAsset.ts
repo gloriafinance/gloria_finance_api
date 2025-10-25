@@ -1,15 +1,12 @@
 import { Logger } from "@/Shared/adapter"
 import {
   Asset,
-  AssetAttachmentLimitException,
   AssetCodeGenerator,
   AssetStatus,
   CreateAssetRequest,
   IAssetRepository,
 } from "../domain"
 import { mapAssetToResponse } from "./mappers/AssetResponse.mapper"
-
-const MAX_ATTACHMENTS = 3
 
 export class CreateAsset {
   private readonly logger = Logger(CreateAsset.name)
@@ -30,10 +27,6 @@ export class CreateAsset {
       mimetype: attachment.mimetype!,
       size: attachment.size!,
     }))
-
-    if (attachments.length > MAX_ATTACHMENTS) {
-      throw new AssetAttachmentLimitException()
-    }
 
     const code = await this.codeGenerator.generate()
 

@@ -12,6 +12,7 @@ export type UpdateAssetRequest = {
   responsibleId?: string
   status?: AssetStatus
   attachments?: CreateAssetAttachmentRequest[]
+  attachmentsToRemove?: string[]
   performedBy: string
   notes?: string
 }
