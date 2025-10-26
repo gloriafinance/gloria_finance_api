@@ -12,9 +12,7 @@ export class RecordAssetInventory {
 
   constructor(private readonly repository: IAssetRepository) {}
 
-  async execute(
-    request: RecordAssetInventoryRequest
-  ): Promise<AssetResponse> {
+  async execute(request: RecordAssetInventoryRequest): Promise<AssetResponse> {
     this.logger.info("Recording physical inventory for asset", request)
 
     const asset = await this.repository.one({ assetId: request.assetId })

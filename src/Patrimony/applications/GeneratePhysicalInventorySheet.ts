@@ -58,7 +58,8 @@ export class GeneratePhysicalInventorySheet {
     ]
 
     const rows = assets.map((asset) => {
-      const inventoryStatus = asset.inventoryStatus as AssetInventoryStatus | null
+      const inventoryStatus =
+        asset.inventoryStatus as AssetInventoryStatus | null
 
       return [
         asset.code,
@@ -70,9 +71,7 @@ export class GeneratePhysicalInventorySheet {
         asset.inventoryCheckedAt
           ? new Date(asset.inventoryCheckedAt).toLocaleDateString("pt-BR")
           : "",
-        inventoryStatus
-          ? AssetInventoryStatusLabels[inventoryStatus]
-          : "",
+        inventoryStatus ? AssetInventoryStatusLabels[inventoryStatus] : "",
         "",
       ]
     })

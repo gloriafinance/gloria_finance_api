@@ -1,8 +1,8 @@
 import { Logger } from "@/Shared/adapter"
 import {
+  AssetNotFoundException,
   GetAssetRequest,
   IAssetRepository,
-  AssetNotFoundException,
 } from "../domain"
 import { mapAssetToResponse } from "./mappers/AssetResponse.mapper"
 

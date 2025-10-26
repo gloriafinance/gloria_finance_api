@@ -3,12 +3,15 @@ import * as fs from "fs"
 import { v4 } from "uuid"
 import { GenericException, IStorageService } from "../domain"
 import { Logger } from "../adapter"
+import { CacheService } from "./CacheService"
 
 export class StorageGCP implements IStorageService {
   private static _instance: StorageGCP
   private logger = Logger("StorageGCP")
   private storage: Storage
   private bucketName: string
+  private cacheService = CacheService.getInstance()
+  private readonly downloadCacheTtlSeconds = 50 * 60
 
   constructor(bucketName?: string) {
     this.storage = new Storage()
@@ -48,8 +51,17 @@ export class StorageGCP implements IStorageService {
    * @param pathInFileStorage
    */
   async downloadFile(pathInFileStorage: string): Promise<string> {
-    this.logger.info(`Generating signed URL for file: ${pathInFileStorage}`)
     try {
+      const cacheKey = `storage:download:${this.bucketName}:${pathInFileStorage}`
+      const cachedUrl = this.cacheService.get(cacheKey)
+
+      if (cachedUrl) {
+        this.logger.info(
+          `Returning cached signed URL for file: ${pathInFileStorage}`
+        )
+        return cachedUrl
+      }
+
       const bucket = this.storage.bucket(this.bucketName)
       const file = bucket.file(pathInFileStorage)
 
@@ -59,6 +71,7 @@ export class StorageGCP implements IStorageService {
         expires: Date.now() + 3600 * 1000,
       })
 
+      this.cacheService.set(cacheKey, url, this.downloadCacheTtlSeconds)
       return url
     } catch (error) {
       this.logger.error("Error generating signed URL:", error)
