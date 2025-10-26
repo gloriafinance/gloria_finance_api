@@ -1,10 +1,13 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AssetStatus } from "./enums/AssetStatus.enum"
+import { AssetInventoryStatus } from "./enums/AssetInventoryStatus.enum"
 import { AssetAttachment } from "./types/AssetAttachment.type"
 import { AssetHistoryEntry } from "./types/AssetHistoryEntry.type"
+import { AssetDisposalRecord } from "./types/AssetDisposal.type"
 import { v4 } from "uuid"
 import { DateBR } from "@/Shared/helpers"
+import { InvalidAssetDisposalException } from "./exceptions/InvalidAssetDisposal.exception"
 
 export type AssetPrimitives = {
   id?: string
@@ -20,8 +23,10 @@ export type AssetPrimitives = {
   status: AssetStatus
   attachments: AssetAttachment[]
   history: AssetHistoryEntry[]
+  inventoryStatus?: AssetInventoryStatus | null
   inventoryCheckedAt?: Date | null
   inventoryCheckedBy?: string | null
+  disposal?: AssetDisposalRecord | null
   createdAt: Date
   updatedAt: Date
 }
@@ -40,8 +45,10 @@ export class Asset extends AggregateRoot {
   private status: AssetStatus
   private attachments: AssetAttachment[]
   private history: AssetHistoryEntry[]
+  private inventoryStatus?: AssetInventoryStatus | null
   private inventoryCheckedAt?: Date | null
   private inventoryCheckedBy?: string | null
+  private disposal?: AssetDisposalRecord | null
   private createdAt: Date
   private updatedAt: Date
 
@@ -78,7 +85,11 @@ export class Asset extends AggregateRoot {
       ...attachment,
     }))
     asset.history = []
+    asset.inventoryStatus = null
     asset.createdAt = DateBR()
+    asset.inventoryCheckedAt = null
+    asset.inventoryCheckedBy = null
+    asset.disposal = null
     asset.updatedAt = asset.createdAt
 
     asset.appendHistory({
@@ -120,10 +131,17 @@ export class Asset extends AggregateRoot {
       ...entry,
       performedAt: new Date(entry.performedAt),
     }))
+    asset.inventoryStatus = plainData.inventoryStatus ?? null
     asset.inventoryCheckedAt = plainData.inventoryCheckedAt
       ? new Date(plainData.inventoryCheckedAt)
       : null
     asset.inventoryCheckedBy = plainData.inventoryCheckedBy ?? null
+    asset.disposal = plainData.disposal
+      ? {
+          ...plainData.disposal,
+          occurredAt: new Date(plainData.disposal.occurredAt),
+        }
+      : null
     asset.createdAt = new Date(plainData.createdAt)
     asset.updatedAt = new Date(plainData.updatedAt)
 
@@ -164,8 +182,10 @@ export class Asset extends AggregateRoot {
       status: this.status,
       attachments: this.attachments,
       history: this.history,
+      inventoryStatus: this.inventoryStatus ?? null,
       inventoryCheckedAt: this.inventoryCheckedAt ?? null,
       inventoryCheckedBy: this.inventoryCheckedBy ?? null,
+      disposal: this.disposal ?? null,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     }
@@ -298,16 +318,77 @@ export class Asset extends AggregateRoot {
 
   markInventory(metadata: {
     performedBy: string
+    status: AssetInventoryStatus
     notes?: string
     checkedAt?: Date
   }) {
+    const previousStatus = this.inventoryStatus ?? null
     this.inventoryCheckedAt = metadata.checkedAt ?? DateBR()
     this.inventoryCheckedBy = metadata.performedBy
+    this.inventoryStatus = metadata.status
     this.touch()
     this.appendHistory({
       action: "INVENTORY_CONFIRMED",
       performedBy: metadata.performedBy,
       notes: metadata.notes,
+      changes: {
+        inventoryStatus: {
+          previous: previousStatus,
+          current: metadata.status,
+        },
+      },
+    })
+  }
+
+  dispose(payload: {
+    status: AssetStatus
+    reason: string
+    performedBy: string
+    occurredAt?: Date
+    notes?: string
+  }) {
+    const allowedStatuses: AssetStatus[] = [
+      AssetStatus.DONATED,
+      AssetStatus.SOLD,
+      AssetStatus.LOST,
+    ]
+
+    if (!allowedStatuses.includes(payload.status)) {
+      throw new InvalidAssetDisposalException()
+    }
+
+    const occurredAt = payload.occurredAt ?? DateBR()
+
+    const previousStatus = this.status
+    const previousDisposal = this.disposal
+
+    this.status = payload.status
+    const disposal: AssetDisposalRecord = {
+      status: payload.status,
+      reason: payload.reason,
+      performedBy: payload.performedBy,
+      occurredAt,
+      notes: payload.notes,
+    }
+
+    this.disposal = disposal
+
+    this.touch()
+    this.appendHistory({
+      action: "DISPOSAL",
+      performedBy: payload.performedBy,
+      notes: payload.notes,
+      changes: {
+        status: { previous: previousStatus, current: this.status },
+        disposalReason: {
+          previous: previousDisposal?.reason,
+          current: disposal.reason,
+        },
+        disposalDate: {
+          previous: previousDisposal?.occurredAt,
+          current: occurredAt,
+        },
+      },
     })
   }
 

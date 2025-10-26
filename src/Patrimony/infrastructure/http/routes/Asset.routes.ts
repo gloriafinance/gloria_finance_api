@@ -3,19 +3,29 @@ import { PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   createAssetController,
   generateInventoryReportController,
+  generatePhysicalInventorySheetController,
   getAssetController,
   listAssetsController,
+  disposeAssetController,
+  recordAssetInventoryController,
   updateAssetController,
 } from "../controllers"
 import CreateAssetValidator from "../validators/CreateAsset.validator"
 import UpdateAssetValidator from "../validators/UpdateAsset.validator"
 import ListAssetsValidator from "../validators/ListAssets.validator"
 import InventoryReportValidator from "../validators/InventoryReport.validator"
+import DisposeAssetValidator from "../validators/DisposeAsset.validator"
+import RecordAssetInventoryValidator from "../validators/RecordAssetInventory.validator"
+import PhysicalInventorySheetValidator from "../validators/PhysicalInventorySheet.validator"
 import {
   AssetStatus,
   CreateAssetAttachmentRequest,
   CreateAssetRequest,
   InventoryReportFormat,
+  AssetInventoryStatus,
+  DisposeAssetRequest,
+  PhysicalInventorySheetRequest,
+  RecordAssetInventoryRequest,
   UpdateAssetRequest,
 } from "@/Patrimony"
 
@@ -150,6 +160,63 @@ router.put(
           : undefined,
         performedBy,
       } as UpdateAssetRequest,
+      res
+    )
+  }
+)
+
+router.post(
+  "/:assetId/disposal",
+  [PermissionMiddleware, DisposeAssetValidator],
+  async (req: Request, res: Response) => {
+    const performedBy = resolveUserId(req)
+
+    await disposeAssetController(
+      {
+        ...req.body,
+        assetId: req.params.assetId,
+        status: req.body.status as DisposeAssetRequest["status"],
+        performedBy,
+      } as DisposeAssetRequest,
+      res
+    )
+  }
+)
+
+router.post(
+  "/:assetId/inventory",
+  [PermissionMiddleware, RecordAssetInventoryValidator],
+  async (req: Request, res: Response) => {
+    const performedBy = resolveUserId(req)
+
+    await recordAssetInventoryController(
+      {
+        ...req.body,
+        assetId: req.params.assetId,
+        status: req.body.status as AssetInventoryStatus,
+        performedBy,
+      } as RecordAssetInventoryRequest,
+      res
+    )
+  }
+)
+
+router.get(
+  "/report/inventory/physical",
+  [PermissionMiddleware, PhysicalInventorySheetValidator],
+  async (req: Request, res: Response) => {
+    const performedBy = resolveUserId(req)
+
+    await generatePhysicalInventorySheetController(
+      {
+        churchId: req["user"].churchId,
+        category:
+          typeof req.query.category === "string"
+            ? req.query.category
+            : undefined,
+        status: req.query.status as AssetStatus,
+        performedBy,
+      } as PhysicalInventorySheetRequest,
       res
     )
   }

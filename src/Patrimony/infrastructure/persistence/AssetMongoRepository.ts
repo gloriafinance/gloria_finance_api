@@ -109,6 +109,15 @@ export class AssetMongoRepository
       performedAt: entry.performedAt ? new Date(entry.performedAt) : new Date(),
     }))
 
+    const disposal = document.disposal
+      ? {
+          ...document.disposal,
+          occurredAt: document.disposal.occurredAt
+            ? new Date(document.disposal.occurredAt)
+            : new Date(),
+        }
+      : null
+
     return {
       id: document._id?.toString(),
       assetId: document.assetId,
@@ -125,10 +134,12 @@ export class AssetMongoRepository
       status: document.status,
       attachments,
       history,
+      inventoryStatus: document.inventoryStatus ?? null,
       inventoryCheckedAt: document.inventoryCheckedAt
         ? new Date(document.inventoryCheckedAt)
         : null,
       inventoryCheckedBy: document.inventoryCheckedBy ?? null,
+      disposal,
       createdAt: document.createdAt ? new Date(document.createdAt) : new Date(),
       updatedAt: document.updatedAt ? new Date(document.updatedAt) : new Date(),
     }
