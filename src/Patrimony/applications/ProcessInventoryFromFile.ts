@@ -1,11 +1,7 @@
 import { createReadStream, promises as fs } from "fs"
 import { parse } from "@fast-csv/parse"
 import { Logger } from "@/Shared/adapter"
-import {
-  AssetInventoryStatus,
-  IAssetRepository,
-  ImportInventoryRequest,
-} from "../domain"
+import { AssetInventoryStatus, IAssetRepository, ImportInventoryRequest, } from "../domain"
 import { IQueue, IQueueService, QueueName } from "@/Shared/domain"
 import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
 
@@ -24,8 +20,6 @@ type ImportInventorySummary = {
   errors: Array<{ assetId?: string; reason: string }>
 }
 
-const CSV_DELIMITER = ";"
-
 const normalizeHeader = (header: string): string =>
   header
     .normalize("NFD")
@@ -34,21 +28,49 @@ const normalizeHeader = (header: string): string =>
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
 
-const HEADER_MAPPING: Record<string, string> = {
+const HEADER_KEYS: Record<string, string> = {
   id_do_ativo: "assetId",
-  id: "assetId",
-  asset_id: "assetId",
+  codigo_atual: "currentCode",
   codigo_inventario: "inventoryCode",
-  codigo: "inventoryCode",
-  codigo_de_inventario: "inventoryCode",
   quantidade_inventario: "inventoryQuantity",
-  quantidade: "inventoryQuantity",
-  quantidade_inventariada: "inventoryQuantity",
+  quantidade_registrada: "registeredQuantity",
   status_inventario: "inventoryStatus",
-  status: "inventoryStatus",
   observacoes: "notes",
-  observacao: "notes",
-  comentarios: "notes",
+}
+
+const detectDelimiter = async (filePath: string): Promise<string> => {
+  try {
+    const content = await fs.readFile(filePath, { encoding: "utf-8" })
+    const firstLine = content.split(/\r?\n/, 1)[0] ?? ""
+
+    const semicolonCount = (firstLine.match(/;/g) || []).length
+    const commaCount = (firstLine.match(/,/g) || []).length
+    const tabCount = (firstLine.match(/\t/g) || []).length
+
+    if (
+      semicolonCount >= commaCount &&
+      semicolonCount >= tabCount &&
+      semicolonCount > 0
+    ) {
+      return ";"
+    }
+
+    if (
+      commaCount >= semicolonCount &&
+      commaCount >= tabCount &&
+      commaCount > 0
+    ) {
+      return ","
+    }
+
+    if (tabCount > 0) {
+      return "\t"
+    }
+  } catch (error) {
+    // Fallback handled below
+  }
+
+  return ";"
 }
 
 const parseInventoryStatus = (
@@ -63,8 +85,8 @@ const parseInventoryStatus = (
   return AssetInventoryStatus.CONFIRMED
 }
 
-export class ImportInventoryFromFile implements IQueue {
-  private readonly logger = Logger(ImportInventoryFromFile.name)
+export class ProcessInventoryFromFile implements IQueue {
+  private readonly logger = Logger(ProcessInventoryFromFile.name)
 
   constructor(
     private readonly repository: IAssetRepository,
@@ -74,14 +96,26 @@ export class ImportInventoryFromFile implements IQueue {
   async handle(args: ImportInventoryRequest): Promise<any | void> {
     this.logger.info("Importing physical inventory from CSV", args)
 
+     const startedAt = new Date()
     const summary = await this.execute(args)
+    const finishedAt = new Date()
+
+    const emailContext = {
+      startedAt: startedAt.toLocaleString("pt-BR"),
+      finishedAt: finishedAt.toLocaleString("pt-BR"),
+      performer: args.performedByDetails,
+      processed: summary.processed,
+      updated: summary.updated,
+      skipped: summary.skipped,
+      errors: summary.errors,
+    }
 
     this.queueService.dispatch(QueueName.SendMail, {
       to: args.performedByDetails.email,
       subject: "Status de inventario",
       template: TemplateEmail.SummaryInventory,
       userName: args.performedByDetails.name,
-      context: summary,
+      context: emailContext,
     })
 
     await fs.unlink(args.filePath).catch(() => undefined)
@@ -161,6 +195,7 @@ export class ImportInventoryFromFile implements IQueue {
 
   private async readRows(filePath: string): Promise<InventoryCsvRow[]> {
     const rows: InventoryCsvRow[] = []
+    const delimiter = await detectDelimiter(filePath)
 
     await new Promise<void>((resolve, reject) => {
       const stream = createReadStream(filePath).pipe(
@@ -168,10 +203,9 @@ export class ImportInventoryFromFile implements IQueue {
           headers: (headers: string[]) =>
             headers.map((header) => {
               const normalized = normalizeHeader(header)
-
-              return HEADER_MAPPING[normalized] ?? normalized
+              return HEADER_KEYS[normalized] ?? normalized
             }),
-          delimiter: CSV_DELIMITER,
+          delimiter,
           ignoreEmpty: true,
           trim: true,
         })
@@ -181,15 +215,21 @@ export class ImportInventoryFromFile implements IQueue {
         .on("error", (error) => reject(error))
         .on("data", (data: Record<string, string>) => {
           const assetId = (data["assetId"] ?? "").trim()
-          const inventoryCode = (data["inventoryCode"] ?? "").trim()
-          const quantityValue = data["inventoryQuantity"]
-          const notes = (data["notes"] ?? "").trim() || undefined
+          const inventoryCode =
+            (data["inventoryCode"] ?? data["currentCode"] ?? "").trim()
 
-          const inventoryQuantity = quantityValue
-            ? Number(quantityValue.replace(/\./g, "").replace(",", ".").trim())
+          const quantityRaw =
+            (data["inventoryQuantity"] ?? data["registeredQuantity"] ?? "").trim()
+
+          const inventoryQuantity = quantityRaw
+            ? Number(quantityRaw.replace(/\./g, "").replace(",", "."))
             : Number.NaN
 
-          const inventoryStatus = parseInventoryStatus(data["inventoryStatus"])
+          const inventoryStatusRaw = (data["inventoryStatus"] ?? "").trim()
+          const inventoryStatus = parseInventoryStatus(inventoryStatusRaw)
+
+          const notesRaw = (data["notes"] ?? "").trim()
+          const notes = notesRaw.length > 0 ? notesRaw : undefined
 
           rows.push({
             assetId,
@@ -198,8 +238,7 @@ export class ImportInventoryFromFile implements IQueue {
             inventoryStatus,
             notes,
           })
-        })
-        .on("end", () => resolve())
+        })        .on("end", () => resolve())
     })
 
     return rows
