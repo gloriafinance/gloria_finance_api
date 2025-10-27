@@ -26,9 +26,11 @@ archivo se agrega en un campo `attachments` (puedes repetir la clave tantas vece
 
 | Clave           | Tipo | Valor                          |
 |-----------------|------|--------------------------------|
+| code            | Text | BEM-2025-001                   |
 | name            | Text | Piano Yamaha C3                |
 | category        | Text | instrument                     |
 | value           | Text | 48000                          |
+| quantity        | Text | 12                             |
 | acquisitionDate | Text | 2024-04-15                     |
 | churchId        | Text | urn:church:central             |
 | location        | Text | Salón principal                |
@@ -37,6 +39,8 @@ archivo se agrega en un campo `attachments` (puedes repetir la clave tantas vece
 | attachments     | File | factura.pdf                    |
 | attachments     | File | foto-frontal.jpg               |
 | notes           | Text | Donado por la familia González |
+
+> Los campos `code` (identificador patrimonial) y `quantity` (cantidad registrada) son obligatorios en el alta.
 
 El backend tomará el nombre, tipo y tamaño de cada archivo automáticamente. Si necesitas conservar anexos ya
 almacenados (por ejemplo, reusar una URL existente) agrega un campo adicional `attachments` de tipo `Text` con un JSON
@@ -53,7 +57,9 @@ el orden del array debe coincidir con los archivos enviados para combinar metada
 
 Usa query params para acotar los resultados. El patrón Criteria aplica paginación (`page`, `perPage`), filtros
 directos (`churchId`, `category`, `status`) y búsqueda textual (`search`) sobre nombre, código, responsable (por id o
-nombre) o ubicación.
+nombre) o ubicación. Cuando el activo ya pasó por inventario físico, cada item incluirá `inventoryStatus`,
+`inventoryCheckedAt` e `inventoryCheckedBy` (con `memberId`, `name`, `email`, `phone`) para dejar el rastro completo de
+quién hizo la última verificación.
 
 ```
 {{baseUrl}}/patrimony?
@@ -76,6 +82,7 @@ La respuesta tiene formato de paginación estándar del proyecto:
       "category": "instrument",
       "acquisitionDate": "2024-04-15T00:00:00.000Z",
       "value": 48000,
+      "quantity": 12,
       "churchId": "urn:church:central",
       "location": "Salón principal",
       "responsibleId": "urn:member:music-director",
@@ -116,6 +123,14 @@ La respuesta tiene formato de paginación estándar del proyecto:
         }
       ],
       "documentsPending": false,
+      "inventoryStatus": "CONFIRMED",
+      "inventoryCheckedAt": "2024-09-12T00:00:00.000Z",
+      "inventoryCheckedBy": {
+        "memberId": "67c11a75-e23e-4e3f-8d3a-a4328246055e",
+        "name": "angel",
+        "email": "programador@gmail.com",
+        "phone": "+55 11 1423-4234"
+      },
       "createdAt": "2024-04-16T02:31:00.000Z",
       "updatedAt": "2024-04-16T02:31:00.000Z"
     }
@@ -227,20 +242,23 @@ similar a:
 `POST {{baseUrl}}/patrimony/:assetId/inventory`
 
 Permite dejar constancia de que un activo fue verificado físicamente. El campo `status` usa los valores del enumerado de
-inventario (`CONFIRMED`, `NOT_FOUND`). Puedes adjuntar notas para clarificar el resultado. El parámetro `checkedAt` es
+inventario (`CONFIRMED`, `NOT_FOUND`). Debes informar el nuevo `code` (etiqueta escrita durante el inventario) y la
+`quantity` encontrada en la inspección. Puedes adjuntar notas para clarificar el resultado. El parámetro `checkedAt` es
 opcional, acepta formato `YYYY-MM-DD` y, si no se envía, se tomará la fecha actual.
 
 ```json
 POST {{baseUrl}}/patrimony/asset-123/inventory
 {
   "status": "CONFIRMED",
+  "code": "INV-2024-00045",
+  "quantity": 36,
   "checkedAt": "2024-09-12",
   "notes": "Verificado durante la auditoría trimestral"
 }
 ```
 
 El servicio devolverá el activo con los campos `inventoryStatus`, `inventoryCheckedAt` e `inventoryCheckedBy` completos
-y un nuevo evento en el historial (`INVENTORY_CONFIRMED`).
+y un nuevo evento en el historial (`INVENTORY_CONFIRMED`). El bloque `inventoryCheckedBy` trae los datos del usuario autenticado que ejecutó la operación (`memberId`, `name`, `email`, `phone`), para que quede registrado quién realizó la verificación.
 
 ## Descargar checklist para inventario físico
 
@@ -256,8 +274,24 @@ valores que la búsqueda general (`category`, `status`).
   status=ACTIVE
 ```
 
-El archivo contiene columnas para código, nombre, responsable, localización, estado y el último resultado de inventario
-registrado. En Postman selecciona "Send and Download" o "Save Response" para guardar el CSV.
+El archivo contiene columnas para el identificador interno del bien (`ID do ativo`), código actual, cantidad registrada,
+nombre, responsable, localización, estado y el último resultado de inventario registrado, además de campos vacíos para
+que el equipo de campo informe el nuevo código y la cantidad contada (`Código inventário`, `Quantidade inventário`,
+`Status inventário`, `Observações`). En Postman selecciona "Send and Download" o "Save Response" para guardar el CSV.
+
+## Importar checklist para actualizar inventario
+
+`POST {{baseUrl}}/patrimony/inventory/import`
+
+Permite subir el CSV completado y aplicar los resultados en lote. Envía el archivo como `form-data` en la clave
+`inventoryFile` (también acepta `file`). Cada fila debe conservar el `ID do ativo` generado por el sistema y completar al
+menos los campos `Código inventário` (nuevo identificador físico) y `Quantidade inventário` (número entero). Opcionalmente
+puedes informar `Status inventário` (`CONFIRMED` o `NOT_FOUND`) y `Observações`.
+
+Las filas sin identificador, código o cantidad se descartan automáticamente. La respuesta incluye un resumen con los
+contadores `processed`, `updated`, `skipped` y `errors` para ayudarte a validar el resultado. Cada registro actualizado
+mostrará el `inventoryCheckedBy` con los datos del usuario que realizó la importación (según el token utilizado), de modo
+que tengas trazabilidad del responsable del lote.
 
 ---
 

@@ -11,5 +11,9 @@ export type DisposeAssetRequest = {
   reason: string
   disposedAt?: string
   observations?: string
-  performedBy: string
+  performedByDetails: {
+    memberId: string
+    name: string
+    email: string
+  }
 }

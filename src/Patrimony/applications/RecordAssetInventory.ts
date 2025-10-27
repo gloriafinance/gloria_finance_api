@@ -26,10 +26,12 @@ export class RecordAssetInventory {
       : undefined
 
     asset.markInventory({
-      performedBy: request.performedBy,
+      performedByDetails: request.performedByDetails,
       status: request.status,
       notes: request.notes,
       checkedAt,
+      code: request.code,
+      quantity: request.quantity,
     })
 
     await this.repository.upsert(asset)

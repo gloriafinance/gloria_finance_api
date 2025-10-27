@@ -7,4 +7,5 @@ export enum QueueName {
   InitialLoadingFinancialConcepts = "InitialLoadingFinancialConcepts",
   SendMail = "SendMail",
   TelegramNotification = "TelegramNotification",
+  ProcessInventoryFromFile = "ProcessInventoryFromFile",
 }

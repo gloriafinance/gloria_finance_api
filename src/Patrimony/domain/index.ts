@@ -8,6 +8,7 @@ export type { AssetAttachment } from "./types/AssetAttachment.type"
 export type { AssetHistoryEntry } from "./types/AssetHistoryEntry.type"
 export type { AssetDisposalRecord } from "./types/AssetDisposal.type"
 export type { AssetResponsible } from "./types/AssetResponsible.type"
+export type { AssetInventoryChecker } from "./types/AssetInventoryChecker.type"
 export type { AssetModel } from "./models/Asset.model"
 export type { AssetListFilters } from "./types/AssetListFilters.type"
 export type {
@@ -27,6 +28,7 @@ export type {
 } from "./requests/DisposeAsset.request"
 export type { RecordAssetInventoryRequest } from "./requests/RecordAssetInventory.request"
 export type { PhysicalInventorySheetRequest } from "./requests/PhysicalInventorySheet.request"
+export type { ImportInventoryRequest } from "./requests/ImportInventory.request"
 export { AssetNotFoundException } from "./exceptions/AssetNotFound.exception"
 export { InvalidAssetDisposalException } from "./exceptions/InvalidAssetDisposal.exception"
 

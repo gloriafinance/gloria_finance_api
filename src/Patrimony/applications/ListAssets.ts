@@ -1,12 +1,19 @@
 import { Logger } from "@/Shared/adapter"
-import { Criteria, Filters, Operator, OrCondition, Order, OrderTypes, Paginate } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  OrCondition,
+  Order,
+  OrderTypes,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { AssetModel, IAssetRepository, ListAssetsRequest } from "../domain"
 
 export class ListAssets {
   private readonly logger = Logger(ListAssets.name)
 
-  constructor(private readonly repository: IAssetRepository) {
-  }
+  constructor(private readonly repository: IAssetRepository) {}
 
   async execute(request: ListAssetsRequest): Promise<Paginate<AssetModel>> {
     this.logger.info("Listing patrimony assets", request)
@@ -26,7 +33,7 @@ export class ListAssets {
 
   private prepareCriteria(
     request: ListAssetsRequest,
-    pagination: { page: number; perPage: number },
+    pagination: { page: number; perPage: number }
   ): Criteria {
     type FilterValue = string | number | boolean | OrCondition[] | Operator
 
@@ -38,7 +45,7 @@ export class ListAssets {
           ["field", "churchId"],
           ["operator", Operator.EQUAL],
           ["value", request.churchId],
-        ]),
+        ])
       )
     }
 
@@ -48,7 +55,7 @@ export class ListAssets {
           ["field", "category"],
           ["operator", Operator.EQUAL],
           ["value", request.category],
-        ]),
+        ])
       )
     }
 
@@ -58,7 +65,7 @@ export class ListAssets {
           ["field", "status"],
           ["operator", Operator.EQUAL],
           ["value", request.status],
-        ]),
+        ])
       )
     }
 
@@ -92,7 +99,7 @@ export class ListAssets {
           ["field", "search"],
           ["operator", Operator.OR],
           ["value", searchConditions],
-        ]),
+        ])
       )
     }
 
@@ -100,7 +107,7 @@ export class ListAssets {
       Filters.fromValues(filters),
       Order.fromValues("createdAt", OrderTypes.DESC),
       pagination.perPage,
-      pagination.page,
+      pagination.page
     )
   }
 }

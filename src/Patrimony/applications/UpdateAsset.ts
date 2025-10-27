@@ -71,12 +71,8 @@ export class UpdateAsset {
       ? new Date(request.acquisitionDate)
       : undefined
 
-    let value =
-      typeof request.value !== "undefined" ? Number(request.value) : undefined
-
-    if (typeof value === "number" && Number.isNaN(value)) {
-      value = undefined
-    }
+    const value = request.value
+    const quantity = request.quantity
 
     let responsiblePayload
 
@@ -107,6 +103,7 @@ export class UpdateAsset {
         category: request.category,
         acquisitionDate,
         value,
+        quantity,
         churchId: request.churchId,
         location: request.location,
         responsible: responsiblePayload,
@@ -114,7 +111,7 @@ export class UpdateAsset {
         attachments: attachmentsPayload,
       },
       {
-        performedBy: request.performedBy,
+        performedByDetails: request.performedByDetails,
         notes: request.notes,
       }
     )

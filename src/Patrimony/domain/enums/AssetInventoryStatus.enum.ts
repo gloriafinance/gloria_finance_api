@@ -3,7 +3,8 @@ export enum AssetInventoryStatus {
   NOT_FOUND = "NOT_FOUND",
 }
 
-export const AssetInventoryStatusLabels: Record<AssetInventoryStatus, string> = {
-  [AssetInventoryStatus.CONFIRMED]: "Conferido",
-  [AssetInventoryStatus.NOT_FOUND]: "Não encontrado",
-}
+export const AssetInventoryStatusLabels: Record<AssetInventoryStatus, string> =
+  {
+    [AssetInventoryStatus.CONFIRMED]: "Conferido",
+    [AssetInventoryStatus.NOT_FOUND]: "Não encontrado",
+  }

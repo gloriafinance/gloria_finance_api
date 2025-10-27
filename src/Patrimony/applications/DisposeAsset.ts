@@ -29,7 +29,7 @@ export class DisposeAsset {
       status: request.status,
       reason: request.reason,
       notes: request.observations,
-      performedBy: request.performedBy,
+      performedByDetails: request.performedByDetails,
       occurredAt,
     })
 

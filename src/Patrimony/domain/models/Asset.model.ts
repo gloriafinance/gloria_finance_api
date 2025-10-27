@@ -4,6 +4,7 @@ import { AssetAttachment } from "../types/AssetAttachment.type"
 import { AssetHistoryEntry } from "../types/AssetHistoryEntry.type"
 import { AssetDisposalRecord } from "../types/AssetDisposal.type"
 import { AssetResponsible } from "../types/AssetResponsible.type"
+import { AssetInventoryChecker } from "../types/AssetInventoryChecker.type"
 
 export type AssetModel = {
   assetId: string
@@ -12,6 +13,7 @@ export type AssetModel = {
   category: string
   acquisitionDate: Date
   value: number
+  quantity: number
   churchId: string
   location: string
   responsibleId?: string
@@ -21,7 +23,7 @@ export type AssetModel = {
   history: AssetHistoryEntry[]
   inventoryStatus?: AssetInventoryStatus | null
   inventoryCheckedAt?: Date | null
-  inventoryCheckedBy?: string | null
+  inventoryCheckedBy?: AssetInventoryChecker | null
   disposal?: AssetDisposalRecord | null
   createdAt: Date
   updatedAt: Date

@@ -46,6 +46,7 @@ export class MakeLogin {
         churchId: user.getChurchId(),
         userId: user.getUserId(),
         email: user.getEmail(),
+        name: user.getName(),
         profiles: user.getProfiles(),
       }),
     }

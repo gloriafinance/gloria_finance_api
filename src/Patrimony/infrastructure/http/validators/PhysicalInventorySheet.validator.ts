@@ -13,6 +13,7 @@ export default async (req, res, next) => {
   const statusValues = Object.values(AssetStatus).join(",")
 
   const rules = {
+    churchId: "string",
     category: "string",
     status: `in:${statusValues}`,
   }

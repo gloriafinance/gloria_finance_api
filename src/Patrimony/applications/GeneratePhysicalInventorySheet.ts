@@ -46,14 +46,19 @@ export class GeneratePhysicalInventorySheet {
     assets: AssetResponse[]
   ): Promise<PhysicalInventorySheetFile> {
     const header = [
-      "Código",
+      "ID do ativo",
+      "Código atual",
       "Nome",
       "Categoria",
       "Responsável",
       "Localização",
       "Status atual",
+      "Quantidade registrada",
       "Última conferência",
       "Resultado",
+      "Código inventário",
+      "Quantidade inventário",
+      "Status inventário",
       "Observações",
     ]
 
@@ -62,16 +67,21 @@ export class GeneratePhysicalInventorySheet {
         asset.inventoryStatus as AssetInventoryStatus | null
 
       return [
+        asset.assetId,
         asset.code,
         asset.name,
         asset.category,
         asset.responsible?.name ?? asset.responsibleId,
         asset.location,
         AssetStatusLabels[asset.status],
+        asset.quantity ?? "",
         asset.inventoryCheckedAt
           ? new Date(asset.inventoryCheckedAt).toLocaleDateString("pt-BR")
           : "",
         inventoryStatus ? AssetInventoryStatusLabels[inventoryStatus] : "",
+        "",
+        "",
+        "",
         "",
       ]
     })

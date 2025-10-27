@@ -9,9 +9,11 @@ export type CreateAssetAttachmentRequest = {
 }
 
 export type CreateAssetRequest = {
+  code: string
   name: string
   category: string
   value: number
+  quantity: number
   acquisitionDate: string
   churchId: string
   location: string
@@ -19,6 +21,10 @@ export type CreateAssetRequest = {
   serialNumber: string
   status?: AssetStatus
   attachments?: CreateAssetAttachmentRequest[]
-  performedBy: string
+  performedByDetails: {
+    memberId: string
+    name: string
+    email: string
+  }
   notes?: string
 }

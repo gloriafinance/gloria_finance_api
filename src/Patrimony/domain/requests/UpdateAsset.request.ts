@@ -6,6 +6,7 @@ export type UpdateAssetRequest = {
   name?: string
   category?: string
   value?: number
+  quantity?: number
   acquisitionDate?: string
   churchId?: string
   location?: string
@@ -13,6 +14,10 @@ export type UpdateAssetRequest = {
   status?: AssetStatus
   attachments?: CreateAssetAttachmentRequest[]
   attachmentsToRemove?: string[]
-  performedBy: string
+  performedByDetails: {
+    memberId: string
+    name: string
+    email: string
+  }
   notes?: string
 }

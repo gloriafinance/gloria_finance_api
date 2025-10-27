@@ -1,7 +1,6 @@
 import { Logger } from "@/Shared/adapter"
 import {
   Asset,
-  AssetCodeGenerator,
   AssetStatus,
   CreateAssetRequest,
   IAssetRepository,
@@ -14,10 +13,7 @@ export class CreateAsset {
 
   constructor(
     private readonly repository: IAssetRepository,
-    private readonly memberRepository: IMemberRepository,
-    private readonly codeGenerator: AssetCodeGenerator = new AssetCodeGenerator(
-      repository
-    )
+    private readonly memberRepository: IMemberRepository
   ) {}
 
   async execute(request: CreateAssetRequest) {
@@ -38,15 +34,14 @@ export class CreateAsset {
       throw new MemberNotFound()
     }
 
-    const code = await this.codeGenerator.generate()
-
     const asset = Asset.create(
       {
-        code,
+        code: request.code,
         name: request.name,
         category: request.category,
         acquisitionDate: new Date(request.acquisitionDate),
-        value: Number(request.value),
+        value: request.value,
+        quantity: request.quantity,
         churchId: request.churchId,
         location: request.location,
         responsible: {
@@ -59,7 +54,7 @@ export class CreateAsset {
         attachments,
       },
       {
-        performedBy: request.performedBy,
+        performedByDetails: request.performedByDetails,
         notes: request.notes,
       }
     )

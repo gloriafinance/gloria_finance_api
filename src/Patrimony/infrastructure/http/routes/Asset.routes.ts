@@ -1,4 +1,5 @@
 import { Request, Response, Router } from "express"
+import { UploadedFile } from "express-fileupload"
 import { PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   createAssetController,
@@ -6,6 +7,7 @@ import {
   generateInventoryReportController,
   generatePhysicalInventorySheetController,
   getAssetController,
+  importInventoryController,
   listAssetsController,
   recordAssetInventoryController,
   updateAssetController,
@@ -17,12 +19,14 @@ import InventoryReportValidator from "../validators/InventoryReport.validator"
 import DisposeAssetValidator from "../validators/DisposeAsset.validator"
 import RecordAssetInventoryValidator from "../validators/RecordAssetInventory.validator"
 import PhysicalInventorySheetValidator from "../validators/PhysicalInventorySheet.validator"
+import ImportInventoryValidator from "../validators/ImportInventory.validator"
 import {
+  AssetInventoryChecker,
   AssetInventoryStatus,
   AssetStatus,
-  CreateAssetAttachmentRequest,
   CreateAssetRequest,
   DisposeAssetRequest,
+  ImportInventoryRequest,
   InventoryReportFormat,
   PhysicalInventorySheetRequest,
   RecordAssetInventoryRequest,
@@ -37,60 +41,69 @@ const resolveUserId = (request: Request) => {
   return user.userId || user.id || user.sub || "system"
 }
 
-const collectAttachmentsFromRequest = (
-  req: Request
-): { attachments?: CreateAssetAttachmentRequest[]; provided: boolean } => {
-  const hasAttachmentsProp = Object.prototype.hasOwnProperty.call(
-    req.body,
-    "attachments"
-  )
-
-  const filesInput = (
-    req as Request & {
-      files?: { [fieldname: string]: unknown }
-    }
-  ).files?.attachments as
-    | CreateAssetAttachmentRequest["file"]
-    | CreateAssetAttachmentRequest["file"][]
-    | undefined
-
-  const files = Array.isArray(filesInput)
-    ? filesInput
-    : filesInput
-      ? [filesInput]
-      : []
-
-  if (!hasAttachmentsProp) {
-    return { attachments: undefined, provided: false }
+const resolveInventoryPerformerDetails = (user: any): AssetInventoryChecker => {
+  return {
+    name: user.name,
+    email: user.email,
+    memberId: user.userId.trim(),
   }
-
-  const metadata = Array.isArray(req.body.attachments)
-    ? (req.body.attachments as CreateAssetAttachmentRequest[])
-    : []
-
-  const attachments = metadata.map((attachment, index) => ({
-    ...attachment,
-    file: attachment.file ?? files[index],
-  }))
-
-  return { attachments, provided: true }
 }
+//
+// const collectAttachmentsFromRequest = (
+//   req: Request
+// ): { attachments?: CreateAssetAttachmentRequest[]; provided: boolean } => {
+//   const hasAttachmentsProp = Object.prototype.hasOwnProperty.call(
+//     req.body,
+//     "attachments"
+//   )
+//
+//   const filesInput = (
+//     req as Request & {
+//       files?: { [fieldname: string]: unknown }
+//     }
+//   ).files?.attachments as
+//     | CreateAssetAttachmentRequest["file"]
+//     | CreateAssetAttachmentRequest["file"][]
+//     | undefined
+//
+//   const files = Array.isArray(filesInput)
+//     ? filesInput
+//     : filesInput
+//       ? [filesInput]
+//       : []
+//
+//   if (!hasAttachmentsProp) {
+//     return { attachments: undefined, provided: false }
+//   }
+//
+//   const metadata = Array.isArray(req.body.attachments)
+//     ? (req.body.attachments as CreateAssetAttachmentRequest[])
+//     : []
+//
+//   const attachments = metadata.map((attachment, index) => ({
+//     ...attachment,
+//     file: attachment.file ?? files[index],
+//   }))
+//
+//   return { attachments, provided: true }
+// }
 
 router.post(
   "/",
   [PermissionMiddleware, CreateAssetValidator],
   async (req: Request, res: Response) => {
-    const performedBy = resolveUserId(req)
-    const { attachments, provided } = collectAttachmentsFromRequest(req)
+    //const { attachments, provided } = collectAttachmentsFromRequest(req)
 
     await createAssetController(
       {
         ...req.body,
         churchId: req["user"].churchId,
-        attachments: provided ? (attachments ?? []) : undefined,
+        //attachments: provided ? (attachments ?? []) : undefined,
+        attachments: req.body?.attachments,
         value: Number(req.body.value),
+        quantity: Number(req.body.quantity),
         status: req.body.status as AssetStatus,
-        performedBy,
+        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
       } as CreateAssetRequest,
       res
     )
@@ -142,20 +155,18 @@ router.put(
   "/:assetId",
   [PermissionMiddleware, UpdateAssetValidator],
   async (req: Request, res: Response) => {
-    const performedBy = resolveUserId(req)
-    const { attachments, provided } = collectAttachmentsFromRequest(req)
+    //const { attachments, provided } = collectAttachmentsFromRequest(req)
 
     await updateAssetController(
       {
         ...req.body,
         assetId: req.params.assetId,
         value: Number(req.body.value),
+        quantity: req.body.quantity,
         status: req.body.status as AssetStatus,
-        attachments: provided ? (attachments ?? []) : undefined,
-        attachmentsToRemove: Array.isArray(req.body.attachmentsToRemove)
-          ? (req.body.attachmentsToRemove as string[])
-          : undefined,
-        performedBy,
+        //  attachments: provided ? (attachments ?? []) : undefined,
+        attachments: req.body?.attachments,
+        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
       } as UpdateAssetRequest,
       res
     )
@@ -166,14 +177,12 @@ router.post(
   "/:assetId/disposal",
   [PermissionMiddleware, DisposeAssetValidator],
   async (req: Request, res: Response) => {
-    const performedBy = resolveUserId(req)
-
     await disposeAssetController(
       {
         ...req.body,
         assetId: req.params.assetId,
         status: req.body.status as DisposeAssetRequest["status"],
-        performedBy,
+        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
       } as DisposeAssetRequest,
       res
     )
@@ -184,15 +193,31 @@ router.post(
   "/:assetId/inventory",
   [PermissionMiddleware, RecordAssetInventoryValidator],
   async (req: Request, res: Response) => {
-    const performedBy = resolveUserId(req)
-
     await recordAssetInventoryController(
       {
         ...req.body,
         assetId: req.params.assetId,
         status: req.body.status as AssetInventoryStatus,
-        performedBy,
+        quantity: Number(req.body.quantity),
+        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
       } as RecordAssetInventoryRequest,
+      res
+    )
+  }
+)
+
+router.post(
+  "/inventory/import",
+  [PermissionMiddleware, ImportInventoryValidator],
+  async (req: Request, res: Response) => {
+    const file = req["inventoryFile"] as UploadedFile
+    const performerDetails = resolveInventoryPerformerDetails(req["user"])
+
+    await importInventoryController(
+      {
+        filePath: file.tempFilePath,
+        performedByDetails: performerDetails,
+      } as ImportInventoryRequest,
       res
     )
   }
@@ -203,10 +228,29 @@ router.get(
   [PermissionMiddleware, PhysicalInventorySheetValidator],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
+    const churchIdFromQuery =
+      typeof req.query.churchId === "string" &&
+      req.query.churchId.trim().length > 0
+        ? req.query.churchId.trim()
+        : undefined
+    const churchId = churchIdFromQuery ?? req["user"].churchId
+
+    if (!churchId) {
+      res.status(400).send({
+        churchId: {
+          message:
+            "Não foi possível determinar a congregação. Informe o parâmetro churchId ou utilize um token com o campo churchId.",
+          rule: "required",
+        },
+      })
+      return
+    }
+
+    res.setHeader("Cache-Control", "no-store")
 
     await generatePhysicalInventorySheetController(
       {
-        churchId: req["user"].churchId,
+        churchId,
         category:
           typeof req.query.category === "string"
             ? req.query.category

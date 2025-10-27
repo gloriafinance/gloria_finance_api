@@ -1,7 +1,9 @@
+import { AssetInventoryChecker } from "./AssetInventoryChecker.type"
+
 export type AssetHistoryEntry = {
   entryId: string
   action: string
-  performedBy: string
+  performedByDetails: AssetInventoryChecker
   performedAt: Date
   notes?: string
   changes?: Record<string, { previous?: any; current?: any }>

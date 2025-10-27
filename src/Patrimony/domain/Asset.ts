@@ -9,6 +9,7 @@ import { AssetResponsible } from "./types/AssetResponsible.type"
 import { v4 } from "uuid"
 import { DateBR } from "@/Shared/helpers"
 import { InvalidAssetDisposalException } from "./exceptions/InvalidAssetDisposal.exception"
+import { AssetInventoryChecker } from "./types/AssetInventoryChecker.type"
 
 export type AssetPrimitives = {
   id?: string
@@ -18,6 +19,7 @@ export type AssetPrimitives = {
   category: string
   acquisitionDate: Date
   value: number
+  quantity: number
   churchId: string
   location: string
   responsible?: AssetResponsible
@@ -27,7 +29,7 @@ export type AssetPrimitives = {
   history: AssetHistoryEntry[]
   inventoryStatus?: AssetInventoryStatus | null
   inventoryCheckedAt?: Date | null
-  inventoryCheckedBy?: string | null
+  inventoryCheckedBy?: AssetInventoryChecker | null
   disposal?: AssetDisposalRecord | null
   createdAt: Date
   updatedAt: Date
@@ -41,6 +43,7 @@ export class Asset extends AggregateRoot {
   private category: string
   private acquisitionDate: Date
   private value: number
+  private quantity: number
   private churchId: string
   private location: string
   private responsible: AssetResponsible
@@ -49,7 +52,7 @@ export class Asset extends AggregateRoot {
   private history: AssetHistoryEntry[]
   private inventoryStatus?: AssetInventoryStatus | null
   private inventoryCheckedAt?: Date | null
-  private inventoryCheckedBy?: string | null
+  private inventoryCheckedBy?: AssetInventoryChecker | null
   private disposal?: AssetDisposalRecord | null
   private createdAt: Date
   private updatedAt: Date
@@ -61,13 +64,21 @@ export class Asset extends AggregateRoot {
       category: string
       acquisitionDate: Date
       value: number
+      quantity: number
       churchId: string
       location: string
       responsible: AssetResponsible
       status: AssetStatus
       attachments?: Array<Omit<AssetAttachment, "attachmentId" | "uploadedAt">>
     },
-    metadata: { performedBy: string; notes?: string }
+    metadata: {
+      performedByDetails: {
+        memberId: string
+        name: string
+        email: string
+      }
+      notes?: string
+    }
   ): Asset {
     const asset = new Asset()
 
@@ -77,6 +88,7 @@ export class Asset extends AggregateRoot {
     asset.category = props.category
     asset.acquisitionDate = props.acquisitionDate
     asset.value = props.value
+    asset.quantity = props.quantity
     asset.churchId = props.churchId
     asset.location = props.location
     asset.responsible = {
@@ -101,14 +113,14 @@ export class Asset extends AggregateRoot {
 
     asset.appendHistory({
       action: "CREATED",
-      performedBy: metadata.performedBy,
+      performedByDetails: metadata.performedByDetails,
       notes: metadata.notes,
       changes: {
+        code: { current: asset.code },
         name: { current: asset.name },
         category: { current: asset.category },
         value: { current: asset.value },
-        churchId: { current: asset.churchId },
-        responsibleId: { current: asset.responsible.memberId },
+        quantity: { current: asset.quantity },
         responsible: { current: asset.responsible },
         status: { current: asset.status },
       },
@@ -127,6 +139,7 @@ export class Asset extends AggregateRoot {
     asset.category = plainData.category
     asset.acquisitionDate = new Date(plainData.acquisitionDate)
     asset.value = plainData.value
+    asset.quantity = plainData.quantity
     asset.churchId = plainData.churchId
     asset.location = plainData.location
     asset.responsible = plainData.responsible
@@ -141,10 +154,10 @@ export class Asset extends AggregateRoot {
       performedAt: new Date(entry.performedAt),
     }))
     asset.inventoryStatus = plainData.inventoryStatus ?? null
-    asset.inventoryCheckedAt = plainData.inventoryCheckedAt
-      ? new Date(plainData.inventoryCheckedAt)
-      : null
+    asset.inventoryCheckedAt = new Date(plainData.inventoryCheckedAt) ?? null
+
     asset.inventoryCheckedBy = plainData.inventoryCheckedBy ?? null
+
     asset.disposal = plainData.disposal
       ? {
           ...plainData.disposal,
@@ -173,6 +186,10 @@ export class Asset extends AggregateRoot {
     return this.attachments
   }
 
+  getQuantity(): number {
+    return this.quantity
+  }
+
   getResponsible(): AssetResponsible {
     return this.responsible
   }
@@ -193,6 +210,7 @@ export class Asset extends AggregateRoot {
       category: this.category,
       acquisitionDate: this.acquisitionDate,
       value: this.value,
+      quantity: this.quantity,
       churchId: this.churchId,
       location: this.location,
       responsibleId: this.responsible.memberId,
@@ -202,7 +220,13 @@ export class Asset extends AggregateRoot {
       history: this.history,
       inventoryStatus: this.inventoryStatus ?? null,
       inventoryCheckedAt: this.inventoryCheckedAt ?? null,
-      inventoryCheckedBy: this.inventoryCheckedBy ?? null,
+      inventoryCheckedBy: this.inventoryCheckedBy
+        ? {
+            memberId: this.inventoryCheckedBy.memberId,
+            name: this.inventoryCheckedBy.name,
+            email: this.inventoryCheckedBy.email,
+          }
+        : null,
       disposal: this.disposal ?? null,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
@@ -215,13 +239,21 @@ export class Asset extends AggregateRoot {
       category?: string
       acquisitionDate?: Date
       value?: number
+      quantity?: number
       churchId?: string
       location?: string
       responsible?: AssetResponsible
       status?: AssetStatus
       attachments?: AssetAttachment[]
     },
-    metadata: { performedBy: string; notes?: string }
+    metadata: {
+      performedByDetails: {
+        memberId: string
+        name: string
+        email: string
+      }
+      notes?: string
+    }
   ): AssetHistoryEntry | undefined {
     const changes: AssetHistoryEntry["changes"] = {}
 
@@ -246,9 +278,17 @@ export class Asset extends AggregateRoot {
       this.acquisitionDate = payload.acquisitionDate
     }
 
-    if (Number(payload.value) !== Number(this.value)) {
+    if (typeof payload.value === "number" && payload.value !== this.value) {
       changes.value = { previous: this.value, current: payload.value }
-      this.value = Number(payload.value)
+      this.value = payload.value
+    }
+
+    if (
+      typeof payload.quantity === "number" &&
+      payload.quantity !== this.quantity
+    ) {
+      changes.quantity = { previous: this.quantity, current: payload.quantity }
+      this.quantity = payload.quantity
     }
 
     if (payload.location !== this.location) {
@@ -321,7 +361,7 @@ export class Asset extends AggregateRoot {
 
     const entry = this.appendHistory({
       action: "UPDATED",
-      performedBy: metadata.performedBy,
+      performedByDetails: metadata.performedByDetails,
       notes: metadata.notes,
       changes,
     })
@@ -331,7 +371,14 @@ export class Asset extends AggregateRoot {
 
   replaceAttachments(
     attachments: Array<Omit<AssetAttachment, "attachmentId" | "uploadedAt">>,
-    metadata: { performedBy: string; notes?: string }
+    metadata: {
+      performedByDetails: {
+        memberId: string
+        name: string
+        email: string
+      }
+      notes?: string
+    }
   ) {
     const previous = this.attachments
     this.attachments = attachments.map((attachment) => ({
@@ -342,7 +389,7 @@ export class Asset extends AggregateRoot {
     this.touch()
     this.appendHistory({
       action: "ATTACHMENTS_UPDATED",
-      performedBy: metadata.performedBy,
+      performedByDetails: metadata.performedByDetails,
       notes: metadata.notes,
       changes: {
         attachments: {
@@ -354,25 +401,65 @@ export class Asset extends AggregateRoot {
   }
 
   markInventory(metadata: {
-    performedBy: string
+    performedByDetails?: AssetInventoryChecker
     status: AssetInventoryStatus
     notes?: string
     checkedAt?: Date
+    code: string
+    quantity: number
   }) {
     const previousStatus = this.inventoryStatus ?? null
+    const previousCode = this.code
+    const previousQuantity = this.quantity
+    const previousChecker = this.inventoryCheckedBy ?? null
+
+    const normalizedCode = metadata.code.trim()
+    this.code = normalizedCode
+    this.quantity = metadata.quantity
+
     this.inventoryCheckedAt = metadata.checkedAt ?? DateBR()
-    this.inventoryCheckedBy = metadata.performedBy
+    const checkerDetails = metadata.performedByDetails
+    this.inventoryCheckedBy = {
+      memberId: checkerDetails.memberId,
+      name: checkerDetails.name,
+      email: checkerDetails.email,
+    }
     this.inventoryStatus = metadata.status
     this.touch()
     this.appendHistory({
       action: "INVENTORY_CONFIRMED",
-      performedBy: metadata.performedBy,
+      performedByDetails: metadata.performedByDetails,
       notes: metadata.notes,
       changes: {
         inventoryStatus: {
           previous: previousStatus,
           current: metadata.status,
         },
+        ...(previousCode !== this.code
+          ? {
+              code: {
+                previous: previousCode,
+                current: this.code,
+              },
+            }
+          : {}),
+        ...(previousQuantity !== this.quantity
+          ? {
+              quantity: {
+                previous: previousQuantity,
+                current: this.quantity,
+              },
+            }
+          : {}),
+        ...(previousChecker?.memberId !== this.inventoryCheckedBy?.memberId ||
+        previousChecker?.name !== this.inventoryCheckedBy?.name
+          ? {
+              inventoryCheckedBy: {
+                previous: previousChecker,
+                current: this.inventoryCheckedBy,
+              },
+            }
+          : {}),
       },
     })
   }
@@ -380,7 +467,11 @@ export class Asset extends AggregateRoot {
   dispose(payload: {
     status: AssetStatus
     reason: string
-    performedBy: string
+    performedByDetails: {
+      memberId: string
+      name: string
+      email: string
+    }
     occurredAt?: Date
     notes?: string
   }) {
@@ -403,7 +494,7 @@ export class Asset extends AggregateRoot {
     const disposal: AssetDisposalRecord = {
       status: payload.status,
       reason: payload.reason,
-      performedBy: payload.performedBy,
+      performedByDetails: payload.performedByDetails,
       occurredAt,
       notes: payload.notes,
     }
@@ -413,7 +504,7 @@ export class Asset extends AggregateRoot {
     this.touch()
     this.appendHistory({
       action: "DISPOSAL",
-      performedBy: payload.performedBy,
+      performedByDetails: payload.performedByDetails,
       notes: payload.notes,
       changes: {
         status: { previous: previousStatus, current: this.status },

@@ -6,6 +6,7 @@ import {
   hasMissingAttachmentSource,
   normalizeAttachmentPayload,
 } from "./utils/attachmentPayload"
+import { normalizeAttachmentsToRemove } from "../utils/attachmentsToRemove"
 
 const logger = Logger("UpdateAssetValidator")
 
@@ -23,10 +24,22 @@ export default async (req, res, next) => {
     delete payload.attachments
   }
 
-  if (Array.isArray(payload.attachmentsToRemove)) {
-    payload.attachmentsToRemove = payload.attachmentsToRemove
-      .map((value) => (typeof value === "string" ? value.trim() : ""))
-      .filter((value) => value.length > 0)
+  if (typeof payload.quantity === "string") {
+    const trimmed = payload.quantity.trim()
+
+    if (trimmed.length === 0) {
+      delete payload.quantity
+    } else {
+      payload.quantity = Number(trimmed)
+    }
+  }
+
+  const attachmentsToRemove = normalizeAttachmentsToRemove(
+    payload.attachmentsToRemove
+  )
+
+  if (attachmentsToRemove) {
+    payload.attachmentsToRemove = attachmentsToRemove
   } else {
     delete payload.attachmentsToRemove
   }
@@ -41,6 +54,7 @@ export default async (req, res, next) => {
     name: "string",
     category: "string",
     value: "numeric",
+    quantity: "integer|min:1",
     acquisitionDate: "dateFormat:YYYY-MM-DD",
     location: "string",
     responsibleId: "string",
