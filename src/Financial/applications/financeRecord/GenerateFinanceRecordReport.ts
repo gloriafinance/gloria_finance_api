@@ -176,8 +176,7 @@ export class GenerateFinanceRecordReport {
         const data = totals[type] ?? { amount: 0, count: 0 }
         const isExpense = expenseTypes.has(type)
         const isReversal = type === ConceptType.REVERSAL
-        const signedTotal =
-          isExpense || isReversal ? -data.amount : data.amount
+        const signedTotal = isExpense || isReversal ? -data.amount : data.amount
 
         if (type === ConceptType.INCOME) {
           totalsByNature.income += data.amount
@@ -203,9 +202,7 @@ export class GenerateFinanceRecordReport {
     )
 
     const netResult =
-      totalsByNature.income -
-      totalsByNature.expenses -
-      totalsByNature.reversal
+      totalsByNature.income - totalsByNature.expenses - totalsByNature.reversal
 
     return {
       totalsByType,

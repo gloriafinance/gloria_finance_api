@@ -72,15 +72,13 @@ export class IncomeStatement {
     }
 
     for (const summary of statementByCategory) {
-      const current =
-        breakdownMap.get(summary.category) ??
-        ({
-          category: summary.category,
-          income: 0,
-          expenses: 0,
-          net: 0,
-          reversal: 0,
-        })
+      const current = breakdownMap.get(summary.category) ?? {
+        category: summary.category,
+        income: 0,
+        expenses: 0,
+        net: 0,
+        reversal: 0,
+      }
 
       current.income = summary.income ?? 0
       current.expenses = summary.expenses ?? 0
