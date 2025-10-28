@@ -1,13 +1,16 @@
 import { Router } from "express"
 import { PermissionMiddleware } from "@/Shared/infrastructure"
-import { FilterFinanceRecordRequest } from "../../../domain"
+import {
+  FilterFinanceRecordRequest,
+  FinanceRecordReportRequest,
+} from "../../../domain"
 import FinancialRecordValidator from "../validators/FinancialRecord.validator"
 import {
   CancelFinancialRecordController,
   FinancialRecordController,
 } from "../controllers/FinancialRecord.controller"
 import { FinanceRecordListController } from "../controllers/FinanceRecordList.controller"
-import { ExportFinanceRecordToExcelController } from "../controllers/ExportFinanceRecordToExcel.controller"
+import { GenerateFinanceRecordReportController } from "../controllers/GenerateFinanceRecordReport.controller"
 
 const financialRecordRoutes = Router()
 
@@ -49,8 +52,8 @@ financialRecordRoutes.get("/", PermissionMiddleware, async (req, res) => {
 })
 
 financialRecordRoutes.get("/export", PermissionMiddleware, async (req, res) => {
-  const params = req.query as unknown as FilterFinanceRecordRequest
-  await ExportFinanceRecordToExcelController(
+  const params = req.query as unknown as FinanceRecordReportRequest
+  await GenerateFinanceRecordReportController(
     { ...params, churchId: req["user"].churchId },
     res
   )

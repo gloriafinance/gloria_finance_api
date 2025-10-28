@@ -37,6 +37,10 @@ export {
   FinancialRecordRequest,
 } from "./requests/FinancialRecord.request"
 export { FilterFinanceRecordRequest } from "./requests/FilterFinanceRecord.request"
+export {
+  FinanceRecordReportRequest,
+  FinanceRecordReportFormat,
+} from "./requests/FinanceRecordReport.request"
 export { AvailabilityAccountRequest } from "./requests/AvailabilityAccount.request"
 export { UpdateAvailabilityAccountBalanceRequest } from "./requests/UpdateAvailabilityAccountBalance.request"
 export { FinancialConceptRequest } from "./requests/FinancialConcept.request"

@@ -1,0 +1,191 @@
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{title}}</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 24px;
+        color: #1f2933;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin-bottom: 4px;
+        color: #20364b;
+      }
+
+      .meta {
+        margin-bottom: 24px;
+        font-size: 12px;
+      }
+
+      .meta p {
+        margin: 2px 0;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .summary-card {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 12px;
+        background: #f8fafc;
+      }
+
+      .summary-card .label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+
+      .summary-card .value {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .summary-card .value.negative {
+        color: #b42318;
+      }
+
+      .summary-card .caption {
+        display: block;
+        font-size: 11px;
+        color: #475569;
+        margin-top: 4px;
+      }
+
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      th,
+      td {
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background: #e2e8f0;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: #334155;
+      }
+
+      tbody tr:nth-child(even) {
+        background: #f8fafc;
+      }
+
+      .number-cell {
+        text-align: right;
+        font-feature-settings: "tnum";
+      }
+
+      .empty {
+        text-align: center;
+        padding: 24px;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+
+    <div class="meta">
+      <p><strong>Igreja:</strong> {{church}}</p>
+      <p><strong>Gerado em:</strong> {{formatDate generatedAt}}</p>
+      {{#if filters.startDate}}
+        <p>
+          <strong>Período:</strong>
+          {{formatDate filters.startDate}}
+          {{#if filters.endDate}}
+            -
+            {{formatDate filters.endDate}}
+          {{/if}}
+        </p>
+      {{/if}}
+      {{#if filters.conceptType}}
+        <p>
+          <strong>Tipo filtrado:</strong>
+          {{filters.conceptType}}
+        </p>
+      {{/if}}
+    </div>
+
+    <div class="summary-grid">
+      {{#each summary.totalsByType}}
+        <div class="summary-card">
+          <span class="label">{{typeLabel}} ({{typeCode}})</span>
+          <span class="value {{#if isExpense}}negative{{/if}}">
+            {{signedTotalFormatted}}
+          </span>
+          <span class="caption">{{count}} movimento(s)</span>
+        </div>
+      {{/each}}
+      <div class="summary-card">
+        <span class="label">Resultado Líquido</span>
+        <span class="value {{#if (isNegative summary.netResult)}}negative{{/if}}">
+          {{summary.netResultFormatted}}
+        </span>
+        <span class="caption">{{summary.totalRecords}} movimento(s)</span>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Conceito</th>
+          <th>Conta de Disponibilidade</th>
+          <th>Centro de Custo</th>
+          <th>Comprovante</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#if records.length}}
+          {{#each records}}
+            <tr>
+              <td>{{index}}</td>
+              <td>{{formatDate date}}</td>
+              <td>{{description}}</td>
+              <td>{{typeLabel}}</td>
+              <td>{{conceptName}}</td>
+              <td>{{availabilityAccount}}</td>
+              <td>{{costCenter}}</td>
+              <td>{{voucher}}</td>
+              <td class="number-cell">{{amountFormatted}}</td>
+            </tr>
+          {{/each}}
+        {{else}}
+          <tr>
+            <td class="empty" colspan="9">
+              Nenhum movimento financeiro encontrado para os filtros informados.
+            </td>
+          </tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </body>
+</html>
