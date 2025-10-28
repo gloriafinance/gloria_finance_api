@@ -1,5 +1,6 @@
 export { DebtorType } from "./enums/DebtorType.enum"
 export { AccountsReceivableStatus } from "./enums/AccountsReceivableStatus.enum"
+export * from "./enums/AccountReceivableType.enum"
 
 export { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 export { IAccountsReceivableRepository } from "./interfaces/AccountsReceivableRepository.interface"

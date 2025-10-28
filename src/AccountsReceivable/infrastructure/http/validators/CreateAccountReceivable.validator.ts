@@ -12,6 +12,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   const rule = {
     debtor: "required|object",
     "debtor.debtorType": "required|string|in:MEMBER,GROUP,EXTERNAL",
+    "type:":
+      "required|string|in:CONTRIBUTION,SERVICE,INTERINSTITUTIONAL,RENTAL,LOAN,FINANCIAL,LEGAL",
     "debtor.name": "required|string",
     "debtor.email": "required|email",
     "debtor.phone": "required|string",

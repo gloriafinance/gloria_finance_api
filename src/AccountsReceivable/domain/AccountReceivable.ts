@@ -7,6 +7,7 @@ import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.i
 
 import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
 
 type Debtor = {
   debtorType: DebtorType
@@ -21,6 +22,7 @@ export class AccountReceivable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
   private id?: string
+  private type: AccountReceivableType
   private debtor: Debtor
   private accountReceivableId: string
   private churchId: string
@@ -41,6 +43,7 @@ export class AccountReceivable extends AggregateRoot {
       amountPaid,
       amountPending,
       installments,
+      type,
     } = params
 
     const accountReceivable: AccountReceivable = new AccountReceivable()
@@ -48,6 +51,7 @@ export class AccountReceivable extends AggregateRoot {
       IdentifyEntity.get(`accountReceivable`)
     accountReceivable.churchId = churchId
     accountReceivable.description = description
+    accountReceivable.type = type
 
     accountReceivable.amountPaid = amountPaid
     accountReceivable.amountPending = amountPending
@@ -105,12 +109,17 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.updatedAt = params.updatedAt
     accountReceivable.debtor = params.debtor
     accountReceivable.token = params.token
+    accountReceivable.type = params.type
 
     return accountReceivable
   }
 
   getId(): string {
     return this.id
+  }
+
+  getType(): AccountReceivableType {
+    return this.type
   }
 
   getToken(): string {
@@ -192,6 +201,7 @@ export class AccountReceivable extends AggregateRoot {
       installments: this.installments,
       token: this.token,
       contract: this.contract,
+      type: this.type,
     }
   }
 }

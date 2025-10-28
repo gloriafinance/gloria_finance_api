@@ -1,4 +1,4 @@
-import { DebtorType } from "@/AccountsReceivable/domain"
+import { AccountReceivableType, DebtorType } from "@/AccountsReceivable/domain"
 import { Church } from "@/Church/domain"
 
 export type AccountReceivableRequest = {
@@ -17,4 +17,5 @@ export type AccountReceivableRequest = {
     amount: number
     dueDate: Date
   }[]
+  type: AccountReceivableType
 }
