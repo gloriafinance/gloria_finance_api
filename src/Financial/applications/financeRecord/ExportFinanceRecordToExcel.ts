@@ -10,6 +10,7 @@ import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { FinanceRecord } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
 import { IExcelExportAdapter } from "@/Shared/domain"
+import { PrepareFinanceRecordCriteria } from "./ListFilters"
 
 export class ExportFinanceRecordToExcel {
   private logger = Logger(ExportFinanceRecordToExcel.name)
@@ -42,7 +43,7 @@ export class ExportFinanceRecordToExcel {
       this.logger.info(`Obteniendo página ${currentPage} de registros`)
 
       const records = await this.financialRecordRepository.list(
-        this.prepareCriteria(paginatedRequest)
+        PrepareFinanceRecordCriteria(paginatedRequest)
       )
 
       // Agregar los registros de esta página al array total
