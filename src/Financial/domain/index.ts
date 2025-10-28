@@ -19,7 +19,7 @@ export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
 export * from "./exceptions/FinancialMovementNotFound.exception"
 
 export { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
-export { ConceptType } from "./enums/ConcepType.enum"
+export * from "./enums/ConcepType.enum"
 export { StatementCategory } from "./enums/StatementCategory.enum"
 export { MoneyLocation } from "./enums/MoneyLocation.enum"
 export { TypeOperationMoney } from "./enums/TypeOperationMoney.enum"

@@ -1,4 +1,4 @@
-import { FilterFinanceRecordRequest } from "../../domain"
+import { ConceptTypeLabels, FilterFinanceRecordRequest } from "../../domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { FinanceRecord } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
@@ -60,12 +60,13 @@ export class ExportFinanceRecordToExcel {
         new Date(record.date).toISOString().slice(0, 10),
         record.amount,
         record.description || "",
-        record.type,
+        ConceptTypeLabels[record.type],
         record.availabilityAccount?.accountName || "N/A",
         record.financialConcept?.name || "N/A",
         record.costCenter?.name || "N/A",
       ]),
       [
+        "Data",
         "Monto",
         "Descrição",
         "Tipo",
