@@ -6,7 +6,7 @@ import {
   IncomeStatementCategoryBreakdown,
   IncomeStatementResponse,
 } from "../domain/responses/IncomeStatement.response"
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { StatementCategory } from "@/Financial/domain"
 
 export class IncomeStatement {
@@ -58,7 +58,7 @@ export class IncomeStatement {
 
     const breakdownMap = new Map<
       StatementCategory,
-      IncomeStatementCategoryBreakdown
+      IncomeStatementCategoryBreakdown & { reversal: number }
     >()
 
     for (const category of orderedCategories) {
@@ -67,6 +67,7 @@ export class IncomeStatement {
         income: 0,
         expenses: 0,
         net: 0,
+        reversal: 0,
       })
     }
 
@@ -78,58 +79,51 @@ export class IncomeStatement {
           income: 0,
           expenses: 0,
           net: 0,
-        } as IncomeStatementCategoryBreakdown)
+          reversal: 0,
+        })
 
-      current.income = summary.income
-      current.expenses = summary.expenses
-      current.net = summary.income - summary.expenses
+      current.income = summary.income ?? 0
+      current.expenses = summary.expenses ?? 0
+      current.reversal = summary.reversal ?? 0
+      current.net = current.income - current.expenses
       breakdownMap.set(summary.category, current)
     }
 
     const breakdown: IncomeStatementCategoryBreakdown[] = [
       ...orderedCategories
         .map((category) => breakdownMap.get(category)!)
-        .filter(Boolean),
+        .filter(Boolean)
+        .map(({ category, income, expenses, net }) => ({
+          category,
+          income,
+          expenses,
+          net,
+        })),
       ...Array.from(breakdownMap.entries())
         .filter(([category]) => !orderedCategories.includes(category))
-        .map(([, value]) => value),
+        .map(([, value]) => ({
+          category: value.category,
+          income: value.income,
+          expenses: value.expenses,
+          net: value.income - value.expenses,
+        })),
     ]
 
-    const revenue = breakdownMap.get(StatementCategory.REVENUE) ?? {
-      category: StatementCategory.REVENUE,
-      income: 0,
-      expenses: 0,
-      net: 0,
-    }
-    const cogs = breakdownMap.get(StatementCategory.COGS) ?? {
-      category: StatementCategory.COGS,
-      income: 0,
-      expenses: 0,
-      net: 0,
-    }
-    const opex = breakdownMap.get(StatementCategory.OPEX) ?? {
-      category: StatementCategory.OPEX,
-      income: 0,
-      expenses: 0,
-      net: 0,
-    }
-    const capex = breakdownMap.get(StatementCategory.CAPEX) ?? {
-      category: StatementCategory.CAPEX,
-      income: 0,
-      expenses: 0,
-      net: 0,
-    }
-    const other = breakdownMap.get(StatementCategory.OTHER) ?? {
-      category: StatementCategory.OTHER,
-      income: 0,
-      expenses: 0,
-      net: 0,
-    }
+    const totals = Array.from(breakdownMap.values()).reduce(
+      (acc, item) => {
+        acc.income += item.income
+        acc.expenses += item.expenses
+        acc.reversal += item.reversal
+        return acc
+      },
+      { income: 0, expenses: 0, reversal: 0 }
+    )
 
-    const grossProfit = revenue.net + cogs.net
-    const operatingIncome = grossProfit + opex.net
-    const otherNet = other.net
-    const netIncome = operatingIncome + capex.net + otherNet
+    const revenueTotal = totals.income
+    const operatingExpenses = totals.expenses
+    const operatingIncome = revenueTotal - operatingExpenses
+    const reversalAdjustments = totals.reversal
+    const netIncome = operatingIncome - reversalAdjustments
 
     return {
       period: {
@@ -138,15 +132,18 @@ export class IncomeStatement {
       },
       breakdown,
       summary: {
-        revenue: revenue.net,
-        cogs: cogs.expenses - cogs.income,
-        grossProfit,
-        operatingExpenses: opex.expenses - opex.income,
+        revenue: revenueTotal,
+        cogs: 0,
+        grossProfit: operatingIncome,
+        operatingExpenses,
         operatingIncome,
-        capitalExpenditures: capex.expenses - capex.income,
-        otherIncome: other.income,
-        otherExpenses: other.expenses,
-        otherNet,
+        capitalExpenditures: 0,
+        otherIncome: 0,
+        otherExpenses: 0,
+        otherNet: 0,
+        reversalAdjustments,
+        totalIncome: revenueTotal,
+        totalExpenses: operatingExpenses,
         netIncome,
       },
       cashFlowSnapshot: {

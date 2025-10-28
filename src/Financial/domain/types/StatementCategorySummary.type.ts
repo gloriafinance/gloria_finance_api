@@ -4,4 +4,5 @@ export type StatementCategorySummary = {
   category: StatementCategory
   income: number
   expenses: number
+  reversal: number
 }

@@ -21,6 +21,9 @@ export type IncomeStatementSummary = {
   otherIncome: number
   otherExpenses: number
   otherNet: number
+  reversalAdjustments: number
+  totalIncome: number
+  totalExpenses: number
   netIncome: number
 }
 

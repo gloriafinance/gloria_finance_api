@@ -256,10 +256,7 @@ export class FinanceRecordMongoRepository
               $sum: {
                 $cond: [
                   {
-                    $in: [
-                      "$_id.type",
-                      [ConceptType.INCOME, ConceptType.REVERSAL],
-                    ],
+                    $eq: ["$_id.type", ConceptType.INCOME],
                   },
                   "$total",
                   0,
@@ -280,6 +277,15 @@ export class FinanceRecordMongoRepository
                 ],
               },
             },
+            reversal: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$_id.type", ConceptType.REVERSAL] },
+                  "$total",
+                  0,
+                ],
+              },
+            },
           },
         },
         {
@@ -288,6 +294,7 @@ export class FinanceRecordMongoRepository
             category: "$_id",
             income: 1,
             expenses: 1,
+            reversal: 1,
           },
         },
       ])
@@ -297,6 +304,7 @@ export class FinanceRecordMongoRepository
       category: item.category as StatementCategory,
       income: item.income ?? 0,
       expenses: item.expenses ?? 0,
+      reversal: item.reversal ?? 0,
     }))
   }
 }

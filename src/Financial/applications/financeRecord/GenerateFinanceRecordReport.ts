@@ -4,7 +4,8 @@ import {
   FinanceRecordReportRequest,
 } from "../../domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
-import { Logger, PuppeteerAdapter } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
+import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
 import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { PrepareFinanceRecordCriteria } from "./ListFilters"
 import { IChurchRepository } from "@/Church/domain"
@@ -20,10 +21,17 @@ type FinanceRecordSummary = {
     signedTotal: number
     signedTotalFormatted: string
     isExpense: boolean
+    isReversal: boolean
   }>
   totalRecords: number
   netResult: number
   netResultFormatted: string
+  totalIncome: number
+  totalIncomeFormatted: string
+  totalExpenses: number
+  totalExpensesFormatted: string
+  totalReversal: number
+  totalReversalFormatted: string
 }
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -128,8 +136,13 @@ export class GenerateFinanceRecordReport {
     const expenseTypes = new Set<ConceptType>([
       ConceptType.DISCHARGE,
       ConceptType.PURCHASE,
-      ConceptType.REVERSAL,
     ])
+
+    const totalsByNature = {
+      income: 0,
+      expenses: 0,
+      reversal: 0,
+    }
 
     const totals = records.reduce<
       Record<
@@ -162,7 +175,17 @@ export class GenerateFinanceRecordReport {
       (type) => {
         const data = totals[type] ?? { amount: 0, count: 0 }
         const isExpense = expenseTypes.has(type)
-        const signedTotal = isExpense ? -data.amount : data.amount
+        const isReversal = type === ConceptType.REVERSAL
+        const signedTotal =
+          isExpense || isReversal ? -data.amount : data.amount
+
+        if (type === ConceptType.INCOME) {
+          totalsByNature.income += data.amount
+        } else if (expenseTypes.has(type)) {
+          totalsByNature.expenses += data.amount
+        } else if (isReversal) {
+          totalsByNature.reversal += data.amount
+        }
 
         return {
           type,
@@ -173,21 +196,30 @@ export class GenerateFinanceRecordReport {
           totalFormatted: currencyFormatter.format(data.amount),
           signedTotal,
           signedTotalFormatted: currencyFormatter.format(signedTotal),
-          isExpense,
+          isExpense: isExpense || isReversal,
+          isReversal,
         }
       }
     )
 
-    const netResult = totalsByType.reduce(
-      (acc, item) => acc + item.signedTotal,
-      0
-    )
+    const netResult =
+      totalsByNature.income -
+      totalsByNature.expenses -
+      totalsByNature.reversal
 
     return {
       totalsByType,
       totalRecords: records.length,
       netResult,
       netResultFormatted: currencyFormatter.format(netResult),
+      totalIncome: totalsByNature.income,
+      totalIncomeFormatted: currencyFormatter.format(totalsByNature.income),
+      totalExpenses: totalsByNature.expenses,
+      totalExpensesFormatted: currencyFormatter.format(totalsByNature.expenses),
+      totalReversal: totalsByNature.reversal,
+      totalReversalFormatted: currencyFormatter.format(
+        -Math.abs(totalsByNature.reversal)
+      ),
     }
   }
 
@@ -207,6 +239,9 @@ export class GenerateFinanceRecordReport {
       const typeLabel = type
         ? ConceptTypeLabels[type]
         : String(record.type ?? "")
+      const numericAmount = Number(record.amount ?? 0)
+      const displayAmount =
+        type === ConceptType.REVERSAL ? -Math.abs(numericAmount) : numericAmount
       const conceptName =
         record.financialConcept?.name ??
         record.financialConcept?.financialConcept?.name ??
@@ -220,7 +255,7 @@ export class GenerateFinanceRecordReport {
 
       return [
         new Date(record.date).toISOString().slice(0, 10),
-        record.amount,
+        displayAmount,
         record.description ?? "",
         typeLabel,
         availabilityAccountName,
@@ -266,12 +301,15 @@ export class GenerateFinanceRecordReport {
         const typeCode = type
           ? conceptTypeCodes[type]
           : String(record.type ?? "")
+        const amountValue = Number(record.amount ?? 0)
+        const displayAmount =
+          type === ConceptType.REVERSAL ? -Math.abs(amountValue) : amountValue
 
         return {
           index: index + 1,
           date: new Date(record.date).toISOString(),
-          amount: record.amount,
-          amountFormatted: currencyFormatter.format(Number(record.amount ?? 0)),
+          amount: displayAmount,
+          amountFormatted: currencyFormatter.format(displayAmount),
           description: record.description ?? "",
           type: typeCode,
           typeLabel,
