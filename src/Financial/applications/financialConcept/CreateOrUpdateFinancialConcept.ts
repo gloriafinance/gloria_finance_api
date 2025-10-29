@@ -42,6 +42,8 @@ export class CreateOrUpdateFinancialConcept {
       financialConcept.setStatementCategory(params.statementCategory)
 
       await this.financialConceptRepository.upsert(financialConcept)
+
+      return
     }
 
     this.logger.info(`Creating new financial concept`)
