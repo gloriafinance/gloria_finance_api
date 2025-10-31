@@ -32,7 +32,13 @@ export class InitialLoadingFinancialConcepts implements IQueue {
           c.active,
           c.type as ConceptType,
           c.statementCategory as StatementCategory,
-          church
+          church,
+          {
+            affectsCashFlow: c.affectsCashFlow,
+            affectsResult: c.affectsResult,
+            affectsBalance: c.affectsBalance,
+            isOperational: c.isOperational,
+          }
         )
       )
     }

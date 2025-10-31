@@ -1,0 +1,170 @@
+openapi: 3.0.1
+info:
+  title: Church Finance API - Financial Concepts
+  version: '1.0'
+paths:
+  /financial-concepts:
+    get:
+      summary: Lista conceitos financeiros
+      tags: [Financial Concepts]
+      responses:
+        '200':
+          description: Lista de conceitos cadastrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialConcept'
+    post:
+      summary: Cria ou atualiza um conceito financeiro
+      tags: [Financial Concepts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialConceptPayload'
+      responses:
+        '201':
+          description: Conceito criado/atualizado com sucesso
+  /financial-concepts/{financialConceptId}:
+    get:
+      summary: Obtém um conceito específico
+      tags: [Financial Concepts]
+      parameters:
+        - name: financialConceptId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conceito encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialConcept'
+    patch:
+      summary: Atualiza campos de um conceito financeiro
+      tags: [Financial Concepts]
+      parameters:
+        - name: financialConceptId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialConceptPatch'
+      responses:
+        '200':
+          description: Conceito atualizado
+  /financial-records:
+    post:
+      summary: Registra um lançamento financeiro
+      tags: [Financial Records]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialRecordPayload'
+      responses:
+        '201':
+          description: Lançamento criado
+components:
+  schemas:
+    FinancialConcept:
+      type: object
+      required:
+        - financialConceptId
+        - name
+        - description
+        - type
+        - statementCategory
+        - active
+        - affectsCashFlow
+        - affectsResult
+        - affectsBalance
+        - isOperational
+      properties:
+        financialConceptId:
+          type: string
+          example: FC-DIZIMO
+        name:
+          type: string
+          example: Dízimos de Membros
+        description:
+          type: string
+        type:
+          type: string
+          enum: [INCOME, OUTGO, PURCHASE, REVERSAL]
+        statementCategory:
+          type: string
+          enum: [REVENUE, COGS, OPEX, CAPEX, OTHER]
+        active:
+          type: boolean
+        affectsCashFlow:
+          type: boolean
+        affectsResult:
+          type: boolean
+        affectsBalance:
+          type: boolean
+        isOperational:
+          type: boolean
+    FinancialConceptPayload:
+      allOf:
+        - $ref: '#/components/schemas/FinancialConcept'
+        - type: object
+          required:
+            - churchId
+          properties:
+            churchId:
+              type: string
+              format: uuid
+    FinancialConceptPatch:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [INCOME, OUTGO, PURCHASE, REVERSAL]
+        statementCategory:
+          type: string
+          enum: [REVENUE, COGS, OPEX, CAPEX, OTHER]
+        active:
+          type: boolean
+        affectsCashFlow:
+          type: boolean
+        affectsResult:
+          type: boolean
+        affectsBalance:
+          type: boolean
+        isOperational:
+          type: boolean
+    FinancialRecordPayload:
+      type: object
+      properties:
+        amount:
+          type: number
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        financialConceptId:
+          type: string
+        financialConcept:
+          $ref: '#/components/schemas/FinancialConcept'
+      required:
+        - amount
+        - date
+        - description
+        - financialConceptId

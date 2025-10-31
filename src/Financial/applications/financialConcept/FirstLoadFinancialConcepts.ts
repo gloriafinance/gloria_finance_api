@@ -10,6 +10,10 @@ type rawFinancialConcept = {
   type: ConceptType
   statementCategory: StatementCategory
   active: boolean
+  affectsCashFlow: boolean
+  affectsResult: boolean
+  affectsBalance: boolean
+  isOperational: boolean
 }
 
 export class FirstLoadFinancialConcepts {
@@ -34,7 +38,13 @@ export class FirstLoadFinancialConcepts {
           concept.active,
           concept.type,
           concept.statementCategory,
-          church
+          church,
+          {
+            affectsCashFlow: concept.affectsCashFlow,
+            affectsResult: concept.affectsResult,
+            affectsBalance: concept.affectsBalance,
+            isOperational: concept.isOperational,
+          }
         )
       )
     }

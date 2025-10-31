@@ -4,293 +4,461 @@
     "description": "Rendimentos obtidos com juros gerados em contas bancárias, incluindo contas poupança ou outras contas com rentabilidade financeira.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Perda de investimento",
     "description": "Diminuição do valor de um fundo de investimento ou outro instrumento financeiro, registada como ajustamento negativo na conta correspondente.",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Retornos Financeiros",
     "description": "Rendimentos gerados por juros ou lucros provenientes de contas de investimento, depósitos a prazo ou outros instrumentos financeiros da igreja.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Contas a Pagar",
     "description": "Valor a pagar por conta a pagar.",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Conta a Receber",
     "description": "Valor a receber por pagamento de uma conta a receber.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE"
+    "statementCategory": "REVENUE",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Empréstimos Concedidos",
     "description": "Valor emprestado a membros ou entidades, registrado como saída de caixa e criação de conta a receber do tipo empréstimo.",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Confraternizações e Festividades",
     "description": "Despesas com a compra de alimentos, bebidas, materiais de decoração e outros itens necessários para eventos de confraternização, celebrações e festas da igreja",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "COGS"
+    "statementCategory": "COGS",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Suprimentos Gerais",
     "description": "Despesas com materiais e produtos comumente utilizados na igreja, como água, papel e outros suprimentos necessários ao funcionamento diário.",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Saldo inicial em contas de disponibilidade",
     "description": "Saldo inicial em contas de disponibilidade / Abertura de exercício.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Dízmos de Dízmos",
     "description": "Pagameto de Dízmos de dízmos ao distrito",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Gastos de Pessoal",
     "description": "Salários e honorários para pastores, ministros, pessoal administrativo e outros funcionários da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Aluguel ou Arrendamento",
     "description": "Despesas relacionadas ao aluguel ou arrendamento de instalações para reuniões e atividades da igreja / alugel do salāo",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Produtos de Limpeza",
     "description": "Compra de utensílios e produtos de limpeza necessários para a manutenção e higiene das instalações da igreja.",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Suprimentos de Escritório",
     "description": "Compra de papel, tinta, equipamentos de escritório e outros suprimentos necessários para a administração da igreja",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Serviços Públicos",
     "description": "Pagamentos de eletricidade, água, gás e outros serviços públicos para manter as instalações da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Manutenção e Reparos",
     "description": "Despesas com a manutenção e reparo de edifícios, equipamentos e terrenos da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Despesas de Eventos / Conferências e Convenções",
     "description": "Custos associados a eventos especiais, conferências, retiros e atividades para a congregação",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Combustível e Transporte",
     "description": "Despesas relacionadas à compra de combustível, transporte e mobilidade dos veículos da igreja para atividades ministeriais e administrativas",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Programas de Assistência",
     "description": "Despesas destinadas a programas de assistência e caridade, como doações a instituições de caridade e projetos comunitários",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Educação Religiosa",
     "description": "Despesas com programas educacionais, estudos bíblicos, aulas e materiais de ensino",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Materiais de Evangelização e Ensino",
     "description": "Despesas associadas à impressão de recursos usados para aprendizagem da Bíblia, atividades de discipulado e divulgação da mensagem cristã.",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Publicidade e Promoção",
     "description": "Despesas relacionadas à publicidade, promoção de eventos e atividades da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Compra de equipamento Tecnológico",
     "description": "Compra equipamentos tecnológicos, como projetores, sistemas de som e equipamentos audiovisuais",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": false,
+    "affectsBalance": true,
+    "isOperational": false
   },
   {
     "name": "Missões e Evangelismo",
     "description": "Despesas relacionadas a atividades missionárias, viagens de evangelização e apoio a missionários",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Despesas de Viagem",
     "description": "Custos de viagem para conferências, retiros e atividades pastorais",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Treinamento e Desenvolvimento",
     "description": "Despesas para a formação e capacitação de líderes e membros da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Benevolência",
     "description": "Ajuda financeira fornecida a membros necessitados ou famílias em dificuldades",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Oferta de benevolência",
     "description": "Ajuda financeira fornecida a membros necessitados ou famílias em dificuldades",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Despesas Legais e Contábeis",
     "description": "Honorários de advogados e serviços de contabilidade relacionados a questões legais e fiscais",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Pagamento de Dívidas e Empréstimos",
     "description": "Pagamentos de empréstimos ou dívidas pendentes, como hipotecas ou outros compromissos financeiros",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Despesas de Culto",
     "description": "Custos associados à organização de cultos, música, adoração e recursos litúrgicos",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Despesas de Decoração",
     "description": "Custos associados à decoração de eventos, celebrações e cultos especiais da igreja",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "OPEX"
+    "statementCategory": "OPEX",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Despesas de Alimentação",
     "description": "Gastos relacionados a refeições, lanches e eventos de alimentação da igreja e seus membros",
     "type": "OUTGO",
     "active": true,
-    "statementCategory": "COGS"
+    "statementCategory": "COGS",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Ofertas de Culto",
     "description": "Contribuições feitas pelos membros da igreja durante os cultos.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE"
+    "statementCategory": "REVENUE",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Dízimos de Membros",
     "description": "Dízimos regulares doados pelos membros da igreja para sustentar as atividades e ministérios.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE"
+    "statementCategory": "REVENUE",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Oferta mensal pro Terreno",
     "description": "Oferta messal destinadas para adquirir terreno pra igreja.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Vendas de comida ou mercadorias",
     "description": "Ingresos obtidos por vendas.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE"
+    "statementCategory": "REVENUE",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": true
   },
   {
     "name": "Ofertas para Missões",
     "description": "Contribuições destinadas a apoiar projetos missionários e atividades de alcance evangelístico da igreja.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Projeto de Grupos de Jovens",
     "description": "Ingreso geradas pelas atividades realizados pelo grupo de jovens da igreja em pro de um projeto especifico.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Projeto de Grupos de Crianças",
     "description": "Ingreso provenientes de atividades e reuniões organizadas pelos grupos de crianças da igreja em pro de um projeto especifico.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Projeto de Grupos de Mulheres",
     "description": "Ingreso provenientes de atividades organizadas pelos grupos de mulheres da igreja em pro de um projeto especifico.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   },
   {
     "name": "Projeto de Grupos de Homens",
     "description": "Projeto provenientes de atividades organizadas pelos grupos de homens da igreja em pro de um projeto especifico.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "OTHER"
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": false,
+    "isOperational": false
   }
 ]
