@@ -6,7 +6,11 @@ export { Bank } from "./Bank"
 export { CostCenter } from "./CostCenter"
 export * from "./FinanceRecord"
 
-export { FinancialConcept } from "./FinancialConcept"
+export {
+  FinancialConcept,
+  type FinancialConceptImpactFlags,
+  type FinancialConceptImpactOverrides,
+} from "./FinancialConcept"
 export { OnlineContributions } from "./OnlineContributions"
 export { AvailabilityAccount } from "./AvailabilityAccount"
 export { AvailabilityAccountMaster } from "./AvailabilityAccountMaster"

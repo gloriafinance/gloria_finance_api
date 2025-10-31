@@ -1,4 +1,10 @@
-import { ConceptType, StatementCategory } from "@/Financial/domain"
+import {
+  ConceptType,
+  FinancialConceptImpactOverrides,
+  StatementCategory,
+} from "@/Financial/domain"
+
+export type FinancialConceptImpactRequest = FinancialConceptImpactOverrides
 
 export type FinancialConceptRequest = {
   name: string
@@ -8,4 +14,4 @@ export type FinancialConceptRequest = {
   active: boolean
   churchId: string
   financialConceptId?: string
-}
+} & FinancialConceptImpactRequest

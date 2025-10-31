@@ -1,6 +1,9 @@
 import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { FinancialConcept, FinancialConceptRequest } from "@/Financial/domain"
+import {
+  FinancialConcept,
+  FinancialConceptRequest,
+} from "@/Financial/domain"
 import { FindChurchById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
 
@@ -41,6 +44,13 @@ export class CreateOrUpdateFinancialConcept {
       financialConcept.setDescription(params.description)
       financialConcept.setStatementCategory(params.statementCategory)
 
+      financialConcept.updateImpactFlags({
+        affectsCashFlow: params.affectsCashFlow,
+        affectsResult: params.affectsResult,
+        affectsBalance: params.affectsBalance,
+        isOperational: params.isOperational,
+      })
+
       await this.financialConceptRepository.upsert(financialConcept)
 
       return
@@ -54,7 +64,13 @@ export class CreateOrUpdateFinancialConcept {
       params.active,
       params.type,
       params.statementCategory,
-      church
+      church,
+      {
+        affectsCashFlow: params.affectsCashFlow,
+        affectsResult: params.affectsResult,
+        affectsBalance: params.affectsBalance,
+        isOperational: params.isOperational,
+      }
     )
 
     await this.financialConceptRepository.upsert(newFinancialConcept)

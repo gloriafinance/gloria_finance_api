@@ -6,6 +6,10 @@ export interface IFinanceRecordDTO {
   financialConcept: {
     financialConceptId: string
     name: string
+    affectsCashFlow?: boolean
+    affectsResult?: boolean
+    affectsBalance?: boolean
+    isOperational?: boolean
   }
   financialRecordId: string
 

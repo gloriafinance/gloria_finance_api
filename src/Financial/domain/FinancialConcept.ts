@@ -5,6 +5,17 @@ import { Church } from "@/Church/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 
+export type FinancialConceptImpactFlags = {
+  affectsCashFlow: boolean
+  affectsResult: boolean
+  affectsBalance: boolean
+  isOperational: boolean
+}
+
+export type FinancialConceptImpactOverrides = Partial<
+  FinancialConceptImpactFlags
+>
+
 export class FinancialConcept extends AggregateRoot {
   private id?: string
   private financialConceptId: string
@@ -15,6 +26,10 @@ export class FinancialConcept extends AggregateRoot {
   private statementCategory: StatementCategory
   private churchId: string
   private createdAt: Date
+  private affectsCashFlow: boolean
+  private affectsResult: boolean
+  private affectsBalance: boolean
+  private isOperational: boolean
 
   static create(
     name: string,
@@ -22,7 +37,8 @@ export class FinancialConcept extends AggregateRoot {
     active: boolean,
     type: ConceptType,
     statementCategory: StatementCategory,
-    church: Church
+    church: Church,
+    impactOverrides?: FinancialConceptImpactOverrides
   ): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
     concept.financialConceptId = IdentifyEntity.get(`financialConcept`)
@@ -33,6 +49,7 @@ export class FinancialConcept extends AggregateRoot {
     concept.statementCategory = statementCategory
     concept.churchId = church.getChurchId()
     concept.createdAt = DateBR()
+    concept.applyImpactFlags(impactOverrides)
     return concept
   }
 
@@ -48,7 +65,84 @@ export class FinancialConcept extends AggregateRoot {
       plainData.statementCategory ?? StatementCategory.OTHER
     concept.createdAt = plainData.createdAt
     concept.churchId = plainData.churchId
+    concept.applyImpactFlags({
+      affectsCashFlow: plainData.affectsCashFlow,
+      affectsResult: plainData.affectsResult,
+      affectsBalance: plainData.affectsBalance,
+      isOperational: plainData.isOperational,
+    })
     return concept
+  }
+
+  private applyImpactFlags(
+    overrides?: FinancialConceptImpactOverrides
+  ): void {
+    const defaults = FinancialConcept.resolveImpactDefaults(
+      this.type,
+      this.statementCategory
+    )
+
+    this.affectsCashFlow =
+      overrides?.affectsCashFlow ?? defaults.affectsCashFlow
+    this.affectsResult = overrides?.affectsResult ?? defaults.affectsResult
+    this.affectsBalance = overrides?.affectsBalance ?? defaults.affectsBalance
+    this.isOperational = overrides?.isOperational ?? defaults.isOperational
+  }
+
+  private static resolveImpactDefaults(
+    type: ConceptType,
+    statementCategory: StatementCategory
+  ): FinancialConceptImpactFlags {
+    switch (statementCategory) {
+      case StatementCategory.REVENUE:
+        return {
+          affectsCashFlow: true,
+          affectsResult: true,
+          affectsBalance: false,
+          isOperational: true,
+        }
+      case StatementCategory.OPEX:
+      case StatementCategory.COGS:
+        return {
+          affectsCashFlow: true,
+          affectsResult: true,
+          affectsBalance: false,
+          isOperational: true,
+        }
+      case StatementCategory.CAPEX:
+        return {
+          affectsCashFlow: true,
+          affectsResult: false,
+          affectsBalance: true,
+          isOperational: false,
+        }
+      case StatementCategory.OTHER:
+      default:
+        if (type === ConceptType.PURCHASE) {
+          return {
+            affectsCashFlow: true,
+            affectsResult: false,
+            affectsBalance: true,
+            isOperational: false,
+          }
+        }
+
+        if (type === ConceptType.REVERSAL) {
+          return {
+            affectsCashFlow: false,
+            affectsResult: false,
+            affectsBalance: false,
+            isOperational: false,
+          }
+        }
+
+        return {
+          affectsCashFlow: true,
+          affectsResult: true,
+          affectsBalance: false,
+          isOperational: false,
+        }
+    }
   }
 
   getFinancialConceptId(): string {
@@ -107,6 +201,44 @@ export class FinancialConcept extends AggregateRoot {
     this.statementCategory = statementCategory
   }
 
+  updateImpactFlags(overrides?: FinancialConceptImpactOverrides): void {
+    if (!overrides) {
+      return
+    }
+
+    if (typeof overrides.affectsCashFlow === "boolean") {
+      this.affectsCashFlow = overrides.affectsCashFlow
+    }
+
+    if (typeof overrides.affectsResult === "boolean") {
+      this.affectsResult = overrides.affectsResult
+    }
+
+    if (typeof overrides.affectsBalance === "boolean") {
+      this.affectsBalance = overrides.affectsBalance
+    }
+
+    if (typeof overrides.isOperational === "boolean") {
+      this.isOperational = overrides.isOperational
+    }
+  }
+
+  getAffectsCashFlow(): boolean {
+    return this.affectsCashFlow
+  }
+
+  getAffectsResult(): boolean {
+    return this.affectsResult
+  }
+
+  getAffectsBalance(): boolean {
+    return this.affectsBalance
+  }
+
+  getIsOperational(): boolean {
+    return this.isOperational
+  }
+
   toPrimitives(): any {
     return {
       financialConceptId: this.financialConceptId,
@@ -117,6 +249,10 @@ export class FinancialConcept extends AggregateRoot {
       type: this.type,
       statementCategory: this.statementCategory,
       createdAt: this.createdAt,
+      affectsCashFlow: this.affectsCashFlow,
+      affectsResult: this.affectsResult,
+      affectsBalance: this.affectsBalance,
+      isOperational: this.isOperational,
     }
   }
 }
