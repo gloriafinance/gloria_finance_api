@@ -1,9 +1,6 @@
 import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import {
-  FinancialConcept,
-  FinancialConceptRequest,
-} from "@/Financial/domain"
+import { FinancialConcept, FinancialConceptRequest } from "@/Financial/domain"
 import { FindChurchById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
 

@@ -12,9 +12,8 @@ export type FinancialConceptImpactFlags = {
   isOperational: boolean
 }
 
-export type FinancialConceptImpactOverrides = Partial<
-  FinancialConceptImpactFlags
->
+export type FinancialConceptImpactOverrides =
+  Partial<FinancialConceptImpactFlags>
 
 export class FinancialConcept extends AggregateRoot {
   private id?: string
@@ -38,7 +37,7 @@ export class FinancialConcept extends AggregateRoot {
     type: ConceptType,
     statementCategory: StatementCategory,
     church: Church,
-    impactOverrides?: FinancialConceptImpactOverrides
+    impactOverrides: FinancialConceptImpactOverrides
   ): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
     concept.financialConceptId = IdentifyEntity.get(`financialConcept`)
@@ -49,7 +48,10 @@ export class FinancialConcept extends AggregateRoot {
     concept.statementCategory = statementCategory
     concept.churchId = church.getChurchId()
     concept.createdAt = DateBR()
-    concept.applyImpactFlags(impactOverrides)
+    concept.affectsBalance = impactOverrides.affectsBalance
+    concept.affectsResult = impactOverrides.affectsResult
+    concept.affectsCashFlow = impactOverrides.affectsCashFlow
+    concept.isOperational = impactOverrides.isOperational
     return concept
   }
 
@@ -65,29 +67,33 @@ export class FinancialConcept extends AggregateRoot {
       plainData.statementCategory ?? StatementCategory.OTHER
     concept.createdAt = plainData.createdAt
     concept.churchId = plainData.churchId
-    concept.applyImpactFlags({
-      affectsCashFlow: plainData.affectsCashFlow,
-      affectsResult: plainData.affectsResult,
-      affectsBalance: plainData.affectsBalance,
-      isOperational: plainData.isOperational,
-    })
+    // concept.applyImpactFlags({
+    //   affectsCashFlow: plainData.affectsCashFlow,
+    //   affectsResult: plainData.affectsResult,
+    //   affectsBalance: plainData.affectsBalance,
+    //   isOperational: plainData.isOperational,
+    // })
+    concept.affectsCashFlow = plainData.affectsCashFlow
+    concept.affectsResult = plainData.affectsResult
+    concept.affectsBalance = plainData.affectsBalance
+    concept.isOperational = plainData.isOperational
     return concept
   }
 
-  private applyImpactFlags(
-    overrides?: FinancialConceptImpactOverrides
-  ): void {
-    const defaults = FinancialConcept.resolveImpactDefaults(
-      this.type,
-      this.statementCategory
-    )
-
-    this.affectsCashFlow =
-      overrides?.affectsCashFlow ?? defaults.affectsCashFlow
-    this.affectsResult = overrides?.affectsResult ?? defaults.affectsResult
-    this.affectsBalance = overrides?.affectsBalance ?? defaults.affectsBalance
-    this.isOperational = overrides?.isOperational ?? defaults.isOperational
-  }
+  // private applyImpactFlags(
+  //   overrides?: FinancialConceptImpactOverrides
+  // ): void {
+  //   const defaults = FinancialConcept.resolveImpactDefaults(
+  //     this.type,
+  //     this.statementCategory
+  //   )
+  //
+  //   this.affectsCashFlow =
+  //     overrides?.affectsCashFlow ?? defaults.affectsCashFlow
+  //   this.affectsResult = overrides?.affectsResult ?? defaults.affectsResult
+  //   this.affectsBalance = overrides?.affectsBalance ?? defaults.affectsBalance
+  //   this.isOperational = overrides?.isOperational ?? defaults.isOperational
+  // }
 
   private static resolveImpactDefaults(
     type: ConceptType,
