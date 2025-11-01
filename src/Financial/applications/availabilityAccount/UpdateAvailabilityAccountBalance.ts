@@ -39,6 +39,6 @@ export class UpdateAvailabilityAccountBalance implements IQueue {
 
     await new UpdateAvailabilityAccountMaster(
       this.availabilityAccountMasterRepository
-    ).execute(account, Number(args.amount), args.operationType)
+    ).execute(account, Number(args.amount), args.operationType, args.period)
   }
 }

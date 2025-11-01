@@ -1,7 +1,7 @@
 import { IAvailabilityAccountMasterRepository } from "../../domain/interfaces"
 import { AvailabilityAccount, AvailabilityAccountMaster } from "../../domain"
 import IdentifyAvailabilityAccountMaster from "../helpers/MasterBalanceIdentifier"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class UpdateAvailabilityAccountMaster {
   private logger = Logger("UpdateAvailabilityAccountMaster")
@@ -13,11 +13,13 @@ export class UpdateAvailabilityAccountMaster {
   async execute(
     account: AvailabilityAccount,
     amount: number,
-    operationType: "MONEY_IN" | "MONEY_OUT"
+    operationType: "MONEY_IN" | "MONEY_OUT",
+    period?: { year?: number; month?: number }
   ) {
     this.logger.info(`UpdateAvailabilityAccountMaster`, account)
     const identifyAvailabilityAccountMaster = IdentifyAvailabilityAccountMaster(
-      account.getAvailabilityAccountId()
+      account.getAvailabilityAccountId(),
+      period
     )
 
     this.logger.info(
