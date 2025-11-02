@@ -12,5 +12,7 @@ export const toFinancialRecordType = (
       return FinancialRecordType.PURCHASE
     case ConceptType.REVERSAL:
       return FinancialRecordType.REVERSAL
+    default:
+      return FinancialRecordType.TRANSFER
   }
 }

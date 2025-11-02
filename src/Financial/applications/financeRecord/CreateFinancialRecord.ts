@@ -80,9 +80,9 @@ export class CreateFinancialRecord implements IQueue {
     }
   }
 
-  private async uploadFile(file?: any): Promise<string> {
+  private async uploadFile(file?: any): Promise<string | undefined> {
     if (!file) {
-      return
+      return undefined
     }
     const voucher = await this.store.uploadFile(file)
 

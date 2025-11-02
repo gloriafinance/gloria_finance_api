@@ -1,6 +1,5 @@
 import { TypeBankingOperation } from "@/MovementBank/domain"
 import {
-  AvailabilityAccount,
   CostCenter,
   FinancialConcept,
   FinancialRecordSource,
@@ -28,12 +27,9 @@ export type FinancialRecordCreateQueue = {
   }
 }
 
-export type FinancialRecordUpdateQueue = {
-  file?: any
+export type UpdateStatusFinancialRecordQueue = {
   financialRecord: any
-  status?: FinancialRecordStatus
-  costCenter?: CostCenter
-  availabilityAccount?: AvailabilityAccount
+  status: FinancialRecordStatus
 }
 
 export type FinancialRecordRequest = {

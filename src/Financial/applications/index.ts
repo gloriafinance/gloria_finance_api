@@ -28,4 +28,4 @@ export { FindAvailabilityAccountByAvailabilityAccountId } from "./availabilityAc
 export { DispatchUpdateAvailabilityAccountBalance } from "./DispatchUpdateAvailabilityAccountBalance"
 export { DispatchCreateFinancialRecord } from "./DispatchCreateFinancialRecord"
 export { DispatchUpdateCostCenterMaster } from "./DispatchUpdateCostCenterMaster"
-export * from "./DispatchUpdateFinancialRecord"
+export * from "./DispatchUpdateStatusFinancialRecord"

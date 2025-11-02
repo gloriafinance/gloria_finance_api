@@ -51,22 +51,6 @@ export class ConfirmOrDenyPaymentCommitment {
 
     if (accepted) {
       await this.generateContract(account, church)
-
-      // new DispatchCreateFinancialRecord(this.queueService).execute({
-      //   churchId: account.getChurchId(),
-      //   date: DateBR(),
-      //   createdBy: account.getCreatedBy(),
-      //   financialRecordType: FinancialRecordType.INCOME,
-      //   source: FinancialRecordSource.AUTO,
-      //   status: FinancialRecordStatus.PENDING,
-      //   amount: account.getAmountPending(),
-      //   financialConcept: account.getFinancialConcept(),
-      //   description: `Conta a Receber criada: ${account.getDescription()}`,
-      //   reference: {
-      //     entityId: account.getAccountReceivableId(),
-      //     type: "AccountReceivable",
-      //   },
-      // })
     }
 
     await this.accountReceivableRepository.upsert(account)

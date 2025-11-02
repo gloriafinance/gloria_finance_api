@@ -69,6 +69,7 @@ export class PayAccountPayable {
         this.availabilityAccountRepository
       ).execute(req.availabilityAccountId, accountPayable.getChurchId())
 
+    //TODO multi language support
     const concept = await this.financialConceptRepository.one({
       name: "Contas a Pagar",
       churchId: accountPayable.getChurchId(),
@@ -84,7 +85,7 @@ export class PayAccountPayable {
         churchId: accountPayable.getChurchId(),
         file: req.file,
         date: DateBR(),
-        createdBy: "system",
+        createdBy: req.createdBy,
         availabilityAccount,
         financialRecordType: FinancialRecordType.OUTGO,
         source: FinancialRecordSource.AUTO,

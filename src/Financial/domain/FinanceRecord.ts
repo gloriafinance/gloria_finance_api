@@ -67,7 +67,12 @@ export class FinanceRecord extends AggregateRoot {
     }
 
     financialRecord.churchId = churchId
-    financialRecord.amount = Number(amount)
+
+    financialRecord.amount =
+      type === FinancialRecordType.REVERSAL
+        ? -Math.abs(Number(amount))
+        : Math.abs(Number(amount))
+
     financialRecord.date = date
     financialRecord.type = type
 

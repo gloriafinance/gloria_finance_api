@@ -9,7 +9,6 @@ import {
   FinancialRecordRequest,
   FinancialRecordSource,
   FinancialRecordStatus,
-  FinancialRecordType,
 } from "../../../domain"
 import {
   CancelFinancialRecord,
@@ -50,6 +49,7 @@ export const FinancialRecordController = async (
       financialConcept.getType() === ConceptType.DISCHARGE &&
       !request.costCenterId
     ) {
+      //TODO message em portugues, should be internationalized
       res.status(HttpStatus.BAD_REQUEST).send({
         costCenterId: {
           message: "Deve selecionar um centro de custos.",
@@ -67,10 +67,6 @@ export const FinancialRecordController = async (
       ).execute(request.churchId, request.costCenterId)
     }
 
-    let financialRecordType = FinancialRecordType.INCOME
-
-    financialRecordType = toFinancialRecordType(financialConcept.getType())
-
     await new CreateFinancialRecord(
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
@@ -80,7 +76,7 @@ export const FinancialRecordController = async (
       ...request,
       costCenter,
       financialConcept,
-      financialRecordType,
+      financialRecordType: toFinancialRecordType(financialConcept.getType()),
       availabilityAccount,
       status: FinancialRecordStatus.CLEARED,
       source: FinancialRecordSource.MANUAL,

@@ -1,5 +1,4 @@
 import { AmountValue } from "@/Shared/domain"
-import { FinancialConcept } from "@/Financial/domain"
 
 export type PayAccountPayableRequest = {
   accountPayableId: string
@@ -9,6 +8,5 @@ export type PayAccountPayableRequest = {
   availabilityAccountId: string
   amount: AmountValue
   file?: any
-  voucher?: string
-  concept?: FinancialConcept
+  createdBy: string
 }

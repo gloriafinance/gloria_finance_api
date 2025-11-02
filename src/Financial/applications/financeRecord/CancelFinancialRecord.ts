@@ -11,14 +11,12 @@ import {
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import {
-  IAvailabilityAccountRepository,
-  IFinancialRecordRepository,
-} from "@/Financial/domain/interfaces"
+import { IAvailabilityAccountRepository, IFinancialRecordRepository, } from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,
+  DispatchUpdateStatusFinancialRecord,
 } from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 
@@ -45,40 +43,44 @@ export class CancelFinancialRecord {
 
     const { financialRecordId, churchId, createdBy } = params
 
-    const movement = await this.financialRecordRepository.one({
+    const financialRecord = await this.financialRecordRepository.one({
       financialRecordId,
       churchId,
     })
 
-    if (!movement) {
+    if (!financialRecord) {
       this.logger.error(`Movement not found`, params)
       throw new FinancialMovementNotFound()
     }
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
-      churchId: movement.getChurchId(),
-      month: movement.getDate().getMonth() + 1,
-      year: movement.getDate().getFullYear(),
+      churchId: financialRecord.getChurchId(),
+      month: financialRecord.getDate().getMonth() + 1,
+      year: financialRecord.getDate().getFullYear(),
     })
 
-    if (movement.getType() === FinancialRecordType.OUTGO) {
-      await this.cancelOutgoRecord(movement, createdBy)
+    if (financialRecord.getType() === FinancialRecordType.OUTGO) {
+      await this.cancelOutgoRecord(financialRecord, createdBy)
     }
   }
 
-  private async cancelOutgoRecord(movement: FinanceRecord, createdBy: string) {
+  private async cancelOutgoRecord(
+    financialRecord: FinanceRecord,
+    createdBy: string
+  ) {
     const availabilityAccount = await this.availabilityAccountRepository.one({
-      availabilityAccountId: movement.getAvailabilityAccountId(),
+      availabilityAccountId: financialRecord.getAvailabilityAccountId(),
     })
 
     await this.financeRecordReversal({
       availabilityAccount,
       financeRecordReversal: {
-        churchId: movement.getChurchId(),
-        amount: movement.getAmount(),
+        churchId: financialRecord.getChurchId(),
+        amount: financialRecord.getAmount(),
         date: new Date(DateBR().toISOString().split("T")[0]),
         availabilityAccount,
-        description: "Reversão do movimento " + movement.getFinancialRecordId(),
+        description:
+          "Reversão do movimento " + financialRecord.getFinancialRecordId(),
         type: FinancialRecordType.REVERSAL,
         status: FinancialRecordStatus.VOID,
         source: FinancialRecordSource.MANUAL,
@@ -88,10 +90,18 @@ export class CancelFinancialRecord {
     })
 
     new DispatchUpdateCostCenterMaster(this.queueService).execute({
-      costCenterId: movement.getCostCenterId(),
-      amount: movement.getAmount(),
-      churchId: movement.getChurchId(),
+      costCenterId: financialRecord.getCostCenterId(),
+      amount: financialRecord.getAmount(),
+      churchId: financialRecord.getChurchId(),
       operation: "subtract",
+    })
+
+    new DispatchUpdateStatusFinancialRecord(this.queueService).execute({
+      financialRecord: {
+        ...financialRecord.toPrimitives(),
+        id: financialRecord.getId(),
+      },
+      status: FinancialRecordStatus.VOID,
     })
   }
 
@@ -109,7 +119,7 @@ export class CancelFinancialRecord {
 
     new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       availabilityAccount: availabilityAccount,
-      amount: financeRecordReversal.amount,
+      amount: Math.abs(financeRecordReversal.amount),
       concept: financeRecordReversal.description,
       operationType: operation,
       createdAt: financeRecordReversal.date,
