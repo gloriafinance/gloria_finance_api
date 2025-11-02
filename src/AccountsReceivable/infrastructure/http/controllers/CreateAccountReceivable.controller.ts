@@ -2,9 +2,7 @@ import { AccountReceivableRequest } from "@/AccountsReceivable/domain"
 import { Response } from "express"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { CreateAccountReceivable } from "@/AccountsReceivable/applications"
-import {
-  AccountsReceivableMongoRepository
-} from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
+import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import { HttpStatus } from "@/Shared/domain"
 import { FindChurchById } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"

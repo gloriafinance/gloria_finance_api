@@ -56,9 +56,10 @@ export class PayAccountPayable {
       throw new AccountPayableNotFound()
     }
 
-    const accountPayableSnapshot = AccountPayable.fromPrimitives(
-      accountPayable.toPrimitives()
-    )
+    const accountPayableSnapshot = AccountPayable.fromPrimitives({
+      ...accountPayable.toPrimitives(),
+      id: accountPayable.getId(),
+    })
     unitOfWork.registerRollbackActions(async () => {
       await this.accountPayableRepository.upsert(accountPayableSnapshot)
     })
@@ -92,7 +93,7 @@ export class PayAccountPayable {
         financialConcept: concept,
         description: `pagamento de conta a pagar: parcela: ${req.installmentIds.join(",")}`,
         reference: {
-          reference: `${accountPayable.getAccountPayableId()} installments ${req.installmentIds.join(",")}`,
+          entityId: `${accountPayable.getAccountPayableId()} installments ${req.installmentIds.join(",")}`,
           type: "AccountPayable",
         },
       })

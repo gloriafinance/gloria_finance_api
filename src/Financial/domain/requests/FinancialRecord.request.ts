@@ -18,19 +18,19 @@ export type FinancialRecordCreateQueue = {
   status: FinancialRecordStatus
   costCenter?: CostCenter
   financialConcept: FinancialConcept
-  availabilityAccount?: AvailabilityAccount
+  availabilityAccount?: any
   createdBy: string
   file?: any
   voucher?: string
   reference?: {
     type: string
-    reference: string
+    entityId: string
   }
 }
 
 export type FinancialRecordUpdateQueue = {
   file?: any
-  financialConceptId: string
+  financialRecord: any
   status?: FinancialRecordStatus
   costCenter?: CostCenter
   availabilityAccount?: AvailabilityAccount

@@ -31,7 +31,7 @@ export class FinanceRecord extends AggregateRoot {
   private description?: string
   private reference?: {
     type: string
-    reference: string
+    entityId: string
   }
   private status: FinancialRecordStatus
   private source: FinancialRecordSource
@@ -77,6 +77,7 @@ export class FinanceRecord extends AggregateRoot {
         accountType: availabilityAccount.getType(),
       }
     }
+
     financialRecord.voucher = voucher
     financialRecord.description = description
 

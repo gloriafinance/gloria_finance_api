@@ -13,6 +13,7 @@ import { UpdateCostCenterMaster } from "../applications/costCenter/UpdateCostCen
 import { CreateFinancialRecord } from "@/Financial/applications/financeRecord/CreateFinancialRecord"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
+import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinanceRecord"
 
 export const FinancialQueue = (): IDefinitionQueue[] => [
   {
@@ -33,6 +34,14 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     useClass: CreateFinancialRecord,
     inject: [
       FinancialYearMongoRepository.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      StorageGCP.getInstance(process.env.BUCKET_FILES),
+      QueueService.getInstance(),
+    ],
+  },
+  {
+    useClass: UpdateFinancialRecord,
+    inject: [
       FinanceRecordMongoRepository.getInstance(),
       StorageGCP.getInstance(process.env.BUCKET_FILES),
       QueueService.getInstance(),

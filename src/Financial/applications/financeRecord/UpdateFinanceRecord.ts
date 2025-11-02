@@ -27,9 +27,7 @@ export class UpdateFinancialRecord implements IQueue {
   async handle(args: FinancialRecordUpdateQueue): Promise<void> {
     this.logger.info(`UpdateFinancialRecord handle:`, args)
 
-    const financialRecord = await this.financialRecordRepository.one({
-      financialConceptId: args.financialConceptId,
-    })
+    const financialRecord = FinanceRecord.fromPrimitives(args.financialRecord)
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: financialRecord.getChurchId(),
@@ -37,9 +35,10 @@ export class UpdateFinancialRecord implements IQueue {
 
     const unitOfWork = new UnitOfWork()
 
-    const financialRecordSnapshot = FinanceRecord.fromPrimitives(
-      financialRecord.toPrimitives()
-    )
+    const financialRecordSnapshot = FinanceRecord.fromPrimitives({
+      ...financialRecord.toPrimitives(),
+      id: financialRecord.getId(),
+    })
 
     unitOfWork.registerRollbackActions(async () => {
       await this.financialRecordRepository.upsert(financialRecordSnapshot)

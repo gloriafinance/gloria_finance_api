@@ -5,7 +5,10 @@ import { PayAccountReceivable } from "@/AccountsReceivable/applications"
 import { AccountsReceivableMongoRepository } from "../../persistence/AccountsReceivableMongoRepository"
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/Shared/infrastructure"
-import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
+import {
+  AvailabilityAccountMongoRepository,
+  FinanceRecordMongoRepository
+} from "@/Financial/infrastructure/persistence"
 
 /**
  * @function PayAccountReceivableController
@@ -27,6 +30,7 @@ export const PayAccountReceivableController = async (
     //await makeFinanceRecord(req)
 
     await new PayAccountReceivable(
+      FinanceRecordMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       AccountsReceivableMongoRepository.getInstance(),
       QueueService.getInstance()

@@ -22,6 +22,6 @@ export type CreateFinanceRecord = {
   costCenter?: CostCenter
   reference?: {
     type: string
-    reference: string
+    entityId: string
   }
 }
