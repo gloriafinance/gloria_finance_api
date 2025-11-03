@@ -4,7 +4,7 @@ import { IFinancialRecordRepository } from "../../domain/interfaces"
 import { FinanceRecord } from "@/Financial/domain"
 import { PrepareFinanceRecordCriteria } from "./ListFilters"
 
-export class SearchFinanceRecord {
+export class FetchingFinanceRecord {
   constructor(
     private readonly financialRecordRepository: IFinancialRecordRepository
   ) {}

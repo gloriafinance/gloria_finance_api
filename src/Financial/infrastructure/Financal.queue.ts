@@ -44,6 +44,8 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
+      AvailabilityAccountMongoRepository.getInstance(),
+      QueueService.getInstance(),
     ],
   },
   {

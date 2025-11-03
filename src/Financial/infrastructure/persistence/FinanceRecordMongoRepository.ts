@@ -6,6 +6,7 @@ import {
   CostCenterMaster,
   StatementCategory,
   StatementCategorySummary,
+  FinancialRecordStatus,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import {
@@ -13,6 +14,11 @@ import {
   MongoRepository,
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
+
+const REALIZED_STATUSES = [
+  FinancialRecordStatus.CLEARED,
+  FinancialRecordStatus.RECONCILED,
+]
 
 export class FinanceRecordMongoRepository
   extends MongoRepository<FinanceRecord>
@@ -85,6 +91,7 @@ export class FinanceRecordMongoRepository
       },
       "financialConcept.name": { $regex: "Dízimos" },
       type: ConceptType.INCOME,
+      status: { $in: REALIZED_STATUSES },
     }
 
     const collection = await this.collection()
@@ -228,6 +235,7 @@ export class FinanceRecordMongoRepository
         $gte: startDate,
         $lt: endDate,
       },
+      status: { $in: REALIZED_STATUSES },
     }
 
     const result = await collection

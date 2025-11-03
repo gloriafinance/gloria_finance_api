@@ -15,7 +15,7 @@ export { FindFinancialConceptByChurchIdAndFinancialConceptId } from "./financial
 export { FirstLoadFinancialConcepts } from "./financialConcept/FirstLoadFinancialConcepts"
 export { FindFinancialConceptsByChurchIdAndTypeConcept } from "./financialConcept/FindFinancialConceptsByChurchIdAndTypeConcept"
 
-export { SearchFinanceRecord } from "./financeRecord/SearchFinanceRecord"
+export * from "./financeRecord/FetchingFinanceRecord"
 export { GenerateFinanceRecordReport } from "./financeRecord/GenerateFinanceRecordReport"
 export * from "./financeRecord/CancelFinancialRecord"
 export * from "./financeRecord/CreateFinancialRecord"

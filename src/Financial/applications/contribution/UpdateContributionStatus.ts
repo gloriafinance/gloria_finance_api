@@ -5,11 +5,11 @@ import {
   FinancialRecordType,
   OnlineContributions,
   OnlineContributionsStatus,
+  ConceptType,
   TypeOperationMoney,
 } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "../../../Shared/adapter"
-import { TypeBankingOperation } from "../../../MovementBank/domain"
 import { IQueueService } from "../../../Shared/domain"
 import { DispatchCreateFinancialRecord } from "../DispatchCreateFinancialRecord"
 import { DateBR } from "../../../Shared/helpers"
@@ -49,17 +49,21 @@ export class UpdateContributionStatus {
       return
     }
 
+    const concept = contribution.getFinancialConcept()
+    const operationType =
+      concept.getType() === ConceptType.INCOME
+        ? TypeOperationMoney.MONEY_IN
+        : TypeOperationMoney.MONEY_OUT
+
     new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
       availabilityAccount: contribution.getAvailabilityAccount(),
-      operationType: TypeBankingOperation.DEPOSIT
-        ? TypeOperationMoney.MONEY_IN
-        : TypeOperationMoney.MONEY_OUT,
-      concept: contribution.getFinancialConcept().getName(),
+      operationType,
+      concept: concept.getName(),
       amount: contribution.getAmount(),
     })
 
     new DispatchCreateFinancialRecord(this.queueService).execute({
-      financialConcept: contribution.getFinancialConcept(),
+      financialConcept: concept,
       amount: contribution.getAmount(),
       churchId: contribution.getMember().getChurchId(),
       date: DateBR(),
@@ -69,7 +73,7 @@ export class UpdateContributionStatus {
       status: FinancialRecordStatus.RECONCILED,
       availabilityAccount: contribution.getAvailabilityAccount(),
       voucher: contribution.getBankTransferReceipt(),
-      description: contribution.getFinancialConcept().getName(),
+      description: concept.getName(),
     })
   }
 }

@@ -9,8 +9,8 @@ import {
   CancelFinancialRecordController,
   FinancialRecordController,
 } from "../controllers/FinancialRecord.controller"
-import { FinanceRecordListController } from "../controllers/FinanceRecordList.controller"
 import { GenerateFinanceRecordReportController } from "../controllers/GenerateFinanceRecordReport.controller"
+import { FetchingFinanceRecordController } from "@/Financial/infrastructure/http/controllers/FetchingFinanceRecordController"
 
 const financialRecordRoutes = Router()
 
@@ -47,7 +47,7 @@ financialRecordRoutes.patch(
 
 financialRecordRoutes.get("/", PermissionMiddleware, async (req, res) => {
   const params = req.query as unknown as FilterFinanceRecordRequest
-  await FinanceRecordListController(
+  await FetchingFinanceRecordController(
     { ...params, churchId: req["user"].churchId },
     res
   )

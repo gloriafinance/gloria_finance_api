@@ -8,6 +8,7 @@ import {
   FinanceRecord,
   FinancialConcept,
   FinancialRecordCreateQueue,
+  FinancialRecordStatus,
   TypeOperationMoney,
 } from "@/Financial/domain"
 import { UnitOfWork } from "@/Shared/helpers"
@@ -98,6 +99,10 @@ export class CreateFinancialRecord implements IQueue {
       return
     }
 
+    if (!this.isRealizedStatus(args.status)) {
+      return
+    }
+
     this.unitOfWork.execPostCommit(async () => {
       new DispatchUpdateCostCenterMaster(this.queueService).execute({
         churchId: args.churchId,
@@ -111,6 +116,10 @@ export class CreateFinancialRecord implements IQueue {
     args: FinancialRecordCreateQueue
   ) {
     if (!args.availabilityAccount) {
+      return
+    }
+
+    if (!this.isRealizedStatus(args.status)) {
       return
     }
 
@@ -131,5 +140,12 @@ export class CreateFinancialRecord implements IQueue {
         createdAt: args.date,
       })
     })
+  }
+
+  private isRealizedStatus(status: FinancialRecordStatus): boolean {
+    return (
+      status === FinancialRecordStatus.CLEARED ||
+      status === FinancialRecordStatus.RECONCILED
+    )
   }
 }

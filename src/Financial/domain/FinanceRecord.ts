@@ -11,7 +11,7 @@ import {
 import { DateBR } from "@/Shared/helpers"
 
 export class FinanceRecord extends AggregateRoot {
-  private costCenter: {
+  private costCenter?: {
     costCenterId: string
     name: string
   }
@@ -22,7 +22,7 @@ export class FinanceRecord extends AggregateRoot {
   private amount: number
   private date: Date
   private type: FinancialRecordType
-  private availabilityAccount: {
+  private availabilityAccount?: {
     availabilityAccountId: string
     accountName: string
     accountType: AccountType
@@ -38,6 +38,7 @@ export class FinanceRecord extends AggregateRoot {
   private createdBy: string
   private createdAt: Date
   private updatedAt: Date
+  private clearedAt?: Date
   private reconciledAt?: Date
 
   static create(params: CreateFinanceRecord): FinanceRecord {
@@ -96,10 +97,10 @@ export class FinanceRecord extends AggregateRoot {
 
     financialRecord.createdAt = DateBR()
     financialRecord.updatedAt = DateBR()
-    financialRecord.status = status
     financialRecord.source = source
     financialRecord.createdBy = createdBy
     financialRecord.reference = reference
+    financialRecord.setStatus(status)
 
     return financialRecord
   }
@@ -125,6 +126,7 @@ export class FinanceRecord extends AggregateRoot {
     financialRecord.createdBy = plainData.createdBy ?? ""
     financialRecord.status = plainData.status
     financialRecord.reference = plainData.reference ?? undefined
+    financialRecord.clearedAt = plainData.clearedAt ?? undefined
     financialRecord.reconciledAt = plainData.reconciledAt ?? undefined
 
     return financialRecord
@@ -151,7 +153,20 @@ export class FinanceRecord extends AggregateRoot {
   }
 
   getAvailabilityAccountId(): string {
+    if (!this.availabilityAccount) {
+      throw new Error("Availability account not defined")
+    }
     return this.availabilityAccount.availabilityAccountId
+  }
+
+  getAvailabilityAccount():
+    | {
+        availabilityAccountId: string
+        accountName: string
+        accountType: AccountType
+      }
+    | undefined {
+    return this.availabilityAccount
   }
 
   getDate() {
@@ -160,6 +175,10 @@ export class FinanceRecord extends AggregateRoot {
 
   getCostCenterId(): string | undefined {
     return this.costCenter?.costCenterId
+  }
+
+  getCostCenter() {
+    return this.costCenter
   }
 
   getFinancialConcept() {
@@ -171,11 +190,29 @@ export class FinanceRecord extends AggregateRoot {
   }
 
   setStatus(status: FinancialRecordStatus) {
+    if (this.status === status) {
+      return
+    }
+
+    const previousStatus = this.status
     this.status = status
+    this.applyStatusSideEffects(status, previousStatus)
+  }
+
+  getStatus(): FinancialRecordStatus {
+    return this.status
   }
 
   update() {
     this.updatedAt = DateBR()
+  }
+
+  getClearedAt(): Date | undefined {
+    return this.clearedAt
+  }
+
+  getReconciledAt(): Date | undefined {
+    return this.reconciledAt
   }
 
   toPrimitives() {
@@ -196,7 +233,29 @@ export class FinanceRecord extends AggregateRoot {
       source: this.source,
       createdBy: this.createdBy,
       reference: this.reference,
+      clearedAt: this.clearedAt,
       reconciledAt: this.reconciledAt,
+    }
+  }
+
+  private applyStatusSideEffects(
+    newStatus: FinancialRecordStatus,
+    previousStatus?: FinancialRecordStatus
+  ) {
+    const now = DateBR()
+
+    if (
+      newStatus === FinancialRecordStatus.CLEARED ||
+      newStatus === FinancialRecordStatus.RECONCILED
+    ) {
+      this.clearedAt = this.clearedAt ?? now
+    }
+
+    if (
+      newStatus === FinancialRecordStatus.RECONCILED &&
+      previousStatus !== FinancialRecordStatus.RECONCILED
+    ) {
+      this.reconciledAt = now
     }
   }
 }
