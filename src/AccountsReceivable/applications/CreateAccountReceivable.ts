@@ -1,6 +1,7 @@
 import {
   AccountReceivable,
   AccountReceivableRequest,
+  AccountReceivableType,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import { Logger } from "@/Shared/adapter"
@@ -24,30 +25,36 @@ export class CreateAccountReceivable {
 
     const account = AccountReceivable.create(requestAccountReceivable)
 
+    switch (requestAccountReceivable.type) {
+      case AccountReceivableType.CONTRIBUTION:
+        account.accountAccepted(true)
+        break
+      default:
+        //TODO refactor symbol
+        this.sendMailPaymentCommitment.execute({
+          symbol: "R$",
+          amount: account.getAmountPending(),
+          installments: account.getInstallments(),
+          concept: account.getDescription(),
+          dueDate: account.getDueDate(),
+          token: account.getToken(),
+          debtor: {
+            name: account.getDebtor().name,
+            email: account.getDebtor().email,
+            dni: account.getDebtor().debtorDNI,
+          },
+          church: {
+            name: requestAccountReceivable.church.getName(),
+            legalRepresentative: {
+              name: "",
+              role: "",
+            },
+          },
+        })
+    }
+
     await this.accountReceivableRepository.upsert(account)
 
     this.logger.info(`CreateAccountReceivable finish`)
-
-    //TODO refactor symbol
-    this.sendMailPaymentCommitment.execute({
-      symbol: "R$",
-      amount: account.getAmountPending(),
-      installments: account.getInstallments(),
-      concept: account.getDescription(),
-      dueDate: account.getDueDate(),
-      token: account.getToken(),
-      debtor: {
-        name: account.getDebtor().name,
-        email: account.getDebtor().email,
-        dni: account.getDebtor().debtorDNI,
-      },
-      church: {
-        name: requestAccountReceivable.church.getName(),
-        legalRepresentative: {
-          name: "",
-          role: "",
-        },
-      },
-    })
   }
 }
