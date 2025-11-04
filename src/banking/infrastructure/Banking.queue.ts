@@ -3,7 +3,13 @@ import { MovementBankRecord } from "@/banking/applications"
 import {
   BankMongoRepository,
   MovementBankMongoRepository,
+  BankStatementMongoRepository,
 } from "@/banking/infrastructure/persistence"
+import { ImportBankStatementJob } from "@/banking/infrastructure/jobs/ImportBankStatement.job"
+import { BankStatementParserFactory } from "@/banking/infrastructure/parsers/BankStatementParserFactory"
+import { BankStatementReconciler } from "@/banking/infrastructure/services/BankStatementReconciler"
+import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
+import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 
 export const BankingQueue = (): IDefinitionQueue[] => [
   {
@@ -11,6 +17,20 @@ export const BankingQueue = (): IDefinitionQueue[] => [
     inject: [
       MovementBankMongoRepository.getInstance(),
       BankMongoRepository.getInstance(),
+    ],
+  },
+  {
+    useClass: ImportBankStatementJob,
+    inject: [
+      BankStatementParserFactory.getInstance(),
+      BankStatementMongoRepository.getInstance(),
+      new BankStatementReconciler(
+        BankStatementMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ),
+      StorageGCP.getInstance(process.env.BUCKET_FILES),
+      QueueService.getInstance(),
     ],
   },
 ]

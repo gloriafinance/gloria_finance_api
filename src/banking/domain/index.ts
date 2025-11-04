@@ -8,6 +8,12 @@ export * from "./requests/MovementBank.request"
 
 export * from "./interfaces/BankRepository.interface"
 export * from "./interfaces/MovementBankRepository.interface"
+export * from "./interfaces/BankStatementRepository.interface"
+export * from "./interfaces/BankStatementParser.interface"
 
 export * from "./Bank"
 export * from "./MovementBank"
+export * from "./BankStatement"
+export * from "./enums/BankStatementDirection.enum"
+export * from "./enums/BankStatementStatus.enum"
+export * from "./types/IntermediateBankStatement.type"
