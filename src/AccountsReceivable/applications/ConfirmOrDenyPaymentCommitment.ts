@@ -9,6 +9,7 @@ import {
 import { GeneratePDFAdapter, Logger } from "@/Shared/adapter"
 import { Church, IChurchRepository, IMinisterRepository } from "@/Church/domain"
 import { FindChurchById, FindMinisterById } from "@/Church/applications"
+import { IQueueService } from "@/Shared/domain"
 
 export class ConfirmOrDenyPaymentCommitment {
   private logger = Logger(ConfirmOrDenyPaymentCommitment.name)
@@ -19,7 +20,8 @@ export class ConfirmOrDenyPaymentCommitment {
     private readonly accountReceivableRepository: IAccountsReceivableRepository,
     private readonly pdfAdapter: GeneratePDFAdapter,
     private readonly churchRepository: IChurchRepository,
-    private readonly ministerRepository: IMinisterRepository
+    private readonly ministerRepository: IMinisterRepository,
+    private readonly queueService: IQueueService
   ) {
     this.searchChurch = new FindChurchById(this.churchRepository)
     this.searchMinister = new FindMinisterById(this.ministerRepository)

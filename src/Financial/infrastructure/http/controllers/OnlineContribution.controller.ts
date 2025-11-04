@@ -89,13 +89,14 @@ export const listOnlineContributionsController = async (
 export const UpdateContributionStatusController = async (
   contributionId: string,
   status: OnlineContributionsStatus,
+  createdBy: string,
   res: Response
 ) => {
   try {
     await new UpdateContributionStatus(
       OnlineContributionsMongoRepository.getInstance(),
       QueueService.getInstance()
-    ).execute(contributionId, status)
+    ).execute(contributionId, status, createdBy)
 
     res.status(HttpStatus.OK).send({ message: "Contribution updated" })
   } catch (e) {

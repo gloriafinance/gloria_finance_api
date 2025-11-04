@@ -3,7 +3,6 @@ import { Installments, InstallmentsStatus } from "@/Shared/domain"
 export const PayInstallment = (
   installment: Installments,
   amountTransferred: number,
-  financialTransactionId: string,
   logger: any
 ): number => {
   if (installment.status === InstallmentsStatus.PAID) {
@@ -37,8 +36,6 @@ export const PayInstallment = (
     installment.amountPaid =
       amountTransferred + (installment.amountPending || 0)
   }
-
-  installment.financialTransactionId = financialTransactionId
 
   logger.info(`Installment ${installment.installmentId} updated`, installment)
 

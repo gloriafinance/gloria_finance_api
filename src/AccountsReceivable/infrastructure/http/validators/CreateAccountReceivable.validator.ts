@@ -22,6 +22,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     installments: "required|array",
     "installments.*.amount": "required|numeric",
     "installments.*.dueDate": "required|dateFormat:YYYY-MM-DD",
+    financialConceptId: "required|string",
   }
 
   const v = new Validator(payload, rule)

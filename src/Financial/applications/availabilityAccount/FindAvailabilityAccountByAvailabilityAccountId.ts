@@ -1,5 +1,6 @@
 import { IAvailabilityAccountRepository } from "../../domain/interfaces"
 import {
+  AvailabilityAccount,
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
 } from "../../domain"
@@ -12,7 +13,10 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository
   ) {}
 
-  async execute(availabilityAccountId: string, churchId?: string) {
+  async execute(
+    availabilityAccountId: string,
+    churchId?: string
+  ): Promise<AvailabilityAccount> {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`
     )

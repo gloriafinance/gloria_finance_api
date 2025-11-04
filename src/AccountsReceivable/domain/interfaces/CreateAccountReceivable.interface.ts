@@ -1,6 +1,7 @@
 import { DebtorType } from "../enums/DebtorType.enum"
 import { Installments } from "@/Shared/domain"
 import { AccountReceivableType } from "@/AccountsReceivable/domain"
+import { FinancialConcept } from "@/Financial/domain"
 
 export interface ICreateAccountReceivable {
   debtor: {
@@ -19,4 +20,6 @@ export interface ICreateAccountReceivable {
   amountPending?: number
   installments?: Installments[]
   type: AccountReceivableType
+  financialConcept: FinancialConcept
+  createdBy: string
 }

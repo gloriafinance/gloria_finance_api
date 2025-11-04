@@ -1,6 +1,8 @@
-import { AccountPayableTaxMetadata } from "@/AccountsPayable/domain"
-import { AccountPayableTaxStatus } from "@/AccountsPayable/domain"
-import { TaxDocumentType } from "@/AccountsPayable/domain"
+import {
+  AccountPayableTaxMetadata,
+  AccountPayableTaxStatus,
+  TaxDocumentType,
+} from "@/AccountsPayable/domain"
 
 export type AccountPayableRequest = {
   supplierId: string
@@ -23,4 +25,5 @@ export type AccountPayableRequest = {
     status?: AccountPayableTaxStatus
   }[]
   taxMetadata?: AccountPayableTaxMetadata
+  createdBy: string
 }

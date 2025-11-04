@@ -12,13 +12,32 @@ import {
 import { CreateAccountPayable } from "@/AccountsPayable/applications"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import { InvalidInstallmentsConfiguration } from "@/AccountsPayable/domain/exceptions/InvalidInstallmentsConfiguration"
-import { AmountValue } from "@/Shared/domain"
+import { AmountValue, IQueueService, QueueName } from "@/Shared/domain"
+import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import { FinancialConcept } from "@/Financial/domain"
 
 type TestCase = {
   name: string
   run: () => void | Promise<void>
 }
 
+class QueueServiceMock implements IQueueService {
+  dispatch(queueName: QueueName, args: any): void {}
+}
+
+class FinancialConceptRepositoryMock implements IFinancialConceptRepository {
+  listByCriteria(filter: object): Promise<FinancialConcept[]> {
+    return Promise.resolve([])
+  }
+
+  one(filter: object): Promise<FinancialConcept | undefined> {
+    return Promise.resolve(undefined)
+  }
+
+  upsert(financialConcept: FinancialConcept): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+}
 class AccountPayableRepositoryMock implements IAccountPayableRepository {
   public saved: AccountPayable | null = null
 
@@ -126,10 +145,14 @@ async function testCreateAccountPayablePersistsTaxes(): Promise<void> {
   const accountPayableRepository = new AccountPayableRepositoryMock()
   const useCase = new CreateAccountPayable(
     accountPayableRepository,
-    supplierRepository
+    supplierRepository,
+    new FinancialConceptRepositoryMock(),
+    new QueueServiceMock()
   )
 
   const request: AccountPayableRequest = {
+    createdBy: "user-name",
+    taxDocument: { date: undefined, type: undefined },
     supplierId: supplier.getSupplierId(),
     churchId: "church-002",
     description: "Construção do mezanino",

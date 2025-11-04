@@ -1,18 +1,27 @@
 import {
   AvailabilityAccount,
-  ConceptType,
   CostCenter,
   FinancialConcept,
+  FinancialRecordSource,
+  FinancialRecordStatus,
+  FinancialRecordType,
 } from "@/Financial/domain"
 
 export type CreateFinanceRecord = {
   financialConcept?: FinancialConcept
-  type: ConceptType
+  type: FinancialRecordType
   churchId: string
   amount: number
   date: Date
-  availabilityAccount: AvailabilityAccount
+  createdBy: string
+  status: FinancialRecordStatus
+  source: FinancialRecordSource
+  availabilityAccount?: AvailabilityAccount
   description?: string
   voucher?: string
   costCenter?: CostCenter
+  reference?: {
+    type: string
+    entityId: string
+  }
 }

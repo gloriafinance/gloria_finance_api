@@ -41,6 +41,7 @@ export class AccountPayable extends AggregateRoot {
   }
   private createdAt: Date
   private updatedAt: Date
+  private createdBy: string
 
   static create(params: Partial<ICreateAccountPayable>): AccountPayable {
     const {
@@ -52,13 +53,14 @@ export class AccountPayable extends AggregateRoot {
       taxes,
       taxMetadata,
       taxDocument,
+      createdBy,
     } = params
 
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.accountPayableId = IdentifyEntity.get(`accountPayable`)
     accountPayable.churchId = churchId
     accountPayable.description = description
-
+    accountPayable.createdBy = createdBy
     accountPayable.amountPaid = amountPaid
     accountPayable.status = AccountPayableStatus.PENDING
 
@@ -206,6 +208,7 @@ export class AccountPayable extends AggregateRoot {
       forceExempt
     )
     accountPayable.taxDocument = params.taxDocument
+    accountPayable.createdBy = params.createdBy || ""
 
     return accountPayable
   }
@@ -347,6 +350,10 @@ export class AccountPayable extends AggregateRoot {
     return this.installments.find((i) => i.installmentId === installmentId)
   }
 
+  getAccountPayableId() {
+    return this.accountPayableId
+  }
+
   updateAmount(amountPaid: AmountValue) {
     this.amountPaid += amountPaid.getValue()
     this.amountPending -= amountPaid.getValue()
@@ -386,6 +393,9 @@ export class AccountPayable extends AggregateRoot {
   getTaxMetadata(): AccountPayableTaxMetadata {
     return this.taxMetadata
   }
+  getDescription() {
+    return this.description
+  }
 
   toPrimitives() {
     return {
@@ -404,6 +414,7 @@ export class AccountPayable extends AggregateRoot {
       taxAmountTotal: this.taxAmountTotal,
       taxMetadata: this.taxMetadata,
       taxDocument: this.taxDocument,
+      createdBy: this.createdBy,
     }
   }
 }

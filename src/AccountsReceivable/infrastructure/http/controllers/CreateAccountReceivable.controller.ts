@@ -8,6 +8,7 @@ import { FindChurchById } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import { QueueService } from "@/Shared/infrastructure"
+import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
 
 /**
  * @function CreateAccountReceivableController
@@ -31,6 +32,7 @@ export const CreateAccountReceivableController = async (
 
     await new CreateAccountReceivable(
       AccountsReceivableMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
       new SendMailPaymentCommitment(QueueService.getInstance())
     ).execute({ ...req, church: church })
 

@@ -4,14 +4,11 @@ import domainResponse from "@/Shared/helpers/domainResponse"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
 import { AccountsReceivableMongoRepository } from "../../persistence/AccountsReceivableMongoRepository"
 import { HttpStatus } from "@/Shared/domain"
-import { QueueService, StorageGCP } from "@/Shared/infrastructure"
+import { QueueService } from "@/Shared/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
-  FinancialConceptMongoRepository,
 } from "@/Financial/infrastructure/persistence"
-import { RegisterFinancialRecord } from "@/Financial/applications"
-import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 /**
  * @function PayAccountReceivableController
@@ -29,9 +26,8 @@ export const PayAccountReceivableController = async (
   res: Response
 ): Promise<void> => {
   try {
-    await makeFinanceRecord(req)
-
     await new PayAccountReceivable(
+      FinanceRecordMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       AccountsReceivableMongoRepository.getInstance(),
       QueueService.getInstance()
@@ -43,37 +39,4 @@ export const PayAccountReceivableController = async (
   } catch (e) {
     domainResponse(e, res)
   }
-}
-
-const makeFinanceRecord = async (req: PayAccountReceivableRequest) => {
-  let voucher: string
-
-  if (req.file) {
-    voucher = await StorageGCP.getInstance(process.env.BUCKET_FILES).uploadFile(
-      req.file
-    )
-  }
-
-  req.concept = await FinancialConceptMongoRepository.getInstance().one({
-    name: "Conta a Receber",
-    churchId: req.churchId,
-  })
-
-  req.financialTransactionId = (
-    await new RegisterFinancialRecord(
-      FinancialYearMongoRepository.getInstance(),
-      FinanceRecordMongoRepository.getInstance(),
-      FinancialConceptMongoRepository.getInstance(),
-      AvailabilityAccountMongoRepository.getInstance()
-    ).handle(
-      {
-        churchId: req.churchId,
-        availabilityAccountId: req.availabilityAccountId,
-        voucher,
-        amount: req.amount.getValue(),
-        date: new Date(),
-      },
-      req.concept
-    )
-  ).getFinancialRecordId()
 }

@@ -1,9 +1,9 @@
 import { Installments } from "@/Shared/domain"
 import { SupplierType } from "../enums/SupplierType"
-import { TaxDocumentType } from "../enums/TaxDocumentType.enum"
 import {
   AccountPayableTaxInput,
   AccountPayableTaxMetadata,
+  TaxDocumentType,
 } from "@/AccountsPayable/domain"
 
 export interface ICreateAccountPayable {
@@ -29,4 +29,5 @@ export interface ICreateAccountPayable {
   taxes?: AccountPayableTaxInput[]
   taxAmountTotal?: number
   taxMetadata?: AccountPayableTaxMetadata
+  createdBy: string
 }

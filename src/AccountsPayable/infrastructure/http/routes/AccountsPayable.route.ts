@@ -17,7 +17,11 @@ accountsPayableRoute.post(
   [PermissionMiddleware, CreateAccountPayableValidator],
   async (req: Request, res: Response) => {
     await CreateAccountPayableController(
-      { ...req.body, churchId: req["user"].churchId },
+      {
+        ...req.body,
+        churchId: req["user"].churchId,
+        createdBy: req["user"].name,
+      },
       res
     )
   }
@@ -39,7 +43,7 @@ accountsPayableRoute.post(
     await PayAccountPayableController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
+        createdBy: req["user"].name,
         installmentIds,
         amount: AmountValue.create(req.body.amount),
         file: req?.files?.file,

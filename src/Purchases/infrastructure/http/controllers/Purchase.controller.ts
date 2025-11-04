@@ -8,6 +8,7 @@ import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
 import {
   AvailabilityAccountMongoRepository,
+  FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
@@ -17,7 +18,7 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 
-export const recordPurchaseController = async (
+export const RecordPurchaseController = async (
   request: RecordPurchaseRequest,
   res: Response
 ) => {
@@ -34,6 +35,7 @@ export const recordPurchaseController = async (
       PurchaseMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       FinancialConfigurationMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
       QueueService.getInstance()
     ).execute(request)
 

@@ -6,13 +6,17 @@ import {
   ISupplierRepository,
 } from "@/AccountsPayable/domain"
 import { SupplierNotFound } from "@/AccountsPayable/domain/exceptions/SupplierNotFound"
+import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import { IQueueService } from "@/Shared/domain"
 
 export class CreateAccountPayable {
   private logger = Logger(CreateAccountPayable.name)
 
   constructor(
     private readonly accountPayableRepository: IAccountPayableRepository,
-    private readonly supplierRepository: ISupplierRepository
+    private readonly supplierRepository: ISupplierRepository,
+    private readonly financialConceptRepository: IFinancialConceptRepository,
+    private readonly queueService: IQueueService
   ) {}
 
   async execute(args: AccountPayableRequest) {

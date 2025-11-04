@@ -10,7 +10,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   logger.info(`Validating`, payload)
 
   const rule = {
-    type: "required|string|in:SUPPLIER,SERVICE_PROVIDER,NATURAL_PERSON",
+    type: "required|string|in:SUPPLIER,TECHNOLOGY_PROVIDER,FINANCIAL_PROVIDER,LOGISTICS_PROVIDER,CONSULTING_PROVIDER,MAINTENANCE_PROVIDER,INDIVIDUAL",
     dni: "required|string",
     name: "required|string",
 

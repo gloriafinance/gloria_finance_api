@@ -7,7 +7,7 @@ import { ConfirmOrDenyPaymentCommitment } from "@/AccountsReceivable/application
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
-import { StorageGCP } from "@/Shared/infrastructure"
+import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import {
   ChurchMongoRepository,
@@ -24,7 +24,8 @@ export const ConfirmOrDenyPaymentCommitmentController = async (
       AccountsReceivableMongoRepository.getInstance(),
       new PuppeteerAdapter(new HandlebarsHTMLAdapter(), store),
       ChurchMongoRepository.getInstance(),
-      MinisterMongoRepository.getInstance()
+      MinisterMongoRepository.getInstance(),
+      QueueService.getInstance()
     ).execute(req)
 
     if (req.action === ActionsPaymentCommitment.DENIED) {

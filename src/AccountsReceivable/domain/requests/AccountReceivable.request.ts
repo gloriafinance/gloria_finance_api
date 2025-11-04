@@ -18,4 +18,6 @@ export type AccountReceivableRequest = {
     dueDate: Date
   }[]
   type: AccountReceivableType
+  financialConceptId: string
+  createdBy: string
 }

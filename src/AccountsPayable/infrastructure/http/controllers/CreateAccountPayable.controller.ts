@@ -8,6 +8,8 @@ import {
   AccountsPayableMongoRepository,
   SupplierMongoRepository,
 } from "@/AccountsPayable/infrastructure/persistence"
+import { QueueService } from "@/Shared/infrastructure"
+import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
 
 /**
  * @function CreateAccountPayableController
@@ -27,7 +29,9 @@ export const CreateAccountPayableController = async (
   try {
     await new CreateAccountPayable(
       AccountsPayableMongoRepository.getInstance(),
-      SupplierMongoRepository.getInstance()
+      SupplierMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
+      QueueService.getInstance()
     ).execute(req)
     res
       .status(HttpStatus.CREATED)

@@ -15,4 +15,5 @@ export type RecordPurchaseRequest = {
   }>
   availabilityAccountId: string
   file?: any
+  createdBy: string
 }

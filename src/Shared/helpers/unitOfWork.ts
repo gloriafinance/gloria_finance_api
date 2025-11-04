@@ -19,11 +19,11 @@ export class UnitOfWork {
    * Register a rollback action to be executed if the unit of work is rolled back.
    * @param action
    */
-  register(action: RollbackAction): void {
+  registerRollbackActions(action: RollbackAction): void {
     this.rollbackActions.push(action)
   }
 
-  registerPostCommit(action: PostCommitAction): void {
+  execPostCommit(action: PostCommitAction): void {
     this.postCommitActions.push(action)
   }
 

@@ -8,6 +8,7 @@ import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.i
 import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
+import { FinancialConcept } from "@/Financial/domain"
 
 type Debtor = {
   debtorType: DebtorType
@@ -34,6 +35,8 @@ export class AccountReceivable extends AggregateRoot {
   private createdAt: Date
   private updatedAt: Date
   private contract?: string
+  private financialConcept: FinancialConcept
+  private createdBy: string
 
   static create(params: Partial<ICreateAccountReceivable>): AccountReceivable {
     const {
@@ -44,6 +47,8 @@ export class AccountReceivable extends AggregateRoot {
       amountPending,
       installments,
       type,
+      financialConcept,
+      createdBy,
     } = params
 
     const accountReceivable: AccountReceivable = new AccountReceivable()
@@ -91,6 +96,9 @@ export class AccountReceivable extends AggregateRoot {
       JSON.stringify(accountReceivable.toPrimitives())
     ).toString("base64")
 
+    accountReceivable.financialConcept = financialConcept
+    accountReceivable.createdBy = createdBy
+
     return accountReceivable
   }
 
@@ -110,12 +118,21 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.debtor = params.debtor
     accountReceivable.token = params.token
     accountReceivable.type = params.type
+    accountReceivable.financialConcept = params.financialConcept
+    accountReceivable.createdBy = params.createdBy || ""
 
     return accountReceivable
   }
 
   getId(): string {
     return this.id
+  }
+
+  getAccountReceivableId(): string {
+    return this.accountReceivableId
+  }
+  getCreatedBy() {
+    return this.createdBy
   }
 
   getType(): AccountReceivableType {
@@ -184,6 +201,10 @@ export class AccountReceivable extends AggregateRoot {
     return this.contract
   }
 
+  getFinancialConcept(): FinancialConcept {
+    return this.financialConcept
+  }
+
   toPrimitives() {
     return {
       status: this.status,
@@ -202,6 +223,8 @@ export class AccountReceivable extends AggregateRoot {
       token: this.token,
       contract: this.contract,
       type: this.type,
+      financialConcept: this.financialConcept,
+      createdBy: this.createdBy,
     }
   }
 }

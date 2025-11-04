@@ -51,6 +51,7 @@ financeContribution.patch(
     await UpdateContributionStatusController(
       req.params.contributionId,
       req.params.status as OnlineContributionsStatus,
+      req["user"].name,
       res
     )
   }

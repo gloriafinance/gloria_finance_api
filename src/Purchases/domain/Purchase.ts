@@ -5,6 +5,7 @@ import {
 } from "@/Financial/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { DateBR } from "@/Shared/helpers"
 
 export class Purchase extends AggregateRoot {
   private id?: string
@@ -29,6 +30,8 @@ export class Purchase extends AggregateRoot {
     costCenterId: string
     name: string
   }
+  private createdAt: Date
+  private createdBy?: string
 
   static create(
     financialConceptId: string,
@@ -44,7 +47,8 @@ export class Purchase extends AggregateRoot {
       quantity: number
       price: number
       name: string
-    }>
+    }>,
+    createdBy: string
   ): Purchase {
     const p: Purchase = new Purchase()
 
@@ -65,6 +69,8 @@ export class Purchase extends AggregateRoot {
       costCenterId: costCenter.getCostCenterId(),
       name: costCenter.getCostCenterName(),
     }
+    p.createdAt = DateBR()
+    p.createdBy = createdBy
 
     return p
   }
@@ -84,6 +90,8 @@ export class Purchase extends AggregateRoot {
     p.availabilityAccount = plainData.availabilityAccount
     p.items = plainData.items
     p.costCenter = plainData.costCenter
+    p.createdAt = plainData.createdAt || plainData.purchaseDate
+    p.createdBy = plainData.createdBy || ""
 
     return p
   }
@@ -105,6 +113,8 @@ export class Purchase extends AggregateRoot {
       availabilityAccount: this.availabilityAccount,
       items: this.items,
       costCenter: this.costCenter,
+      createdAt: this.createdAt,
+      createdBy: this.createdBy,
     }
   }
 }

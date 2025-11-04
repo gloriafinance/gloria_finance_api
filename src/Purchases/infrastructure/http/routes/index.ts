@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express"
 import { PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   listPurchasesController,
-  recordPurchaseController,
+  RecordPurchaseController,
 } from "../controllers/Purchase.controller"
 import PurchaseValidator from "../validators/Purchase.validator"
 import { FilterPurchasesRequest } from "../../../domain/requests"
@@ -13,11 +13,12 @@ purchaseRouter.post(
   "/",
   [PermissionMiddleware, PurchaseValidator],
   async (req: Request, res: Response) => {
-    await recordPurchaseController(
+    await RecordPurchaseController(
       {
         ...req.body,
         churchId: req["user"].churchId,
         file: req.files.invoice,
+        createdBy: req["user"].name,
       },
       res
     )
