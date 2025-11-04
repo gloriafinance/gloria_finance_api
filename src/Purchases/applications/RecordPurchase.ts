@@ -8,8 +8,6 @@ import {
 } from "../../Financial/domain/interfaces"
 import {
   DispatchCreateFinancialRecord,
-  DispatchUpdateAvailabilityAccountBalance,
-  DispatchUpdateCostCenterMaster,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
 } from "../../Financial/applications"
@@ -20,7 +18,6 @@ import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
-  TypeOperationMoney,
 } from "../../Financial/domain"
 
 export class RecordPurchase {
@@ -62,19 +59,6 @@ export class RecordPurchase {
     this.logger.info(`RecordPurchase saving purchase`, purchase)
     await this.purchaseRepository.upsert(purchase)
 
-    new DispatchUpdateCostCenterMaster(this.queueService).execute({
-      churchId: request.churchId,
-      costCenterId: request.costCenterId,
-      amount: request.total,
-    })
-
-    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
-      operationType: TypeOperationMoney.MONEY_OUT,
-      availabilityAccount: account,
-      concept: request.description,
-      amount: request.total,
-    })
-
     const concept = await this.financialConcept.one({
       financialConceptId: request.financialConceptId,
     })
@@ -85,6 +69,7 @@ export class RecordPurchase {
       amount: request.total,
       date: request.purchaseDate,
       availabilityAccount: account,
+      costCenter: { ...costCenter.toPrimitives() },
       voucher: request.invoice,
       description: request.description,
       createdBy: request.createdBy,

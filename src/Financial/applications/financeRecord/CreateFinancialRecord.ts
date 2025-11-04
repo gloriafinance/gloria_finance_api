@@ -5,6 +5,7 @@ import { IQueue, IQueueService, IStorageService } from "@/Shared/domain"
 import {
   AvailabilityAccount,
   ConceptType,
+  CostCenter,
   FinanceRecord,
   FinancialConcept,
   FinancialRecordCreateQueue,
@@ -101,6 +102,10 @@ export class CreateFinancialRecord implements IQueue {
 
     if (!this.isRealizedStatus(args.status)) {
       return
+    }
+
+    if (typeof args.costCenter === "object") {
+      args.costCenter = CostCenter.fromPrimitives(args.costCenter)
     }
 
     this.unitOfWork.execPostCommit(async () => {

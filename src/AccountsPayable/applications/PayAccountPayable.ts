@@ -21,6 +21,7 @@ import {
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
 import {
+  CostCenter,
   FinancialConceptNotFound,
   FinancialRecordSource,
   FinancialRecordStatus,
@@ -80,9 +81,19 @@ export class PayAccountPayable {
       throw new FinancialConceptNotFound("Contas a Pagar")
     }
 
+    let costCenter: CostCenter
+    if (req.costCenterId) {
+      costCenter =
+        await this.financialConfigurationRepository.findCostCenterByCostCenterId(
+          req.costCenterId,
+          accountPayable.getChurchId()
+        )
+    }
+
     unitOfWork.execPostCommit(async () => {
       new DispatchCreateFinancialRecord(this.queueService).execute({
         churchId: accountPayable.getChurchId(),
+        costCenter: { ...costCenter.toPrimitives() },
         file: req.file,
         date: DateBR(),
         createdBy: req.createdBy,
