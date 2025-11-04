@@ -236,6 +236,7 @@ export class FinanceRecordMongoRepository
         $lt: endDate,
       },
       status: { $in: REALIZED_STATUSES },
+      "financialConcept.affectsResult": true,
     }
 
     const result = await collection
@@ -244,31 +245,18 @@ export class FinanceRecordMongoRepository
           $match: matchFilter,
         },
         {
-          $group: {
-            _id: {
-              category: {
-                $ifNull: [
-                  "$financialConcept.statementCategory",
-                  StatementCategory.OTHER,
-                ],
-              },
-              type: "$type",
-            },
-            total: { $sum: "$amount" },
+          $project: {
+            category: "$financialConcept.statementCategory",
+            type: "$type",
+            amount: "$amount",
           },
         },
         {
           $group: {
-            _id: "$_id.category",
+            _id: "$category",
             income: {
               $sum: {
-                $cond: [
-                  {
-                    $eq: ["$_id.type", ConceptType.INCOME],
-                  },
-                  "$total",
-                  0,
-                ],
+                $cond: [{ $eq: ["$type", ConceptType.INCOME] }, "$amount", 0],
               },
             },
             expenses: {
@@ -276,22 +264,18 @@ export class FinanceRecordMongoRepository
                 $cond: [
                   {
                     $in: [
-                      "$_id.type",
+                      "$type",
                       [ConceptType.DISCHARGE, ConceptType.PURCHASE],
                     ],
                   },
-                  "$total",
+                  "$amount",
                   0,
                 ],
               },
             },
             reversal: {
               $sum: {
-                $cond: [
-                  { $eq: ["$_id.type", ConceptType.REVERSAL] },
-                  "$total",
-                  0,
-                ],
+                $cond: [{ $eq: ["$type", ConceptType.REVERSAL] }, "$amount", 0],
               },
             },
           },

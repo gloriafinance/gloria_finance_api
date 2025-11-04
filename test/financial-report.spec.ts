@@ -1,5 +1,13 @@
 import { strict as assert } from "assert"
 jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
+jest.mock("@/Shared/adapter/CustomLogger", () => ({
+  Logger: () => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  }),
+}))
 import { GenerateFinanceRecordReport } from "@/Financial/applications/financeRecord/GenerateFinanceRecordReport"
 import {
   AvailabilityAccountMaster,
@@ -8,6 +16,7 @@ import {
   FinanceRecordReportRequest,
   StatementCategory,
   StatementCategorySummary,
+  FinancialRecordStatus,
 } from "@/Financial/domain"
 import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
 import { BaseReportRequest } from "@/Reports/domain"
@@ -33,6 +42,7 @@ type SampleRecord = {
   financialConcept?: {
     name: string
     statementCategory: StatementCategory
+    affectsResult?: boolean
   }
   availabilityAccount?: {
     accountName: string
@@ -40,6 +50,7 @@ type SampleRecord = {
   costCenter?: {
     name: string
   }
+  status?: FinancialRecordStatus
 }
 
 class FakeFinancialRecordRepository implements IFinancialRecordRepository {
@@ -100,12 +111,25 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       month?: number
     }
   ): Promise<StatementCategorySummary[]> {
+    const realizedStatuses = new Set<FinancialRecordStatus>([
+      FinancialRecordStatus.CLEARED,
+      FinancialRecordStatus.RECONCILED,
+    ])
+
     const categoryTotals = new Map<
       StatementCategory,
       { income: number; expenses: number; reversal: number }
     >()
 
     for (const record of this.records) {
+      const isRealized =
+        record.status !== undefined && realizedStatuses.has(record.status)
+      const affectsResult = record.financialConcept?.affectsResult === true
+
+      if (!isRealized || !affectsResult) {
+        continue
+      }
+
       const category =
         record.financialConcept?.statementCategory ?? StatementCategory.OTHER
       const current =
@@ -249,10 +273,12 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Dízimos",
       statementCategory: StatementCategory.REVENUE,
+      affectsResult: true,
     },
     availabilityAccount: {
       accountName: "Conta Principal",
     },
+    status: FinancialRecordStatus.CLEARED,
   },
   {
     financialRecordId: "rec-002",
@@ -264,10 +290,12 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Energia",
       statementCategory: StatementCategory.OPEX,
+      affectsResult: true,
     },
     costCenter: {
       name: "Infraestrutura",
     },
+    status: FinancialRecordStatus.CLEARED,
   },
   {
     financialRecordId: "rec-003",
@@ -279,7 +307,9 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Mobiliário",
       statementCategory: StatementCategory.CAPEX,
+      affectsResult: true,
     },
+    status: FinancialRecordStatus.CLEARED,
   },
   {
     financialRecordId: "rec-004",
@@ -291,7 +321,9 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Estorno",
       statementCategory: StatementCategory.OTHER,
+      affectsResult: true,
     },
+    status: FinancialRecordStatus.CLEARED,
   },
   {
     financialRecordId: "rec-005",
@@ -303,7 +335,9 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Ofertas",
       statementCategory: StatementCategory.OTHER,
+      affectsResult: true,
     },
+    status: FinancialRecordStatus.CLEARED,
   },
   {
     financialRecordId: "rec-006",
@@ -315,7 +349,9 @@ const sampleRecords: SampleRecord[] = [
     financialConcept: {
       name: "Limpeza",
       statementCategory: StatementCategory.OTHER,
+      affectsResult: true,
     },
+    status: FinancialRecordStatus.CLEARED,
   },
 ]
 
@@ -445,5 +481,79 @@ describe("Financial reporting consistency", () => {
       incomeStatement.summary.netIncome,
       "Net results between movement report and income statement should match"
     )
+  })
+
+  it("ignores pending and non-result records while counting realized income", async () => {
+    const focusedRepository = new FakeFinancialRecordRepository([
+      {
+        financialRecordId: "rec-realized-1",
+        churchId: "church-001",
+        amount: 100,
+        date: new Date("2025-10-07T00:00:00.000Z"),
+        type: ConceptType.INCOME,
+        status: FinancialRecordStatus.CLEARED,
+        financialConcept: {
+          name: "Dízimos",
+          statementCategory: StatementCategory.REVENUE,
+          affectsResult: true,
+        },
+      },
+      {
+        financialRecordId: "rec-realized-2",
+        churchId: "church-001",
+        amount: 200,
+        date: new Date("2025-10-08T00:00:00.000Z"),
+        type: ConceptType.INCOME,
+        status: FinancialRecordStatus.CLEARED,
+        financialConcept: {
+          name: "Ofertas",
+          statementCategory: StatementCategory.REVENUE,
+          affectsResult: true,
+        },
+      },
+      {
+        financialRecordId: "rec-non-result",
+        churchId: "church-001",
+        amount: 500,
+        date: new Date("2025-10-09T00:00:00.000Z"),
+        type: ConceptType.INCOME,
+        status: FinancialRecordStatus.CLEARED,
+        financialConcept: {
+          name: "Saldo inicial",
+          statementCategory: StatementCategory.OTHER,
+          affectsResult: false,
+        },
+      },
+      {
+        financialRecordId: "rec-pending",
+        churchId: "church-001",
+        amount: 300,
+        date: new Date("2025-10-10T00:00:00.000Z"),
+        type: ConceptType.INCOME,
+        status: FinancialRecordStatus.PENDING,
+        financialConcept: {
+          name: "Contribuição agendada",
+          statementCategory: StatementCategory.REVENUE,
+          affectsResult: true,
+        },
+      },
+    ])
+
+    const incomeStatement = new IncomeStatement(
+      focusedRepository,
+      churchRepository
+    )
+
+    const response = await incomeStatement.execute({
+      churchId: "church-001",
+      year: 2025,
+      month: 10,
+    })
+
+    expect(response.summary.revenue).toBe(300)
+    const revenueRow = response.breakdown.find(
+      (row) => row.category === StatementCategory.REVENUE
+    )
+    expect(revenueRow?.income).toBe(300)
   })
 })
