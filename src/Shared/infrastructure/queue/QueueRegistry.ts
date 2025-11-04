@@ -66,7 +66,6 @@ export class QueueRegistry {
         }
 
         this.queueInstances.set(queueName, queue)
-        this.logger.info(`Queue ${queueName} initialized and active`)
       } catch (error) {
         this.logger.error(`Error initializing queue ${queueName}:`, error)
       }

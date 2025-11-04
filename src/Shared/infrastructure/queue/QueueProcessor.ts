@@ -1,8 +1,8 @@
 import { QueueRegistry } from "./QueueRegistry"
 import { Logger } from "../../adapter"
-import { RequestContext } from "../../adapter/CustomLogger"
 import { QueueName } from "../../domain"
 import { QueueDispatcher } from "@/Shared/infrastructure/queue/QueueDispatcher"
+import { RequestContext } from "@abejarano/ts-express-server"
 
 export class QueueProcessor {
   private static instance: QueueProcessor
@@ -25,8 +25,6 @@ export class QueueProcessor {
    * Inicia el procesamiento de todas las colas
    */
   async startProcessing(): Promise<void> {
-    this.logger.info("Starting processing for all queues")
-
     for (const queue of this.registry.getAllQueues()) {
       this.initializeQueueProcessor(queue.name)
 

@@ -1,8 +1,8 @@
 import { IQueueService, QueueName } from "../../domain"
 import { QueueRegistry } from "./QueueRegistry"
 import { Logger } from "../../adapter"
-import { RequestContext } from "../../adapter/CustomLogger"
 import { v4 as uuidv4 } from "uuid"
+import { RequestContext } from "@abejarano/ts-express-server"
 
 export class QueueDispatcher implements IQueueService {
   private static instance: QueueDispatcher
