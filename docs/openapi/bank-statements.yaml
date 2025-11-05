@@ -1,0 +1,310 @@
+openapi: 3.0.1
+info:
+  title: Church Finance API - Bank Statements
+  version: '1.0'
+tags:
+  - name: Bank Statements
+    description: Fluxo de conciliação bancária
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ImportBankStatementResponse:
+      type: object
+      properties:
+        bank:
+          type: string
+          example: NUBANK
+        month:
+          type: integer
+          example: 11
+        year:
+          type: integer
+          example: 2024
+        churchId:
+          type: string
+          description: Identificador da igreja inferido a partir do usuário autenticado (ou informado para superusuários).
+          example: CHURCH-ABC123
+        queuedAt:
+          type: string
+          format: date-time
+          example: '2024-11-18T21:34:12.000Z'
+    BankStatement:
+      type: object
+      description: Registro de extrato bancário persistido após o processamento.
+      properties:
+        bankStatementId:
+          type: string
+          example: BSTMT-01HETY6ZABTEXAMPLE
+        churchId:
+          type: string
+          example: CHURCH-ABC123
+        bank:
+          type: string
+          description: Código do banco associado ao extrato.
+          example: NUBANK
+        accountName:
+          type: string
+          nullable: true
+          description: Nome da conta associado ao extrato, quando informado no upload.
+        postedAt:
+          type: string
+          format: date-time
+          description: Data de lançamento original do lançamento bancário.
+          example: '2024-11-15T13:12:00.000Z'
+        amount:
+          type: number
+          format: double
+          example: 1000.5
+        description:
+          type: string
+          example: Transferência recebida
+        direction:
+          type: string
+          enum: [ INCOME, OUTGO ]
+        fitId:
+          type: string
+          description: Identificador único fornecido pelo arquivo (quando disponível).
+        hash:
+          type: string
+          description: Hash calculado para deduplicação.
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        year:
+          type: integer
+        reconciliationStatus:
+          type: string
+          enum: [ PENDING, UNMATCHED, RECONCILED ]
+        financialRecordId:
+          type: string
+          nullable: true
+          description: Identificador do lançamento financeiro conciliado.
+        reconciledAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        raw:
+          type: object
+          additionalProperties: true
+          description: Dados crus do arquivo de origem (quando armazenados).
+    RetryBankStatementRequest:
+      type: object
+      properties:
+        churchId:
+          type: string
+          description: Permite que superusuários processem extratos de outra igreja.
+    RetryBankStatementResponse:
+      type: object
+      properties:
+        matched:
+          type: boolean
+          description: Indica se o extrato foi conciliado automaticamente.
+        financialRecordId:
+          type: string
+          nullable: true
+          description: Referência do lançamento financeiro conciliado.
+    LinkBankStatementRequest:
+      type: object
+      required:
+        - financialRecordId
+      properties:
+        financialRecordId:
+          type: string
+          description: Identificador do lançamento financeiro selecionado manualmente.
+    LinkBankStatementResponse:
+      type: object
+      properties:
+        reconciled:
+          type: boolean
+          example: true
+        bankStatementId:
+          type: string
+        financialRecordId:
+          type: string
+paths:
+  /api/v1/bank/statements/import:
+    post:
+      summary: Importa um extrato bancário
+      description: |
+        Faz upload de um arquivo de extrato bancário, iniciando o processo assíncrono de conciliação.
+        O arquivo deve ser enviado como `multipart/form-data` no campo `file`.
+      tags: [ Bank Statements ]
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - bank
+                - month
+                - year
+                - file
+              properties:
+                bank:
+                  type: string
+                  description: Código do banco (ex. `NUBANK`). Valor convertido para maiúsculas no backend.
+                  example: NUBANK
+                month:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                  description: Mês de referência do extrato.
+                  example: 11
+                year:
+                  type: integer
+                  minimum: 2000
+                  description: Ano de referência do extrato.
+                  example: 2024
+                accountName:
+                  type: string
+                  description: Nome amigável da conta (opcional) utilizado em mensagens e relatórios.
+                churchId:
+                  type: string
+                  description: Para superusuários, permite importar em nome de outra igreja.
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo do extrato (CSV). O backend salva o arquivo temporariamente para processamento.
+      responses:
+        '202':
+          description: Importação enfileirada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportBankStatementResponse'
+        '400':
+          description: Requisição inválida (por exemplo, arquivo ausente).
+        '422':
+          description: Payload inválido (por exemplo, mês/ano não numéricos).
+  /api/v1/bank/statements:
+    get:
+      summary: Lista extratos bancários importados
+      description: Permite filtrar extratos por banco, status, período e igreja.
+      tags: [ Bank Statements ]
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: bank
+          schema:
+            type: string
+          description: Código do banco (ex. `NUBANK`).
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ PENDING, UNMATCHED, RECONCILED ]
+          description: Filtra pelo status de conciliação do extrato.
+        - in: query
+          name: month
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Mês de referência.
+        - in: query
+          name: year
+          schema:
+            type: integer
+            minimum: 2000
+          description: Ano de referência.
+        - in: query
+          name: churchId
+          schema:
+            type: string
+          description: Disponível apenas para superusuários; permite consultar extratos de outra igreja.
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+            format: date
+          description: Data inicial para filtrar pela data de lançamento (`postedAt`).
+        - in: query
+          name: dateTo
+          schema:
+            type: string
+            format: date
+          description: Data final para filtrar pela data de lançamento (`postedAt`).
+      responses:
+        '200':
+          description: Lista de extratos encontrados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankStatement'
+        '422':
+          description: Parâmetros de filtro inválidos.
+  /api/v1/bank/statements/{bankStatementId}/retry:
+    post:
+      summary: Reprocessa a conciliação de um extrato bancário
+      description: Tenta conciliar novamente um extrato que permaneceu pendente ou não conciliado.
+      tags: [ Bank Statements ]
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: bankStatementId
+          required: true
+          schema:
+            type: string
+          description: Identificador do extrato bancário.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetryBankStatementRequest'
+      responses:
+        '200':
+          description: Resultado da tentativa de conciliação automática.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetryBankStatementResponse'
+        '404':
+          description: Extrato bancário não encontrado.
+  /api/v1/bank/statements/{bankStatementId}/link:
+    patch:
+      summary: Vincula manualmente um extrato bancário a um lançamento financeiro
+      description: Permite concluir a conciliação selecionando um lançamento financeiro existente.
+      tags: [ Bank Statements ]
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: bankStatementId
+          required: true
+          schema:
+            type: string
+          description: Identificador do extrato bancário.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkBankStatementRequest'
+      responses:
+        '200':
+          description: Extrato conciliado com o lançamento fornecido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkBankStatementResponse'
+        '404':
+          description: Extrato ou lançamento financeiro não encontrado.
