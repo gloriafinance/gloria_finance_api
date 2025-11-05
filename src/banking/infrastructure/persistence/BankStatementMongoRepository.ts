@@ -43,7 +43,7 @@ export class BankStatementMongoRepository
     const documents = statements.map((statement) => statement.toPrimitives())
 
     try {
-      await collection.insertMany(documents, { ordered: false })
+      await collection.insertMany(documents as any[], { ordered: false })
     } catch (error: unknown) {
       if (
         typeof error === "object" &&
@@ -51,7 +51,9 @@ export class BankStatementMongoRepository
         "code" in error &&
         (error as { code: number }).code === 11000
       ) {
-        this.logger.warn("Duplicate bank statements ignored during bulk insert")
+        this.logger.info(
+          "Duplicate bank statements ignored during bulk insert"
+        )
         return
       }
 
@@ -97,53 +99,101 @@ export class BankStatementMongoRepository
     return BankStatement.fromPrimitives(result as any)
   }
 
-  async findUnmatchedByPeriod(params: {
-    churchId: string
-    bank?: string
-    month: number
-    year: number
-  }): Promise<BankStatement[]> {
-    const { churchId, bank, month, year } = params
-    const collection = await this.collection()
-
-    const filters: Record<string, unknown> = {
-      churchId,
-      month,
-      year,
-      reconciliationStatus: { $in: [BankStatementStatus.PENDING, BankStatementStatus.UNMATCHED] },
-    }
-
-    if (bank) {
-      filters.bank = bank
-    }
-
-    const cursor = collection.find(filters)
-    const documents = await cursor.toArray()
-
-    return documents.map((doc) => BankStatement.fromPrimitives(doc as any))
-  }
-
   async updateStatus(
     statementId: string,
     status: BankStatementStatus,
     financialRecordId?: string
   ): Promise<void> {
     const collection = await this.collection()
+    const now = new Date()
     const update: Record<string, unknown> = {
       reconciliationStatus: status,
-      updatedAt: new Date(),
+      updatedAt: now,
+    }
+
+    const operations: Record<string, any> = {
+      $set: update,
     }
 
     if (financialRecordId) {
-      update.financialRecordId = financialRecordId
-      update.reconciledAt = new Date()
+      operations.$set.financialRecordId = financialRecordId
+      operations.$set.reconciledAt = now
+    } else if (status !== BankStatementStatus.RECONCILED) {
+      operations.$unset = {
+        financialRecordId: "",
+        reconciledAt: "",
+      }
     }
 
-    await collection.updateOne(
-      { bankStatementId: statementId },
-      {
-        $set: update,
+    await collection.updateOne({ bankStatementId: statementId }, operations)
+  }
+
+  async findById(
+    churchId: string,
+    bankStatementId: string
+  ): Promise<BankStatement | undefined> {
+    const collection = await this.collection()
+    const result = await collection.findOne({
+      churchId,
+      bankStatementId,
+    })
+
+    if (!result) {
+      return undefined
+    }
+
+    return BankStatement.fromPrimitives(result as any)
+  }
+
+  async list(params: {
+    churchId: string
+    bank?: string
+    status?: BankStatementStatus
+    month?: number
+    year?: number
+    dateFrom?: Date
+    dateTo?: Date
+  }): Promise<BankStatement[]> {
+    const { churchId, bank, status, month, year, dateFrom, dateTo } = params
+    const collection = await this.collection()
+
+    const filters: Record<string, unknown> = {
+      churchId,
+    }
+
+    if (bank) {
+      filters.bank = bank
+    }
+
+    if (status) {
+      filters.reconciliationStatus = status
+    }
+
+    if (month !== undefined) {
+      filters.month = month
+    }
+
+    if (year !== undefined) {
+      filters.year = year
+    }
+
+    if (dateFrom || dateTo) {
+      const postedAtFilter: Record<string, Date> = {}
+
+      if (dateFrom) {
+        postedAtFilter.$gte = dateFrom
       }
-    )
+
+      if (dateTo) {
+        postedAtFilter.$lte = dateTo
+      }
+
+      filters.postedAt = postedAtFilter
+    }
+
+    const cursor = collection.find(filters).sort({ postedAt: -1 })
+    const documents = await cursor.toArray()
+
+    return documents.map((doc) => BankStatement.fromPrimitives(doc as any))
   }
 }

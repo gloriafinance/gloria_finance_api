@@ -9,7 +9,7 @@ import { ImportBankStatementJob } from "@/banking/infrastructure/jobs/ImportBank
 import { BankStatementParserFactory } from "@/banking/infrastructure/parsers/BankStatementParserFactory"
 import { BankStatementReconciler } from "@/banking/infrastructure/services/BankStatementReconciler"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
-import { QueueService, StorageGCP } from "@/Shared/infrastructure"
+import { QueueService } from "@/Shared/infrastructure"
 
 export const BankingQueue = (): IDefinitionQueue[] => [
   {
@@ -29,7 +29,6 @@ export const BankingQueue = (): IDefinitionQueue[] => [
         FinanceRecordMongoRepository.getInstance(),
         QueueService.getInstance()
       ),
-      StorageGCP.getInstance(process.env.BUCKET_FILES),
       QueueService.getInstance(),
     ],
   },

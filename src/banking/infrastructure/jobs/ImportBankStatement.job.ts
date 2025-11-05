@@ -8,7 +8,6 @@ import {
 } from "@/banking/domain"
 import { BankStatementParserFactory } from "../parsers/BankStatementParserFactory"
 import { BankStatementReconciler } from "../services/BankStatementReconciler"
-import { IStorageService } from "@/Shared/domain/interfaces/StorageService.interface"
 
 type ImportBankStatementJobPayload = {
   churchId: string
@@ -16,8 +15,7 @@ type ImportBankStatementJobPayload = {
   accountName?: string
   month: number
   year: number
-  filePath?: string
-  storagePath?: string
+  filePath: string
   uploadedBy?: string
 }
 
@@ -28,63 +26,57 @@ export class ImportBankStatementJob implements IQueue {
     private readonly parserFactory: BankStatementParserFactory,
     private readonly bankStatementRepository: IBankStatementRepository,
     private readonly reconciler: BankStatementReconciler,
-    private readonly storageService: IStorageService,
     private readonly queueService: IQueueService
   ) {}
 
   async handle(payload: ImportBankStatementJobPayload): Promise<void> {
     this.logger.info("Starting bank statement import job", payload)
 
-    const localFilePath = await this.resolveFilePath(payload)
-    const parser = this.parserFactory.resolve(payload.bank)
+    let localFilePath: string | undefined
 
-    const intermediates = await parser.parse({
-      filePath: localFilePath,
-      churchId: payload.churchId,
-      accountName: payload.accountName,
-      month: payload.month,
-      year: payload.year,
-    })
+    try {
+      localFilePath = this.resolveFilePath(payload)
+      const parser = this.parserFactory.resolve(payload.bank)
 
-    const { inserted, duplicates } = await this.persistNewStatements(
-      intermediates
-    )
+      const intermediates = await parser.parse({
+        filePath: localFilePath,
+        churchId: payload.churchId,
+        accountName: payload.accountName,
+        month: payload.month,
+        year: payload.year,
+      })
 
-    const reconciliationResult = await this.reconcileStatements(inserted)
+      const { inserted, duplicates } =
+        await this.persistNewStatements(intermediates)
 
-    await this.notifyResult({
-      payload,
-      total: intermediates.length,
-      inserted: inserted.length,
-      duplicates,
-      ...reconciliationResult,
-    })
+      const reconciliationResult = await this.reconcileStatements(inserted)
 
-    await this.cleanupTempFile(payload, localFilePath)
+      await this.notifyResult({
+        payload,
+        total: intermediates.length,
+        inserted: inserted.length,
+        duplicates,
+        ...reconciliationResult,
+      })
 
-    this.logger.info("Bank statement import job finished", {
-      ...payload,
-      ...reconciliationResult,
-      duplicates,
-    })
+      this.logger.info("Bank statement import job finished", {
+        ...payload,
+        ...reconciliationResult,
+        duplicates,
+      })
+    } finally {
+      if (localFilePath) {
+        await this.cleanupTempFile(payload, localFilePath)
+      }
+    }
   }
 
-  private async resolveFilePath(
-    payload: ImportBankStatementJobPayload
-  ): Promise<string> {
-    if (payload.filePath) {
-      return payload.filePath
+  private resolveFilePath(payload: ImportBankStatementJobPayload): string {
+    if (!payload.filePath) {
+      throw new Error("ImportBankStatementJob requires a local file path")
     }
 
-    if (!payload.storagePath) {
-      throw new Error("ImportBankStatementJob requires filePath or storagePath")
-    }
-
-    const downloadedPath = await this.storageService.downloadFile(
-      payload.storagePath
-    )
-
-    return downloadedPath
+    return payload.filePath
   }
 
   private async persistNewStatements(
@@ -157,14 +149,7 @@ export class ImportBankStatementJob implements IQueue {
     matched: number
     unmatched: number
   }): Promise<void> {
-    const {
-      payload,
-      total,
-      inserted,
-      duplicates,
-      matched,
-      unmatched,
-    } = params
+    const { payload, total, inserted, duplicates, matched, unmatched } = params
 
     const message = [
       `📥 Importação de extrato bancário concluída`,
@@ -200,7 +185,7 @@ export class ImportBankStatementJob implements IQueue {
     try {
       await fs.unlink(localFilePath)
     } catch (error) {
-      this.logger.warn("Failed to remove temporary bank statement file", {
+      this.logger.error("Failed to remove temporary bank statement file", {
         localFilePath,
         error,
       })

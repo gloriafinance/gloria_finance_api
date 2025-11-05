@@ -17,6 +17,7 @@ import patrimonyRouter from "@/Patrimony/infrastructure/http/routes/Asset.routes
 import accountsReceivableRoutes from "@/AccountsReceivable/infrastructure/http/AccountsReceivable.routes"
 import groupAccountsPayableRoutes from "@/AccountsPayable/infrastructure/http/routes"
 import { Queues } from "@/queues"
+import bankingRoutes from "@/banking/infrastructure/http/routes"
 
 export const APP_DIR = __dirname
 
@@ -25,6 +26,7 @@ const routesModule = new RoutesModule([
   { path: "/api/v1/church/member", router: memberRouters },
   { path: "/api/v1/minister", router: ministerRoute },
   { path: "/api/v1/finance", router: financialRouter },
+  { path: "/api/v1/bank", router: bankingRoutes },
   { path: "/api/v1/account-receivable", router: accountsReceivableRoutes },
   { path: "/api/v1/account-payable", router: groupAccountsPayableRoutes },
   { path: "/api/v1/user", router: userRoutes },

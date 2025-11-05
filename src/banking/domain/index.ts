@@ -5,6 +5,10 @@ export * from "./enums/TypeBankingOperation.enum"
 
 export * from "./requests/Bank.request"
 export * from "./requests/MovementBank.request"
+export * from "./requests/ImportBankStatement.request"
+export * from "./requests/ListBankStatements.request"
+export * from "./requests/RetryBankStatement.request"
+export * from "./requests/LinkBankStatement.request"
 
 export * from "./interfaces/BankRepository.interface"
 export * from "./interfaces/MovementBankRepository.interface"

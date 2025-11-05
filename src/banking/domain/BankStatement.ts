@@ -95,6 +95,10 @@ export class BankStatement extends AggregateRoot {
     return statement
   }
 
+  getId(): string {
+    return this.id
+  }
+
   reconcile(financialRecordId: string): void {
     this.financialRecordId = financialRecordId
     this.reconciliationStatus = BankStatementStatus.RECONCILED
@@ -104,6 +108,8 @@ export class BankStatement extends AggregateRoot {
 
   markUnmatched(): void {
     this.reconciliationStatus = BankStatementStatus.UNMATCHED
+    this.financialRecordId = undefined
+    this.reconciledAt = undefined
     this.updatedAt = DateBR()
   }
 

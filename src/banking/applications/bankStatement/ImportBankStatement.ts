@@ -3,20 +3,7 @@ import path from "path"
 import os from "os"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { IQueueService, QueueName } from "@/Shared/domain"
-
-type ImportBankStatementRequest = {
-  bank: string
-  churchId: string
-  month: number
-  year: number
-  accountName?: string
-  uploadedBy: string
-  file: {
-    name: string
-    tempFilePath?: string
-    data?: Buffer
-  }
-}
+import { ImportBankStatementRequest } from "@/banking/domain/requests/ImportBankStatement.request"
 
 export class ImportBankStatement {
   private readonly logger = Logger(ImportBankStatement.name)
@@ -81,4 +68,3 @@ export class ImportBankStatement {
     return tempPath
   }
 }
-
