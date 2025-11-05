@@ -49,12 +49,12 @@ export class ImportBankStatement {
     await fs.mkdir(baseDir, { recursive: true })
 
     const timestamp = Date.now()
-    const normalizedName = request.file.name.replace(/\s+/g, "_")
+    const safeOriginalName = this.sanitizeFilename(request.file.name)
     const tempPath = path.join(
       baseDir,
       `${request.churchId}-${request.month
         .toString()
-        .padStart(2, "0")}-${request.year}-${timestamp}-${normalizedName}`
+        .padStart(2, "0")}-${request.year}-${timestamp}-${safeOriginalName}`
     )
 
     if (request.file.tempFilePath) {
@@ -66,5 +66,16 @@ export class ImportBankStatement {
     }
 
     return tempPath
+  }
+
+  private sanitizeFilename(filename: string): string {
+    const baseName = path.basename(filename || "upload")
+    const normalized = baseName
+      .replace(/\s+/g, "_")
+      .replace(/[^\w.-]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+
+    return normalized || "upload"
   }
 }

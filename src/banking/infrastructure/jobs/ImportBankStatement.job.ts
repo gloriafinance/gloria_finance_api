@@ -66,7 +66,7 @@ export class ImportBankStatementJob implements IQueue {
       })
     } finally {
       if (localFilePath) {
-        await this.cleanupTempFile(payload, localFilePath)
+        await this.cleanupTempFile(localFilePath)
       }
     }
   }
@@ -170,15 +170,11 @@ export class ImportBankStatementJob implements IQueue {
     this.queueService.dispatch(QueueName.TelegramNotification, { message })
   }
 
-  private async cleanupTempFile(
-    payload: ImportBankStatementJobPayload,
-    localFilePath: string
-  ): Promise<void> {
+  private async cleanupTempFile(localFilePath: string): Promise<void> {
     const shouldSkipCleanup =
       /^https?:\/\//i.test(localFilePath) || !localFilePath
 
     if (shouldSkipCleanup) {
-      // External URL, nothing to cleanup
       return
     }
 
