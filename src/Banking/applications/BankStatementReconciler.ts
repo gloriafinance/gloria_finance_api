@@ -36,7 +36,7 @@ export class BankStatementReconciler {
     this.dispatcher = new DispatchUpdateStatusFinancialRecord(queueService)
   }
 
-  async reconcile(statement: BankStatement): Promise<{
+  async execute(statement: BankStatement): Promise<{
     matched: boolean
     financialRecordId?: string
   }> {
@@ -66,7 +66,7 @@ export class BankStatementReconciler {
     )
 
     this.dispatcher.execute({
-      financialRecord: match.toPrimitives(),
+      financialRecord: { ...match.toPrimitives(), id: match.getId() },
       status: FinancialRecordStatus.RECONCILED,
     })
 
@@ -100,20 +100,17 @@ export class BankStatementReconciler {
       status: {
         $in: [FinancialRecordStatus.PENDING, FinancialRecordStatus.CLEARED],
       },
+      "availabilityAccount.availabilityAccountId":
+        statement.getAvailabilityAccount().availabilityAccountId,
     }
 
-    const accountName = statement.getAccountName()
-    if (accountName) {
-      filters["availabilityAccount.accountName"] = new RegExp(accountName, "i")
-    }
-
-    const record = await this.financialRecordRepository.one(filters)
-    return record
+    return await this.financialRecordRepository.one(filters)
   }
 
   private shiftDate(date: Date, days: number): Date {
-    const copy = new Date(date)
-    copy.setUTCDate(copy.getUTCDate() + days)
-    return copy
+    const newDate = new Date(date)
+    newDate.setDate(date.getDate() + days)
+    newDate.setHours(0, 0, 0, 0)
+    return newDate
   }
 }

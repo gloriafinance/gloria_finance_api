@@ -1,5 +1,8 @@
 import { IDefinitionQueue } from "@/Shared/domain"
-import { MovementBankRecord } from "@/Banking/applications"
+import {
+  BankStatementReconciler,
+  MovementBankRecord,
+} from "@/Banking/applications"
 import {
   BankMongoRepository,
   BankStatementMongoRepository,
@@ -7,7 +10,6 @@ import {
 } from "@/Banking/infrastructure/persistence"
 import { ImportBankStatementJob } from "@/Banking/infrastructure/jobs/ImportBankStatement.job"
 import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers/BankStatementParserFactory"
-import { BankStatementReconciler } from "@/Banking/infrastructure/services/BankStatementReconciler"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
 import { QueueService } from "@/Shared/infrastructure"
 

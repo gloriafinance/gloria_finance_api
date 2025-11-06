@@ -10,6 +10,7 @@ import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "../../../Shared/adapter"
+import { DateBR } from "@/Shared/helpers"
 
 export class RegisterContributionsOnline {
   private logger = Logger("RegisterContributionsOnline")
@@ -30,8 +31,12 @@ export class RegisterContributionsOnline {
       `RegisterContributionsOnline contributionRequest: ${JSON.stringify(contributionRequest)} member: ${member.getName()} financialConcept: ${financialConcept.getName()}`
     )
 
+    const date = DateBR()
+
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: member.getChurchId(),
+      month: date.getUTCMonth() + 1,
+      year: date.getFullYear(),
     })
 
     const voucher = await this.storageService.uploadFile(

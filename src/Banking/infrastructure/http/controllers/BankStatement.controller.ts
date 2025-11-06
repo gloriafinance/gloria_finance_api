@@ -11,9 +11,12 @@ import {
   BankMongoRepository,
   BankStatementMongoRepository,
 } from "@/Banking/infrastructure/persistence"
-import { BankStatementReconciler } from "@/Banking/infrastructure/services/BankStatementReconciler"
+import { BankStatementReconciler } from "@/Banking/applications/BankStatementReconciler"
 import { QueueService } from "@/Shared/infrastructure"
-import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
+import {
+  AvailabilityAccountMongoRepository,
+  FinanceRecordMongoRepository,
+} from "@/Financial/infrastructure/persistence"
 import {
   Bank,
   ImportBankStatementRequest,
@@ -31,6 +34,7 @@ export const importBankStatementController = async (
     const bank = await resolveBankForParsing(req.bankId)
 
     const result = await new ImportBankStatement(
+      AvailabilityAccountMongoRepository.getInstance(),
       QueueService.getInstance()
     ).execute({
       bank,
@@ -178,7 +182,7 @@ const resolveBankForParsing = async (bankId: string): Promise<Bank> => {
     }
   }
 
-  if (canResolve(bank.getBankName())) {
+  if (!canResolve(bank.getBankName())) {
     throw new GenericException(
       `Banco ${bank.getBankName()} não possui parser configurado`
     )

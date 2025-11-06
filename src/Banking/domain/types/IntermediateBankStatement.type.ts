@@ -2,8 +2,11 @@ import { Bank, BankStatementDirection } from "@/Banking/domain"
 
 export type IntermediateBankStatement = {
   bank: Bank
+  availabilityAccount: {
+    accountName: string
+    availabilityAccountId: string
+  }
   bankRefId: string
-  accountName: string
   postedAt: Date
   amount: number
   description: string

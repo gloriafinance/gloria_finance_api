@@ -7,12 +7,16 @@ import {
   IBankStatementRepository,
   IntermediateBankStatement,
 } from "@/Banking/domain"
-import { BankStatementParserFactory } from "../parsers/BankStatementParserFactory"
-import { BankStatementReconciler } from "../services/BankStatementReconciler"
+import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers"
+import { BankStatementReconciler } from "@/Banking/applications"
 
 type ImportBankStatementJobPayload = {
   churchId: string
   bank: any
+  availabilityAccount: {
+    accountName: string
+    availabilityAccountId: string
+  }
   month: number
   year: number
   filePath: string
@@ -40,14 +44,13 @@ export class ImportBankStatementJob implements IQueue {
       localFilePath = this.resolveFilePath(payload)
       const parser = this.parserFactory.resolve(bank.getBankName())
 
-      const intermediates = (
-        await parser.parse({
-          bank,
-          filePath: localFilePath,
-          month: payload.month,
-          year: payload.year,
-        })
-      ).map((i) => ({ ...i, bank }))
+      const intermediates = await parser.parse({
+        bank,
+        availabilityAccount: payload.availabilityAccount,
+        filePath: localFilePath,
+        month: payload.month,
+        year: payload.year,
+      })
 
       const { inserted, duplicates } =
         await this.persistNewStatements(intermediates)
@@ -132,7 +135,7 @@ export class ImportBankStatementJob implements IQueue {
     let unmatched = 0
 
     for (const statement of statements) {
-      const result = await this.reconciler.reconcile(statement)
+      const result = await this.reconciler.execute(statement)
 
       if (result.matched) {
         matched++

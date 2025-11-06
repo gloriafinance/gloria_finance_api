@@ -14,7 +14,10 @@ export class BankStatement extends AggregateRoot {
     bankId: string
     tag: string
   }
-  private accountName: string
+  private availabilityAccount: {
+    accountName: string
+    availabilityAccountId: string
+  }
   private postedAt: Date
   private amount: number
   private description: string
@@ -39,7 +42,7 @@ export class BankStatement extends AggregateRoot {
       bankId: intermediate.bank.getBankId(),
       tag: intermediate.bank.getTag(),
     }
-    statement.accountName = intermediate.accountName
+    statement.availabilityAccount = intermediate.availabilityAccount
     statement.postedAt = intermediate.postedAt
     statement.amount = intermediate.amount
     statement.description = intermediate.description
@@ -61,7 +64,7 @@ export class BankStatement extends AggregateRoot {
     statement.bankStatementId = primitives.bankStatementId
     statement.churchId = primitives.churchId
     statement.bank = primitives.bank
-    statement.accountName = primitives.accountName
+    statement.availabilityAccount = primitives.availabilityAccount
     statement.postedAt = new Date(primitives.postedAt)
     statement.amount = primitives.amount
     statement.description = primitives.description
@@ -81,6 +84,10 @@ export class BankStatement extends AggregateRoot {
 
   getId(): string {
     return this.id
+  }
+
+  getAvailabilityAccount() {
+    return this.availabilityAccount
   }
 
   reconcile(financialRecordId: string): void {
@@ -103,10 +110,6 @@ export class BankStatement extends AggregateRoot {
 
   getChurchId(): string {
     return this.churchId
-  }
-
-  getAccountName(): string {
-    return this.accountName
   }
 
   getFitId(): string {
@@ -150,7 +153,7 @@ export class BankStatement extends AggregateRoot {
       bankStatementId: this.bankStatementId,
       churchId: this.churchId,
       bank: this.bank,
-      accountName: this.accountName,
+      availabilityAccount: this.availabilityAccount,
       postedAt: this.postedAt,
       amount: this.amount,
       description: this.description,

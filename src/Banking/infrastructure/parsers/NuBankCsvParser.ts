@@ -19,8 +19,8 @@ type NubankCsvRow = {
 
 const BANK_CODE = "NUBANK"
 
-export class NubankCsvParser implements IBankStatementParser {
-  private logger = Logger(NubankCsvParser.name)
+export class NuBankCsvParser implements IBankStatementParser {
+  private logger = Logger(NuBankCsvParser.name)
 
   supports(bank: string): boolean {
     return bank.toUpperCase() === BANK_CODE
@@ -28,11 +28,15 @@ export class NubankCsvParser implements IBankStatementParser {
 
   async parse(params: {
     bank: Bank
+    availabilityAccount: {
+      accountName: string
+      availabilityAccountId: string
+    }
     filePath: string
     month: number
     year: number
   }): Promise<IntermediateBankStatement[]> {
-    const { filePath, bank, month, year } = params
+    const { filePath, bank, month, year, availabilityAccount } = params
 
     this.logger.info("Parsing Nubank CSV bank statement", {
       filePath,
@@ -71,9 +75,9 @@ export class NubankCsvParser implements IBankStatementParser {
       })
 
       statements.push({
-        bank: params.bank,
+        bank,
+        availabilityAccount,
         bankRefId,
-        accountName: params.bank.getTag(),
         postedAt,
         amount: normalizedAmount,
         description,

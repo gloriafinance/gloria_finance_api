@@ -4,7 +4,7 @@ import { HttpStatus } from "@/Shared/domain"
 export const ImportBankStatementValidator = async (req, res, next) => {
   const payload = req.body ?? {}
   const rules = {
-    bank: "required|string",
+    bankId: "required|string",
     month: "required|integer|between:1,12",
     year: "required|integer|min:2000",
     accountName: "string",
@@ -20,4 +20,3 @@ export const ImportBankStatementValidator = async (req, res, next) => {
 
   next()
 }
-

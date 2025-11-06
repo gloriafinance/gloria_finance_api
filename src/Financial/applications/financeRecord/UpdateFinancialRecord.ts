@@ -9,15 +9,16 @@ import {
   ConceptType,
   FinanceRecord,
   FinancialRecordStatus,
-  UpdateStatusFinancialRecordQueue,
   TypeOperationMoney,
+  UpdateStatusFinancialRecordQueue,
 } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/DispatchUpdateAvailabilityAccountBalance"
 import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/DispatchUpdateCostCenterMaster"
 
-export class UpdateStatusFinancialRecord implements IQueue {
-  private logger = Logger(UpdateStatusFinancialRecord.name)
+export class UpdateFinancialRecord implements IQueue {
+  private logger = Logger(UpdateFinancialRecord.name)
+
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
@@ -31,10 +32,12 @@ export class UpdateStatusFinancialRecord implements IQueue {
     const financialRecord = FinanceRecord.fromPrimitives(args.financialRecord)
     const previousStatus = financialRecord.getStatus()
 
+    const date = new Date(financialRecord.getDate())
+
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: financialRecord.getChurchId(),
-      month: financialRecord.getDate().getMonth() + 1,
-      year: financialRecord.getDate().getFullYear(),
+      month: date.getUTCMonth() + 1,
+      year: date.getFullYear(),
     })
 
     financialRecord.setStatus(args.status)

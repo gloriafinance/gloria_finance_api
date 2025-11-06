@@ -1,5 +1,5 @@
 import { IBankStatementParser } from "@/Banking/domain"
-import { NubankCsvParser } from "./NubankCsvParser"
+import { NuBankCsvParser } from "./NuBankCsvParser"
 
 export class BankStatementParserFactory {
   private static instance: BankStatementParserFactory
@@ -12,11 +12,17 @@ export class BankStatementParserFactory {
   static getInstance(): BankStatementParserFactory {
     if (!BankStatementParserFactory.instance) {
       BankStatementParserFactory.instance = new BankStatementParserFactory([
-        new NubankCsvParser(),
+        new NuBankCsvParser(),
       ])
     }
 
     return BankStatementParserFactory.instance
+  }
+
+  static initialize(parsers: IBankStatementParser[]): void {
+    BankStatementParserFactory.instance = new BankStatementParserFactory(
+      parsers
+    )
   }
 
   resolve(bank: string): IBankStatementParser {

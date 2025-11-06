@@ -11,10 +11,7 @@ import {
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import {
-  IAvailabilityAccountRepository,
-  IFinancialRecordRepository,
-} from "@/Financial/domain/interfaces"
+import { IAvailabilityAccountRepository, IFinancialRecordRepository, } from "@/Financial/domain/interfaces"
 import { IQueueService } from "@/Shared/domain"
 import {
   DispatchUpdateAvailabilityAccountBalance,
@@ -56,10 +53,12 @@ export class CancelFinancialRecord {
       throw new FinancialMovementNotFound()
     }
 
+    const date = financialRecord.getDate()
+
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: financialRecord.getChurchId(),
-      month: financialRecord.getDate().getMonth() + 1,
-      year: financialRecord.getDate().getFullYear(),
+      month: date.getUTCMonth() + 1,
+      year: date.getFullYear(),
     })
 
     if (financialRecord.getType() === FinancialRecordType.OUTGO) {

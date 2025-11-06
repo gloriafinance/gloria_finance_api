@@ -23,9 +23,15 @@ export const RecordPurchaseController = async (
   res: Response
 ) => {
   try {
+    const date = new Date(request.purchaseDate)
+
     await new FinancialMonthValidator(
       FinancialYearMongoRepository.getInstance()
-    ).validate({ churchId: request.churchId })
+    ).validate({
+      churchId: request.churchId,
+      month: date.getUTCMonth() + 1,
+      year: date.getFullYear(),
+    })
 
     request.invoice = await StorageGCP.getInstance(
       process.env.BUCKET_FILES

@@ -43,6 +43,7 @@
     "pino-pretty": "^11.0.0",
     "puppeteer": "^24.8.0",
     "shelljs": "^0.9.2",
+    "socket.io": "^4.8.1",
     "tsconfig-paths": "^4.2.0",
     "uuid": "^9.0.1"
   },

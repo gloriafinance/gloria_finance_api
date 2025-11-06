@@ -1,5 +1,5 @@
 import { BankStatementStatus, IBankStatementRepository } from "@/Banking/domain"
-import { BankStatementReconciler } from "@/Banking/infrastructure/services/BankStatementReconciler"
+import { BankStatementReconciler } from "@/Banking/applications/BankStatementReconciler"
 import { RetryBankStatementRequest } from "@/Banking/domain/requests/RetryBankStatement.request"
 
 export class RetryBankStatementReconciliation {
@@ -30,6 +30,6 @@ export class RetryBankStatementReconciliation {
       }
     }
 
-    return this.reconciler.reconcile(statement)
+    return this.reconciler.execute(statement)
   }
 }

@@ -10,3 +10,19 @@ export const DateBR = () => {
   // Crear un nuevo objeto Date ajustado
   return new Date(adjustedTime)
 }
+
+export const UTCStringToDateBR = (dateString: any): Date => {
+  if (typeof dateString !== "string") {
+    return dateString
+  }
+
+  const [datePart, timePart] = dateString.split("T")
+  const [y, m, day] = datePart.split("-").map(Number)
+  const [h, min, secAndMs] = timePart.split(":")
+  const sec = Number(secAndMs === undefined ? 0 : secAndMs.split(".")[0])
+
+  // crea fecha interpretando los componentes como hora local:
+  const dAsLocal = new Date(y, m - 1, day, Number(h), Number(min), sec)
+
+  return dAsLocal
+}

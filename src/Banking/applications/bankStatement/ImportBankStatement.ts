@@ -4,6 +4,8 @@ import * as os from "os"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { IQueueService, QueueName } from "@/Shared/domain"
 import { Bank } from "@/Banking/domain"
+import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import { AvailabilityAccountNotFound } from "@/Financial/domain"
 
 type ImportBankStatementRequest = {
   bank: Bank
@@ -17,7 +19,10 @@ type ImportBankStatementRequest = {
 export class ImportBankStatement {
   private readonly logger = Logger(ImportBankStatement.name)
 
-  constructor(private readonly queueService: IQueueService) {}
+  constructor(
+    private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
+    private readonly queueService: IQueueService
+  ) {}
 
   async execute(request: ImportBankStatementRequest): Promise<{
     queuedAt: Date
@@ -31,11 +36,24 @@ export class ImportBankStatement {
       uploadedBy: request.uploadedBy,
     })
 
+    const availabilityAccount = await this.availabilityAccountRepository.one({
+      "source.bankId": request.bank.getBankId(),
+      churchId: request.churchId,
+    })
+
+    if (!availabilityAccount) {
+      throw new AvailabilityAccountNotFound()
+    }
+
     const filePath = await this.persistTempFile(request)
 
     this.queueService.dispatch(QueueName.ImportBankStatementJob, {
       churchId: request.churchId,
       bank: request.bank,
+      availabilityAccount: {
+        accountName: availabilityAccount.getAccountName(),
+        availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
+      },
       month: request.month,
       year: request.year,
       filePath,
