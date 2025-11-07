@@ -4,9 +4,9 @@ import {
   AvailabilityAccountMaster,
   ConceptType,
   CostCenterMaster,
+  FinancialRecordStatus,
   StatementCategory,
   StatementCategorySummary,
-  FinancialRecordStatus,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import {
@@ -50,7 +50,7 @@ export class FinanceRecordMongoRepository
       return undefined
     }
 
-    return FinanceRecord.fromPrimitives(result)
+    return FinanceRecord.fromPrimitives({ ...result, id: result._id })
   }
 
   async list(criteria: Criteria): Promise<Paginate<FinanceRecord>> {

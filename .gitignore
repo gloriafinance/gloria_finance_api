@@ -38,3 +38,4 @@ testem.log
 upload
 .env
 .dist/
+backups

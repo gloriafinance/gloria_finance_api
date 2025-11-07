@@ -7,8 +7,8 @@ import { AvailabilityAccountMongoRepository } from "../../persistence"
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { Response } from "express"
-import { FinBankByBankId } from "@/banking/applications"
-import { BankMongoRepository } from "@/banking/infrastructure/persistence"
+import { FinBankByBankId } from "@/Banking/applications"
+import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
 
 export const createOrUpdateAvailabilityAccount = async (
   request: AvailabilityAccountRequest,

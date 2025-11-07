@@ -6,12 +6,14 @@ import {
   FinanceRecordMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "./persistence"
-import { UpdateAvailabilityAccountBalance } from "../applications"
+import {
+  UpdateAvailabilityAccountBalance,
+  UpdateFinancialRecord,
+} from "../applications"
 import { UpdateCostCenterMaster } from "../applications/costCenter/UpdateCostCenterMaster"
 import { CreateFinancialRecord } from "@/Financial/applications/financeRecord/CreateFinancialRecord"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
-import { UpdateStatusFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinanceRecord"
 
 export const FinancialQueue = (): IDefinitionQueue[] => [
   {
@@ -32,13 +34,14 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     ],
   },
   {
-    useClass: UpdateStatusFinancialRecord,
+    useClass: UpdateFinancialRecord,
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       QueueService.getInstance(),
     ],
+    delay: 3,
   },
   {
     useClass: UpdateAvailabilityAccountBalance,

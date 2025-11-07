@@ -1,0 +1,56 @@
+db["financial_records"].createIndex(
+  {
+    churchId: 1,
+    date: 1,
+    status: 1,
+    "financialConcept.affectsResult": 1
+  },
+  {
+    name: "idx_financial_records_income_statement",
+    background: true,
+    partialFilterExpression: {
+      status: { $in: [Object] },
+      "financialConcept.affectsResult": true
+    }
+  }
+);
+
+db["cost_centers_master"].createSearchIndex({
+  name: "costCentersMasterIndex",
+  definition: {
+    "mappings": {
+        "dynamic": false,
+        "fields": {
+          "churchId": {
+            "type": "string"
+          },
+          "month": {
+            "type": "number"
+          },
+          "year": {
+            "type": "number"
+          }
+        }
+      }
+  }
+})
+
+db["availability_accounts_master"].createSearchIndex({
+  name: "availabilityAccountMasterIndex",
+  definition: {
+    "mappings": {
+        "dynamic": false,
+        "fields": {
+          "churchId": {
+            "type": "string"
+          },
+          "month": {
+            "type": "number"
+          },
+          "year": {
+            "type": "number"
+          }
+        }
+      }
+  }
+})

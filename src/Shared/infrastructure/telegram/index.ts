@@ -13,10 +13,6 @@ const TelegramSendMessage = async (message: string) => {
       chat_id: chatId,
       text: message,
     })
-
-    if (response.status === 200) {
-      console.log("Mensaje enviado correctamente.")
-    }
   } catch (error) {
     console.error(
       "Error al enviar el mensaje:",

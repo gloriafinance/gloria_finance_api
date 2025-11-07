@@ -16,6 +16,7 @@ export * from "./financeRecord/FetchingFinanceRecord"
 export { GenerateFinanceRecordReport } from "./financeRecord/GenerateFinanceRecordReport"
 export * from "./financeRecord/CancelFinancialRecord"
 export * from "./financeRecord/CreateFinancialRecord"
+export * from "./financeRecord/UpdateFinancialRecord"
 
 export { CreateOrUpdateAvailabilityAccount } from "./availabilityAccount/CreateOrUpdateAvailabilityAccount"
 export { SearchAvailabilityAccountByChurchId } from "./availabilityAccount/SearchAvailabilityAccountByChurchId"

@@ -37,7 +37,7 @@ export class CreateFinancialRecord implements IQueue {
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: args.churchId,
-      month: new Date(args.date).getMonth() + 1,
+      month: new Date(args.date).getUTCMonth() + 1,
       year: new Date(args.date).getFullYear(),
     })
 

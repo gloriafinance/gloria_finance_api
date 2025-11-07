@@ -8,7 +8,7 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "./enums/FinancialRecordType.enum"
-import { DateBR } from "@/Shared/helpers"
+import { DateBR, UTCStringToDateBR } from "@/Shared/helpers"
 
 export class FinanceRecord extends AggregateRoot {
   private costCenter?: {
@@ -114,20 +114,30 @@ export class FinanceRecord extends AggregateRoot {
     )
     financialRecord.churchId = plainData.churchId
     financialRecord.amount = plainData.amount
-    financialRecord.date = plainData.date
+    financialRecord.date = UTCStringToDateBR(plainData.date)
     financialRecord.type = plainData.type
     financialRecord.availabilityAccount = plainData.availabilityAccount
     financialRecord.voucher = plainData?.voucher
     financialRecord.description = plainData.description
     financialRecord.costCenter = plainData?.costCenter
-    financialRecord.createdAt = plainData.createdAt ?? plainData.date
-    financialRecord.updatedAt = plainData.updatedAt ?? plainData.date
+    financialRecord.createdAt = UTCStringToDateBR(
+      plainData.createdAt ?? plainData.date
+    )
+    financialRecord.updatedAt = UTCStringToDateBR(
+      plainData.updatedAt ?? plainData.date
+    )
     financialRecord.source = plainData.source
     financialRecord.createdBy = plainData.createdBy ?? ""
     financialRecord.status = plainData.status
     financialRecord.reference = plainData.reference ?? undefined
-    financialRecord.clearedAt = plainData.clearedAt ?? undefined
-    financialRecord.reconciledAt = plainData.reconciledAt ?? undefined
+    financialRecord.clearedAt =
+      plainData.clearedAt === undefined
+        ? undefined
+        : UTCStringToDateBR(plainData.clearedAt)
+    financialRecord.reconciledAt =
+      plainData.reconciledAt === undefined
+        ? undefined
+        : UTCStringToDateBR(plainData.reconciledAt)
 
     return financialRecord
   }
