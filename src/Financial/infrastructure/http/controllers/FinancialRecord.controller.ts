@@ -25,7 +25,7 @@ import {
   FinancialConfigurationMongoRepository,
 } from "../../persistence"
 import { Response } from "express"
-import { CreateFinancialRecord } from "@/Financial/applications/financeRecord/CreateFinancialRecord"
+import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { toFinancialRecordType } from "@/Financial/domain/mappers"
 
 export const FinancialRecordController = async (
@@ -67,7 +67,7 @@ export const FinancialRecordController = async (
       ).execute(request.churchId, request.costCenterId)
     }
 
-    await new CreateFinancialRecord(
+    await new CreateFinancialRecordJob(
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
       StorageGCP.getInstance(process.env.BUCKET_FILES),

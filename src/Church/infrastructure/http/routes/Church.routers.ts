@@ -1,15 +1,20 @@
 import { ChurchController } from "../controllers/Church.controller"
-import { ChurchPaginateRequest } from "../../../domain"
+import { ChurchPaginateRequest, ChurchRequest } from "../../../domain"
 import { Router } from "express"
-import { PermissionMiddleware, Can } from "../../../../Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 
 const churchRoute = Router()
 
-churchRoute.post("/", PermissionMiddleware, Can("church", "upsert"), async (req, res) => {
-  await ChurchController.createOrUpdate(req, res)
-})
+churchRoute.post(
+  "/",
+  PermissionMiddleware,
+  Can("church", "upsert"),
+  async (req, res) => {
+    await ChurchController.createOrUpdate(req.body as ChurchRequest, res)
+  }
+)
 
-churchRoute.get("/", PermissionMiddleware, Can("church", "search"), async (req, res) => {
+churchRoute.get("/", PermissionMiddleware, async (req, res) => {
   const params = req.query as unknown as ChurchPaginateRequest
   await ChurchController.list(params, res)
 })
@@ -48,7 +53,7 @@ churchRoute.get(
   PermissionMiddleware,
   Can("church", "search"),
   async (req, res) => {
-  await ChurchController.findByChurchId(req.params.churchId, res)
+    await ChurchController.findByChurchId(req.params.churchId, res)
   }
 )
 

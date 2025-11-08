@@ -26,9 +26,8 @@ export class AssignPermissionsToRole {
     )
 
     if (!role) {
-      throw new ActionNotAllowed(
-        `Role ${request.roleId} not found in church ${request.churchId}`
-      )
+      throw new ActionNotAllowed()
+      //`Role ${request.roleId} not found in church ${request.churchId}`
     }
 
     const permissions = await this.permissionRepository.findByIds(
@@ -36,7 +35,8 @@ export class AssignPermissionsToRole {
     )
 
     if (permissions.length !== request.permissionIds.length) {
-      throw new ActionNotAllowed("Some permissions do not exist in catalog")
+      throw new ActionNotAllowed()
+      //"Some permissions do not exist in catalog"
     }
 
     await this.rolePermissionRepository.replacePermissions(

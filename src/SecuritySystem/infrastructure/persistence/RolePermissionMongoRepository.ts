@@ -25,7 +25,7 @@ export class RolePermissionMongoRepository
     roleId: string,
     permissionIds: string[]
   ): Promise<void> {
-    const collection = await this.collection()
+    const collection = await this.collection<any>()
 
     await collection.deleteMany({ churchId, roleId })
 
@@ -50,7 +50,7 @@ export class RolePermissionMongoRepository
       return []
     }
 
-    const collection = await this.collection()
+    const collection = await this.collection<any>()
     const documents = await collection
       .find({ churchId, roleId: { $in: roleIds } })
       .toArray()
@@ -62,7 +62,7 @@ export class RolePermissionMongoRepository
     churchId: string,
     roleId: string
   ): Promise<string[]> {
-    const collection = await this.collection()
+    const collection = await this.collection<any>()
     const documents = await collection.find({ churchId, roleId }).toArray()
 
     return documents.map((document) => document.permissionId)

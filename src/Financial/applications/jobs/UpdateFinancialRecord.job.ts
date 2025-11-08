@@ -13,11 +13,11 @@ import {
   UpdateStatusFinancialRecordQueue,
 } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
-import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/DispatchUpdateAvailabilityAccountBalance"
-import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/DispatchUpdateCostCenterMaster"
+import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
+import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 
-export class UpdateFinancialRecord implements IQueue {
-  private logger = Logger(UpdateFinancialRecord.name)
+export class UpdateFinancialRecordJob implements IQueue {
+  private logger = Logger(UpdateFinancialRecordJob.name)
 
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository,

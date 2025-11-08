@@ -1,6 +1,4 @@
-import {
-  AuthorizationService,
-} from "@/SecuritySystem/applications/rbac/AuthorizationService"
+import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 import {
   IRoleRepository,
   IUserAssignmentRepository,
@@ -31,9 +29,8 @@ export class AssignRolesToUser {
     )
 
     if (invalidRoles.length) {
-      throw new ActionNotAllowed(
-        `Roles not found for church ${request.churchId}: ${invalidRoles.join(", ")}`
-      )
+      throw new ActionNotAllowed()
+      //`Roles not found for church ${request.churchId}: ${invalidRoles.join(", ")}`
     }
 
     const assignment = await this.userAssignmentRepository.assignRoles(

@@ -20,7 +20,11 @@ export class UserAssignment extends AggregateRoot {
     super()
   }
 
-  static create(churchId: string, userId: string, roles: string[]): UserAssignment {
+  static create(
+    churchId: string,
+    userId: string,
+    roles: string[]
+  ): UserAssignment {
     const assignment = new UserAssignment()
     assignment.churchId = churchId
     assignment.userId = userId
@@ -29,7 +33,7 @@ export class UserAssignment extends AggregateRoot {
     return assignment
   }
 
-  static fromPrimitives(data: UserAssignmentPrimitives): UserAssignment {
+  static fromPrimitives(data: any): UserAssignment {
     const assignment = new UserAssignment()
     assignment.id = data.id
     assignment.churchId = data.churchId
@@ -37,6 +41,10 @@ export class UserAssignment extends AggregateRoot {
     assignment.roles = data.roles
     assignment.updatedAt = data.updatedAt
     return assignment
+  }
+
+  getId(): string {
+    return this.id
   }
 
   getRoles(): string[] {

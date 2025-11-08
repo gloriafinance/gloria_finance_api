@@ -53,18 +53,12 @@ export class UserAssignmentMongoRepository
     }
 
     return UserAssignment.fromPrimitives({
+      ...document,
       id: document._id?.toString(),
-      churchId: document.churchId,
-      userId: document.userId,
-      roles: document.roles ?? [],
-      updatedAt: document.updatedAt ?? DateBR(),
     })
   }
 
-  async findUserIdsByRole(
-    churchId: string,
-    roleId: string
-  ): Promise<string[]> {
+  async findUserIdsByRole(churchId: string, roleId: string): Promise<string[]> {
     const collection = await this.collection()
     const documents = await collection
       .find({ churchId, roles: roleId })

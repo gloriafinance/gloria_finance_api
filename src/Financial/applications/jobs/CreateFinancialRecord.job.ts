@@ -19,8 +19,8 @@ import {
 } from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 
-export class CreateFinancialRecord implements IQueue {
-  private logger = Logger(CreateFinancialRecord.name)
+export class CreateFinancialRecordJob implements IQueue {
+  private logger = Logger(CreateFinancialRecordJob.name)
   private unitOfWork: UnitOfWork
 
   constructor(

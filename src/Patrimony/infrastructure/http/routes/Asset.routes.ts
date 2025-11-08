@@ -36,9 +36,9 @@ import {
 const router = Router()
 
 const resolveUserId = (request: Request) => {
-  const user = request["user"] || {}
+  const user = request["user"]
 
-  return user.userId || user.id || user.sub || "system"
+  return user.userId || "system"
 }
 
 const resolveInventoryPerformerDetails = (user: any): AssetInventoryChecker => {

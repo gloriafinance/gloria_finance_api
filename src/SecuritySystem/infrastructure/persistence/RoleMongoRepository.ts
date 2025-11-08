@@ -1,5 +1,4 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { DateBR } from "@/Shared/helpers"
 import { IRoleRepository, Role } from "@/SecuritySystem/domain"
 
 export class RoleMongoRepository
@@ -29,13 +28,8 @@ export class RoleMongoRepository
     }
 
     return Role.fromPrimitives({
+      ...document,
       id: document._id?.toString(),
-      churchId: document.churchId,
-      roleId: document.roleId,
-      name: document.name,
-      description: document.description,
-      isSystem: document.isSystem ?? false,
-      createdAt: document.createdAt ?? DateBR(),
     })
   }
 
@@ -51,13 +45,8 @@ export class RoleMongoRepository
     }
 
     return Role.fromPrimitives({
+      ...document,
       id: document._id?.toString(),
-      churchId: document.churchId,
-      roleId: document.roleId,
-      name: document.name,
-      description: document.description,
-      isSystem: document.isSystem ?? false,
-      createdAt: document.createdAt ?? DateBR(),
     })
   }
 
@@ -79,13 +68,8 @@ export class RoleMongoRepository
 
     return documents.map((document) =>
       Role.fromPrimitives({
+        ...document,
         id: document._id?.toString(),
-        churchId: document.churchId,
-        roleId: document.roleId,
-        name: document.name,
-        description: document.description,
-        isSystem: document.isSystem ?? false,
-        createdAt: document.createdAt ?? DateBR(),
       })
     )
   }

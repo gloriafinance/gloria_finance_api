@@ -1,6 +1,6 @@
 import { Member } from "@/Church/domain"
 import { IQueue } from "@/Shared/domain"
-import { IPasswordAdapter, IUserRepository, ProfileType, User } from "../domain"
+import { IPasswordAdapter, IUserRepository, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
 import { Logger } from "@/Shared/adapter"
@@ -37,11 +37,6 @@ export class CreateUserForMember implements IQueue {
       email: member.getEmail(),
       password: member.getDni().replace(".", "").replace("-", ""),
       isActive: true,
-      profiles: [
-        {
-          profileType: ProfileType.MEMBER,
-        },
-      ],
       churchId: member.getChurchId(),
     })
   }

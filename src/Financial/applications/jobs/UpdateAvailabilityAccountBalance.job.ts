@@ -9,10 +9,10 @@ import {
   UpdateAvailabilityAccountBalanceRequest,
 } from "../../domain"
 
-import { UpdateAvailabilityAccountMaster } from "./UpdateAvailabilityAccountMaster"
+import { UpdateAvailabilityAccountMaster } from "../availabilityAccount/UpdateAvailabilityAccountMaster"
 import { Logger } from "@/Shared/adapter"
 
-export class UpdateAvailabilityAccountBalance implements IQueue {
+export class UpdateAvailabilityAccountBalanceJob implements IQueue {
   private logger = Logger("UpdateAvailabilityAccountBalance")
 
   constructor(

@@ -32,7 +32,7 @@ export class Permission extends AggregateRoot {
     return permission
   }
 
-  static fromPrimitives(data: PermissionPrimitives): Permission {
+  static fromPrimitives(data: any): Permission {
     const permission = new Permission()
     permission.id = data.id
     permission.permissionId = data.permissionId
@@ -41,6 +41,10 @@ export class Permission extends AggregateRoot {
     permission.description = data.description
     permission.isSystem = data.isSystem
     return permission
+  }
+
+  getId(): string {
+    return this.id
   }
 
   getPermissionId(): string {
@@ -61,7 +65,6 @@ export class Permission extends AggregateRoot {
 
   toPrimitives(): PermissionPrimitives {
     return {
-      id: this.id,
       permissionId: this.permissionId,
       module: this.module,
       action: this.action,

@@ -5,7 +5,7 @@ import {
   RolePermissionMongoRepository,
   UserAssignmentMongoRepository,
 } from "@/SecuritySystem/infrastructure"
-import { UserPermissionsCache } from "@/Shared/infrastructure"
+import { UserPermissionsCache } from "@/Shared/infrastructure/cache/UserPermissionsCache"
 import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
 
 const authorizationService = AuthorizationService.getInstance(
@@ -38,10 +38,11 @@ export const PermissionMiddleware = async (req, res, next) => {
       })
     }
 
-    const { roles, permissions } = await authorizationService.resolveAuthorization(
-      payload.churchId,
-      payload.userId
-    )
+    const { roles, permissions } =
+      await authorizationService.resolveAuthorization(
+        payload.churchId,
+        payload.userId
+      )
 
     const authContext = {
       ...payload,

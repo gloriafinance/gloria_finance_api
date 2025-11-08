@@ -4,30 +4,25 @@ import {
   PasswordAdapter,
   UserMongoRepository,
 } from "./SecuritySystem/infrastructure"
-import { InitialLoadingFinancialConcepts } from "./Financial/applications"
-import { ChurchMongoRepository } from "./Church/infrastructure"
 import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
 import { SendMail } from "./SendMail/SendMail"
 import { TelegramNotification } from "./Shared/infrastructure"
-import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
 import { PatrimonyQueue } from "@/Patrimony/infrastructure/Patrimony.queue"
 import { BankingQueue } from "@/Banking/infrastructure/Banking.queue"
+import { SecuritySystemQueue } from "@/SecuritySystem/infrastructure/SecuritySystem.queue"
+import { CustomerQueue } from "@/Customers/infrastructure/Customer.queue"
 
 export const Queues = (): IDefinitionQueue[] => [
   ...BankingQueue(),
   ...FinancialQueue(),
   ...PatrimonyQueue(),
+  ...SecuritySystemQueue(),
+  ...CustomerQueue(),
   {
     useClass: CreateUserForMember,
     inject: [UserMongoRepository.getInstance(), new PasswordAdapter()],
   },
-  {
-    useClass: InitialLoadingFinancialConcepts,
-    inject: [
-      FinancialConceptMongoRepository.getInstance(),
-      ChurchMongoRepository.getInstance(),
-    ],
-  },
+
   {
     useClass: SendMail,
     inject: [],

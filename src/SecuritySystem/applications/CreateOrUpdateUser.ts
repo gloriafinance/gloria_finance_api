@@ -20,7 +20,6 @@ export class CreateOrUpdateUser {
       userRequest.name,
       userRequest.email,
       await this.passwordAdapter.encrypt(userRequest.password),
-      userRequest.profiles,
       userRequest.churchId
     )
 
@@ -45,9 +44,6 @@ export class CreateOrUpdateUser {
     userRequest.isActive ? user.enable() : user.disable()
 
     user.setEmail(userRequest.email)
-
-    user.deleteAllProfile()
-    user.setProfile(userRequest.profiles)
 
     await this.userRepository.upsert(user)
 

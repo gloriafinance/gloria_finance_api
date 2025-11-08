@@ -4,7 +4,7 @@ import { HttpStatus } from "@/Shared/domain"
 import {
   AssignPermissionsToRole,
   AssignRolesToUser,
-  BootstrapPermissions,
+  BootstrapPermissionsJob,
   CreateRole,
   GetRolePermissions,
   GetUserPermissions,
@@ -12,10 +12,12 @@ import {
   ListRoles,
 } from "@/SecuritySystem/applications"
 import {
+  PasswordAdapter,
   PermissionMongoRepository,
   RoleMongoRepository,
   RolePermissionMongoRepository,
   UserAssignmentMongoRepository,
+  UserMongoRepository,
 } from "@/SecuritySystem/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 import { UserPermissionsCache } from "@/Shared/infrastructure"
@@ -33,12 +35,14 @@ export class RbacController {
       const auth = req["auth"]
       const targetUserId = req.body.userId ?? auth.userId
 
-      await new BootstrapPermissions(
+      await new BootstrapPermissionsJob(
         PermissionMongoRepository.getInstance(),
         RoleMongoRepository.getInstance(),
         RolePermissionMongoRepository.getInstance(),
-        UserAssignmentMongoRepository.getInstance()
-      ).execute({
+        UserAssignmentMongoRepository.getInstance(),
+        UserMongoRepository.getInstance(),
+        new PasswordAdapter()
+      ).handle({
         churchId: auth.churchId,
         userId: targetUserId,
       })
@@ -197,10 +201,11 @@ export class RbacController {
     churchId: string,
     roleId: string
   ): Promise<void> {
-    const userIds = await UserAssignmentMongoRepository.getInstance().findUserIdsByRole(
-      churchId,
-      roleId
-    )
+    const userIds =
+      await UserAssignmentMongoRepository.getInstance().findUserIdsByRole(
+        churchId,
+        roleId
+      )
 
     await Promise.all(
       userIds.map((userId) =>

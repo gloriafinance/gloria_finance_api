@@ -1,10 +1,10 @@
 import {
+  ActionNotAllowed,
   IPermissionRepository,
   IRolePermissionRepository,
   IRoleRepository,
   Permission,
   Role,
-  ActionNotAllowed,
 } from "@/SecuritySystem/domain"
 
 export type GetRolePermissionsRequest = {
@@ -33,15 +33,15 @@ export class GetRolePermissions {
     )
 
     if (!role) {
-      throw new ActionNotAllowed(
-        `Role ${request.roleId} not found in church ${request.churchId}`
-      )
+      throw new ActionNotAllowed()
+      //`Role ${request.roleId} not found in church ${request.churchId}`
     }
 
-    const permissionIds = await this.rolePermissionRepository.findPermissionIdsByRole(
-      request.churchId,
-      request.roleId
-    )
+    const permissionIds =
+      await this.rolePermissionRepository.findPermissionIdsByRole(
+        request.churchId,
+        request.roleId
+      )
 
     if (!permissionIds.length) {
       return {
@@ -60,8 +60,9 @@ export class GetRolePermissions {
 
     const orderedPermissions = permissionIds
       .map((permissionId) => permissionMap.get(permissionId))
-      .filter((permission): permission is ReturnType<Permission["toPrimitives"]> =>
-        Boolean(permission)
+      .filter(
+        (permission): permission is ReturnType<Permission["toPrimitives"]> =>
+          Boolean(permission)
       )
 
     return {

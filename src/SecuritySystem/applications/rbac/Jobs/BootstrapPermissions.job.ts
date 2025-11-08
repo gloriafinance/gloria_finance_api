@@ -1,41 +1,82 @@
 import {
   BASE_PERMISSIONS,
   BASE_ROLES,
+  IPasswordAdapter,
   IPermissionRepository,
   IRolePermissionRepository,
   IRoleRepository,
   IUserAssignmentRepository,
+  IUserRepository,
   Permission,
   Role,
 } from "@/SecuritySystem/domain"
 import { Logger } from "@/Shared/adapter"
+import { IQueue } from "@/Shared/domain"
+import { CreateOrUpdateUser } from "@/SecuritySystem/applications"
 
 export type BootstrapPermissionsRequest = {
   churchId: string
-  userId: string
+  userId?: string
+  user?: {
+    name: string
+    email: string
+  }
 }
 
-export class BootstrapPermissions {
-  private readonly logger = Logger(BootstrapPermissions.name)
+export class BootstrapPermissionsJob implements IQueue {
+  private readonly logger = Logger(BootstrapPermissionsJob.name)
 
   constructor(
     private readonly permissionRepository: IPermissionRepository,
     private readonly roleRepository: IRoleRepository,
     private readonly rolePermissionRepository: IRolePermissionRepository,
-    private readonly userAssignmentRepository: IUserAssignmentRepository
+    private readonly userAssignmentRepository: IUserAssignmentRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly passwordAdapter: IPasswordAdapter
   ) {}
 
-  async execute(request: BootstrapPermissionsRequest): Promise<void> {
-    this.logger.info(
-      `Bootstrapping permissions for church ${request.churchId}`
-    )
+  async handle(request: BootstrapPermissionsRequest): Promise<void> {
+    this.logger.info(`Bootstrapping permissions for church ${request.churchId}`)
 
     await this.ensurePermissionsCatalog()
     await this.ensureBaseRoles(request.churchId)
-    await this.assignAdminToCreator(request.churchId, request.userId)
+
+    if (request.user) {
+      const userId = await this.createUser(request)
+      await this.assignAdminToCreator(request.churchId, userId)
+      await this.assignAdminToCreator(request.churchId, userId)
+    }
+
+    if (request.userId) {
+      await this.assignAdminToCreator(request.churchId, request.userId)
+      await this.assignAdminToCreator(request.churchId, request.userId)
+    }
+
+    this.logger.info(
+      `finished bootstrapping permissions for church ${request.churchId}`
+    )
+  }
+
+  private async createUser(req: any): Promise<string> {
+    const { churchId, user } = req
+
+    return (
+      await new CreateOrUpdateUser(
+        this.userRepository,
+        this.passwordAdapter
+      ).execute({
+        name: user.name,
+        email: user.email,
+        password: "ChangeMe123!",
+        isActive: true,
+        churchId: churchId,
+      })
+    ).getUserId()
   }
 
   private async ensurePermissionsCatalog(): Promise<void> {
+    this.logger.info(`Ensuring base permissions catalog`)
+
     for (const permissionDefinition of BASE_PERMISSIONS) {
       const existing = await this.permissionRepository.findByModuleAction(
         permissionDefinition.module,
@@ -54,9 +95,13 @@ export class BootstrapPermissions {
         await this.permissionRepository.upsert(permission)
       }
     }
+
+    this.logger.info(`Finished ensuring base permissions catalog`)
   }
 
   private async ensureBaseRoles(churchId: string): Promise<void> {
+    this.logger.info(`Ensuring base roles for church ${churchId}`)
+
     for (const roleDefinition of BASE_ROLES) {
       const existingRole = await this.roleRepository.findByRoleId(
         churchId,
@@ -80,6 +125,8 @@ export class BootstrapPermissions {
         roleDefinition.permissions
       )
     }
+
+    this.logger.info(`Finished ensuring base roles for church ${churchId}`)
   }
 
   private async assignAdminToCreator(

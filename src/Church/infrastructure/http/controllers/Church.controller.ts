@@ -1,4 +1,3 @@
-import { Request } from "express"
 import { HttpStatus } from "../../../../Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { Church, ChurchPaginateRequest, ChurchRequest } from "../../../domain"
@@ -10,23 +9,10 @@ import {
   SearchChurchesByDistrictId,
   WithoutAssignedMinister,
 } from "../../../applications"
-import { ChurchMongoRepository } from "../../persistence/ChurchMongoRepository"
-import { MinisterMongoRepository } from "../../persistence/MinisterMongoRepository"
-import { FirstLoadFinancialConcepts } from "../../../../Financial/applications"
-import { FinancialConceptMongoRepository } from "../../../../Financial/infrastructure/persistence"
-import { GenerateFinancialMonths } from "../../../../ConsolidatedFinancial/applications"
-import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
-import { BootstrapPermissions } from "@/SecuritySystem/applications"
 import {
-  PermissionMongoRepository,
-  RoleMongoRepository,
-  RolePermissionMongoRepository,
-  UserAssignmentMongoRepository,
-} from "@/SecuritySystem/infrastructure"
-// import {
-//   MinisterMongoRepository,
-//   RegionMongoRepository,
-// } from "../../../../OrganizacionalStructure/infrastructure";
+  ChurchMongoRepository,
+  MinisterMongoRepository,
+} from "@/Church/infrastructure"
 
 type AuthContext = {
   userId: string
@@ -36,43 +22,20 @@ type AuthContext = {
 }
 
 export class ChurchController {
-  static async createOrUpdate(req: Request, res) {
+  static async createOrUpdate(req: ChurchRequest, res) {
     try {
-      const request = req.body as ChurchRequest
-      const auth = (req as any)["auth"] as AuthContext | undefined
-
       const church = await new CreateOrUpdateChurch(
         ChurchMongoRepository.getInstance()
         //RegionMongoRepository.getInstance(),
-      ).execute(request)
+      ).execute(req)
 
-      if (!request.churchId) {
-        await new FirstLoadFinancialConcepts(
-          FinancialConceptMongoRepository.getInstance(),
-          ChurchMongoRepository.getInstance()
-        ).execute(church.getChurchId())
-
-        await new GenerateFinancialMonths(
-          FinancialYearMongoRepository.getInstance()
-        ).execute({
-          churchId: church.getChurchId(),
-          year: new Date().getFullYear(),
-        })
-
-        if (auth?.userId) {
-          await new BootstrapPermissions(
-            PermissionMongoRepository.getInstance(),
-            RoleMongoRepository.getInstance(),
-            RolePermissionMongoRepository.getInstance(),
-            UserAssignmentMongoRepository.getInstance()
-          ).execute({
-            churchId: church.getChurchId(),
-            userId: auth.userId,
-          })
-        }
+      if (req.churchId) {
+        return res
+          .status(HttpStatus.CREATED)
+          .send({ message: "Dados da igreja atualizados" })
       }
 
-      res.status(HttpStatus.CREATED).send({ message: "Registered Church" })
+      res.status(HttpStatus.CREATED).send({ message: "Igreja cadastrada" })
     } catch (e) {
       domainResponse(e, res)
     }

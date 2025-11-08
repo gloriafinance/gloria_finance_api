@@ -1,8 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import {
-  IPermissionRepository,
-  Permission,
-} from "@/SecuritySystem/domain"
+import { IPermissionRepository, Permission } from "@/SecuritySystem/domain"
 
 export class PermissionMongoRepository
   extends MongoRepository<Permission>
@@ -34,12 +31,8 @@ export class PermissionMongoRepository
 
     return documents.map((document) =>
       Permission.fromPrimitives({
+        ...document,
         id: document._id?.toString(),
-        permissionId: document.permissionId,
-        module: document.module,
-        action: document.action,
-        description: document.description,
-        isSystem: document.isSystem ?? false,
       })
     )
   }
@@ -56,12 +49,8 @@ export class PermissionMongoRepository
     }
 
     return Permission.fromPrimitives({
+      ...document,
       id: document._id?.toString(),
-      permissionId: document.permissionId,
-      module: document.module,
-      action: document.action,
-      description: document.description,
-      isSystem: document.isSystem ?? false,
     })
   }
 
@@ -83,12 +72,8 @@ export class PermissionMongoRepository
 
     return documents.map((document) =>
       Permission.fromPrimitives({
+        ...document,
         id: document._id?.toString(),
-        permissionId: document.permissionId,
-        module: document.module,
-        action: document.action,
-        description: document.description,
-        isSystem: document.isSystem ?? false,
       })
     )
   }

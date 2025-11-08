@@ -1,5 +1,5 @@
 import { IQueueService, QueueName } from "@/Shared/domain"
-import { FinancialRecordCreateQueue } from "../domain"
+import { FinancialRecordCreateQueue } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 
 export class DispatchCreateFinancialRecord {

@@ -1,7 +1,4 @@
-import {
-  IRoleRepository,
-  Role,
-} from "@/SecuritySystem/domain"
+import { IRoleRepository, Role } from "@/SecuritySystem/domain"
 import { ActionNotAllowed } from "@/SecuritySystem/domain/exceptions/ActionNotAllowed"
 
 export type CreateRoleRequest = {
@@ -20,9 +17,8 @@ export class CreateRole {
     )
 
     if (existingRole) {
-      throw new ActionNotAllowed(
-        `Role with name ${request.name} already exists in church ${request.churchId}`
-      )
+      throw new ActionNotAllowed()
+      //`Role with name ${request.name} already exists in church ${request.churchId}`
     }
 
     const role = Role.create(
