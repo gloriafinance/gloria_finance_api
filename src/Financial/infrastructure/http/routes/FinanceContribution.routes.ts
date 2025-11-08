@@ -1,5 +1,5 @@
 import { Request, Router } from "express"
-import { PermissionMiddleware } from "../../../../Shared/infrastructure"
+import { PermissionMiddleware, Can } from "../../../../Shared/infrastructure"
 import ContributionValidator from "../validators/Contribution.validator"
 import {
   listOnlineContributionsController,
@@ -16,7 +16,11 @@ const financeContribution = Router()
 
 financeContribution.post(
   "/",
-  [PermissionMiddleware, ContributionValidator],
+  [
+    PermissionMiddleware,
+    Can("financial_records", "contributions"),
+    ContributionValidator,
+  ],
   async (req: Request, res) => {
     const file = req.files?.file ?? null
 
@@ -30,23 +34,29 @@ financeContribution.post(
   }
 )
 
-financeContribution.get("/", PermissionMiddleware, async (req, res) => {
-  let filter = {
-    ...(req.query as unknown as FilterContributionsRequest),
-  }
+financeContribution.get(
+  "/",
+  PermissionMiddleware,
+  Can("financial_records", "contributions"),
+  async (req, res) => {
+    let filter = {
+      ...(req.query as unknown as FilterContributionsRequest),
+    }
 
-  if (req["user"].isSuperuser && filter.churchId === undefined) {
-    delete filter.churchId
-  } else {
-    filter.churchId = req["user"].churchId
-  }
+    if (req["user"].isSuperuser && filter.churchId === undefined) {
+      delete filter.churchId
+    } else {
+      filter.churchId = req["user"].churchId
+    }
 
-  await listOnlineContributionsController(filter, res)
-})
+    await listOnlineContributionsController(filter, res)
+  }
+)
 
 financeContribution.patch(
   "/:contributionId/status/:status",
   PermissionMiddleware,
+  Can("financial_records", "contributions"),
   async (req, res) => {
     await UpdateContributionStatusController(
       req.params.contributionId,

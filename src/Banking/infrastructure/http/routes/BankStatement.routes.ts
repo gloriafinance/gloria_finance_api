@@ -1,5 +1,5 @@
 import { Request, Router } from "express"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import { ImportBankStatementValidator } from "../validators/ImportBankStatement.validator"
 import {
   importBankStatementController,
@@ -15,7 +15,7 @@ const bankStatementRoutes = Router()
 
 bankStatementRoutes.get(
   "/",
-  [PermissionMiddleware],
+  [PermissionMiddleware, Can("banking", "statements")],
   async (req: Request, res) => {
     const params = req.query as unknown as ListBankStatementsRequest
     await listBankStatementsController(
@@ -30,7 +30,11 @@ bankStatementRoutes.get(
 
 bankStatementRoutes.post(
   "/import",
-  [PermissionMiddleware, ImportBankStatementValidator],
+  [
+    PermissionMiddleware,
+    Can("banking", "statements"),
+    ImportBankStatementValidator,
+  ],
   async (req: Request, res) => {
     const file = req.files?.file
 
@@ -58,7 +62,7 @@ bankStatementRoutes.post(
 
 bankStatementRoutes.post(
   "/:bankStatementId/retry",
-  [PermissionMiddleware],
+  [PermissionMiddleware, Can("banking", "statements")],
   async (req: Request, res) => {
     await retryBankStatementController(
       {
@@ -72,7 +76,11 @@ bankStatementRoutes.post(
 
 bankStatementRoutes.patch(
   "/:bankStatementId/link",
-  [PermissionMiddleware, LinkBankStatementValidator],
+  [
+    PermissionMiddleware,
+    Can("banking", "statements"),
+    LinkBankStatementValidator,
+  ],
   async (req: Request, res) => {
     await linkBankStatementController(
       {

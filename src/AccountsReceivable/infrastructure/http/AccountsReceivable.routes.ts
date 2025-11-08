@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
   ConfirmOrDenyPaymentCommitmentController,
   CreateAccountReceivableController,
@@ -16,7 +16,11 @@ const accountsReceivableRoutes = Router()
 
 accountsReceivableRoutes.post(
   "/",
-  [PermissionMiddleware, CreateAccountReceivableValidator],
+  [
+    PermissionMiddleware,
+    Can("accounts_receivable", "manage"),
+    CreateAccountReceivableValidator,
+  ],
   async (req, res) => {
     await CreateAccountReceivableController(
       {
@@ -29,19 +33,28 @@ accountsReceivableRoutes.post(
   }
 )
 
-accountsReceivableRoutes.get("", PermissionMiddleware, async (req, res) => {
-  await ListAccountReceivableController(
-    {
-      ...(req.query as unknown as FilterAccountReceivableRequest),
-      churchId: req["user"].churchId,
-    },
-    res
-  )
-})
+accountsReceivableRoutes.get(
+  "",
+  PermissionMiddleware,
+  Can("accounts_receivable", "read"),
+  async (req, res) => {
+    await ListAccountReceivableController(
+      {
+        ...(req.query as unknown as FilterAccountReceivableRequest),
+        churchId: req["user"].churchId,
+      },
+      res
+    )
+  }
+)
 
 accountsReceivableRoutes.post(
   "/pay",
-  [PermissionMiddleware, PayAccountReceivableValidator],
+  [
+    PermissionMiddleware,
+    Can("accounts_receivable", "apply_payments"),
+    PayAccountReceivableValidator,
+  ],
   async (req, res) => {
     const installmentId = req.body.installmentId
     let installmentIds: string[] = []
@@ -68,6 +81,8 @@ accountsReceivableRoutes.post(
 
 accountsReceivableRoutes.patch(
   "/confirm-payment-commitment",
+  PermissionMiddleware,
+  Can("accounts_receivable", "commitments"),
   async (req, res) => {
     await ConfirmOrDenyPaymentCommitmentController(req.body, res)
   }

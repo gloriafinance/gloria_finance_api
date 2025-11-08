@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import "dotenv/config"
 import { Schedule, StartQueueService } from "@/Shared/infrastructure"
 import { BootstrapStandardServer } from "@abejarano/ts-express-server"

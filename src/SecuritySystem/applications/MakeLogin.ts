@@ -47,7 +47,6 @@ export class MakeLogin {
         userId: user.getUserId(),
         email: user.getEmail(),
         name: user.getName(),
-        profiles: user.getProfiles(),
       }),
     }
   }

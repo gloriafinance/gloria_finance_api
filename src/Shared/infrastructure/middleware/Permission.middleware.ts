@@ -1,4 +1,19 @@
 import jwt = require("jsonwebtoken")
+import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
+import {
+  PermissionMongoRepository,
+  RolePermissionMongoRepository,
+  UserAssignmentMongoRepository,
+} from "@/SecuritySystem/infrastructure"
+import { UserPermissionsCache } from "@/Shared/infrastructure/cache/UserPermissionsCache"
+import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
+
+const authorizationService = AuthorizationService.getInstance(
+  UserAssignmentMongoRepository.getInstance(),
+  RolePermissionMongoRepository.getInstance(),
+  PermissionMongoRepository.getInstance(),
+  UserPermissionsCache.getInstance()
+)
 
 export const PermissionMiddleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"]
@@ -12,7 +27,33 @@ export const PermissionMiddleware = async (req, res, next) => {
   }
 
   try {
-    req["user"] = jwt.verify(token, process.env.JWT_SECRET)
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    ) as AuthTokenPayload
+
+    if (!payload?.userId || !payload?.churchId) {
+      return res.status(403).send({
+        message: "Token payload missing scope information.",
+      })
+    }
+
+    const { roles, permissions } =
+      await authorizationService.resolveAuthorization(
+        payload.churchId,
+        payload.userId
+      )
+
+    const authContext = {
+      ...payload,
+      roles,
+      permissions,
+    }
+
+    req.auth = authContext
+    req["auth"] = authContext
+    req["user"] = authContext
+    res.locals.auth = authContext
 
     next()
   } catch (error) {

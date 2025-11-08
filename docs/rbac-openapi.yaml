@@ -1,0 +1,99 @@
+openapi: 3.0.1
+tags:
+  - name: RBAC
+    description: Gestión de roles y permisos
+paths:
+  /api/v1/rbac/permissions/bootstrap:
+    post:
+      tags: [RBAC]
+      summary: Inicializa el catálogo base de permisos y roles para la iglesia
+      x-permissions-required:
+        - rbac:bootstrap
+      responses:
+        '201':
+          description: Bootstrap ejecutado
+  /api/v1/rbac/roles:
+    post:
+      tags: [RBAC]
+      summary: Crea un rol personalizado
+      x-permissions-required:
+        - rbac:manage_roles
+      responses:
+        '201':
+          description: Rol creado
+    get:
+      tags: [RBAC]
+      summary: Lista los roles disponibles para la iglesia
+      x-permissions-required:
+        - rbac:read
+      responses:
+        '200':
+          description: Lista de roles
+  /api/v1/rbac/roles/{roleId}/permissions:
+    get:
+      tags: [RBAC]
+      summary: Consulta los permisos asignados a un rol
+      x-permissions-required:
+        - rbac:read
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Permisos del rol recuperados
+    post:
+      tags: [RBAC]
+      summary: Actualiza los permisos de un rol
+      x-permissions-required:
+        - rbac:manage_roles
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Permisos actualizados
+  /api/v1/rbac/users/{userId}/assignments:
+    post:
+      tags: [RBAC]
+      summary: Asigna roles a un usuario
+      x-permissions-required:
+        - rbac:assign_roles
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Roles asignados
+  /api/v1/rbac/users/{userId}/permissions:
+    get:
+      tags: [RBAC]
+      summary: Obtiene los permisos efectivos del usuario
+      x-permissions-required:
+        - rbac:read
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Permisos efectivos
+  /api/v1/rbac/permissions:
+    get:
+      tags: [RBAC]
+      summary: Lista el catálogo global de permisos
+      x-permissions-required:
+        - rbac:read
+      responses:
+        '200':
+          description: Lista de permisos

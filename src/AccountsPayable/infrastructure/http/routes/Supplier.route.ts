@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import RegisterSupplierValidator from "@/AccountsPayable/infrastructure/http/validators/RegisterSupplier.validator"
 import { SupplierController } from "../controllers"
 
@@ -7,7 +7,11 @@ const supplierRoute = Router()
 
 supplierRoute.post(
   "/",
-  [PermissionMiddleware, RegisterSupplierValidator],
+  [
+    PermissionMiddleware,
+    Can("accounts_payable", "suppliers_manage"),
+    RegisterSupplierValidator,
+  ],
   async (req: Request, res: Response) => {
     await SupplierController.registerSupplier(
       { ...req.body, churchId: req["user"].churchId },
@@ -19,6 +23,7 @@ supplierRoute.post(
 supplierRoute.get(
   "/",
   PermissionMiddleware,
+  Can("accounts_payable", "suppliers_manage"),
   async (req: Request, res: Response) => {
     await SupplierController.listSupplier(req["user"].churchId, res)
   }

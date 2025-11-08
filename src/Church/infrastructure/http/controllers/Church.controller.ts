@@ -9,40 +9,33 @@ import {
   SearchChurchesByDistrictId,
   WithoutAssignedMinister,
 } from "../../../applications"
-import { ChurchMongoRepository } from "../../persistence/ChurchMongoRepository"
-import { MinisterMongoRepository } from "../../persistence/MinisterMongoRepository"
-import { FirstLoadFinancialConcepts } from "../../../../Financial/applications"
-import { FinancialConceptMongoRepository } from "../../../../Financial/infrastructure/persistence"
-import { GenerateFinancialMonths } from "../../../../ConsolidatedFinancial/applications"
-import { FinancialYearMongoRepository } from "../../../../ConsolidatedFinancial/infrastructure"
-// import {
-//   MinisterMongoRepository,
-//   RegionMongoRepository,
-// } from "../../../../OrganizacionalStructure/infrastructure";
+import {
+  ChurchMongoRepository,
+  MinisterMongoRepository,
+} from "@/Church/infrastructure"
+
+type AuthContext = {
+  userId: string
+  churchId: string
+  roles: string[]
+  permissions: string[]
+}
 
 export class ChurchController {
-  static async createOrUpdate(request: ChurchRequest, res) {
+  static async createOrUpdate(req: ChurchRequest, res) {
     try {
       const church = await new CreateOrUpdateChurch(
         ChurchMongoRepository.getInstance()
         //RegionMongoRepository.getInstance(),
-      ).execute(request)
+      ).execute(req)
 
-      if (!request.churchId) {
-        await new FirstLoadFinancialConcepts(
-          FinancialConceptMongoRepository.getInstance(),
-          ChurchMongoRepository.getInstance()
-        ).execute(church.getChurchId())
-
-        await new GenerateFinancialMonths(
-          FinancialYearMongoRepository.getInstance()
-        ).execute({
-          churchId: church.getChurchId(),
-          year: new Date().getFullYear(),
-        })
+      if (req.churchId) {
+        return res
+          .status(HttpStatus.CREATED)
+          .send({ message: "Dados da igreja atualizados" })
       }
 
-      res.status(HttpStatus.CREATED).send({ message: "Registered Church" })
+      res.status(HttpStatus.CREATED).send({ message: "Igreja cadastrada" })
     } catch (e) {
       domainResponse(e, res)
     }

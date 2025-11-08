@@ -8,7 +8,7 @@ import MasterBalanceIdentifier from "../helpers/MasterBalanceIdentifier"
 import { IQueue } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 
-export class UpdateCostCenterMaster implements IQueue {
+export class UpdateCostCenterMasterJob implements IQueue {
   private logger = Logger("UpdateCostCenterMaster")
 
   constructor(

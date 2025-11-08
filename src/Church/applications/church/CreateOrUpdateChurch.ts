@@ -4,7 +4,7 @@ import {
   ChurchRequest,
   IChurchRepository,
 } from "../../domain"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 // import {
 //   IRegionRepository,

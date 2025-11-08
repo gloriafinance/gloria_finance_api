@@ -1,19 +1,19 @@
 import {
+  ConceptType,
   ContributionNotFound,
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
   OnlineContributions,
   OnlineContributionsStatus,
-  ConceptType,
   TypeOperationMoney,
 } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "../../../Shared/adapter"
 import { IQueueService } from "../../../Shared/domain"
-import { DispatchCreateFinancialRecord } from "../DispatchCreateFinancialRecord"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications/dispatchers/DispatchCreateFinancialRecord"
 import { DateBR } from "../../../Shared/helpers"
-import { DispatchUpdateAvailabilityAccountBalance } from "../DispatchUpdateAvailabilityAccountBalance"
+import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
 
 export class UpdateContributionStatus {
   private logger = Logger("UpdateContributionStatus")

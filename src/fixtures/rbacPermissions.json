@@ -1,0 +1,261 @@
+[
+  {
+    "permissionId": "church:upsert",
+    "module": "church",
+    "action": "upsert",
+    "description": "Registrar e atualizar registros de igrejas",
+    "isSystem": true
+  },
+  {
+    "permissionId": "church:search",
+    "module": "church",
+    "action": "search",
+    "description": "Buscar congregações e consultar suas informações",
+    "isSystem": true
+  },
+  {
+    "permissionId": "members:manage",
+    "module": "members",
+    "action": "manage",
+    "description": "Gerenciar membros e sincronizar sua filiação",
+    "isSystem": true
+  },
+  {
+    "permissionId": "ministers:manage",
+    "module": "ministers",
+    "action": "manage",
+    "description": "Administrar designações e registros de ministros",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_payable:suppliers_manage",
+    "module": "accounts_payable",
+    "action": "suppliers_manage",
+    "description": "Registrar e manter o catálogo de fornecedores",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_payable:manage",
+    "module": "accounts_payable",
+    "action": "manage",
+    "description": "Criar e atualizar contas a pagar",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_payable:read",
+    "module": "accounts_payable",
+    "action": "read",
+    "description": "Consultar contas a pagar e seus relatórios",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_payable:reconcile",
+    "module": "accounts_payable",
+    "action": "reconcile",
+    "description": "Conciliar parcelas e programar pagamentos",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_receivable:manage",
+    "module": "accounts_receivable",
+    "action": "manage",
+    "description": "Registrar contas a receber e seus compromissos",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_receivable:read",
+    "module": "accounts_receivable",
+    "action": "read",
+    "description": "Consultar contas a receber e relatórios",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_receivable:commitments",
+    "module": "accounts_receivable",
+    "action": "commitments",
+    "description": "Gerenciar compromissos de pagamento",
+    "isSystem": true
+  },
+  {
+    "permissionId": "accounts_receivable:apply_payments",
+    "module": "accounts_receivable",
+    "action": "apply_payments",
+    "description": "Aplicar pagamentos a contas a receber",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_configuration:manage_concepts",
+    "module": "financial_configuration",
+    "action": "manage_concepts",
+    "description": "Criar, atualizar e carregar conceitos financeiros",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_configuration:availability_accounts",
+    "module": "financial_configuration",
+    "action": "availability_accounts",
+    "description": "Administrar contas de disponibilidade",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_configuration:cost_centers",
+    "module": "financial_configuration",
+    "action": "cost_centers",
+    "description": "Gerenciar centros de custo",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:create",
+    "module": "financial_records",
+    "action": "create",
+    "description": "Gerar registros financeiros e vouchers",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:read",
+    "module": "financial_records",
+    "action": "read",
+    "description": "Consultar registros financeiros",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:cancel",
+    "module": "financial_records",
+    "action": "cancel",
+    "description": "Anular registros financeiros e reverter movimentações",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:reports",
+    "module": "financial_records",
+    "action": "reports",
+    "description": "Gerar relatórios e exportações contábeis",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:contributions",
+    "module": "financial_records",
+    "action": "contributions",
+    "description": "Registrar e administrar contribuições on-line",
+    "isSystem": true
+  },
+  {
+    "permissionId": "consolidated_financial:generate_months",
+    "module": "consolidated_financial",
+    "action": "generate_months",
+    "description": "Gerar e validar períodos financeiros consolidados",
+    "isSystem": true
+  },
+  {
+    "permissionId": "banking:manage",
+    "module": "banking",
+    "action": "manage",
+    "description": "Configurar bancos e registrar movimentos",
+    "isSystem": true
+  },
+  {
+    "permissionId": "banking:read",
+    "module": "banking",
+    "action": "read",
+    "description": "Consultar informações bancárias",
+    "isSystem": true
+  },
+  {
+    "permissionId": "banking:statements",
+    "module": "banking",
+    "action": "statements",
+    "description": "Importar e conciliar extratos bancários",
+    "isSystem": true
+  },
+  {
+    "permissionId": "purchases:manage",
+    "module": "purchases",
+    "action": "manage",
+    "description": "Registrar ordens de compra e faturas",
+    "isSystem": true
+  },
+  {
+    "permissionId": "purchases:read",
+    "module": "purchases",
+    "action": "read",
+    "description": "Consultar compras e seus relatórios",
+    "isSystem": true
+  },
+  {
+    "permissionId": "patrimony:manage_assets",
+    "module": "patrimony",
+    "action": "manage_assets",
+    "description": "Criar, atualizar e dar baixa em ativos patrimoniais",
+    "isSystem": true
+  },
+  {
+    "permissionId": "patrimony:inventory",
+    "module": "patrimony",
+    "action": "inventory",
+    "description": "Gerenciar inventários físicos e relatórios",
+    "isSystem": true
+  },
+  {
+    "permissionId": "reports:monthly_tithes",
+    "module": "reports",
+    "action": "monthly_tithes",
+    "description": "Gerar relatórios de dízimos mensais",
+    "isSystem": true
+  },
+  {
+    "permissionId": "reports:income_statements",
+    "module": "reports",
+    "action": "income_statements",
+    "description": "Construir demonstrativos de resultados",
+    "isSystem": true
+  },
+  {
+    "permissionId": "notifications:payment_commitment",
+    "module": "notifications",
+    "action": "payment_commitment",
+    "description": "Enviar notificações de compromissos de pagamento",
+    "isSystem": true
+  },
+  {
+    "permissionId": "notifications:password_reset",
+    "module": "notifications",
+    "action": "password_reset",
+    "description": "Enviar notificações de redefinição de senha",
+    "isSystem": true
+  },
+  {
+    "permissionId": "world:states_read",
+    "module": "world",
+    "action": "states_read",
+    "description": "Consultar catálogos de estados por país",
+    "isSystem": true
+  },
+  {
+    "permissionId": "rbac:bootstrap",
+    "module": "rbac",
+    "action": "bootstrap",
+    "description": "Inicializar catálogos de permissões e papéis",
+    "isSystem": true
+  },
+  {
+    "permissionId": "rbac:manage_roles",
+    "module": "rbac",
+    "action": "manage_roles",
+    "description": "Gerenciar papéis e suas permissões",
+    "isSystem": true
+  },
+  {
+    "permissionId": "rbac:assign_roles",
+    "module": "rbac",
+    "action": "assign_roles",
+    "description": "Atribuir papéis aos usuários",
+    "isSystem": true
+  },
+  {
+    "permissionId": "rbac:read",
+    "module": "rbac",
+    "action": "read",
+    "description": "Consultar informações do sistema RBAC",
+    "isSystem": true
+  }
+]

@@ -11,6 +11,7 @@ import worldRoute from "@/World/infrastructure/http/routes/World.route"
 import reportsRouter from "@/Reports/infrastructure/http/routes"
 import purchaseRouter from "@/Purchases/infrastructure/http/routes"
 import patrimonyRouter from "@/Patrimony/infrastructure/http/routes/Asset.routes"
+import rbacRouter from "@/SecuritySystem/infrastructure/http/routes/rbac.routes"
 
 export const routerModule = () =>
   new RoutesModule([
@@ -26,4 +27,5 @@ export const routerModule = () =>
     { path: "/api/v1/reports", router: reportsRouter },
     { path: "/api/v1/purchase", router: purchaseRouter },
     { path: "/api/v1/patrimony", router: patrimonyRouter },
+    { path: "/api/v1/rbac", router: rbacRouter },
   ])

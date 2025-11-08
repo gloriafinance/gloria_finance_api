@@ -1,0 +1,5 @@
+export { PermissionMongoRepository } from "./PermissionMongoRepository"
+export { RoleMongoRepository } from "./RoleMongoRepository"
+export { RolePermissionMongoRepository } from "./RolePermissionMongoRepository"
+export { UserAssignmentMongoRepository } from "./UserAssignmentMongoRepository"
+export { UserMongoRepository } from "./UserMongoRepository"

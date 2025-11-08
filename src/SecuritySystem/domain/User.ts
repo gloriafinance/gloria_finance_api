@@ -1,6 +1,5 @@
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { Profile } from "./types/profile.type"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class User extends AggregateRoot {
@@ -11,7 +10,6 @@ export class User extends AggregateRoot {
   private name: string
   private password: string
   private createdAt: Date
-  private profiles: Profile[]
   private churchId: string
   private memberId?: string
   private lastLogin?: Date
@@ -20,7 +18,6 @@ export class User extends AggregateRoot {
     name: string,
     email: string,
     password: string,
-    profiles: Profile[],
     churchId: string
   ): User {
     const u = new User()
@@ -30,8 +27,6 @@ export class User extends AggregateRoot {
     u.churchId = churchId
 
     u.userId = IdentifyEntity.get(`user`)
-
-    u.profiles = profiles
 
     u.createdAt = DateBR()
     u.isActive = true
@@ -50,7 +45,6 @@ export class User extends AggregateRoot {
     u.userId = data.userId
     u.churchId = data.churchId
     u.name = data.name
-    u.profiles = data.profiles
     u.memberId = data.memberId
     u.lastLogin = data.lastLogin ?? null
 
@@ -60,10 +54,6 @@ export class User extends AggregateRoot {
   setMemberId(memberId: string): User {
     this.memberId = memberId
     return this
-  }
-
-  getProfiles() {
-    return this.profiles
   }
 
   getChurchId(): string {
@@ -78,10 +68,6 @@ export class User extends AggregateRoot {
     return this.name
   }
 
-  // getProfileId(): string[] {
-  //   return this.profileId;
-  // }
-
   getPassword(): string {
     return this.password
   }
@@ -94,36 +80,10 @@ export class User extends AggregateRoot {
     return this.userId
   }
 
-  deleteAllProfile(): User {
-    this.profiles = []
-    return this
-  }
-
-  setProfile(profile: Profile[]): User {
-    profile.forEach((p) => {
-      this.profiles.push(p)
-    })
-    return this
-  }
-
   setEmail(email: string): User {
     this.email = email
     return this
   }
-
-  // superUser(): boolean {
-  //   return this.isSuperuser;
-  // }
-
-  // setSuperuser(): User {
-  //   this.isSuperuser = true;
-  //   return this;
-  // }
-
-  // unsetSuperuser(): User {
-  //   this.isSuperuser = false;
-  //   return this;
-  // }
 
   setUpdatePassword(newPass: string): User {
     this.password = newPass
@@ -152,7 +112,6 @@ export class User extends AggregateRoot {
       password: this.password,
       createdAt: this.createdAt,
       isActive: this.isActive,
-      profiles: this.profiles,
       userId: this.userId,
       churchId: this.churchId,
       memberId: this.memberId,

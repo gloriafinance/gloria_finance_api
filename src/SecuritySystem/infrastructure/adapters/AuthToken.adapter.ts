@@ -1,21 +1,17 @@
 import jwt = require("jsonwebtoken")
 import { IAuthToken } from "../../domain"
 
-type dataForToken = {
-  memberId: string
+export type AuthTokenPayload = {
+  userId: string
+  churchId: string
   email: string
   name: string
-  phone: string
-  isTreasurer: boolean
-  isMinister: boolean
-  church: {
-    churchId: string
-    churchName: string
-  }
+  profiles?: any
+  [key: string]: any
 }
 
 export class AuthTokenAdapter implements IAuthToken {
-  createToken(user: dataForToken): string {
+  createToken(user: AuthTokenPayload): string {
     return jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: "1h",
     })

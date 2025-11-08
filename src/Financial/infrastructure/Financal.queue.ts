@@ -7,17 +7,17 @@ import {
   FinancialConfigurationMongoRepository,
 } from "./persistence"
 import {
-  UpdateAvailabilityAccountBalance,
-  UpdateFinancialRecord,
+  UpdateAvailabilityAccountBalanceJob,
+  UpdateFinancialRecordJob,
 } from "../applications"
-import { UpdateCostCenterMaster } from "../applications/costCenter/UpdateCostCenterMaster"
-import { CreateFinancialRecord } from "@/Financial/applications/financeRecord/CreateFinancialRecord"
+import { UpdateCostCenterMasterJob } from "../applications/jobs/UpdateCostCenterMaster.job"
+import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 export const FinancialQueue = (): IDefinitionQueue[] => [
   {
-    useClass: UpdateCostCenterMaster,
+    useClass: UpdateCostCenterMasterJob,
     inject: [
       FinancialConfigurationMongoRepository.getInstance(),
       CostCenterMasterMongoRepository.getInstance(),
@@ -25,7 +25,7 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
   },
 
   {
-    useClass: CreateFinancialRecord,
+    useClass: CreateFinancialRecordJob,
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
@@ -34,7 +34,7 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     ],
   },
   {
-    useClass: UpdateFinancialRecord,
+    useClass: UpdateFinancialRecordJob,
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
@@ -44,7 +44,7 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     delay: 3,
   },
   {
-    useClass: UpdateAvailabilityAccountBalance,
+    useClass: UpdateAvailabilityAccountBalanceJob,
     inject: [
       AvailabilityAccountMongoRepository.getInstance(),
       AvailabilityAccountMasterMongoRepository.getInstance(),

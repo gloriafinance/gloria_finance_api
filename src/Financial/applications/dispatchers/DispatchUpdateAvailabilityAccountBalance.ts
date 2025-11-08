@@ -1,6 +1,10 @@
 import { Logger } from "@/Shared/adapter"
 import { IQueueService, QueueName } from "@/Shared/domain"
-import { AccountType, AvailabilityAccount, TypeOperationMoney } from "../domain"
+import {
+  AccountType,
+  AvailabilityAccount,
+  TypeOperationMoney,
+} from "../../domain"
 import { TypeBankingOperation } from "@/Banking/domain"
 
 export class DispatchUpdateAvailabilityAccountBalance {

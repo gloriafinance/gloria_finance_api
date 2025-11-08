@@ -5,9 +5,10 @@ export enum QueueName {
   UpdateFinancialRecord = "UpdateFinancialRecord",
   UpdateAvailabilityAccountBalance = "UpdateAvailabilityAccountBalance",
   CreateUserForMember = "CreateUserForMember",
-  InitialLoadingFinancialConcepts = "InitialLoadingFinancialConcepts",
   SendMail = "SendMail",
   TelegramNotification = "TelegramNotification",
   ProcessInventoryFromFile = "ProcessInventoryFromFile",
   ImportBankStatementJob = "ImportBankStatementJob",
+  OnboardingCustomerJob = "OnboardingCustomerJob",
+  BootstrapPermissionsJob = "BootstrapPermissionsJob",
 }
