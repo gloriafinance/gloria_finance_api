@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
   FilterFinanceRecordRequest,
   FinanceRecordReportRequest,
@@ -16,7 +16,11 @@ const financialRecordRoutes = Router()
 
 financialRecordRoutes.post(
   "/",
-  [PermissionMiddleware, FinancialRecordValidator],
+  [
+    PermissionMiddleware,
+    Can("financial_records", "create"),
+    FinancialRecordValidator,
+  ],
   async (req, res) => {
     await FinancialRecordController(
       {
@@ -32,7 +36,7 @@ financialRecordRoutes.post(
 
 financialRecordRoutes.patch(
   "/cancel/:financialRecordId",
-  [PermissionMiddleware],
+  [PermissionMiddleware, Can("financial_records", "cancel")],
   async (req, res) => {
     await CancelFinancialRecordController(
       {
@@ -45,20 +49,30 @@ financialRecordRoutes.patch(
   }
 )
 
-financialRecordRoutes.get("/", PermissionMiddleware, async (req, res) => {
-  const params = req.query as unknown as FilterFinanceRecordRequest
-  await FetchingFinanceRecordController(
-    { ...params, churchId: req["user"].churchId },
-    res
-  )
-})
+financialRecordRoutes.get(
+  "/",
+  PermissionMiddleware,
+  Can("financial_records", "read"),
+  async (req, res) => {
+    const params = req.query as unknown as FilterFinanceRecordRequest
+    await FetchingFinanceRecordController(
+      { ...params, churchId: req["user"].churchId },
+      res
+    )
+  }
+)
 
-financialRecordRoutes.get("/export", PermissionMiddleware, async (req, res) => {
-  const params = req.query as unknown as FinanceRecordReportRequest
-  await GenerateFinanceRecordReportController(
-    { ...params, churchId: req["user"].churchId },
-    res
-  )
-})
+financialRecordRoutes.get(
+  "/export",
+  PermissionMiddleware,
+  Can("financial_records", "reports"),
+  async (req, res) => {
+    const params = req.query as unknown as FinanceRecordReportRequest
+    await GenerateFinanceRecordReportController(
+      { ...params, churchId: req["user"].churchId },
+      res
+    )
+  }
+)
 
 export default financialRecordRoutes

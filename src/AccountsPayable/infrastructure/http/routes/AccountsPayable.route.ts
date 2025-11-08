@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
   CreateAccountPayableController,
   ListAccountPayableController,
@@ -14,7 +14,11 @@ const accountsPayableRoute = Router()
 
 accountsPayableRoute.post(
   "/",
-  [PermissionMiddleware, CreateAccountPayableValidator],
+  [
+    PermissionMiddleware,
+    Can("accounts_payable", "manage"),
+    CreateAccountPayableValidator,
+  ],
   async (req: Request, res: Response) => {
     await CreateAccountPayableController(
       {
@@ -29,7 +33,11 @@ accountsPayableRoute.post(
 
 accountsPayableRoute.post(
   "/pay",
-  [PermissionMiddleware, PayAccountPayableValidator],
+  [
+    PermissionMiddleware,
+    Can("accounts_payable", "reconcile"),
+    PayAccountPayableValidator,
+  ],
   async (req: Request, res: Response) => {
     const installmentId = req.body.installmentId
     let installmentIds: string[] = []
@@ -56,6 +64,7 @@ accountsPayableRoute.post(
 accountsPayableRoute.get(
   "",
   PermissionMiddleware,
+  Can("accounts_payable", "read"),
   async (req: Request, res: Response) => {
     await ListAccountPayableController(
       {

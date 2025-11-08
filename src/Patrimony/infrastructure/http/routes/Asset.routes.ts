@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express"
 import { UploadedFile } from "express-fileupload"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
   createAssetController,
   disposeAssetController,
@@ -90,7 +90,7 @@ const resolveInventoryPerformerDetails = (user: any): AssetInventoryChecker => {
 
 router.post(
   "/",
-  [PermissionMiddleware, CreateAssetValidator],
+  [PermissionMiddleware, Can("patrimony", "manage_assets"), CreateAssetValidator],
   async (req: Request, res: Response) => {
     //const { attachments, provided } = collectAttachmentsFromRequest(req)
 
@@ -112,7 +112,7 @@ router.post(
 
 router.get(
   "/",
-  [PermissionMiddleware, ListAssetsValidator],
+  [PermissionMiddleware, Can("patrimony", "manage_assets"), ListAssetsValidator],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
 
@@ -137,7 +137,7 @@ router.get(
 
 router.get(
   "/:assetId",
-  [PermissionMiddleware],
+  [PermissionMiddleware, Can("patrimony", "manage_assets")],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
 
@@ -153,7 +153,7 @@ router.get(
 
 router.put(
   "/:assetId",
-  [PermissionMiddleware, UpdateAssetValidator],
+  [PermissionMiddleware, Can("patrimony", "manage_assets"), UpdateAssetValidator],
   async (req: Request, res: Response) => {
     //const { attachments, provided } = collectAttachmentsFromRequest(req)
 
@@ -175,7 +175,7 @@ router.put(
 
 router.post(
   "/:assetId/disposal",
-  [PermissionMiddleware, DisposeAssetValidator],
+  [PermissionMiddleware, Can("patrimony", "manage_assets"), DisposeAssetValidator],
   async (req: Request, res: Response) => {
     await disposeAssetController(
       {
@@ -191,7 +191,11 @@ router.post(
 
 router.post(
   "/:assetId/inventory",
-  [PermissionMiddleware, RecordAssetInventoryValidator],
+  [
+    PermissionMiddleware,
+    Can("patrimony", "inventory"),
+    RecordAssetInventoryValidator,
+  ],
   async (req: Request, res: Response) => {
     await recordAssetInventoryController(
       {
@@ -208,7 +212,11 @@ router.post(
 
 router.post(
   "/inventory/import",
-  [PermissionMiddleware, ImportInventoryValidator],
+  [
+    PermissionMiddleware,
+    Can("patrimony", "inventory"),
+    ImportInventoryValidator,
+  ],
   async (req: Request, res: Response) => {
     const file = req["inventoryFile"] as UploadedFile
     const performerDetails = resolveInventoryPerformerDetails(req["user"])
@@ -225,7 +233,11 @@ router.post(
 
 router.get(
   "/report/inventory/physical",
-  [PermissionMiddleware, PhysicalInventorySheetValidator],
+  [
+    PermissionMiddleware,
+    Can("patrimony", "inventory"),
+    PhysicalInventorySheetValidator,
+  ],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
     const churchIdFromQuery =
@@ -265,7 +277,11 @@ router.get(
 
 router.get(
   "/report/inventory",
-  [PermissionMiddleware, InventoryReportValidator],
+  [
+    PermissionMiddleware,
+    Can("patrimony", "inventory"),
+    InventoryReportValidator,
+  ],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
 

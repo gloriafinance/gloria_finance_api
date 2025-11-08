@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express"
-import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
   listPurchasesController,
   RecordPurchaseController,
@@ -11,7 +11,7 @@ const purchaseRouter = Router()
 
 purchaseRouter.post(
   "/",
-  [PermissionMiddleware, PurchaseValidator],
+  [PermissionMiddleware, Can("purchases", "manage"), PurchaseValidator],
   async (req: Request, res: Response) => {
     await RecordPurchaseController(
       {
@@ -27,7 +27,7 @@ purchaseRouter.post(
 
 purchaseRouter.get(
   "/",
-  [PermissionMiddleware],
+  [PermissionMiddleware, Can("purchases", "read")],
   async (req: Request, res: Response) => {
     await listPurchasesController(
       {

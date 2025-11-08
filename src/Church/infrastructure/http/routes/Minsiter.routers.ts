@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { PermissionMiddleware } from "../../../../Shared/infrastructure"
+import { PermissionMiddleware, Can } from "../../../../Shared/infrastructure"
 import AssignChurchValidator from "../validators/AssignChurch.validator"
 import { MinisterController } from "../controllers/Minister.controller"
 import { MinisterRequest } from "../../../domain"
@@ -9,7 +9,7 @@ const ministerRoute = Router()
 
 ministerRoute.post(
   "/",
-  [PermissionMiddleware, MinisterValidator],
+  [PermissionMiddleware, Can("ministers", "manage"), MinisterValidator],
   async (req, res): Promise<void> => {
     await MinisterController.createOrUpdate(req.body as MinisterRequest, res)
   }
@@ -17,7 +17,7 @@ ministerRoute.post(
 
 ministerRoute.post(
   "/assign-church",
-  [PermissionMiddleware, AssignChurchValidator],
+  [PermissionMiddleware, Can("ministers", "manage"), AssignChurchValidator],
   async (req, res): Promise<void> => {
     await MinisterController.assignChurch(
       req.body as { churchId: string; ministerId: string },
