@@ -94,6 +94,15 @@ class InMemoryRolePermissionRepository implements IRolePermissionRepository {
     this.rolePermissions.set(this.key(churchId, roleId), new Set(permissionIds))
   }
 
+  async findPermissionIdsByRole(
+    churchId: string,
+    roleId: string
+  ): Promise<string[]> {
+    return Array.from(
+      this.rolePermissions.get(this.key(churchId, roleId)) ?? new Set()
+    )
+  }
+
   async findPermissionIdsByRoles(
     churchId: string,
     roleIds: string[]
@@ -310,6 +319,30 @@ describe("RBAC endpoints", () => {
         "financial_records:read",
         "financial_records:create",
         "accounts_payable:manage",
+      ])
+    )
+  })
+
+  it("retrieves the permissions assigned to a role", async () => {
+    const token = buildToken({
+      userId: "user-admin",
+      churchId: "church-1",
+      email: "admin@test.com",
+      name: "Admin",
+    })
+
+    const response = await request(app)
+      .get("/api/v1/rbac/roles/PASTOR/permissions")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200)
+
+    expect(response.body.data.role.roleId).toBe("PASTOR")
+    expect(response.body.data.permissions.length).toBeGreaterThan(0)
+    expect(response.body.data.permissions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          permissionId: expect.stringContaining(":"),
+        }),
       ])
     )
   })

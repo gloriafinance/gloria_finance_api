@@ -20,6 +20,10 @@ export interface IRolePermissionRepository {
     roleId: string,
     permissionIds: string[]
   ): Promise<void>
+  findPermissionIdsByRole(
+    churchId: string,
+    roleId: string
+  ): Promise<string[]>
   findPermissionIdsByRoles(
     churchId: string,
     roleIds: string[]

@@ -57,4 +57,14 @@ export class RolePermissionMongoRepository
 
     return documents.map((document) => document.permissionId)
   }
+
+  async findPermissionIdsByRole(
+    churchId: string,
+    roleId: string
+  ): Promise<string[]> {
+    const collection = await this.collection()
+    const documents = await collection.find({ churchId, roleId }).toArray()
+
+    return documents.map((document) => document.permissionId)
+  }
 }

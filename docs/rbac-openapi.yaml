@@ -30,6 +30,20 @@ paths:
         '200':
           description: Lista de roles
   /api/v1/rbac/roles/{roleId}/permissions:
+    get:
+      tags: [RBAC]
+      summary: Consulta los permisos asignados a un rol
+      x-permissions-required:
+        - rbac:read
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Permisos del rol recuperados
     post:
       tags: [RBAC]
       summary: Actualiza los permisos de un rol

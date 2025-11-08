@@ -6,6 +6,7 @@ import {
   AssignRolesToUser,
   BootstrapPermissions,
   CreateRole,
+  GetRolePermissions,
   GetUserPermissions,
   ListPermissions,
   ListRoles,
@@ -97,6 +98,26 @@ export class RbacController {
         message: "Permissions updated",
         data: role.toPrimitives(),
       })
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
+  async getRolePermissions(req: Request, res: Response) {
+    try {
+      const auth = req["auth"]
+      const roleId = req.params.id
+
+      const permissions = await new GetRolePermissions(
+        RoleMongoRepository.getInstance(),
+        RolePermissionMongoRepository.getInstance(),
+        PermissionMongoRepository.getInstance()
+      ).execute({
+        churchId: auth.churchId,
+        roleId,
+      })
+
+      res.status(HttpStatus.OK).send({ data: permissions })
     } catch (error) {
       domainResponse(error, res)
     }

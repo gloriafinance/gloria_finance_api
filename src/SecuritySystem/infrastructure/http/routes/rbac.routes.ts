@@ -26,6 +26,13 @@ rbacRouter.post(
   controller.assignPermissionsToRole.bind(controller)
 )
 
+rbacRouter.get(
+  "/roles/:id/permissions",
+  PermissionMiddleware,
+  Can("rbac", "read"),
+  controller.getRolePermissions.bind(controller)
+)
+
 rbacRouter.post(
   "/users/:id/assignments",
   PermissionMiddleware,
