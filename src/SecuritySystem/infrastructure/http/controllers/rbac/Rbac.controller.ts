@@ -18,7 +18,6 @@ import {
 } from "@/SecuritySystem/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 import { UserPermissionsCache } from "@/Shared/infrastructure"
-import { Can } from "@/Shared/infrastructure"
 
 export class RbacController {
   private readonly authorizationService = AuthorizationService.getInstance(
@@ -28,7 +27,6 @@ export class RbacController {
     UserPermissionsCache.getInstance()
   )
 
-  @Can("rbac", "bootstrap")
   async bootstrap(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -57,7 +55,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "manage_roles")
   async createRole(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -78,7 +75,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "manage_roles")
   async assignPermissionsToRole(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -106,7 +102,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "assign_roles")
   async assignRolesToUser(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -132,7 +127,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "read")
   async getUserPermissions(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -153,7 +147,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "read")
   async listRoles(req: Request, res: Response) {
     try {
       const auth = req["auth"]
@@ -167,7 +160,6 @@ export class RbacController {
     }
   }
 
-  @Can("rbac", "read")
   async listPermissions(_req: Request, res: Response) {
     try {
       const permissions = await new ListPermissions(
