@@ -5,7 +5,6 @@ import {
   Role,
 } from "@/SecuritySystem/domain"
 import { ActionNotAllowed } from "@/SecuritySystem/domain/exceptions/ActionNotAllowed"
-import { SystemRoleModificationNotAllowed } from "@/SecuritySystem/domain/exceptions/SystemRoleModificationNotAllowed"
 
 export type AssignPermissionsToRoleRequest = {
   churchId: string
@@ -31,9 +30,9 @@ export class AssignPermissionsToRole {
       //`Role ${request.roleId} not found in church ${request.churchId}`
     }
 
-    if (role.isSystemRole()) {
-      throw new SystemRoleModificationNotAllowed()
-    }
+    // if (role.isSystemRole()) {
+    //   throw new SystemRoleModificationNotAllowed()
+    // }
 
     const permissions = await this.permissionRepository.findByIds(
       request.permissionIds
