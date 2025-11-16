@@ -98,6 +98,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "financial_configuration:read_availability_accounts",
+    "module": "financial_configuration",
+    "action": "read_availability_accounts",
+    "description": "Consultar contas de disponibilidade",
+    "isSystem": true
+  },
+  {
     "permissionId": "financial_configuration:cost_centers",
     "module": "financial_configuration",
     "action": "cost_centers",

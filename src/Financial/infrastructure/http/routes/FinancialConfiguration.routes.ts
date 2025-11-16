@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { AvailabilityAccountRequest, CostCenterRequest } from "../../../domain"
-import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import AvailabilityAccountValidator from "../validators/AvailabilityAccount.validator"
 import {
   createOrUpdateAvailabilityAccount,
@@ -60,7 +60,10 @@ financialConfigurationRoute.post(
 financialConfigurationRoute.get(
   "/availability-account/:churchId",
   PermissionMiddleware,
-  Can("financial_configuration", "availability_accounts"),
+  Can("financial_configuration", [
+    "availability_accounts",
+    "read_availability_accounts",
+  ]),
   async (req, res) => {
     await listAvailabilityAccountByChurchId(req.params.churchId, res)
   }
