@@ -21,7 +21,7 @@ bankStatementRoutes.get(
     await listBankStatementsController(
       {
         ...params,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       },
       res
     )
@@ -52,8 +52,8 @@ bankStatementRoutes.post(
       {
         ...req.body,
         file,
-        uploadedBy: req["user"].name,
-        churchId: req["user"].churchId,
+        uploadedBy: req.auth.name,
+        churchId: req.auth.churchId,
       },
       res
     )
@@ -67,7 +67,7 @@ bankStatementRoutes.post(
     await retryBankStatementController(
       {
         params: req.params as any,
-        user: req["user"],
+        auth: req.auth,
       } as any,
       res
     )
@@ -86,7 +86,7 @@ bankStatementRoutes.patch(
       {
         params: req.params as any,
         body: req.body,
-        user: req["user"],
+        auth: req.auth,
       } as any,
       res
     )

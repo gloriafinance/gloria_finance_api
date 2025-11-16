@@ -14,7 +14,7 @@ financialConceptRoutes.post(
     await CreateOrUpdateFinancialConceptController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       },
       res
     )

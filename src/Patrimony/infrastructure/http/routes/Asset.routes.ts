@@ -36,9 +36,9 @@ import {
 const router = Router()
 
 const resolveUserId = (request: Request) => {
-  const user = request["user"]
+  const user = request.auth
 
-  return user.userId || "system"
+  return user?.userId || "system"
 }
 
 const resolveInventoryPerformerDetails = (user: any): AssetInventoryChecker => {
@@ -101,13 +101,13 @@ router.post(
     await createAssetController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
         //attachments: provided ? (attachments ?? []) : undefined,
         attachments: req.body?.attachments,
         value: Number(req.body.value),
         quantity: Number(req.body.quantity),
         status: req.body.status as AssetStatus,
-        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
+        performedByDetails: resolveInventoryPerformerDetails(req.auth),
       } as CreateAssetRequest,
       res
     )
@@ -118,8 +118,7 @@ router.get(
   "/",
   [
     PermissionMiddleware,
-    Can("patrimony", "manage_assets"),
-    Can("patrimony", "list_assets"),
+    Can("patrimony", ["list_assets", "manage_assets"]),
     ListAssetsValidator,
   ],
   async (req: Request, res: Response) => {
@@ -127,7 +126,7 @@ router.get(
 
     await listAssetsController(
       {
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
         category:
           typeof req.query.category === "string"
             ? req.query.category
@@ -146,11 +145,7 @@ router.get(
 
 router.get(
   "/:assetId",
-  [
-    PermissionMiddleware,
-    Can("patrimony", "manage_assets"),
-    Can("patrimony", "read_assets"),
-  ],
+  [PermissionMiddleware, Can("patrimony", ["read_assets", "manage_assets"])],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
 
@@ -183,7 +178,7 @@ router.put(
         status: req.body.status as AssetStatus,
         //  attachments: provided ? (attachments ?? []) : undefined,
         attachments: req.body?.attachments,
-        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
+        performedByDetails: resolveInventoryPerformerDetails(req.auth),
       } as UpdateAssetRequest,
       res
     )
@@ -203,7 +198,7 @@ router.post(
         ...req.body,
         assetId: req.params.assetId,
         status: req.body.status as DisposeAssetRequest["status"],
-        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
+        performedByDetails: resolveInventoryPerformerDetails(req.auth),
       } as DisposeAssetRequest,
       res
     )
@@ -224,7 +219,7 @@ router.post(
         assetId: req.params.assetId,
         status: req.body.status as AssetInventoryStatus,
         quantity: Number(req.body.quantity),
-        performedByDetails: resolveInventoryPerformerDetails(req["user"]),
+        performedByDetails: resolveInventoryPerformerDetails(req.auth),
       } as RecordAssetInventoryRequest,
       res
     )
@@ -240,7 +235,7 @@ router.post(
   ],
   async (req: Request, res: Response) => {
     const file = req["inventoryFile"] as UploadedFile
-    const performerDetails = resolveInventoryPerformerDetails(req["user"])
+    const performerDetails = resolveInventoryPerformerDetails(req.auth)
 
     await importInventoryController(
       {
@@ -266,7 +261,7 @@ router.get(
       req.query.churchId.trim().length > 0
         ? req.query.churchId.trim()
         : undefined
-    const churchId = churchIdFromQuery ?? req["user"].churchId
+    const churchId = churchIdFromQuery ?? req.auth.churchId
 
     if (!churchId) {
       res.status(400).send({
@@ -309,7 +304,7 @@ router.get(
     await generateInventoryReportController(
       {
         ...req.query,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
         format: req.query.format as InventoryReportFormat,
         status: req.query.status as AssetStatus,
         performedBy,

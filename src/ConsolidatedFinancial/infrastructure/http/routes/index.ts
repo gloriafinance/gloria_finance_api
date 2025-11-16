@@ -12,7 +12,7 @@ consolidatedFinancialRoutes.patch(
   Can("consolidated_financial", "generate_months"),
   async (req, res) => {
     await UpdateFinancialMonthController(
-      { ...req.body, churchId: req["user"].churchId },
+      { ...req.body, churchId: req.auth.churchId },
       res
     )
   }

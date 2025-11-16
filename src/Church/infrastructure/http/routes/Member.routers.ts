@@ -29,7 +29,7 @@ memberRoute.get(
   PermissionMiddleware,
   Can("members", "manage"),
   async (req, res) => {
-    await MemberController.all(req["user"].churchId, res)
+    await MemberController.all(req.auth.churchId, res)
   }
 )
 

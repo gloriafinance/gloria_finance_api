@@ -16,9 +16,9 @@ purchaseRouter.post(
     await RecordPurchaseController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
         file: req.files.invoice,
-        createdBy: req["user"].name,
+        createdBy: req.auth.name,
       },
       res
     )
@@ -32,7 +32,7 @@ purchaseRouter.get(
     await listPurchasesController(
       {
         ...req.query,
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       } as FilterPurchasesRequest,
       res
     )

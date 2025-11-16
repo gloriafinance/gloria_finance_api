@@ -5,6 +5,6 @@ type AuthenticatedUser = {
 
 export type RetryBankStatementHttpRequest = {
   params: { bankStatementId?: string }
-  user: AuthenticatedUser
+  auth: AuthenticatedUser
   body?: { churchId?: string }
 }
