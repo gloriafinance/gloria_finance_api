@@ -50,7 +50,7 @@ financialConfigurationRoute.post(
     await createOrUpdateAvailabilityAccount(
       {
         ...(req.body as AvailabilityAccountRequest),
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       },
       res
     )

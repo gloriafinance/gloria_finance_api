@@ -23,8 +23,8 @@ accountsPayableRoute.post(
     await CreateAccountPayableController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
-        createdBy: req["user"].name,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
       },
       res
     )
@@ -51,7 +51,7 @@ accountsPayableRoute.post(
     await PayAccountPayableController(
       {
         ...req.body,
-        createdBy: req["user"].name,
+        createdBy: req.auth.name,
         installmentIds,
         amount: AmountValue.create(req.body.amount),
         file: req?.files?.file,
@@ -69,7 +69,7 @@ accountsPayableRoute.get(
     await ListAccountPayableController(
       {
         ...(req.query as unknown as FilterAccountPayableRequest),
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       },
       res
     )

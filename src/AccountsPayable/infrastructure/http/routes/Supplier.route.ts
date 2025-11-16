@@ -14,7 +14,7 @@ supplierRoute.post(
   ],
   async (req: Request, res: Response) => {
     await SupplierController.registerSupplier(
-      { ...req.body, churchId: req["user"].churchId },
+      { ...req.body, churchId: req.auth.churchId },
       res
     )
   }
@@ -25,7 +25,7 @@ supplierRoute.get(
   PermissionMiddleware,
   Can("accounts_payable", "suppliers_manage"),
   async (req: Request, res: Response) => {
-    await SupplierController.listSupplier(req["user"].churchId, res)
+    await SupplierController.listSupplier(req.auth.churchId, res)
   }
 )
 

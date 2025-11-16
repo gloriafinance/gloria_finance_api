@@ -18,8 +18,7 @@ financeContribution.post(
   "/",
   [
     PermissionMiddleware,
-    Can("financial_records", "adm_contributions"),
-    Can("financial_records", "add_contributions"),
+    Can("financial_records", ["add_contributions", "adm_contributions"]),
     ContributionValidator,
   ],
   async (req: Request, res) => {
@@ -38,17 +37,16 @@ financeContribution.post(
 financeContribution.get(
   "/",
   PermissionMiddleware,
-  Can("financial_records", "adm_contributions"),
-  Can("financial_records", "list_contributions"),
+  Can("financial_records", ["list_contributions", "adm_contributions"]),
   async (req, res) => {
     let filter = {
       ...(req.query as unknown as FilterContributionsRequest),
     }
 
-    if (req["user"].isSuperuser && filter.churchId === undefined) {
+    if (req.auth.isSuperuser && filter.churchId === undefined) {
       delete filter.churchId
     } else {
-      filter.churchId = req["user"].churchId
+      filter.churchId = req.auth.churchId
     }
 
     await listOnlineContributionsController(filter, res)
@@ -63,7 +61,7 @@ financeContribution.patch(
     await UpdateContributionStatusController(
       req.params.contributionId,
       req.params.status as OnlineContributionsStatus,
-      req["user"].name,
+      req.auth.name,
       res
     )
   }

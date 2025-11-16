@@ -5,5 +5,5 @@ type AuthenticatedUser = {
 export type LinkBankStatementHttpRequest = {
   params: { bankStatementId?: string }
   body: { financialRecordId?: string }
-  user: AuthenticatedUser
+  auth: AuthenticatedUser
 }

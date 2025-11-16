@@ -82,9 +82,9 @@ export const retryBankStatementController = async (
     }
 
     const churchId =
-      req.user.isSuperuser && req.body?.churchId
+      req.auth.isSuperuser && req.body?.churchId
         ? req.body.churchId
-        : req.user.churchId
+        : req.auth.churchId
     const repository = BankStatementMongoRepository.getInstance()
     const reconciler = buildReconciler(QueueService.getInstance())
 
@@ -128,7 +128,7 @@ export const linkBankStatementController = async (
     ).execute({
       bankStatementId,
       financialRecordId: req.body.financialRecordId,
-      churchId: req.user.churchId,
+      churchId: req.auth.churchId,
     })
 
     res.status(HttpStatus.OK).send({

@@ -51,8 +51,6 @@ export const PermissionMiddleware = async (req, res, next) => {
     }
 
     req.auth = authContext
-    req["auth"] = authContext
-    req["user"] = authContext
     res.locals.auth = authContext
 
     next()

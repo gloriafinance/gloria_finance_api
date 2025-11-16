@@ -32,7 +32,7 @@ export class RbacController {
 
   async bootstrap(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const targetUserId = req.body.userId ?? auth.userId
 
       await new BootstrapPermissionsJob(
@@ -62,7 +62,7 @@ export class RbacController {
 
   async createRole(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const role = await new CreateRole(
         RoleMongoRepository.getInstance()
       ).execute({
@@ -82,7 +82,7 @@ export class RbacController {
 
   async assignPermissionsToRole(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const roleId = req.params.id
       const permissionIds: string[] = req.body.permissionIds ?? []
 
@@ -109,7 +109,7 @@ export class RbacController {
 
   async getRolePermissions(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const roleId = req.params.id
 
       const permissions = await new GetRolePermissions(
@@ -129,7 +129,7 @@ export class RbacController {
 
   async assignRolesToUser(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const userId = req.params.id
       const roles: string[] = req.body.roles ?? []
 
@@ -154,7 +154,7 @@ export class RbacController {
 
   async getUserPermissions(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const userId = req.params.id
 
       const permissions = await new GetUserPermissions(
@@ -174,7 +174,7 @@ export class RbacController {
 
   async listRoles(req: Request, res: Response) {
     try {
-      const auth = req["auth"]
+      const auth = req.auth
       const roles = await new ListRoles(
         RoleMongoRepository.getInstance()
       ).execute(auth.churchId)

@@ -25,8 +25,8 @@ financialRecordRoutes.post(
     await FinancialRecordController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
-        createdBy: req["user"].name,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
         file: req?.files?.file,
       },
       res
@@ -41,8 +41,8 @@ financialRecordRoutes.patch(
     await CancelFinancialRecordController(
       {
         financialRecordId: req.params.financialRecordId,
-        churchId: req["user"].churchId,
-        createdBy: req["user"].name,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
       },
       res
     )
@@ -56,7 +56,7 @@ financialRecordRoutes.get(
   async (req, res) => {
     const params = req.query as unknown as FilterFinanceRecordRequest
     await FetchingFinanceRecordController(
-      { ...params, churchId: req["user"].churchId },
+      { ...params, churchId: req.auth.churchId },
       res
     )
   }
@@ -69,7 +69,7 @@ financialRecordRoutes.get(
   async (req, res) => {
     const params = req.query as unknown as FinanceRecordReportRequest
     await GenerateFinanceRecordReportController(
-      { ...params, churchId: req["user"].churchId },
+      { ...params, churchId: req.auth.churchId },
       res
     )
   }

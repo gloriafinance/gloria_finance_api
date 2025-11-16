@@ -25,8 +25,8 @@ accountsReceivableRoutes.post(
     await CreateAccountReceivableController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
-        createdBy: req["user"].name,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
       },
       res
     )
@@ -41,7 +41,7 @@ accountsReceivableRoutes.get(
     await ListAccountReceivableController(
       {
         ...(req.query as unknown as FilterAccountReceivableRequest),
-        churchId: req["user"].churchId,
+        churchId: req.auth.churchId,
       },
       res
     )
@@ -68,8 +68,8 @@ accountsReceivableRoutes.post(
     await PayAccountReceivableController(
       {
         ...req.body,
-        churchId: req["user"].churchId,
-        createdBy: req["user"].name,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
         installmentIds,
         amount: AmountValue.create(req.body.amount),
         file: req?.files?.file,
