@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express"
 import { UploadedFile } from "express-fileupload"
-import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   createAssetController,
   disposeAssetController,
@@ -119,6 +119,7 @@ router.get(
   [
     PermissionMiddleware,
     Can("patrimony", "manage_assets"),
+    Can("patrimony", "list_assets"),
     ListAssetsValidator,
   ],
   async (req: Request, res: Response) => {
@@ -145,7 +146,11 @@ router.get(
 
 router.get(
   "/:assetId",
-  [PermissionMiddleware, Can("patrimony", "manage_assets")],
+  [
+    PermissionMiddleware,
+    Can("patrimony", "manage_assets"),
+    Can("patrimony", "read_assets"),
+  ],
   async (req: Request, res: Response) => {
     const performedBy = resolveUserId(req)
 

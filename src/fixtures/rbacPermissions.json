@@ -196,6 +196,20 @@
     "isSystem": true
   },
   {
+    "permissionId": "patrimony:read_assets",
+    "module": "patrimony",
+    "action": "read_assets",
+    "description": "Consultar ativos patrimoniais",
+    "isSystem": true
+  },
+  {
+    "permissionId": "patrimony:list_assets",
+    "module": "patrimony",
+    "action": "list_assets",
+    "description": "Listar ativos patrimoniais",
+    "isSystem": true
+  },
+  {
     "permissionId": "patrimony:manage_assets",
     "module": "patrimony",
     "action": "manage_assets",
