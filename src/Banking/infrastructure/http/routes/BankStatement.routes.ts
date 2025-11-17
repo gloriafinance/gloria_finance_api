@@ -1,5 +1,5 @@
 import { Request, Router } from "express"
-import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import { ImportBankStatementValidator } from "../validators/ImportBankStatement.validator"
 import {
   importBankStatementController,
@@ -15,7 +15,7 @@ const bankStatementRoutes = Router()
 
 bankStatementRoutes.get(
   "/",
-  [PermissionMiddleware, Can("banking", "statements")],
+  [PermissionMiddleware, Can("banking", ["statements", "read_statements"])],
   async (req: Request, res) => {
     const params = req.query as unknown as ListBankStatementsRequest
     await listBankStatementsController(

@@ -85,8 +85,8 @@
       {{#if filters.church}}
         <p><strong>Congregação:</strong> {{filters.church}}</p>
       {{/if}}
-      {{#if filters.category}}
-        <p><strong>Categoria:</strong> {{filters.category}}</p>
+      {{#if filters.categoryLabel}}
+        <p><strong>Categoria:</strong> {{filters.categoryLabel}}</p>
       {{/if}}
       {{#if filters.status}}
         <p><strong>Status:</strong> {{filters.status}}</p>
@@ -127,7 +127,7 @@
               <td>{{index}}</td>
               <td>{{code}}</td>
               <td>{{name}}</td>
-              <td>{{category}}</td>
+              <td>{{categoryLabel}}</td>
               <td class="status">{{statusLabel}}</td>
               <td>{{valueFormatted}}</td>
               <td>{{responsibleName}}</td>

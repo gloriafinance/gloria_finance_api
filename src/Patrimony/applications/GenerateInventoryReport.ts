@@ -19,6 +19,15 @@ type InventorySummary = {
 
 export class GenerateInventoryReport {
   private readonly logger = Logger(GenerateInventoryReport.name)
+  private readonly categoryLabels: Record<string, string> = {
+    instrument: "Instrumentos",
+    vehicle: "Veículos",
+    furniture: "Mobília",
+    electronics: "Eletrônicos",
+    property: "Imóveis",
+    supplies: "Suprimentos",
+    other: "Outros",
+  }
 
   constructor(
     private readonly churchRepository: IChurchRepository,
@@ -88,7 +97,7 @@ export class GenerateInventoryReport {
     const rows = assets.map((asset) => [
       asset.code,
       asset.name,
-      asset.category,
+      this.getCategoryLabel(asset.category),
       AssetStatusLabels[asset.status],
       Number(asset.value ?? 0).toFixed(2),
       asset.churchId,
@@ -119,11 +128,13 @@ export class GenerateInventoryReport {
       },
       filters: {
         church: `${church.getName()}`,
+        categoryLabel: this.getCategoryLabel(request.category),
         category: request.category,
         status: request.status,
       },
       assets: assets.map((asset, index) => ({
         ...asset,
+        categoryLabel: this.getCategoryLabel(asset.category),
         index: index + 1,
         acquisitionDateFormatted: new Date(
           asset.acquisitionDate
@@ -146,5 +157,15 @@ export class GenerateInventoryReport {
         .toPDF(false),
       filename: filename,
     }
+  }
+
+  private getCategoryLabel(category?: string): string {
+    if (!category) {
+      return ""
+    }
+
+    const normalized = category.toLowerCase()
+
+    return this.categoryLabels[normalized] ?? category
   }
 }

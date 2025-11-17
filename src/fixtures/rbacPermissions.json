@@ -189,6 +189,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "banking:read_statements",
+    "module": "banking",
+    "action": "read_statements",
+    "description": "Consultar conciliações bancárias",
+    "isSystem": true
+  },
+  {
     "permissionId": "purchases:manage",
     "module": "purchases",
     "action": "manage",

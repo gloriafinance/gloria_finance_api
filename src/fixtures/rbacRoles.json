@@ -49,20 +49,22 @@
     "name": "Pastor",
     "description": "Supervisiona a igreja, membros e relatórios pastorais",
     "permissions": [
-      "church:upsert",
-      "church:search",
-      "members:manage",
-      "ministers:manage",
+      "accounts_payable:read",
       "accounts_receivable:read",
+      "banking:read_statements",
+      "banking:read",
+      "church:search",
+      "church:upsert",
+      "financial_configuration:read_availability_accounts",
       "financial_records:read",
       "financial_records:reports",
-      "financial_records:contributions",
-      "reports:monthly_tithes",
+      "members:manage",
+      "patrimony:read_assets",
+      "patrimony:list_assets",
+      "purchases:read",
+      "rbac:read",
       "reports:income_statements",
-      "notifications:payment_commitment",
-      "notifications:password_reset",
-      "world:states_read",
-      "rbac:read"
+      "reports:monthly_tithes"
     ],
     "isSystem": true
   },
@@ -119,24 +121,6 @@
       "reports:monthly_tithes",
       "reports:income_statements",
       "world:states_read",
-      "rbac:read"
-    ],
-    "isSystem": true
-  },
-  {
-    "roleId": "AUDITOR",
-    "name": "Auditor",
-    "description": "Audita registros financeiros e bancários",
-    "permissions": [
-      "church:search",
-      "accounts_payable:read",
-      "accounts_receivable:read",
-      "financial_records:read",
-      "financial_records:reports",
-      "banking:read",
-      "banking:statements",
-      "reports:monthly_tithes",
-      "reports:income_statements",
       "rbac:read"
     ],
     "isSystem": true
