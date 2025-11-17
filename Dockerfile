@@ -1,5 +1,5 @@
 # Etapa de construcción (builder)
-FROM node:20-alpine3.19 AS builder
+FROM node:22-alpine3.19 AS builder
 
 # Directorio de trabajo dentro de la imagen
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npm ci --only=production
 COPY dist ./dist
 
 # Etapa final (imagen ligera para producción)
-FROM node:20-alpine3.19
+FROM node:22-alpine3.19
 
 # Directorio de trabajo dentro de la imagen
 WORKDIR /app
