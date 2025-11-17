@@ -1,6 +1,6 @@
 {
   "name": "church_financial_api",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
@@ -11,6 +11,10 @@
     "format": "prettier --write \"src/**/*.{ts,hbs}\" ",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "copy-static-assets": "ts-node src/copyStaticAssets.ts"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "author": "angel bejarano / angel.bejarano@jaspesoft.com",
   "repository": {
