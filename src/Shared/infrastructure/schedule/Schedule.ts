@@ -24,7 +24,6 @@ export const Schedule = () => {
       }
     },
     {
-      scheduled: true,
       timezone: "America/Sao_Paulo",
     }
   )

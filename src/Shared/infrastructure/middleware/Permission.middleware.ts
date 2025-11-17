@@ -8,12 +8,11 @@ import {
 import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
 import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
 
-
 const authorizationService = AuthorizationService.getInstance(
   UserAssignmentMongoRepository.getInstance(),
   RolePermissionMongoRepository.getInstance(),
   PermissionMongoRepository.getInstance(),
-  CacheService.getInstance(),
+  CacheService.getInstance()
 )
 
 export const PermissionMiddleware = async (req, res, next) => {
@@ -30,7 +29,7 @@ export const PermissionMiddleware = async (req, res, next) => {
   try {
     const payload = jwt.verify(
       token,
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET
     ) as AuthTokenPayload
 
     if (!payload?.userId || !payload?.churchId) {
@@ -42,7 +41,7 @@ export const PermissionMiddleware = async (req, res, next) => {
     const { roles, permissions } =
       await authorizationService.resolveAuthorization(
         payload.churchId,
-        payload.userId,
+        payload.userId
       )
 
     const authContext = {

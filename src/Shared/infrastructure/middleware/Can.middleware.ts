@@ -19,7 +19,7 @@ export function Can(module: string, action: string | string[]) {
   return async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const auth = req.auth
@@ -38,7 +38,7 @@ export function Can(module: string, action: string | string[]) {
         const permissionDescriptions =
           await permissionDescriptionResolver.resolveDescriptions(
             module,
-            actions,
+            actions
           )
         const permissionDescription = permissionDescriptions.length
           ? permissionDescriptions.join(", ")
