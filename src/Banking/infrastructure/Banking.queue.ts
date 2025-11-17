@@ -1,7 +1,7 @@
 import { IDefinitionQueue } from "@/Shared/domain"
 import {
   BankStatementReconciler,
-  MovementBankRecord,
+  MovementBankRecordJob,
 } from "@/Banking/applications"
 import {
   BankMongoRepository,
@@ -15,7 +15,7 @@ import { QueueService } from "@/Shared/infrastructure"
 
 export const BankingQueue = (): IDefinitionQueue[] => [
   {
-    useClass: MovementBankRecord,
+    useClass: MovementBankRecordJob,
     inject: [
       MovementBankMongoRepository.getInstance(),
       BankMongoRepository.getInstance(),

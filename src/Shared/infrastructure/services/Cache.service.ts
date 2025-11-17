@@ -2,21 +2,20 @@ export class CacheService {
   private static instance: CacheService
   private cache: Map<string, { data: any; expiry: number }> = new Map()
 
-  private constructor() {}
-
   public static getInstance(): CacheService {
     if (!CacheService.instance) {
       CacheService.instance = new CacheService()
     }
+
     return CacheService.instance
   }
 
-  set(key: string, value: any, ttlSeconds: number): void {
+  async set(key: string, value: any, ttlSeconds: number): Promise<void> {
     const expiry = Date.now() + ttlSeconds * 1000
     this.cache.set(key, { data: value, expiry })
   }
 
-  get(key: string): any | null {
+  get<T>(key: string): Promise<T | null> {
     const cached = this.cache.get(key)
 
     if (!cached) {
@@ -31,7 +30,7 @@ export class CacheService {
     return cached.data
   }
 
-  invalidate(key: string): void {
+  async invalidate(key: string): Promise<void> {
     this.cache.delete(key)
   }
 

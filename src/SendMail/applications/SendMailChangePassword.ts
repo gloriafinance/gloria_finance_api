@@ -13,7 +13,7 @@ export class SendMailChangePassword {
       `Sending email of the change password to ${user.getEmail()}`
     )
 
-    this.queueService.dispatch(QueueName.SendMail, {
+    this.queueService.dispatch(QueueName.SendMailJob, {
       to: user.getEmail(),
       subject: "Nova senha",
       template: TemplateEmail.RecoveryPassword,

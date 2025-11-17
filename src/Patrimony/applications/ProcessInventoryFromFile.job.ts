@@ -89,8 +89,8 @@ const parseInventoryStatus = (
   return AssetInventoryStatus.CONFIRMED
 }
 
-export class ProcessInventoryFromFile implements IQueue {
-  private readonly logger = Logger(ProcessInventoryFromFile.name)
+export class ProcessInventoryFromFileJob implements IQueue {
+  private readonly logger = Logger(ProcessInventoryFromFileJob.name)
 
   constructor(
     private readonly repository: IAssetRepository,
@@ -114,7 +114,7 @@ export class ProcessInventoryFromFile implements IQueue {
       errors: summary.errors,
     }
 
-    this.queueService.dispatch(QueueName.SendMail, {
+    this.queueService.dispatch(QueueName.SendMailJob, {
       to: args.performedByDetails.email,
       subject: "Status de inventario",
       template: TemplateEmail.SummaryInventory,

@@ -1,7 +1,8 @@
 {
     "prettier.mode": "Enabled",
     "editor.formatOnSave": true,
-    "prettier.specificBinary": "/node_module/prettier",
+    "editor.defaultFormatter": "prettier",    
+    "prettier.specificBinary": "/node_module/prettier/bin/prettier.cjs",
     "plugins": [
         {
             "type": "add",
@@ -14,6 +15,10 @@
         {
             "type": "add",
             "pluginName": "fleet.javascript.ai"
+        },
+        {
+            "type": "add",
+            "pluginName": "fleet.prettier"
         }
     ]
 }

@@ -29,7 +29,7 @@ export class SendMailPaymentCommitment {
   }) {
     this.logger.info(`Start Send Mail Payment Commitment`, params)
 
-    this.queueService.dispatch(QueueName.SendMail, {
+    this.queueService.dispatch(QueueName.SendMailJob, {
       to: params.debtor.email,
       subject: "Compromisso de Pagamento",
       template: TemplateEmail.PaymentCommitment,

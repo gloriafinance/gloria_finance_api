@@ -1,12 +1,12 @@
 import { IDefinitionQueue } from "./Shared/domain"
-import { CreateUserForMember } from "./SecuritySystem/applications"
+import { CreateUserForMemberJob } from "./SecuritySystem/applications"
 import {
   PasswordAdapter,
   UserMongoRepository,
 } from "./SecuritySystem/infrastructure"
 import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
-import { SendMail } from "./SendMail/SendMail"
-import { TelegramNotification } from "./Shared/infrastructure"
+import { SendMailJob } from "./SendMail/SendMail.job"
+import { TelegramNotificationJob } from "./Shared/infrastructure"
 import { PatrimonyQueue } from "@/Patrimony/infrastructure/Patrimony.queue"
 import { BankingQueue } from "@/Banking/infrastructure/Banking.queue"
 import { SecuritySystemQueue } from "@/SecuritySystem/infrastructure/SecuritySystem.queue"
@@ -19,17 +19,17 @@ export const Queues = (): IDefinitionQueue[] => [
   ...SecuritySystemQueue(),
   ...CustomerQueue(),
   {
-    useClass: CreateUserForMember,
+    useClass: CreateUserForMemberJob,
     inject: [UserMongoRepository.getInstance(), new PasswordAdapter()],
   },
 
   {
-    useClass: SendMail,
+    useClass: SendMailJob,
     inject: [],
     delay: 4,
   },
   {
-    useClass: TelegramNotification,
+    useClass: TelegramNotificationJob,
     delay: 4,
   },
 ]

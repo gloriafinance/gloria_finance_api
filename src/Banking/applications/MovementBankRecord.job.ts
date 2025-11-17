@@ -7,7 +7,7 @@ import {
   MovementBankRequest,
 } from "@/Banking/domain"
 
-export class MovementBankRecord implements IQueue {
+export class MovementBankRecordJob implements IQueue {
   private logger = Logger("MovementBankRecord")
 
   constructor(

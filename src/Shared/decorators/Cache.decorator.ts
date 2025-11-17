@@ -1,6 +1,6 @@
 import { Response } from "express"
 import { Logger } from "@/Shared/adapter"
-import { CacheService } from "@/Shared/infrastructure/CacheService"
+import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
 
 export function CacheController(prefix: string, ttlSeconds: number = 300) {
   const logger = Logger(CacheController.name)

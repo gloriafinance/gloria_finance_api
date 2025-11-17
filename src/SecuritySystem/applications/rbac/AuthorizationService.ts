@@ -4,7 +4,7 @@ import {
   IRolePermissionRepository,
   IUserAssignmentRepository,
 } from "@/SecuritySystem/domain"
-import { UserPermissionsCache } from "@/Shared/infrastructure/cache/UserPermissionsCache"
+import { CacheService } from "@/Shared/infrastructure"
 
 export type AuthorizationContext = {
   roles: string[]
@@ -19,21 +19,18 @@ export class AuthorizationService {
     private readonly userAssignmentRepository: IUserAssignmentRepository,
     private readonly rolePermissionRepository: IRolePermissionRepository,
     private readonly permissionRepository: IPermissionRepository,
-    private readonly cache: UserPermissionsCache
-  ) {}
+    private readonly cache: CacheService,
+  ) {
+  }
 
   static getInstance(
-    userAssignmentRepository?: IUserAssignmentRepository,
-    rolePermissionRepository?: IRolePermissionRepository,
-    permissionRepository?: IPermissionRepository,
-    cache?: UserPermissionsCache
+    userAssignmentRepository: IUserAssignmentRepository,
+    rolePermissionRepository: IRolePermissionRepository,
+    permissionRepository: IPermissionRepository,
+    cache: CacheService,
   ): AuthorizationService {
     if (
-      AuthorizationService.instance &&
-      !userAssignmentRepository &&
-      !rolePermissionRepository &&
-      !permissionRepository &&
-      !cache
+      AuthorizationService.instance
     ) {
       return AuthorizationService.instance
     }
@@ -42,7 +39,7 @@ export class AuthorizationService {
       userAssignmentRepository!,
       rolePermissionRepository!,
       permissionRepository!,
-      cache!
+      cache!,
     )
 
     return AuthorizationService.instance
@@ -54,21 +51,21 @@ export class AuthorizationService {
 
   async resolveAuthorization(
     churchId: string,
-    userId: string
+    userId: string,
   ): Promise<AuthorizationContext> {
     const cacheKey = this.buildCacheKey(churchId, userId)
     const cached = await this.cache.get<AuthorizationContext>(cacheKey)
 
     if (cached) {
       this.logger.debug(
-        `Authorization cache hit for church ${churchId} and user ${userId}`
+        `Authorization cache hit for church ${churchId} and user ${userId}`,
       )
       return cached
     }
 
     const assignment = await this.userAssignmentRepository.findByUser(
       churchId,
-      userId
+      userId,
     )
     const roles = assignment ? assignment.getRoles() : []
 
@@ -81,7 +78,7 @@ export class AuthorizationService {
     const permissionIds =
       await this.rolePermissionRepository.findPermissionIdsByRoles(
         churchId,
-        roles
+        roles,
       )
 
     const uniquePermissionIds = [...new Set(permissionIds)]
@@ -90,7 +87,7 @@ export class AuthorizationService {
       await this.permissionRepository.findByIds(uniquePermissionIds)
 
     const permissionCodes = permissions.map(
-      (permission) => `${permission.getModule()}:${permission.getAction()}`
+      (permission) => `${permission.getModule()}:${permission.getAction()}`,
     )
 
     const context: AuthorizationContext = {
@@ -101,7 +98,7 @@ export class AuthorizationService {
     await this.cache.set(cacheKey, context, 300)
 
     this.logger.debug(
-      `Authorization cache refreshed for church ${churchId} and user ${userId}`
+      `Authorization cache refreshed for church ${churchId} and user ${userId}`,
     )
 
     return context

@@ -10,7 +10,7 @@ export const importInventoryController = async (
 ) => {
   try {
     QueueService.getInstance().dispatch(
-      QueueName.ProcessInventoryFromFile,
+      QueueName.ProcessInventoryFromFileJob,
       request
     )
 

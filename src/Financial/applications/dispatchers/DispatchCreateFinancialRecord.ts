@@ -10,6 +10,9 @@ export class DispatchCreateFinancialRecord {
   execute(financialRecord: FinancialRecordCreateQueue) {
     this.logger.info(`DispatchFinancialRecord`, financialRecord)
 
-    this.queueService.dispatch(QueueName.CreateFinancialRecord, financialRecord)
+    this.queueService.dispatch(
+      QueueName.CreateFinancialRecordJob,
+      financialRecord
+    )
   }
 }

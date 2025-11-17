@@ -17,7 +17,7 @@ export default (e, res) => {
     return
   }
 
-  QueueService.getInstance().dispatch(QueueName.TelegramNotification, {
+  QueueService.getInstance().dispatch(QueueName.TelegramNotificationJob, {
     message: e.message + " RequestId:" + logger.getRequestId(),
   })
 

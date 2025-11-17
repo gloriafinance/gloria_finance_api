@@ -122,9 +122,9 @@ export class QueueProcessor {
         this.logger.error(`Job ${job.id} in queue ${queue.name} failed:`, error)
 
         // Evitar ciclos recursivos en notificaciones de error
-        if (queue.name !== QueueName.TelegramNotification) {
+        if (queue.name !== QueueName.TelegramNotificationJob) {
           const queueDispatcher = QueueDispatcher.getInstance()
-          queueDispatcher.dispatch(QueueName.TelegramNotification, {
+          queueDispatcher.dispatch(QueueName.TelegramNotificationJob, {
             message: `Job failed: ${queue.name} - ${error.message} (RequestId: ${requestId})`,
           })
         }

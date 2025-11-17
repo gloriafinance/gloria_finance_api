@@ -20,14 +20,14 @@ import {
   UserMongoRepository,
 } from "@/SecuritySystem/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
-import { UserPermissionsCache } from "@/Shared/infrastructure"
+import { CacheService } from "@/Shared/infrastructure"
 
 export class RbacController {
   private readonly authorizationService = AuthorizationService.getInstance(
     UserAssignmentMongoRepository.getInstance(),
     RolePermissionMongoRepository.getInstance(),
     PermissionMongoRepository.getInstance(),
-    UserPermissionsCache.getInstance()
+    CacheService.getInstance(),
   )
 
   async bootstrap(req: Request, res: Response) {
@@ -41,7 +41,7 @@ export class RbacController {
         RolePermissionMongoRepository.getInstance(),
         UserAssignmentMongoRepository.getInstance(),
         UserMongoRepository.getInstance(),
-        new PasswordAdapter()
+        new PasswordAdapter(),
       ).handle({
         churchId: auth.churchId,
         userId: targetUserId,
@@ -49,7 +49,7 @@ export class RbacController {
 
       await this.authorizationService.invalidateUserCache(
         auth.churchId,
-        targetUserId
+        targetUserId,
       )
 
       res.status(HttpStatus.CREATED).send({
@@ -64,7 +64,7 @@ export class RbacController {
     try {
       const auth = req.auth
       const role = await new CreateRole(
-        RoleMongoRepository.getInstance()
+        RoleMongoRepository.getInstance(),
       ).execute({
         churchId: auth.churchId,
         name: req.body.name,
@@ -89,7 +89,7 @@ export class RbacController {
       const role = await new AssignPermissionsToRole(
         RoleMongoRepository.getInstance(),
         PermissionMongoRepository.getInstance(),
-        RolePermissionMongoRepository.getInstance()
+        RolePermissionMongoRepository.getInstance(),
       ).execute({
         churchId: auth.churchId,
         roleId,
@@ -115,7 +115,7 @@ export class RbacController {
       const permissions = await new GetRolePermissions(
         RoleMongoRepository.getInstance(),
         RolePermissionMongoRepository.getInstance(),
-        PermissionMongoRepository.getInstance()
+        PermissionMongoRepository.getInstance(),
       ).execute({
         churchId: auth.churchId,
         roleId,
@@ -136,7 +136,7 @@ export class RbacController {
       const assignment = await new AssignRolesToUser(
         RoleMongoRepository.getInstance(),
         UserAssignmentMongoRepository.getInstance(),
-        this.authorizationService
+        this.authorizationService,
       ).execute({
         churchId: auth.churchId,
         userId,
@@ -158,7 +158,7 @@ export class RbacController {
       const userId = req.params.id
 
       const permissions = await new GetUserPermissions(
-        this.authorizationService
+        this.authorizationService,
       ).execute({
         churchId: auth.churchId,
         userId,
@@ -176,7 +176,7 @@ export class RbacController {
     try {
       const auth = req.auth
       const roles = await new ListRoles(
-        RoleMongoRepository.getInstance()
+        RoleMongoRepository.getInstance(),
       ).execute(auth.churchId)
 
       res.status(HttpStatus.OK).send({ data: roles })
@@ -188,7 +188,7 @@ export class RbacController {
   async listPermissions(_req: Request, res: Response) {
     try {
       const permissions = await new ListPermissions(
-        PermissionMongoRepository.getInstance()
+        PermissionMongoRepository.getInstance(),
       ).execute()
 
       res.status(HttpStatus.OK).send({ data: permissions })
@@ -199,18 +199,18 @@ export class RbacController {
 
   private async invalidateCacheForRole(
     churchId: string,
-    roleId: string
+    roleId: string,
   ): Promise<void> {
     const userIds =
       await UserAssignmentMongoRepository.getInstance().findUserIdsByRole(
         churchId,
-        roleId
+        roleId,
       )
 
     await Promise.all(
       userIds.map((userId) =>
-        this.authorizationService.invalidateUserCache(churchId, userId)
-      )
+        this.authorizationService.invalidateUserCache(churchId, userId),
+      ),
     )
   }
 }

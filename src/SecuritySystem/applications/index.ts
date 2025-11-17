@@ -1,4 +1,4 @@
-export { CreateUserForMember } from "./CreateUserForMember"
+export { CreateUserForMemberJob } from "./CreateUserForMember.job"
 export { MakeLogin } from "./MakeLogin"
 export { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 export { ChangePassword } from "./ChangePassword"

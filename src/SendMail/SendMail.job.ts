@@ -3,7 +3,7 @@ import { Mail } from "./types/mail.type"
 import { SendMailService } from "./service/SendMail.service"
 import { Logger } from "@/Shared/adapter"
 
-export class SendMail implements IQueue {
+export class SendMailJob implements IQueue {
   private logger = Logger("SendMail")
 
   async handle(args: any): Promise<void> {

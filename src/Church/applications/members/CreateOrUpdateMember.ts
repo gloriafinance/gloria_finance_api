@@ -81,7 +81,7 @@ export class CreateOrUpdateMember {
 
     await this.memberRepository.upsert(member)
 
-    this.queueService.dispatch(QueueName.CreateUserForMember, member)
+    this.queueService.dispatch(QueueName.CreateUserForMemberJob, member)
 
     this.logger.info(
       `Queue dispatched for create user for member ${JSON.stringify(member)}`

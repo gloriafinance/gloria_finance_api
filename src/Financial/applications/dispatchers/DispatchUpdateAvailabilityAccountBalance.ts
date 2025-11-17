@@ -31,7 +31,7 @@ export class DispatchUpdateAvailabilityAccountBalance {
     })
 
     if (availabilityAccount.getType() === AccountType.BANK) {
-      this.queueService.dispatch(QueueName.MovementBankRecord, {
+      this.queueService.dispatch(QueueName.MovementBankRecordJob, {
         amount: amount,
         bankingOperation:
           operationType === TypeOperationMoney.MONEY_OUT

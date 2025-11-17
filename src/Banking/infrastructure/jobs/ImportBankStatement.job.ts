@@ -184,7 +184,7 @@ export class ImportBankStatementJob implements IQueue {
       .filter(Boolean)
       .join("\n")
 
-    this.queueService.dispatch(QueueName.TelegramNotification, { message })
+    this.queueService.dispatch(QueueName.TelegramNotificationJob, { message })
   }
 
   private async cleanupTempFile(localFilePath: string): Promise<void> {

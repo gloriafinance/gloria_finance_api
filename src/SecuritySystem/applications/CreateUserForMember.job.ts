@@ -5,8 +5,8 @@ import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
 import { Logger } from "@/Shared/adapter"
 
-export class CreateUserForMember implements IQueue {
-  private logger = Logger("AssingChurchValidator")
+export class CreateUserForMemberJob implements IQueue {
+  private logger = Logger(CreateUserForMemberJob.name)
 
   constructor(
     private readonly userRepository: IUserRepository,

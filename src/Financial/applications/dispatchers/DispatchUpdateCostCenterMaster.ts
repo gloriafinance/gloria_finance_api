@@ -14,7 +14,7 @@ export class DispatchUpdateCostCenterMaster {
   }) {
     this.logger.info(`DispatchUpdateCostCenterMaster`, args)
 
-    this.queueService.dispatch(QueueName.UpdateCostCenterMaster, {
+    this.queueService.dispatch(QueueName.UpdateCostCenterMasterJob, {
       churchId: args.churchId,
       amount: args.amount,
       costCenterId: args.costCenterId,
