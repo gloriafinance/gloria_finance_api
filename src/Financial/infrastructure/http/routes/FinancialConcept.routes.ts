@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import { FinancialConfigurationController } from "@/Financial/infrastructure/http/controllers/FinancialConfiguration.controller"
 import { CreateOrUpdateFinancialConceptController } from "@/Financial/infrastructure/http/controllers/financialConcept/CreateOrUpdateFinancialConcept.controller"
 import { ConceptType } from "@/Financial/domain"
@@ -24,7 +24,7 @@ financialConceptRoutes.post(
 financialConceptRoutes.get(
   "/:churchId",
   PermissionMiddleware,
-  Can("financial_configuration", "manage_concepts"),
+  Can("financial_configuration", ["manage_concepts", "list_concepts"]),
   async (req, res) => {
     await FinancialConfigurationController.findFinancialConceptsByChurchIdAndTypeConcept(
       req.params.churchId,
@@ -36,7 +36,7 @@ financialConceptRoutes.get(
 financialConceptRoutes.get(
   "/:churchId/:typeConcept",
   PermissionMiddleware,
-  Can("financial_configuration", "manage_concepts"),
+  Can("financial_configuration", ["manage_concepts", "list_concepts"]),
   async (req, res) => {
     await FinancialConfigurationController.findFinancialConceptsByChurchIdAndTypeConcept(
       req.params.churchId,
