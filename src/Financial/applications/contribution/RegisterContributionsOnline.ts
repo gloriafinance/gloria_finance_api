@@ -39,17 +39,24 @@ export class RegisterContributionsOnline {
       year: date.getFullYear(),
     })
 
-    const voucher = await this.storageService.uploadFile(
-      contributionRequest.bankTransferReceipt
-    )
+    let voucher = contributionRequest.bankTransferReceipt
+    if (voucher && typeof voucher !== "string") {
+      voucher = await this.storageService.uploadFile(voucher)
+    }
+
+    const voucherPath = (voucher as string) || ""
 
     const contribution: OnlineContributions = OnlineContributions.create(
       AmountValue.create(contributionRequest.amount),
       member,
       financialConcept,
-      voucher,
+      voucherPath,
       contributionRequest.observation,
-      availabilityAccount
+      availabilityAccount,
+      {
+        accountReceivableId: contributionRequest.accountReceivableId,
+        installmentId: contributionRequest.installmentId,
+      }
     )
 
     await this.contributionRepository.upsert(contribution)

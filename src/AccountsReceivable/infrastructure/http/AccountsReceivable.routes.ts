@@ -5,10 +5,16 @@ import {
   ConfirmOrDenyPaymentCommitmentController,
   CreateAccountReceivableController,
   ListAccountReceivableController,
+  ListMemberAccountReceivableController,
+  DeclareInstallmentPaymentController,
   PayAccountReceivableController,
 } from "@/AccountsReceivable/infrastructure/http/controllers"
-import { FilterAccountReceivableRequest } from "@/AccountsReceivable/domain"
+import {
+  AccountsReceivableStatus,
+  FilterAccountReceivableRequest,
+} from "@/AccountsReceivable/domain"
 import PayAccountReceivableValidator from "@/AccountsReceivable/infrastructure/http/validators/PayAccountReceivable.validator"
+import DeclareInstallmentPaymentValidator from "@/AccountsReceivable/infrastructure/http/validators/DeclareInstallmentPayment.validator"
 import { AmountValue } from "@/Shared/domain"
 import CreateAccountReceivableValidator from "@/AccountsReceivable/infrastructure/http/validators/CreateAccountReceivable.validator"
 
@@ -48,6 +54,27 @@ accountsReceivableRoutes.get(
   }
 )
 
+accountsReceivableRoutes.get(
+  "/member/:debtorDNI/commitments",
+  PermissionMiddleware,
+  Can("accounts_receivable", ["member_commitments", "read"]),
+  async (req, res) => {
+    const page = req.query.page ? Number(req.query.page) : 1
+    const perPage = req.query.perPage ? Number(req.query.perPage) : 10
+
+    await ListMemberAccountReceivableController(
+      {
+        churchId: req.auth.churchId,
+        debtorDNI: req.params.debtorDNI,
+        page,
+        perPage,
+        status: req.query.status as AccountsReceivableStatus,
+      },
+      res
+    )
+  }
+)
+
 accountsReceivableRoutes.post(
   "/pay",
   [
@@ -72,6 +99,28 @@ accountsReceivableRoutes.post(
         createdBy: req.auth.name,
         installmentIds,
         amount: AmountValue.create(req.body.amount),
+        file: req?.files?.file,
+      },
+      res
+    )
+  }
+)
+
+accountsReceivableRoutes.post(
+  "/member/payment-declaration",
+  [
+    PermissionMiddleware,
+    Can("accounts_receivable", "member_commitments"),
+    DeclareInstallmentPaymentValidator,
+  ],
+  async (req, res) => {
+    await DeclareInstallmentPaymentController(
+      {
+        ...req.body,
+        debtorDNI: req.body.debtorDNI || req.auth.dni,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
+        amount: Number(req.body.amount),
         file: req?.files?.file,
       },
       res

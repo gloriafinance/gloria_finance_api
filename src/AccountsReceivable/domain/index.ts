@@ -10,6 +10,8 @@ export { AccountReceivable } from "./AccountReceivable"
 export { AccountReceivableRequest } from "./requests/AccountReceivable.request"
 export { FilterAccountReceivableRequest } from "./requests/FilterAccountReceivable.request"
 export { PayAccountReceivableRequest } from "./requests/PayAccountReceivable.request"
+export { FilterMemberAccountReceivableRequest } from "./requests/FilterMemberAccountReceivable.request"
+export { DeclareInstallmentPaymentRequest } from "./requests/DeclareInstallmentPayment.request"
 export * from "./requests/ConfirmOrDenyPaymentCommitment.request"
 
 export { PayAccountReceivableNotFound } from "./exceptions/PayAccountReceivableNotFound.exception"

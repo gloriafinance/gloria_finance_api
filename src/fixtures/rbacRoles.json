@@ -15,6 +15,7 @@
       "accounts_receivable:manage",
       "accounts_receivable:read",
       "accounts_receivable:commitments",
+      "accounts_receivable:member_commitments",
       "accounts_receivable:apply_payments",
       "financial_configuration:manage_concepts",
       "financial_configuration:availability_accounts",
@@ -132,7 +133,8 @@
     "permissions": [
       "financial_records:list_contributions",
       "financial_records:add_contributions",
-      "financial_configuration:list_concepts"
+      "financial_configuration:list_concepts",
+      "accounts_receivable:member_commitments"
     ],
     "isSystem": true
   }

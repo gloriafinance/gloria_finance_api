@@ -10,17 +10,26 @@ import {
 } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "../../../Shared/adapter"
-import { IQueueService } from "../../../Shared/domain"
+import { AmountValue, IQueueService } from "../../../Shared/domain"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications/dispatchers/DispatchCreateFinancialRecord"
 import { DateBR } from "../../../Shared/helpers"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
+import { PayAccountReceivable } from "@/AccountsReceivable/applications"
+import {
+  IAvailabilityAccountRepository,
+  IFinancialRecordRepository,
+} from "@/Financial/domain/interfaces"
+import { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
 
 export class UpdateContributionStatus {
   private logger = Logger("UpdateContributionStatus")
 
   constructor(
     private readonly contributionRepository: IOnlineContributionsRepository,
-    private readonly queueService: IQueueService
+    private readonly queueService: IQueueService,
+    private readonly financialRecordRepository: IFinancialRecordRepository,
+    private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
+    private readonly accountReceivableRepository: IAccountsReceivableRepository
   ) {}
 
   async execute(
@@ -75,5 +84,29 @@ export class UpdateContributionStatus {
       voucher: contribution.getBankTransferReceipt(),
       description: concept.getName(),
     })
+
+    if (
+      contribution.getAccountReceivableId() &&
+      contribution.getInstallmentId()
+    ) {
+      await new PayAccountReceivable(
+        this.financialRecordRepository,
+        this.availabilityAccountRepository,
+        this.accountReceivableRepository,
+        this.queueService
+      ).execute({
+        accountReceivableId: contribution.getAccountReceivableId(),
+        installmentId: contribution.getInstallmentId(),
+        installmentIds: [contribution.getInstallmentId()],
+        financialTransactionId: contribution.getBankTransferReceipt(),
+        availabilityAccountId:
+          contribution.getAvailabilityAccount().getAvailabilityAccountId(),
+        churchId: contribution.getMember().getChurchId(),
+        amount: AmountValue.create(contribution.getAmount()),
+        voucher: contribution.getBankTransferReceipt(),
+        concept: concept.getName(),
+        createdBy: createdBy,
+      })
+    }
   }
 }
