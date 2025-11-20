@@ -91,6 +91,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "financial_configuration:list_concepts",
+    "module": "financial_configuration",
+    "action": "list_concepts",
+    "description": "Listar conceitos financeiros",
+    "isSystem": true
+  },
+  {
     "permissionId": "financial_configuration:availability_accounts",
     "module": "financial_configuration",
     "action": "availability_accounts",

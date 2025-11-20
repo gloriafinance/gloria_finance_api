@@ -131,7 +131,8 @@
     "description": "Acesso ao aplicativo como membro da igreja.",
     "permissions": [
       "financial_records:list_contributions",
-      "financial_records:add_contributions"
+      "financial_records:add_contributions",
+      "financial_configuration:list_concepts"
     ],
     "isSystem": true
   }
