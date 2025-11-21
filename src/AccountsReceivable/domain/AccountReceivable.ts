@@ -118,7 +118,9 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.debtor = params.debtor
     accountReceivable.token = params.token
     accountReceivable.type = params.type
-    accountReceivable.financialConcept = params.financialConcept
+    accountReceivable.financialConcept = FinancialConcept.fromPrimitives(
+      params.financialConcept
+    )
     accountReceivable.createdBy = params.createdBy || ""
 
     return accountReceivable
@@ -153,6 +155,19 @@ export class AccountReceivable extends AggregateRoot {
 
   getInstallments(): Installments[] {
     return this.installments
+  }
+
+  markInstallmentInReview(installmentId: string): void {
+    const installment = this.getInstallment(installmentId)
+
+    if (!installment) {
+      return
+    }
+
+    installment.amountPaid = installment.amountPaid ?? 0
+    installment.amountPending = installment.amountPending ?? installment.amount
+    installment.status = InstallmentsStatus.IN_REVIEW
+    this.updatedAt = DateBR()
   }
 
   getDescription(): string {

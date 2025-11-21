@@ -20,14 +20,20 @@ export class OnlineContributions extends AggregateRoot {
   private observation: string
   private createdAt: Date
   private availabilityAccount: AvailabilityAccount
+  private accountReceivableId?: string
+  private installmentId?: string
 
   static create(
     amount: AmountValue,
     member: Member,
     financialConcept: FinancialConcept,
     bankTransferReceipt: string,
-    observation: string,
-    availabilityAccount: AvailabilityAccount
+    observation: string = "",
+    availabilityAccount: AvailabilityAccount,
+    reference?: {
+      accountReceivableId?: string
+      installmentId?: string
+    }
   ): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.member = member
@@ -46,6 +52,8 @@ export class OnlineContributions extends AggregateRoot {
     }
 
     contributions.observation = observation
+    contributions.accountReceivableId = reference?.accountReceivableId
+    contributions.installmentId = reference?.installmentId
 
     return contributions
   }
@@ -67,6 +75,8 @@ export class OnlineContributions extends AggregateRoot {
     contributions.availabilityAccount = AvailabilityAccount.fromPrimitives(
       plainData.availabilityAccount
     )
+    contributions.accountReceivableId = plainData.accountReceivableId
+    contributions.installmentId = plainData.installmentId
 
     return contributions
   }
@@ -103,6 +113,14 @@ export class OnlineContributions extends AggregateRoot {
     return this.availabilityAccount
   }
 
+  getAccountReceivableId(): string | undefined {
+    return this.accountReceivableId
+  }
+
+  getInstallmentId(): string | undefined {
+    return this.installmentId
+  }
+
   getFinancialConcept() {
     return this.financialConcept
   }
@@ -123,6 +141,8 @@ export class OnlineContributions extends AggregateRoot {
       observation: this.observation,
       financialConcept: this.financialConcept.toPrimitives(),
       availabilityAccount: this.availabilityAccount,
+      accountReceivableId: this.accountReceivableId,
+      installmentId: this.installmentId,
     }
   }
 }

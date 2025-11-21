@@ -2,6 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
   IAccountsReceivableRepository,
+  InstallmentNotFound,
   PayAccountReceivableNotFound,
   PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
@@ -20,7 +21,6 @@ import {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
-import { InstallmentNotFound } from "@/AccountsPayable/domain"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
 
 export class PayAccountReceivable {
@@ -70,6 +70,7 @@ export class PayAccountReceivable {
           this.logger.debug(`Installment ${installmentId} not found`)
           throw new InstallmentNotFound(installmentId)
         }
+
         amountPay = PayInstallment(installment, amountPay, this.logger)
       }
 

@@ -4,12 +4,12 @@ import {
   FinancialConcept,
   OnlineContributions,
 } from "../../domain"
-import { AmountValue, IStorageService } from "../../../Shared/domain"
-import { Member } from "../../../Church/domain"
-import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
-import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
+import { AmountValue, IStorageService } from "@/Shared/domain"
+import { Member } from "@/Church/domain"
+import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 
 export class RegisterContributionsOnline {
@@ -39,17 +39,24 @@ export class RegisterContributionsOnline {
       year: date.getFullYear(),
     })
 
-    const voucher = await this.storageService.uploadFile(
-      contributionRequest.bankTransferReceipt
-    )
+    let voucher = contributionRequest.bankTransferReceipt
+    if (voucher && typeof voucher !== "string") {
+      voucher = await this.storageService.uploadFile(voucher)
+    }
+
+    const voucherPath = (voucher as string) || ""
 
     const contribution: OnlineContributions = OnlineContributions.create(
       AmountValue.create(contributionRequest.amount),
       member,
       financialConcept,
-      voucher,
+      voucherPath,
       contributionRequest.observation,
-      availabilityAccount
+      availabilityAccount,
+      {
+        accountReceivableId: contributionRequest.accountReceivableId,
+        installmentId: contributionRequest.installmentId,
+      }
     )
 
     await this.contributionRepository.upsert(contribution)

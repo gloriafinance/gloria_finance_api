@@ -22,6 +22,8 @@ import {
   FinancialConceptMongoRepository,
   OnlineContributionsMongoRepository,
 } from "../../persistence"
+import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
+import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { Logger } from "@/Shared/adapter"
 import { Response } from "express"
@@ -95,7 +97,10 @@ export const UpdateContributionStatusController = async (
   try {
     await new UpdateContributionStatus(
       OnlineContributionsMongoRepository.getInstance(),
-      QueueService.getInstance()
+      QueueService.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      AvailabilityAccountMongoRepository.getInstance(),
+      AccountsReceivableMongoRepository.getInstance()
     ).execute(contributionId, status, createdBy)
 
     res.status(HttpStatus.OK).send({ message: "Contribution updated" })

@@ -84,6 +84,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "accounts_receivable:member_commitments",
+    "module": "accounts_receivable",
+    "action": "member_commitments",
+    "description": "Consultar e declarar compromissos de contribuição do membro",
+    "isSystem": true
+  },
+  {
     "permissionId": "financial_configuration:manage_concepts",
     "module": "financial_configuration",
     "action": "manage_concepts",

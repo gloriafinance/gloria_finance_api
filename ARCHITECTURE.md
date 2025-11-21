@@ -574,6 +574,7 @@ describe("POST /churches", () => {
 ❌ **Don't put business logic in controllers**
 ❌ **Don't import infrastructure in domain**
 ❌ **Don't use repositories directly in controllers (use use cases)**
+❌ **Don't instantiate infrastructure inside use cases** (e.g., calling `MongoRepository.getInstance()` or `StorageGCP.getInstance()` from a use case like `DeclareInstallmentPayment`. Inject repositories/adapters through the constructor and wire them in the controller/bootstrap layer.)
 ❌ **Don't mix HTTP concerns with business logic**
 ❌ **Don't use global state or singletons for domain entities**
 ❌ **Don't bypass the layered architecture**
