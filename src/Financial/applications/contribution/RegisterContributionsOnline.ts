@@ -4,12 +4,12 @@ import {
   FinancialConcept,
   OnlineContributions,
 } from "../../domain"
-import { AmountValue, IStorageService } from "../../../Shared/domain"
-import { Member } from "../../../Church/domain"
-import { IFinancialYearRepository } from "../../../ConsolidatedFinancial/domain"
-import { FinancialMonthValidator } from "../../../ConsolidatedFinancial/applications"
+import { AmountValue, IStorageService } from "@/Shared/domain"
+import { Member } from "@/Church/domain"
+import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 
 export class RegisterContributionsOnline {

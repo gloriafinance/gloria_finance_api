@@ -99,8 +99,9 @@ export class UpdateContributionStatus {
         installmentId: contribution.getInstallmentId(),
         installmentIds: [contribution.getInstallmentId()],
         financialTransactionId: contribution.getBankTransferReceipt(),
-        availabilityAccountId:
-          contribution.getAvailabilityAccount().getAvailabilityAccountId(),
+        availabilityAccountId: contribution
+          .getAvailabilityAccount()
+          .getAvailabilityAccountId(),
         churchId: contribution.getMember().getChurchId(),
         amount: AmountValue.create(contribution.getAmount()),
         voucher: contribution.getBankTransferReceipt(),

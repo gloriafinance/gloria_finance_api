@@ -16,10 +16,11 @@ export default async (req: Request, res: Response, next: NextFunction) => {
   const rule = {
     accountReceivableId: "required|string",
     installmentId: "required|string",
-    debtorDNI: "required|string",
+    memberId: "string",
     availabilityAccountId: "required|string",
     amount: "required|numeric",
     voucher: "string",
+    file: "required",
   }
 
   const v = new Validator(payload, rule)

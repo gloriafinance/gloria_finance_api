@@ -18,3 +18,4 @@ export { PayAccountReceivableNotFound } from "./exceptions/PayAccountReceivableN
 export { InstallmentNotFound } from "./exceptions/InstallmentNotFound.exception"
 export { AccountReceivablePaid } from "./exceptions/AccountReceivablePaid.exception"
 export * from "./exceptions/AccountReceivableNotFound.exception"
+export { InvalidMemberForInstallmentPayment } from "./exceptions/InvalidMemberForInstallmentPayment.exception"

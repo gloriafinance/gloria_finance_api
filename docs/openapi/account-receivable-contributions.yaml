@@ -10,12 +10,12 @@ servers:
   - url: https://api.example.com
     description: Producción (reemplazar)
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 paths:
   /api/v1/account-receivable/member/{debtorDNI}/commitments:
     get:
       summary: Lista compromisos de contribución del miembro
-      tags: [Accounts Receivable]
+      tags: [ Accounts Receivable ]
       parameters:
         - in: path
           name: debtorDNI
@@ -27,7 +27,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [PENDING, PAID, PENDING_ACCEPTANCE, DENIED]
+            enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
           description: Filtra por estado de la cuenta por cobrar.
         - in: query
           name: page
@@ -62,7 +62,7 @@ paths:
   /api/v1/account-receivable/member/payment-declaration:
     post:
       summary: Declara un pago digital de una cuota de compromiso (crea OnlineContribution)
-      tags: [Accounts Receivable]
+      tags: [ Accounts Receivable ]
       requestBody:
         required: true
         content:
@@ -74,7 +74,7 @@ paths:
                   type: string
                 installmentId:
                   type: string
-                debtorDNI:
+                memberId:
                   type: string
                   description: Se usa para validar que el miembro corresponde al compromiso.
                 availabilityAccountId:
@@ -104,11 +104,11 @@ paths:
         "422":
           description: Validación fallida.
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
   /api/v1/finance/contribution/{contributionId}/status/{status}:
     patch:
       summary: Actualiza el estado de una contribución en línea
-      tags: [Financial]
+      tags: [ Financial ]
       parameters:
         - in: path
           name: contributionId
@@ -130,11 +130,11 @@ paths:
         "404":
           description: Contribución no encontrada.
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
   /api/v1/account-receivable/pay:
     post:
       summary: Aplica un pago a una o varias cuotas de cuenta por cobrar
-      tags: [Accounts Receivable]
+      tags: [ Accounts Receivable ]
       requestBody:
         required: true
         content:
@@ -168,7 +168,7 @@ paths:
         "422":
           description: Validación fallida.
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
 components:
   securitySchemes:
     bearerAuth:
@@ -198,7 +198,7 @@ components:
           nullable: true
         status:
           type: string
-          enum: [PENDING, PAID, PARTIAL_PAYMENT]
+          enum: [ PENDING, PAID, PARTIAL_PAYMENT ]
     AccountReceivable:
       type: object
       properties:
@@ -216,7 +216,7 @@ components:
           type: number
         status:
           type: string
-          enum: [PENDING, PAID, PENDING_ACCEPTANCE, DENIED]
+          enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
         installments:
           type: array
           items:
@@ -226,7 +226,7 @@ components:
           properties:
             debtorType:
               type: string
-              enum: [MEMBER, GROUP, EXTERNAL]
+              enum: [ MEMBER, GROUP, EXTERNAL ]
             debtorDNI:
               type: string
             name:

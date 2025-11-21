@@ -1,12 +1,12 @@
 import { Router } from "express"
 
-import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   ConfirmOrDenyPaymentCommitmentController,
   CreateAccountReceivableController,
+  DeclareInstallmentPaymentController,
   ListAccountReceivableController,
   ListMemberAccountReceivableController,
-  DeclareInstallmentPaymentController,
   PayAccountReceivableController,
 } from "@/AccountsReceivable/infrastructure/http/controllers"
 import {
@@ -117,9 +117,7 @@ accountsReceivableRoutes.post(
     await DeclareInstallmentPaymentController(
       {
         ...req.body,
-        debtorDNI: req.body.debtorDNI || req.auth.dni,
-        churchId: req.auth.churchId,
-        createdBy: req.auth.name,
+        memberId: req.body.memberId || req.auth.memberId,
         amount: Number(req.body.amount),
         file: req?.files?.file,
       },

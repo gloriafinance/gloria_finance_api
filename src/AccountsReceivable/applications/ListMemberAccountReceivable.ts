@@ -28,9 +28,7 @@ export class ListMemberAccountReceivable {
       `Start List Member Account Receivable for debtor ${request.debtorDNI}`
     )
 
-    return this.accountReceivableRepository.list(
-      this.prepareCriteria(request)
-    )
+    return this.accountReceivableRepository.list(this.prepareCriteria(request))
   }
 
   private prepareCriteria(request: FilterMemberAccountReceivableRequest) {

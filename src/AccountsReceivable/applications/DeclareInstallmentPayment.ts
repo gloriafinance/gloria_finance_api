@@ -1,43 +1,42 @@
 import { Logger } from "@/Shared/adapter"
 import {
-  AccountReceivable,
   AccountReceivableNotFound,
-  AccountReceivableType,
   DebtorType,
   DeclareInstallmentPaymentRequest,
   IAccountsReceivableRepository,
   InstallmentNotFound,
-  InvalidMemberForInstallmentPayment,
 } from "@/AccountsReceivable/domain"
+import { ContributionRequest } from "@/Financial/domain"
 import {
-  ContributionRequest,
-  OnlineContributionsStatus,
-} from "@/Financial/domain"
-import { RegisterContributionsOnline } from "@/Financial/applications"
-import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
-import { AvailabilityAccountNotFound } from "@/Financial/domain/exceptions"
-import { MemberMongoRepository } from "@/Church/infrastructure"
-import { FindMemberById } from "@/Church/applications"
-import { OnlineContributionsMongoRepository } from "@/Financial/infrastructure/persistence/OnlineContributionsMongoRepository"
-import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
-import { StorageGCP } from "@/Shared/infrastructure"
+  FindAvailabilityAccountByAvailabilityAccountId,
+  RegisterContributionsOnline,
+} from "@/Financial/applications"
 import { AmountValue } from "@/Shared/domain"
+import { IMemberRepository } from "@/Church/domain"
+import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import { FindMemberById } from "@/Church/applications"
 
 export class DeclareInstallmentPayment {
   private logger = Logger(DeclareInstallmentPayment.name)
 
   constructor(
-    private readonly accountReceivableRepository: IAccountsReceivableRepository
+    private readonly accountReceivableRepository: IAccountsReceivableRepository,
+    private readonly memberRepository: IMemberRepository,
+    private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
+    private readonly registerContributionsOnline: RegisterContributionsOnline
   ) {}
 
-  async execute(
-    request: DeclareInstallmentPaymentRequest
-  ): Promise<OnlineContributionsStatus> {
+  async execute(request: DeclareInstallmentPaymentRequest): Promise<void> {
     this.logger.info(`Start DeclareInstallmentPayment`, request)
+
+    const member = await new FindMemberById(this.memberRepository).execute(
+      request.memberId
+    )
 
     const account = await this.accountReceivableRepository.one({
       accountReceivableId: request.accountReceivableId,
-      churchId: request.churchId,
+      "debtor.debtorDNI": member.getDni(),
+      "debtor.debtorType": DebtorType.MEMBER,
     })
 
     if (!account) {
@@ -45,35 +44,16 @@ export class DeclareInstallmentPayment {
       throw new AccountReceivableNotFound()
     }
 
-    if (account.getType() !== AccountReceivableType.CONTRIBUTION) {
-      throw new InvalidMemberForInstallmentPayment()
-    }
-
-    const debtor = account.getDebtor()
-    const debtorMatches = debtor.debtorDNI === request.debtorDNI
-
-    if (debtor.debtorType !== DebtorType.MEMBER || !debtorMatches) {
-      throw new InvalidMemberForInstallmentPayment()
-    }
+    const availabilityAccount =
+      await new FindAvailabilityAccountByAvailabilityAccountId(
+        this.availabilityAccountRepository
+      ).execute(request.availabilityAccountId, member.getChurchId())
 
     const installment = account.getInstallment(request.installmentId)
 
     if (!installment) {
       this.logger.debug(`Installment ${request.installmentId} not found`)
       throw new InstallmentNotFound(request.installmentId)
-    }
-
-    const member = await new FindMemberById(
-      MemberMongoRepository.getInstance()
-    ).execute(request.debtorDNI)
-
-    const availabilityAccount =
-      await AvailabilityAccountMongoRepository.getInstance().one({
-        availabilityAccountId: request.availabilityAccountId,
-      })
-
-    if (!availabilityAccount) {
-      throw new AvailabilityAccountNotFound()
     }
 
     const contributionRequest: ContributionRequest = {
@@ -88,17 +68,11 @@ export class DeclareInstallmentPayment {
       installmentId: installment.installmentId,
     }
 
-    await new RegisterContributionsOnline(
-      OnlineContributionsMongoRepository.getInstance(),
-      StorageGCP.getInstance(process.env.BUCKET_FILES),
-      FinancialYearMongoRepository.getInstance()
-    ).execute(
+    await this.registerContributionsOnline.execute(
       contributionRequest,
       availabilityAccount,
       member,
       account.getFinancialConcept()
     )
-
-    return OnlineContributionsStatus.PENDING_VERIFICATION
   }
 }
