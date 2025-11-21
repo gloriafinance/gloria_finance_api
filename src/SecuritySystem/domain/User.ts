@@ -80,6 +80,10 @@ export class User extends AggregateRoot {
     return this.userId
   }
 
+  getMemberId(): string | undefined {
+    return this.memberId
+  }
+
   setEmail(email: string): User {
     this.email = email
     return this

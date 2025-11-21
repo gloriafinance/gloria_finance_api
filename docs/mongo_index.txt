@@ -1,3 +1,5 @@
+db["members"].createIndex({ memberId: 1 },{ unique: true })
+
 db["financial_records"].createIndex(
   {
     churchId: 1,

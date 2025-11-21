@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: Account Receivable Commitments & Online Contributions
+  version: 1.0.0
+  description: |
+    Endpoints para gestionar compromisos de contribuciones de miembros y declarar pagos digitales
+    que luego se procesan como contribuciones en línea y, tras su aprobación, aplican el pago
+    a la cuenta por cobrar correspondiente.
+servers:
+  - url: https://api.example.com
+    description: Producción (reemplazar)
+security:
+  - bearerAuth: [ ]
+paths:
+  /api/v1/account-receivable/member/commitments:
+    get:
+      summary: Lista compromisos de contribución del miembro
+      tags: [ Accounts Receivable ]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
+          description: Filtra por estado de la cuenta por cobrar.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        "200":
+          description: Lista paginada de cuentas por cobrar del miembro.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nextPag:
+                    type: integer
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountReceivable"
+        "403":
+          description: Permiso faltante (`accounts_receivable:member_commitments` o `accounts_receivable:read`).
+  /api/v1/account-receivable/member/payment-declaration:
+    post:
+      summary: Declara un pago digital de una cuota de compromiso (crea OnlineContribution)
+      tags: [ Accounts Receivable ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                accountReceivableId:
+                  type: string
+                installmentId:
+                  type: string
+                memberId:
+                  type: string
+                  description: Se usa para validar que el miembro corresponde al compromiso.
+                availabilityAccountId:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                voucher:
+                  type: string
+                  format: binary
+                  description: Comprobante de transferencia bancaria (opcional).
+              required:
+                - accountReceivableId
+                - installmentId
+                - availabilityAccountId
+                - amount
+      responses:
+        "200":
+          description: Contribución registrada en estado pendiente de verificación y la cuota queda marcada como IN_REVIEW.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Validación fallida.
+      security:
+        - bearerAuth: [ ]
+  /api/v1/finance/contribution/{contributionId}/status/{status}:
+    patch:
+      summary: Actualiza el estado de una contribución en línea
+      tags: [ Financial ]
+      parameters:
+        - in: path
+          name: contributionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: status
+          required: true
+          schema:
+            type: string
+            enum:
+              - PENDING_VERIFICATION
+              - PROCESSED
+              - REJECTED
+      responses:
+        "200":
+          description: Contribución actualizada. Si posee referencia a AccountReceivable y queda PROCESSED, se ejecuta el pago de la cuota.
+        "404":
+          description: Contribución no encontrada.
+      security:
+        - bearerAuth: [ ]
+  /api/v1/account-receivable/pay:
+    post:
+      summary: Aplica un pago a una o varias cuotas de cuenta por cobrar
+      tags: [ Accounts Receivable ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountReceivableId:
+                  type: string
+                installmentId:
+                  type: string
+                  description: Si se envían varias, separadas por coma (el backend las divide en installmentIds).
+                availabilityAccountId:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                voucher:
+                  type: string
+                  description: Identificador o comprobante de transacción bancaria.
+              required:
+                - accountReceivableId
+                - installmentId
+                - availabilityAccountId
+                - amount
+      responses:
+        "200":
+          description: Pago aplicado y registro financiero generado.
+        "404":
+          description: Cuenta por cobrar o cuota no encontrada.
+        "422":
+          description: Validación fallida.
+      security:
+        - bearerAuth: [ ]
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Installment:
+      type: object
+      properties:
+        installmentId:
+          type: string
+        amount:
+          type: number
+        amountPaid:
+          type: number
+          nullable: true
+        amountPending:
+          type: number
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+        paymentDate:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [ PENDING, IN_REVIEW, PAID, PARTIAL_PAYMENT ]
+    AccountReceivable:
+      type: object
+      properties:
+        accountReceivableId:
+          type: string
+        churchId:
+          type: string
+        description:
+          type: string
+        amountTotal:
+          type: number
+        amountPaid:
+          type: number
+        amountPending:
+          type: number
+        status:
+          type: string
+          enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
+        installments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Installment"
+        debtor:
+          type: object
+          properties:
+            debtorType:
+              type: string
+              enum: [ MEMBER, GROUP, EXTERNAL ]
+            debtorDNI:
+              type: string
+            name:
+              type: string
+            phone:
+              type: string
+            email:
+              type: string
+            address:
+              type: string

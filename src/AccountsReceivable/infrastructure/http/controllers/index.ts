@@ -2,3 +2,5 @@ export { CreateAccountReceivableController } from "./CreateAccountReceivable.con
 export { ListAccountReceivableController } from "./ListAccountReceivable.controller"
 export { PayAccountReceivableController } from "./PayAccountReceivable.controller"
 export * from "./ConfirmOrDenyPaymentCommitment.controller"
+export { ListMemberAccountReceivableController } from "./ListMemberAccountReceivable.controller"
+export { DeclareInstallmentPaymentController } from "./DeclareInstallmentPayment.controller"
