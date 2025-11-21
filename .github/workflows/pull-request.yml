@@ -1,0 +1,35 @@
+name: pull-request.yml
+on:
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+  verify-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Configure npm for GitHub Packages
+        run: |
+          echo "@abejarano:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN }}" >> .npmrc
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Check code formatting
+        run: npm run format:check
+
+      - name: Build code
+        run: npm run build
