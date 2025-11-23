@@ -248,7 +248,7 @@ export class FinanceRecordMongoRepository
           $project: {
             category: "$financialConcept.statementCategory",
             type: "$type",
-            amount: "$amount",
+            amount: { $abs: "$amount" },
           },
         },
         {
@@ -263,10 +263,7 @@ export class FinanceRecordMongoRepository
               $sum: {
                 $cond: [
                   {
-                    $in: [
-                      "$type",
-                      [ConceptType.DISCHARGE, ConceptType.PURCHASE],
-                    ],
+                    $in: ["$type", [ConceptType.OUTGO, ConceptType.PURCHASE]],
                   },
                   "$amount",
                   0,
