@@ -27,7 +27,12 @@ import {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import { AmountValue, InstallmentsStatus, IQueueService, IStorageService } from "@/Shared/domain"
+import {
+  AmountValue,
+  InstallmentsStatus,
+  IQueueService,
+  IStorageService,
+} from "@/Shared/domain"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   id?: string
@@ -51,7 +56,7 @@ const createConcept = (churchId = "church-1") =>
     name: "Concept",
     description: "Payment concept",
     active: true,
-    type: ConceptType.DISCHARGE,
+    type: ConceptType.OUTGO,
     statementCategory: StatementCategory.OPEX,
     createdAt: new Date(),
     churchId,

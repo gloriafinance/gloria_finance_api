@@ -46,7 +46,7 @@ export const FinancialRecordController = async (
     let costCenter: CostCenter = undefined
 
     if (
-      financialConcept.getType() === ConceptType.DISCHARGE &&
+      financialConcept.getType() === ConceptType.OUTGO &&
       !request.costCenterId
     ) {
       //TODO message em portugues, should be internationalized
@@ -59,7 +59,7 @@ export const FinancialRecordController = async (
       return
     }
     if (
-      financialConcept.getType() === ConceptType.DISCHARGE &&
+      financialConcept.getType() === ConceptType.OUTGO &&
       request.costCenterId
     ) {
       costCenter = await new FindCostCenterByCostCenterId(
