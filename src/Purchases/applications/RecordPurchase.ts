@@ -1,27 +1,27 @@
-import { Logger } from "../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 import { IPurchaseRepository } from "../domain/interfaces"
 import { RecordPurchaseRequest } from "../domain/requests"
 import {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
-} from "../../Financial/domain/interfaces"
+} from "@/Financial/domain/interfaces"
 import {
   DispatchCreateFinancialRecord,
   FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
-} from "../../Financial/applications"
+} from "@/Financial/applications"
 import { Purchase } from "../domain"
-import { IQueueService } from "../../Shared/domain"
+import { IQueueService } from "@/Shared/domain"
 import {
   AccountType,
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
-} from "../../Financial/domain"
+} from "@/Financial/domain"
 
 export class RecordPurchase {
-  private logger = Logger("RecordPurchase")
+  private logger = Logger(RecordPurchase.name)
 
   constructor(
     private readonly purchaseRepository: IPurchaseRepository,

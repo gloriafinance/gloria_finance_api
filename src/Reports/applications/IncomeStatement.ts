@@ -52,6 +52,7 @@ export class IncomeStatement {
       StatementCategory.REVENUE,
       StatementCategory.COGS,
       StatementCategory.OPEX,
+      StatementCategory.MINISTRY_TRANSFERS,
       StatementCategory.CAPEX,
       StatementCategory.OTHER,
     ]
@@ -80,7 +81,7 @@ export class IncomeStatement {
         reversal: 0,
       }
 
-      current.income = summary.income ?? 0
+      current.income = (summary.income ?? 0) - (summary.reversal ?? 0)
       current.expenses = summary.expenses ?? 0
       current.reversal = summary.reversal ?? 0
       current.net = current.income - current.expenses
@@ -121,7 +122,7 @@ export class IncomeStatement {
     const operatingExpenses = totals.expenses
     const operatingIncome = revenueTotal - operatingExpenses
     const reversalAdjustments = totals.reversal
-    const netIncome = operatingIncome - reversalAdjustments
+    const netIncome = operatingIncome
 
     return {
       period: {
