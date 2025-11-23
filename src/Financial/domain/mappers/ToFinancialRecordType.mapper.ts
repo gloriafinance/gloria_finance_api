@@ -6,7 +6,7 @@ export const toFinancialRecordType = (
   switch (type) {
     case ConceptType.INCOME:
       return FinancialRecordType.INCOME
-    case ConceptType.DISCHARGE:
+    case ConceptType.OUTGO:
       return FinancialRecordType.OUTGO
     case ConceptType.PURCHASE:
       return FinancialRecordType.PURCHASE

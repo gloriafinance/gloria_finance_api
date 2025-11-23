@@ -1,20 +1,7 @@
 import { strict as assert } from "assert"
-jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
-jest.mock("@/Shared/adapter/CustomLogger", () => ({
-  Logger: () => ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-  }),
-}))
 import { DRE } from "@/Reports/applications/DRE"
 import { BaseReportRequest } from "@/Reports/domain"
-import {
-  IChurchRepository,
-  Church,
-  ChurchDTO,
-} from "@/Church/domain"
+import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
 import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import {
   AvailabilityAccountMaster,
@@ -25,6 +12,16 @@ import {
   StatementCategorySummary,
 } from "@/Financial/domain"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+
+jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
+jest.mock("@/Shared/adapter/CustomLogger", () => ({
+  Logger: () => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  }),
+}))
 
 type SampleRecord = {
   financialRecordId: string
@@ -78,33 +75,27 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     throw new Error("Method not implemented in fake repository.")
   }
 
-  async fetchAvailableAccounts(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<AvailabilityAccountMaster[]> {
+  async fetchAvailableAccounts(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<AvailabilityAccountMaster[]> {
     return []
   }
 
-  async fetchCostCenters(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<CostCenterMaster[]> {
+  async fetchCostCenters(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]> {
     return []
   }
 
-  async fetchStatementCategories(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<StatementCategorySummary[]> {
+  async fetchStatementCategories(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<StatementCategorySummary[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -126,17 +117,16 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
       const category =
         record.financialConcept?.statementCategory ?? StatementCategory.OTHER
-      const current =
-        categoryTotals.get(category) ?? {
-          income: 0,
-          expenses: 0,
-          reversal: 0,
-        }
+      const current = categoryTotals.get(category) ?? {
+        income: 0,
+        expenses: 0,
+        reversal: 0,
+      }
 
       if (record.type === ConceptType.INCOME) {
         current.income += record.amount
       } else if (
-        record.type === ConceptType.DISCHARGE ||
+        record.type === ConceptType.OUTGO ||
         record.type === ConceptType.PURCHASE
       ) {
         current.expenses += record.amount
@@ -157,7 +147,10 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 }
 
 class FakeChurch implements Partial<Church> {
-  constructor(private readonly id: string, private readonly name: string) {}
+  constructor(
+    private readonly id: string,
+    private readonly name: string
+  ) {}
 
   getName(): string {
     return this.name
@@ -231,7 +224,7 @@ describe("DRE Report", () => {
         churchId: "church-001",
         amount: 50,
         date: new Date("2024-05-03T00:00:00.000Z"),
-        type: ConceptType.DISCHARGE,
+        type: ConceptType.OUTGO,
         description: "Energia elétrica",
         financialConcept: {
           name: "Energia",
@@ -245,7 +238,7 @@ describe("DRE Report", () => {
         churchId: "church-001",
         amount: 51.5,
         date: new Date("2024-05-04T00:00:00.000Z"),
-        type: ConceptType.DISCHARGE,
+        type: ConceptType.OUTGO,
         description: "Água",
         financialConcept: {
           name: "Água",
@@ -349,7 +342,7 @@ describe("DRE Report", () => {
         churchId: "church-001",
         amount: 200,
         date: new Date("2024-05-02T00:00:00.000Z"),
-        type: ConceptType.DISCHARGE,
+        type: ConceptType.OUTGO,
         description: "Material de eventos",
         financialConcept: {
           name: "Material eventos",
@@ -413,7 +406,7 @@ describe("DRE Report", () => {
         churchId: "church-001",
         amount: 50,
         date: new Date("2024-05-03T00:00:00.000Z"),
-        type: ConceptType.DISCHARGE,
+        type: ConceptType.OUTGO,
         description: "Multa",
         financialConcept: {
           name: "Multa",
@@ -587,7 +580,7 @@ describe("DRE Report", () => {
         churchId: "church-001",
         amount: 100,
         date: new Date("2024-05-03T00:00:00.000Z"),
-        type: ConceptType.DISCHARGE,
+        type: ConceptType.OUTGO,
         description: "Energia elétrica",
         financialConcept: {
           name: "Energia",
@@ -626,10 +619,10 @@ describe("DRE Report", () => {
     // Revenue: 1000 (income) - 200 (reversal) = 800
     assert.strictEqual(result.receitaBruta, 800)
     assert.strictEqual(result.receitaLiquida, 800)
-    
+
     // Operating expenses: 100 (expense) - 50 (reversal) = 50
     assert.strictEqual(result.despesasOperacionais, 50)
-    
+
     // Result: 800 (revenue) - 50 (expenses) = 750
     assert.strictEqual(result.resultadoOperacional, 750)
     assert.strictEqual(result.resultadoLiquido, 750)

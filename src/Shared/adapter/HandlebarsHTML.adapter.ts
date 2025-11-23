@@ -8,6 +8,7 @@ const categoryLabels: Record<string, string> = {
   REVENUE: "Entradas operacionais e doações recorrentes",
   COGS: "Custos diretos para entregar serviços ou projetos",
   OPEX: "Despesas operacionais do dia a dia",
+  MINISTRY_TRANSFERS: "Repasses e contribuições ministeriais",
   CAPEX: "Investimentos e gastos de capital de longo prazo",
   OTHER: "Receitas ou despesas extraordinárias",
 }

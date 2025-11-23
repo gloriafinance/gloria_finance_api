@@ -41,7 +41,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 const conceptTypeCodes: Record<ConceptType, string> = {
   [ConceptType.INCOME]: "INCOME",
-  [ConceptType.DISCHARGE]: "OUT",
+  [ConceptType.OUTGO]: "OUT",
   [ConceptType.PURCHASE]: "PURCHASE",
   [ConceptType.REVERSAL]: "REVERSAL",
 }
@@ -57,7 +57,7 @@ const normalizeConceptType = (value: unknown): ConceptType | undefined => {
     case "INCOME":
       return ConceptType.INCOME
     case "OUTGO":
-      return ConceptType.DISCHARGE
+      return ConceptType.OUTGO
     case "PURCHASE":
       return ConceptType.PURCHASE
     case "REVERSAL":
@@ -134,7 +134,7 @@ export class GenerateFinanceRecordReport {
 
   private buildSummary(records: any[]): FinanceRecordSummary {
     const expenseTypes = new Set<ConceptType>([
-      ConceptType.DISCHARGE,
+      ConceptType.OUTGO,
       ConceptType.PURCHASE,
     ])
 

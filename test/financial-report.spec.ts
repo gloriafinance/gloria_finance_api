@@ -1,4 +1,23 @@
 import { strict as assert } from "assert"
+import { GenerateFinanceRecordReport } from "@/Financial/applications/financeRecord/GenerateFinanceRecordReport"
+import {
+  AvailabilityAccountMaster,
+  ConceptType,
+  CostCenterMaster,
+  FinanceRecordReportRequest,
+  FinancialRecordStatus,
+  StatementCategory,
+  StatementCategorySummary,
+} from "@/Financial/domain"
+import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
+import { BaseReportRequest } from "@/Reports/domain"
+import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
+import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { IStorageService, IXLSExportAdapter, ReportFile } from "@/Shared/domain"
+import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
+import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
+
 jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
 jest.mock("@/Shared/adapter/CustomLogger", () => ({
   Logger: () => ({
@@ -8,29 +27,6 @@ jest.mock("@/Shared/adapter/CustomLogger", () => ({
     debug: jest.fn(),
   }),
 }))
-import { GenerateFinanceRecordReport } from "@/Financial/applications/financeRecord/GenerateFinanceRecordReport"
-import {
-  AvailabilityAccountMaster,
-  ConceptType,
-  CostCenterMaster,
-  FinanceRecordReportRequest,
-  StatementCategory,
-  StatementCategorySummary,
-  FinancialRecordStatus,
-} from "@/Financial/domain"
-import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
-import { BaseReportRequest } from "@/Reports/domain"
-import {
-  IChurchRepository,
-  Church,
-  ChurchDTO,
-} from "@/Church/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
-import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
-import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
-import { IStorageService } from "@/Shared/domain"
 
 type SampleRecord = {
   financialRecordId: string
@@ -51,6 +47,85 @@ type SampleRecord = {
     name: string
   }
   status?: FinancialRecordStatus
+}
+
+const csvSample = `"Data";"Montante";"Descrição";"Tipo";"Conta de Disponibilidade";"Conceito Financeiro";"Centro de Custo"
+"2025-11-22";"15";"Compra de agua";"Despesa";"Nubak";"Suprimentos Gerais";"Administração"
+"2025-11-21";"4";"Pagmento de pedago culto em osasco";"Despesa";"Nubak";"Despesas de Viagem";"Administração"
+"2025-11-21";"13.7";"Pagamento de pedago, culto em ossasco";"Despesa";"Nubak";"Despesas de Viagem";"Administração"
+"2025-11-21";"100";"Combustível para ir a ossasco";"Despesa";"Nubak";"Combustível e Transporte";"Administração"
+"2025-11-19";"25.17";"Pagamentos de eletricidade.";"Despesa";"Nubak";"Serviços Públicos";"Administração"
+"2025-11-16";"50";"Custos de viagem para culto em sumare";"Despesa";"Nubak";"Despesas de Viagem";"Administração"
+"2025-11-16";"100";"Combustível, viagem pro culo em sumare";"Despesa";"Nubak";"Combustível e Transporte";"Administração"
+"2025-11-15";"1504";"Despesas relacionadas ao aluguel do salāo";"Despesa";"Nubak";"Aluguel ou Arrendamento";"Administração"
+"2025-11-15";"267.96";"Pagameto de Dízmos de dízimos ao distrito mês outurbo";"Despesa";"Nubak";"Dízimos de Dízimos";"Administração"
+"2025-11-10";"220";"Dízimos irmã Wilmar";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-10";"101.5";"Oferta missionárias";"Despesa";"Nubak";"Missões e Evangelismo";"Administração"
+"2025-11-10";"-101.5";"Reversão do movimento urn:financialRecord:1c28c27b-b0d3-40f0-8a23-e1a36e52b4f0";"Estorno";"Nubak";"N/A";"N/A"
+"2025-11-10";"101.5";"Contribuições para a obra missionária";"Receita";"Nubak";"Ofertas para Missões";"N/A"
+"2025-11-09";"20";"Culto de missões";"Receita";"Nubak";"Ofertas de Culto";"N/A"
+"2025-11-09";"20";"Culto de missões.";"Receita";"Nubak";"Ofertas de Culto";"N/A"
+"2025-11-09";"61.5";"Culto de missões.";"Receita";"Fundo fixo";"Ofertas de Culto";"N/A"
+"2025-11-09";"152";"Dízimos irmão Tito";"Receita";"Fundo fixo";"Dízimos de Membros";"N/A"
+"2025-11-07";"4";"Custos de pedago culto em ossasco";"Despesa";"Nubak";"Despesas de Viagem";"Administração"
+"2025-11-07";"13.7";"Custos de pedago culto em ossasco";"Despesa";"Nubak";"Despesas de Viagem";"Administração"
+"2025-11-07";"115";"Dízimos irmão Jonathan";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-06";"12";"Ingresos obtidos por vendas.";"Receita";"Nubak";"Vendas de comida ou mercadorias";"N/A"
+"2025-11-06";"320";"Dízimos irmã Rosilys";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-05";"250";"Dízimos irmã Yamileth";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-05";"44";"Dízimos irmão Javier";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-04";"18";"Dízimos irmã Yamileth";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-03";"275";"Dízimos irmã Yamileth";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-02";"168";"Saldo inicial em contas de disponibilidade / Nova conta.";"Receita";"Filhas de Sião";"Saldo inicial em contas de disponibilidade";"N/A"
+"2025-11-02";"10";"oferta de culto";"Receita";"Nubak";"Ofertas de Culto";"N/A"
+"2025-11-02";"49.55";" oferta de culto";"Receita";"Nubak";"Ofertas de Culto";"N/A"
+"2025-11-02";"20";"Oferta do culto";"Receita";"Nubak";"Ofertas de Culto";"N/A"
+"2025-11-01";"150";"Dízimos irmã Yoliver";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-01";"150";"Dízimos irmã Yoliver.";"Receita";"Nubak";"Dízimos de Membros";"N/A"
+"2025-11-01";"1700";"Dízimos irmão Angel";"Receita";"Nubak";"Dízimos de Membros";"N/A"`
+
+const parseCsvRecords = (csvText: string): SampleRecord[] => {
+  const lines = csvText.trim().split("\n")
+  const [, ...rows] = lines
+
+  const typeMap: Record<string, ConceptType> = {
+    Receita: ConceptType.INCOME,
+    Despesa: ConceptType.OUTGO,
+    Estorno: ConceptType.REVERSAL,
+  }
+
+  return rows.map((raw, index) => {
+    const parts = raw.split(";").map((v) => v.replace(/^"|"$/g, ""))
+    const [date, amount, , tipo, conta, conceito, centroCusto] = parts
+    const parsedAmount = parseFloat(amount.replace(",", "."))
+    const conceptName = conceito || "N/A"
+
+    const statementCategory = /d[ií]zimos de d[ií]zimos/i.test(conceptName)
+      ? StatementCategory.MINISTRY_CONTRIBUTIONS
+      : tipo === "Receita"
+        ? StatementCategory.REVENUE
+        : StatementCategory.OPEX
+
+    return {
+      financialRecordId: `csv-${index}`,
+      churchId: "church-001",
+      amount: parsedAmount,
+      date: new Date(`${date}T00:00:00.000Z`),
+      type: typeMap[tipo],
+      description: conceptName,
+      financialConcept: {
+        name: conceptName,
+        statementCategory,
+        affectsResult: true,
+      },
+      availabilityAccount: { accountName: conta },
+      costCenter:
+        centroCusto && centroCusto !== "N/A"
+          ? { name: centroCusto }
+          : undefined,
+      status: FinancialRecordStatus.CLEARED,
+    }
+  })
 }
 
 class FakeFinancialRecordRepository implements IFinancialRecordRepository {
@@ -84,33 +159,131 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     throw new Error("Method not implemented in fake repository.")
   }
 
-  async fetchAvailableAccounts(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
+  async fetchAvailableAccounts(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<AvailabilityAccountMaster[]> {
+    const realizedStatuses = new Set<FinancialRecordStatus>([
+      FinancialRecordStatus.CLEARED,
+      FinancialRecordStatus.RECONCILED,
+    ])
+
+    const totals = new Map<
+      string,
+      { name: string; totalInput: number; totalOutput: number }
+    >()
+
+    for (const record of this.records) {
+      if (!record.availabilityAccount) continue
+      if (!record.status || !realizedStatuses.has(record.status)) continue
+
+      const key = record.availabilityAccount.accountName
+      const current = totals.get(key) ?? {
+        name: key,
+        totalInput: 0,
+        totalOutput: 0,
+      }
+
+      const normalizedAmount =
+        record.type === ConceptType.REVERSAL
+          ? -Math.abs(record.amount)
+          : Math.abs(record.amount)
+
+      if (
+        record.type === ConceptType.INCOME ||
+        record.type === ConceptType.REVERSAL
+      ) {
+        current.totalInput += normalizedAmount
+      } else if (
+        record.type === ConceptType.OUTGO ||
+        record.type === ConceptType.PURCHASE
+      ) {
+        current.totalOutput += normalizedAmount
+      }
+
+      totals.set(key, current)
     }
-  ): Promise<AvailabilityAccountMaster[]> {
-    return []
+
+    return Array.from(totals.values()).map((item) =>
+      AvailabilityAccountMaster.fromPrimitives({
+        id: undefined,
+        month: undefined,
+        year: undefined,
+        totalInput: item.totalInput,
+        totalOutput: item.totalOutput,
+        availabilityAccount: {
+          availabilityAccountId: item.name,
+          accountName: item.name,
+          symbol: "",
+        },
+        availabilityAccountMasterId: `test-${item.name}`,
+        churchId: "church-001",
+      })
+    )
   }
 
-  async fetchCostCenters(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
+  async fetchCostCenters(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]> {
+    const realizedStatuses = new Set<FinancialRecordStatus>([
+      FinancialRecordStatus.CLEARED,
+      FinancialRecordStatus.RECONCILED,
+    ])
+
+    const totals = new Map<
+      string,
+      { name: string; total: number; lastMove?: Date }
+    >()
+
+    for (const record of this.records) {
+      if (!record.costCenter) continue
+      if (!record.status || !realizedStatuses.has(record.status)) continue
+
+      if (
+        record.type !== ConceptType.OUTGO &&
+        record.type !== ConceptType.PURCHASE
+      ) {
+        continue
+      }
+
+      const key = record.costCenter.name
+      const normalizedAmount = Math.abs(record.amount)
+
+      const current = totals.get(key) ?? {
+        name: key,
+        total: 0,
+        lastMove: undefined,
+      }
+      current.total += normalizedAmount
+      current.lastMove = record.date
+      totals.set(key, current)
     }
-  ): Promise<CostCenterMaster[]> {
-    return []
+
+    return Array.from(totals.values()).map((item) =>
+      CostCenterMaster.fromPrimitives({
+        id: undefined,
+        month: undefined,
+        year: undefined,
+        total: item.total,
+        costCenter: {
+          costCenterId: item.name,
+          costCenterName: item.name,
+        },
+        costCenterMasterId: `test-${item.name}`,
+        churchId: "church-001",
+        lastMove: item.lastMove,
+      })
+    )
   }
 
-  async fetchStatementCategories(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<StatementCategorySummary[]> {
+  async fetchStatementCategories(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<StatementCategorySummary[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -124,30 +297,35 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     for (const record of this.records) {
       const isRealized =
         record.status !== undefined && realizedStatuses.has(record.status)
-      const affectsResult = record.financialConcept?.affectsResult === true
+      const affectsResult = record.financialConcept?.affectsResult !== false
 
       if (!isRealized || !affectsResult) {
         continue
       }
 
-      const category =
-        record.financialConcept?.statementCategory ?? StatementCategory.OTHER
-      const current =
-        categoryTotals.get(category) ?? {
-          income: 0,
-          expenses: 0,
-          reversal: 0,
-        }
+      const specialTithe =
+        record.financialConcept?.name &&
+        /d[ií]zimos de d[ií]zimos/i.test(record.financialConcept.name)
+
+      const category = specialTithe
+        ? StatementCategory.MINISTRY_TRANSFERS
+        : (record.financialConcept?.statementCategory ??
+          StatementCategory.OTHER)
+      const current = categoryTotals.get(category) ?? {
+        income: 0,
+        expenses: 0,
+        reversal: 0,
+      }
 
       if (record.type === ConceptType.INCOME) {
-        current.income += record.amount
+        current.income += Math.abs(record.amount)
       } else if (
-        record.type === ConceptType.DISCHARGE ||
+        record.type === ConceptType.OUTGO ||
         record.type === ConceptType.PURCHASE
       ) {
-        current.expenses += record.amount
+        current.expenses += Math.abs(record.amount)
       } else if (record.type === ConceptType.REVERSAL) {
-        current.reversal += record.amount
+        current.reversal -= Math.abs(record.amount)
       }
 
       categoryTotals.set(category, current)
@@ -215,7 +393,11 @@ class FakeXlsAdapter implements IXLSExportAdapter {
   public header: string[] = []
   public sheetName: string | null = null
 
-  async export(rows: any[], header: string[], sheetName: string): Promise<ReportFile> {
+  async export(
+    rows: any[],
+    header: string[],
+    sheetName: string
+  ): Promise<ReportFile> {
     this.rows = rows
     this.header = header
     this.sheetName = sheetName
@@ -227,7 +409,10 @@ class FakeXlsAdapter implements IXLSExportAdapter {
 }
 
 class FakeChurch implements Partial<Church> {
-  constructor(private readonly id: string, private readonly name: string) {}
+  constructor(
+    private readonly id: string,
+    private readonly name: string
+  ) {}
 
   getName(): string {
     return this.name
@@ -285,7 +470,7 @@ const sampleRecords: SampleRecord[] = [
     churchId: "church-001",
     amount: 300,
     date: new Date("2025-10-02T00:00:00.000Z"),
-    type: ConceptType.DISCHARGE,
+    type: ConceptType.OUTGO,
     description: "Energia elétrica",
     financialConcept: {
       name: "Energia",
@@ -314,7 +499,7 @@ const sampleRecords: SampleRecord[] = [
   {
     financialRecordId: "rec-004",
     churchId: "church-001",
-    amount: 150,
+    amount: -150,
     date: new Date("2025-10-04T00:00:00.000Z"),
     type: ConceptType.REVERSAL,
     description: "Estorno de recebimento",
@@ -344,7 +529,7 @@ const sampleRecords: SampleRecord[] = [
     churchId: "church-001",
     amount: 50,
     date: new Date("2025-10-06T00:00:00.000Z"),
-    type: ConceptType.DISCHARGE,
+    type: ConceptType.OUTGO,
     description: "Materiais de limpeza",
     financialConcept: {
       name: "Limpeza",
@@ -356,16 +541,18 @@ const sampleRecords: SampleRecord[] = [
 ]
 
 const expectedTotals = {
-  income: 1400,
+  income: 1250,
   expenses: 550,
-  reversal: 150,
+  reversal: -150,
   net: 700,
 }
 
 describe("Financial reporting consistency", () => {
   const church = new FakeChurch("church-001", "Igreja Central")
   const churchRepository = buildChurchRepository(church)
-  const financialRecordRepository = new FakeFinancialRecordRepository(sampleRecords)
+  const financialRecordRepository = new FakeFinancialRecordRepository(
+    sampleRecords
+  )
 
   it("generates movement report summary aligned with type rules", async () => {
     const fakePdf = new FakePdfAdapter()
@@ -402,13 +589,16 @@ describe("Financial reporting consistency", () => {
       (row) => row.type === ConceptType.REVERSAL
     )
     assert.ok(reversalRow, "Reversal row should exist in summary totals")
-    assert.strictEqual(reversalRow!.signedTotal, -expectedTotals.reversal)
+    assert.strictEqual(
+      reversalRow!.signedTotal,
+      Math.abs(expectedTotals.reversal)
+    )
 
     const reversalRecord = fakePdf.payload.records.find(
       (record: any) => record.type === "REVERSAL"
     )
     assert.ok(reversalRecord, "Reversal record should be present in the PDF")
-    assert.strictEqual(reversalRecord.amount, -expectedTotals.reversal)
+    assert.strictEqual(reversalRecord.amount, expectedTotals.reversal)
   })
 
   it("computes income statement totals using type-only classification", async () => {
@@ -426,16 +616,25 @@ describe("Financial reporting consistency", () => {
     const response = await incomeStatement.execute(request)
 
     assert.strictEqual(response.summary.revenue, expectedTotals.income)
-    assert.strictEqual(response.summary.operatingExpenses, expectedTotals.expenses)
-    assert.strictEqual(response.summary.operatingIncome, expectedTotals.income - expectedTotals.expenses)
-    assert.strictEqual(response.summary.reversalAdjustments, expectedTotals.reversal)
+    assert.strictEqual(
+      response.summary.operatingExpenses,
+      expectedTotals.expenses
+    )
+    assert.strictEqual(
+      response.summary.operatingIncome,
+      expectedTotals.income - expectedTotals.expenses
+    )
+    assert.strictEqual(
+      response.summary.reversalAdjustments,
+      expectedTotals.reversal
+    )
     assert.strictEqual(response.summary.netIncome, expectedTotals.net)
 
     const otherCategory = response.breakdown.find(
       (item) => item.category === StatementCategory.OTHER
     )
     assert.ok(otherCategory, "Other category should be present in breakdown")
-    assert.strictEqual(otherCategory!.income, 400)
+    assert.strictEqual(otherCategory!.income, 250)
     assert.strictEqual(otherCategory!.expenses, 50)
     assert.strictEqual(
       otherCategory!.net,
@@ -555,5 +754,66 @@ describe("Financial reporting consistency", () => {
       (row) => row.category === StatementCategory.REVENUE
     )
     expect(revenueRow?.income).toBe(300)
+  })
+
+  it("aggregates full monthly flows including reversals, all accounts and cost centers", async () => {
+    const csvRecords = parseCsvRecords(csvSample)
+    const repository = new FakeFinancialRecordRepository(csvRecords)
+    const incomeStatement = new IncomeStatement(repository, churchRepository)
+
+    const response = await incomeStatement.execute({
+      churchId: "church-001",
+      year: 2025,
+      month: 11,
+    })
+
+    expect(
+      response.cashFlowSnapshot.availabilityAccounts.accounts
+    ).toHaveLength(3)
+    const nubakAccount =
+      response.cashFlowSnapshot.availabilityAccounts.accounts.find(
+        (acc) => acc.toPrimitives().availabilityAccount.accountName === "Nubak"
+      )
+    const fundoFixo =
+      response.cashFlowSnapshot.availabilityAccounts.accounts.find(
+        (acc) =>
+          acc.toPrimitives().availabilityAccount.accountName === "Fundo fixo"
+      )
+    const filhas = response.cashFlowSnapshot.availabilityAccounts.accounts.find(
+      (acc) =>
+        acc.toPrimitives().availabilityAccount.accountName === "Filhas de Sião"
+    )
+
+    expect(nubakAccount?.getIncome()).toBeCloseTo(3373.55, 2)
+    expect(nubakAccount?.getExpenses()).toBeCloseTo(2199.03, 2)
+    expect(fundoFixo?.getIncome()).toBeCloseTo(213.5, 2)
+    expect(fundoFixo?.getExpenses()).toBeCloseTo(0, 2)
+    expect(filhas?.getIncome()).toBeCloseTo(168, 2)
+
+    expect(response.cashFlowSnapshot.availabilityAccounts.income).toBeCloseTo(
+      3755.05,
+      2
+    )
+    expect(response.cashFlowSnapshot.availabilityAccounts.expenses).toBeCloseTo(
+      2199.03,
+      2
+    )
+    expect(response.cashFlowSnapshot.availabilityAccounts.total).toBeCloseTo(
+      1556.02,
+      2
+    )
+
+    expect(response.summary.revenue).toBeCloseTo(3755.05, 2)
+    expect(response.summary.operatingExpenses).toBeCloseTo(2199.03, 2)
+    expect(response.summary.netIncome).toBeCloseTo(1556.02, 2)
+
+    const ministryCategory = response.breakdown.find(
+      (item) => item.category === StatementCategory.MINISTRY_TRANSFERS
+    )
+    expect(ministryCategory?.expenses).toBeCloseTo(267.96, 2)
+
+    expect(
+      response.cashFlowSnapshot.costCenters.costCenters[0].getTotal()
+    ).toBeCloseTo(2199.03, 2)
   })
 })
