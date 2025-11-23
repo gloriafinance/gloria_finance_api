@@ -24,7 +24,7 @@ export default async (list: Paginate<any>) => {
       status: item.status,
     }
 
-    if (item.type === ConceptType.DISCHARGE) {
+    if (item.type === ConceptType.OUTGO) {
       object["costCenter"] = item.costCenter
     }
 

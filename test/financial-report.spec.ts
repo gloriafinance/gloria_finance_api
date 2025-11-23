@@ -1,4 +1,23 @@
 import { strict as assert } from "assert"
+import { GenerateFinanceRecordReport } from "@/Financial/applications/financeRecord/GenerateFinanceRecordReport"
+import {
+  AvailabilityAccountMaster,
+  ConceptType,
+  CostCenterMaster,
+  FinanceRecordReportRequest,
+  FinancialRecordStatus,
+  StatementCategory,
+  StatementCategorySummary,
+} from "@/Financial/domain"
+import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
+import { BaseReportRequest } from "@/Reports/domain"
+import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
+import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { IStorageService, IXLSExportAdapter, ReportFile } from "@/Shared/domain"
+import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
+import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
+
 jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
 jest.mock("@/Shared/adapter/CustomLogger", () => ({
   Logger: () => ({
@@ -8,29 +27,6 @@ jest.mock("@/Shared/adapter/CustomLogger", () => ({
     debug: jest.fn(),
   }),
 }))
-import { GenerateFinanceRecordReport } from "@/Financial/applications/financeRecord/GenerateFinanceRecordReport"
-import {
-  AvailabilityAccountMaster,
-  ConceptType,
-  CostCenterMaster,
-  FinanceRecordReportRequest,
-  StatementCategory,
-  StatementCategorySummary,
-  FinancialRecordStatus,
-} from "@/Financial/domain"
-import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
-import { BaseReportRequest } from "@/Reports/domain"
-import {
-  IChurchRepository,
-  Church,
-  ChurchDTO,
-} from "@/Church/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
-import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
-import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
-import { IStorageService } from "@/Shared/domain"
 
 type SampleRecord = {
   financialRecordId: string
@@ -94,7 +90,7 @@ const parseCsvRecords = (csvText: string): SampleRecord[] => {
 
   const typeMap: Record<string, ConceptType> = {
     Receita: ConceptType.INCOME,
-    Despesa: ConceptType.DISCHARGE,
+    Despesa: ConceptType.OUTGO,
     Estorno: ConceptType.REVERSAL,
   }
 
@@ -163,13 +159,11 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     throw new Error("Method not implemented in fake repository.")
   }
 
-  async fetchAvailableAccounts(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<AvailabilityAccountMaster[]> {
+  async fetchAvailableAccounts(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<AvailabilityAccountMaster[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -185,18 +179,24 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       if (!record.status || !realizedStatuses.has(record.status)) continue
 
       const key = record.availabilityAccount.accountName
-      const current =
-        totals.get(key) ?? { name: key, totalInput: 0, totalOutput: 0 }
+      const current = totals.get(key) ?? {
+        name: key,
+        totalInput: 0,
+        totalOutput: 0,
+      }
 
       const normalizedAmount =
         record.type === ConceptType.REVERSAL
           ? -Math.abs(record.amount)
           : Math.abs(record.amount)
 
-      if (record.type === ConceptType.INCOME || record.type === ConceptType.REVERSAL) {
+      if (
+        record.type === ConceptType.INCOME ||
+        record.type === ConceptType.REVERSAL
+      ) {
         current.totalInput += normalizedAmount
       } else if (
-        record.type === ConceptType.DISCHARGE ||
+        record.type === ConceptType.OUTGO ||
         record.type === ConceptType.PURCHASE
       ) {
         current.totalOutput += normalizedAmount
@@ -223,26 +223,27 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     )
   }
 
-  async fetchCostCenters(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<CostCenterMaster[]> {
+  async fetchCostCenters(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
     ])
 
-    const totals = new Map<string, { name: string; total: number; lastMove?: Date }>()
+    const totals = new Map<
+      string,
+      { name: string; total: number; lastMove?: Date }
+    >()
 
     for (const record of this.records) {
       if (!record.costCenter) continue
       if (!record.status || !realizedStatuses.has(record.status)) continue
 
       if (
-        record.type !== ConceptType.DISCHARGE &&
+        record.type !== ConceptType.OUTGO &&
         record.type !== ConceptType.PURCHASE
       ) {
         continue
@@ -251,8 +252,11 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       const key = record.costCenter.name
       const normalizedAmount = Math.abs(record.amount)
 
-      const current =
-        totals.get(key) ?? { name: key, total: 0, lastMove: undefined }
+      const current = totals.get(key) ?? {
+        name: key,
+        total: 0,
+        lastMove: undefined,
+      }
       current.total += normalizedAmount
       current.lastMove = record.date
       totals.set(key, current)
@@ -275,13 +279,11 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     )
   }
 
-  async fetchStatementCategories(
-    _filter: {
-      churchId: string
-      year: number
-      month?: number
-    }
-  ): Promise<StatementCategorySummary[]> {
+  async fetchStatementCategories(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<StatementCategorySummary[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -306,19 +308,19 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
         /d[ií]zimos de d[ií]zimos/i.test(record.financialConcept.name)
 
       const category = specialTithe
-      ? StatementCategory.MINISTRY_TRANSFERS
-        : record.financialConcept?.statementCategory ?? StatementCategory.OTHER
-      const current =
-        categoryTotals.get(category) ?? {
-          income: 0,
-          expenses: 0,
-          reversal: 0,
-        }
+        ? StatementCategory.MINISTRY_TRANSFERS
+        : (record.financialConcept?.statementCategory ??
+          StatementCategory.OTHER)
+      const current = categoryTotals.get(category) ?? {
+        income: 0,
+        expenses: 0,
+        reversal: 0,
+      }
 
       if (record.type === ConceptType.INCOME) {
         current.income += Math.abs(record.amount)
       } else if (
-        record.type === ConceptType.DISCHARGE ||
+        record.type === ConceptType.OUTGO ||
         record.type === ConceptType.PURCHASE
       ) {
         current.expenses += Math.abs(record.amount)
@@ -391,7 +393,11 @@ class FakeXlsAdapter implements IXLSExportAdapter {
   public header: string[] = []
   public sheetName: string | null = null
 
-  async export(rows: any[], header: string[], sheetName: string): Promise<ReportFile> {
+  async export(
+    rows: any[],
+    header: string[],
+    sheetName: string
+  ): Promise<ReportFile> {
     this.rows = rows
     this.header = header
     this.sheetName = sheetName
@@ -403,7 +409,10 @@ class FakeXlsAdapter implements IXLSExportAdapter {
 }
 
 class FakeChurch implements Partial<Church> {
-  constructor(private readonly id: string, private readonly name: string) {}
+  constructor(
+    private readonly id: string,
+    private readonly name: string
+  ) {}
 
   getName(): string {
     return this.name
@@ -461,7 +470,7 @@ const sampleRecords: SampleRecord[] = [
     churchId: "church-001",
     amount: 300,
     date: new Date("2025-10-02T00:00:00.000Z"),
-    type: ConceptType.DISCHARGE,
+    type: ConceptType.OUTGO,
     description: "Energia elétrica",
     financialConcept: {
       name: "Energia",
@@ -520,7 +529,7 @@ const sampleRecords: SampleRecord[] = [
     churchId: "church-001",
     amount: 50,
     date: new Date("2025-10-06T00:00:00.000Z"),
-    type: ConceptType.DISCHARGE,
+    type: ConceptType.OUTGO,
     description: "Materiais de limpeza",
     financialConcept: {
       name: "Limpeza",
@@ -541,7 +550,9 @@ const expectedTotals = {
 describe("Financial reporting consistency", () => {
   const church = new FakeChurch("church-001", "Igreja Central")
   const churchRepository = buildChurchRepository(church)
-  const financialRecordRepository = new FakeFinancialRecordRepository(sampleRecords)
+  const financialRecordRepository = new FakeFinancialRecordRepository(
+    sampleRecords
+  )
 
   it("generates movement report summary aligned with type rules", async () => {
     const fakePdf = new FakePdfAdapter()
@@ -578,7 +589,10 @@ describe("Financial reporting consistency", () => {
       (row) => row.type === ConceptType.REVERSAL
     )
     assert.ok(reversalRow, "Reversal row should exist in summary totals")
-    assert.strictEqual(reversalRow!.signedTotal, Math.abs(expectedTotals.reversal))
+    assert.strictEqual(
+      reversalRow!.signedTotal,
+      Math.abs(expectedTotals.reversal)
+    )
 
     const reversalRecord = fakePdf.payload.records.find(
       (record: any) => record.type === "REVERSAL"
@@ -602,9 +616,18 @@ describe("Financial reporting consistency", () => {
     const response = await incomeStatement.execute(request)
 
     assert.strictEqual(response.summary.revenue, expectedTotals.income)
-    assert.strictEqual(response.summary.operatingExpenses, expectedTotals.expenses)
-    assert.strictEqual(response.summary.operatingIncome, expectedTotals.income - expectedTotals.expenses)
-    assert.strictEqual(response.summary.reversalAdjustments, expectedTotals.reversal)
+    assert.strictEqual(
+      response.summary.operatingExpenses,
+      expectedTotals.expenses
+    )
+    assert.strictEqual(
+      response.summary.operatingIncome,
+      expectedTotals.income - expectedTotals.expenses
+    )
+    assert.strictEqual(
+      response.summary.reversalAdjustments,
+      expectedTotals.reversal
+    )
     assert.strictEqual(response.summary.netIncome, expectedTotals.net)
 
     const otherCategory = response.breakdown.find(
@@ -744,13 +767,18 @@ describe("Financial reporting consistency", () => {
       month: 11,
     })
 
-    expect(response.cashFlowSnapshot.availabilityAccounts.accounts).toHaveLength(3)
-    const nubakAccount = response.cashFlowSnapshot.availabilityAccounts.accounts.find(
-      (acc) => acc.toPrimitives().availabilityAccount.accountName === "Nubak"
-    )
-    const fundoFixo = response.cashFlowSnapshot.availabilityAccounts.accounts.find(
-      (acc) => acc.toPrimitives().availabilityAccount.accountName === "Fundo fixo"
-    )
+    expect(
+      response.cashFlowSnapshot.availabilityAccounts.accounts
+    ).toHaveLength(3)
+    const nubakAccount =
+      response.cashFlowSnapshot.availabilityAccounts.accounts.find(
+        (acc) => acc.toPrimitives().availabilityAccount.accountName === "Nubak"
+      )
+    const fundoFixo =
+      response.cashFlowSnapshot.availabilityAccounts.accounts.find(
+        (acc) =>
+          acc.toPrimitives().availabilityAccount.accountName === "Fundo fixo"
+      )
     const filhas = response.cashFlowSnapshot.availabilityAccounts.accounts.find(
       (acc) =>
         acc.toPrimitives().availabilityAccount.accountName === "Filhas de Sião"
@@ -784,9 +812,8 @@ describe("Financial reporting consistency", () => {
     )
     expect(ministryCategory?.expenses).toBeCloseTo(267.96, 2)
 
-    expect(response.cashFlowSnapshot.costCenters.costCenters[0].getTotal()).toBeCloseTo(
-      2199.03,
-      2
-    )
+    expect(
+      response.cashFlowSnapshot.costCenters.costCenters[0].getTotal()
+    ).toBeCloseTo(2199.03, 2)
   })
 })

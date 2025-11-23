@@ -33,7 +33,7 @@ describe("FinancialConcept impact flags", () => {
       name: "Conta de luz",
       description: "Despesa operacional",
       active: true,
-      type: ConceptType.DISCHARGE,
+      type: ConceptType.OUTGO,
       statementCategory: StatementCategory.OPEX,
       createdAt: new Date().toISOString(),
       churchId: "church-001",
