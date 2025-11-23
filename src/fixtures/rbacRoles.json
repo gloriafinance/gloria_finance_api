@@ -65,7 +65,8 @@
       "purchases:read",
       "rbac:read",
       "reports:income_statements",
-      "reports:monthly_tithes"
+      "reports:monthly_tithes",
+      "patrimony:report_inventory"
     ],
     "isSystem": true
   },

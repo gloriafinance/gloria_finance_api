@@ -252,6 +252,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "patrimony:report_inventory",
+    "module": "patrimony",
+    "action": "report_inventory",
+    "description": "Gerar relatórios",
+    "isSystem": true
+  },
+  {
     "permissionId": "reports:monthly_tithes",
     "module": "reports",
     "action": "monthly_tithes",

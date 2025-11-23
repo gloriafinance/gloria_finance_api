@@ -295,7 +295,7 @@ router.get(
   "/report/inventory",
   [
     PermissionMiddleware,
-    Can("patrimony", "inventory"),
+    Can("patrimony", ["inventory", "patrimony:report_inventory"]),
     InventoryReportValidator,
   ],
   async (req: Request, res: Response) => {
