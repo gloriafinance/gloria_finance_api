@@ -188,6 +188,13 @@ export class AvailabilityAccountMasterMongoRepository
       .aggregate(pipeline)
       .toArray()
 
+    if (!aggregated.length) {
+      this.logger.info(
+        `No availability accounts found to rebuild for churchId=${churchId}, year=${year}, month=${month}`
+      )
+      return
+    }
+
     // 2) Escribir en availability_accounts_master
     this.dbCollectionName = "availability_accounts_master"
     const masterCollection = await this.collection()
@@ -202,37 +209,17 @@ export class AvailabilityAccountMasterMongoRepository
 
     await masterCollection.deleteMany(deleteFilter)
 
-    if (!aggregated.length) {
-      this.logger.info(
-        `No availability accounts found to rebuild for churchId=${churchId}, year=${year}, month=${month}`
-      )
-      return
-    }
-
     const docsToInsert = aggregated.map((item) => {
-      const account = item.availabilityAccount ?? {}
-      const availabilityAccountId =
-        item.availabilityAccountId ??
-        account.availabilityAccountId ??
-        "UNKNOWN_ACCOUNT"
-
-      const masterId = `${month ?? 0}-${year}-${availabilityAccountId}`
+      const masterId = `${month ?? 0}-${year}-${item.availabilityAccountId}`
 
       const doc: any = {
         availabilityAccountMasterId: masterId,
-        availabilityAccount: {
-          availabilityAccountId,
-          accountName: account.accountName ?? "N/A",
-          symbol: account.symbol ?? "",
-        },
+        availabilityAccount: item.availabilityAccount,
         churchId,
+        month,
         year,
         totalInput: item.totalInput ?? 0,
         totalOutput: item.totalOutput ?? 0,
-      }
-
-      if (month !== undefined) {
-        doc.month = month
       }
 
       return doc

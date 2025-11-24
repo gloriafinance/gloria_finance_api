@@ -10,8 +10,8 @@ export default async (req, res, next) => {
 
   const rule = {
     churchId: "required|string",
-    year: "required|string|maxLength:4",
-    month: "required|string|maxLength:2",
+    year: "required|integer|maxLength:4",
+    month: "required|integer|maxLength:2",
   }
 
   const v = new Validator(payload, rule)

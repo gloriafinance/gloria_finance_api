@@ -1,4 +1,4 @@
-import { Router, Response, Request } from "express"
+import { Request, Response, Router } from "express"
 import {
   Can,
   PermissionMiddleware,
@@ -17,6 +17,8 @@ financialJobRoute.post(
       QueueName.RebuildAvailabilityMasterAccountJob,
       {
         ...req.body,
+        month: Number(req.body.month),
+        year: Number(req.body.year),
       }
     )
 
@@ -30,6 +32,8 @@ financialJobRoute.post(
   async (req: Request, res) => {
     QueueService.getInstance().dispatch(QueueName.RebuildCostCenterMasterJob, {
       ...req.body,
+      month: Number(req.body.month),
+      year: Number(req.body.year),
     })
     res.status(HttpStatus.OK).send({ message: "process" })
   }

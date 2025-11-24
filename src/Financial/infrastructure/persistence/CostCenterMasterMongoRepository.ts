@@ -141,20 +141,6 @@ export class CostCenterMasterMongoRepository
       .aggregate(pipeline)
       .toArray()
 
-    // 2) Escribir en cost_centers_master
-    this.dbCollectionName = "cost_centers_master"
-    const masterCollection = await this.collection()
-
-    const deleteFilter: any = {
-      churchId,
-      year,
-    }
-    if (month !== undefined) {
-      deleteFilter.month = month
-    }
-
-    await masterCollection.deleteMany(deleteFilter)
-
     if (!aggregated.length) {
       this.logger.info(
         `No cost centers found to rebuild for churchId=${churchId}, year=${year}, month=${month}`
@@ -162,27 +148,27 @@ export class CostCenterMasterMongoRepository
       return
     }
 
+    // 2) Escribir en cost_centers_master
+    this.dbCollectionName = "cost_centers_master"
+    const masterCollection = await this.collection()
+
+    const deleteFilter: any = {
+      churchId,
+      month,
+      year,
+    }
+
+    await masterCollection.deleteMany(deleteFilter)
+
     const docsToInsert = aggregated.map((item) => {
-      const center = item.costCenter ?? {}
-      const costCenterId =
-        item.costCenterId ?? center.costCenterId ?? "UNKNOWN_CENTER"
-
-      const masterId = `${month ?? 0}-${year}-${costCenterId}`
-
       const doc: any = {
         churchId,
-        costCenter: {
-          costCenterId,
-          costCenterName: center.costCenterName ?? center.name ?? "N/A",
-        },
-        costCenterMasterId: masterId,
+        costCenter: item.costCenter,
+        costCenterMasterId: `${month ?? 0}-${year}-${item.costCenter.costCenterId}`,
         total: item.total ?? 0,
         lastMove: item.lastMove ?? new Date(),
+        month,
         year,
-      }
-
-      if (month !== undefined) {
-        doc.month = month
       }
 
       return doc
