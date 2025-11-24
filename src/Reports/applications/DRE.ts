@@ -19,6 +19,7 @@ export class DRE {
 
     await new FindChurchById(this.churchRepository).execute(params.churchId)
 
+    // consolida por categoria contábil (REVENUE, OPEX, CAPEX, etc.)
     const statementByCategory =
       await this.financialRecordRepository.fetchStatementCategories(params)
 
@@ -34,46 +35,69 @@ export class DRE {
     let investimentosCAPEX = 0
 
     for (const summary of statementByCategory) {
-      // AQUÍ YA NO RESTAMOS REVERSAL OTRA VEZ
-      const net = summary.income - summary.expenses
+      // income / expenses já vêm agregados por categoria
+      // reversals já foram tratados na IncomeStatement (não vamos subtrair 2x aqui)
+      const income = summary.income ?? 0
+      const expenses = summary.expenses ?? 0
+      const net = income - expenses
 
       switch (summary.category) {
         case StatementCategory.REVENUE:
+          // receitas operacionais (dízimos, ofertas, doações)
           receitaBruta += net
           break
 
         case StatementCategory.COGS:
-          custosDiretos += summary.expenses - summary.income
+          // custos diretos (se a igreja usar essa categoria)
+          // guardamos como valor positivo de custo
+          custosDiretos += expenses - income
           break
 
         case StatementCategory.OPEX:
-          despesasOperacionais += summary.expenses - summary.income
+          // despesas administrativas e operacionais
+          despesasOperacionais += expenses - income
           break
 
         case StatementCategory.MINISTRY_TRANSFERS:
-          repassesMinisteriais += summary.expenses - summary.income
+          // repasses para campo, convenção, missões, etc.
+          repassesMinisteriais += expenses - income
           break
 
         case StatementCategory.CAPEX:
-          // Não afeta resultado, mas deve aparecer no relatório
-          investimentosCAPEX += summary.expenses
+          // investimentos em mobiliário, equipamentos, etc.
+          // não entram no resultado operacional, mas serão abatidos
+          // ao calcular o resultado líquido final
+          investimentosCAPEX += expenses
           break
 
         case StatementCategory.OTHER:
+          // receitas e despesas não operacionais / extraordinárias
           resultadosExtraordinarios += net
           break
 
         default:
+          // qualquer categoria desconhecida cai em "outros resultados"
           resultadosExtraordinarios += net
           break
       }
     }
 
+    // montagem da DRE em etapas
     const receitaLiquida = receitaBruta
     const resultadoBruto = receitaLiquida - custosDiretos
+
+    // resultado operacional antes de CAPEX e resultados extraordinários
     const resultadoOperacional =
       resultadoBruto - despesasOperacionais - repassesMinisteriais
-    const resultadoLiquido = resultadoOperacional + resultadosExtraordinarios
+
+    // >>>> PONTO CRÍTICO: unificamos com o Estado de Ingressos
+    // Resultado líquido após:
+    // - despesas operacionais
+    // - repasses ministeriais
+    // - resultados extraordinários
+    // - investimentos CAPEX (cadeiras, mobiliário, etc.)
+    const resultadoLiquido =
+      resultadoOperacional + resultadosExtraordinarios - investimentosCAPEX
 
     return {
       receitaBruta,
