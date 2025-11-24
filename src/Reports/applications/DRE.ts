@@ -17,10 +17,8 @@ export class DRE {
   async execute(params: BaseReportRequest): Promise<DREResponse> {
     this.logger.info(`Starting DRE Report`, params)
 
-    // Validate that the church exists
     await new FindChurchById(this.churchRepository).execute(params.churchId)
 
-    // Fetch statement categories with affectsResult filter
     const statementByCategory =
       await this.financialRecordRepository.fetchStatementCategories(params)
 
@@ -28,62 +26,53 @@ export class DRE {
       `Statement categories fetched: ${JSON.stringify(statementByCategory)}`
     )
 
-    // Initialize all DRE line items
     let receitaBruta = 0
     let custosDiretos = 0
     let despesasOperacionais = 0
+    let repassesMinisteriais = 0
     let resultadosExtraordinarios = 0
+    let investimentosCAPEX = 0
 
-    // Process each category and map to DRE line items
     for (const summary of statementByCategory) {
-      // Calculate net considering reversals
-      // Reversals reduce the net result as they cancel out previous transactions
-      const net = summary.income - summary.expenses - summary.reversal
+      // AQUÍ YA NO RESTAMOS REVERSAL OTRA VEZ
+      const net = summary.income - summary.expenses
 
       switch (summary.category) {
         case StatementCategory.REVENUE:
-          // REVENUE → Receita (gross revenue)
-          // Income increases revenue, expenses reduce it, reversals cancel transactions
           receitaBruta += net
           break
 
         case StatementCategory.COGS:
-          // COGS → Custos Diretos (cost of goods sold)
-          // Expenses increase costs, income reduces them (returns/refunds), reversals cancel
-          custosDiretos += summary.expenses - summary.income - summary.reversal
+          custosDiretos += summary.expenses - summary.income
           break
 
         case StatementCategory.OPEX:
-          // OPEX → Despesas Operacionais (operating expenses)
-          // Expenses increase operating costs, income reduces them (reimbursements), reversals cancel
-          despesasOperacionais +=
-            summary.expenses - summary.income - summary.reversal
+          despesasOperacionais += summary.expenses - summary.income
+          break
+
+        case StatementCategory.MINISTRY_TRANSFERS:
+          repassesMinisteriais += summary.expenses - summary.income
           break
 
         case StatementCategory.CAPEX:
-          // CAPEX → Does not affect DRE (capital expenditures)
-          // Intentionally excluded from income statement
+          // Não afeta resultado, mas deve aparecer no relatório
+          investimentosCAPEX += summary.expenses
           break
 
         case StatementCategory.OTHER:
-          // OTHER → Resultados Extraordinários (extraordinary results)
-          // Net result of extraordinary income and expenses, minus reversals
           resultadosExtraordinarios += net
           break
 
         default:
-          this.logger.error(
-            `Unknown statement category: ${summary.category}, treating as OTHER`
-          )
           resultadosExtraordinarios += net
           break
       }
     }
 
-    // Calculate DRE totals following accounting order
     const receitaLiquida = receitaBruta
     const resultadoBruto = receitaLiquida - custosDiretos
-    const resultadoOperacional = resultadoBruto - despesasOperacionais
+    const resultadoOperacional =
+      resultadoBruto - despesasOperacionais - repassesMinisteriais
     const resultadoLiquido = resultadoOperacional + resultadosExtraordinarios
 
     return {
@@ -92,8 +81,10 @@ export class DRE {
       custosDiretos,
       resultadoBruto,
       despesasOperacionais,
-      resultadoOperacional,
+      repassesMinisteriais,
+      investimentosCAPEX,
       resultadosExtraordinarios,
+      resultadoOperacional,
       resultadoLiquido,
       year: params.year,
       month: params.month,

@@ -1,4 +1,4 @@
-import { CostCenterMaster } from "../CostCenterMaster"
+import { CostCenterMaster } from "@/Financial/domain"
 
 export interface ICostCenterMasterRepository {
   one(costCenterMasterId: string): Promise<CostCenterMaster | undefined>
@@ -10,4 +10,16 @@ export interface ICostCenterMasterRepository {
   ): Promise<CostCenterMaster[]>
 
   upsert(costCenterMaster: CostCenterMaster): Promise<void>
+
+  rebuildCostCentersMaster(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<void>
+
+  fetchCostCenters(filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]>
 }

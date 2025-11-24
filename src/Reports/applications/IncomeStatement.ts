@@ -1,4 +1,8 @@
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import {
+  IAvailabilityAccountMasterRepository,
+  ICostCenterMasterRepository,
+  IFinancialRecordRepository,
+} from "@/Financial/domain/interfaces"
 import { IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import { BaseReportRequest } from "../domain"
@@ -14,6 +18,8 @@ export class IncomeStatement {
 
   constructor(
     private readonly financialRecordRepository: IFinancialRecordRepository,
+    private readonly costCenterMasterRepository: ICostCenterMasterRepository,
+    private readonly availabilityAccountMasterRepository: IAvailabilityAccountMasterRepository,
     private readonly churchRepository: IChurchRepository
   ) {}
 
@@ -23,7 +29,9 @@ export class IncomeStatement {
     await new FindChurchById(this.churchRepository).execute(params.churchId)
 
     const availableAccounts =
-      await this.financialRecordRepository.fetchAvailableAccounts(params)
+      await this.availabilityAccountMasterRepository.fetchAvailableAccounts(
+        params
+      )
 
     this.logger.info(`Calculating the total assets`)
     let totalAssets = 0
@@ -37,7 +45,7 @@ export class IncomeStatement {
     }
 
     const costCenters =
-      await this.financialRecordRepository.fetchCostCenters(params)
+      await this.costCenterMasterRepository.fetchCostCenters(params)
 
     this.logger.info(`Calculating the total liabilities`)
     let liabilitiesAssets = 0

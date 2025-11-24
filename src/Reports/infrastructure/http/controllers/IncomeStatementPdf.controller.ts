@@ -4,9 +4,13 @@ import { BaseReportRequest } from "../../../domain"
 import { IncomeStatement } from "../../../applications"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 import { NoOpStorage } from "@/Shared/infrastructure"
+import {
+  AvailabilityAccountMasterMongoRepository,
+  CostCenterMasterMongoRepository,
+} from "@/Financial/infrastructure/persistence"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
 
 export const IncomeStatementPdfController = async (
   req: BaseReportRequest,
@@ -15,6 +19,8 @@ export const IncomeStatementPdfController = async (
   try {
     const incomeStatement = await new IncomeStatement(
       FinanceRecordMongoRepository.getInstance(),
+      CostCenterMasterMongoRepository.getInstance(),
+      AvailabilityAccountMasterMongoRepository.getInstance(),
       ChurchMongoRepository.getInstance()
     ).execute(req)
 

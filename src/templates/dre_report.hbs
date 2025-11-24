@@ -126,12 +126,18 @@
 <div class="report">
   <header class="header">
     <h1>Demonstração do Resultado do Exercício (DRE)</h1>
-    <p class="subtitle">{{#if month}}Período: {{month}}/{{year}}{{else}}Ano: {{year}}{{/if}}</p>
+    <p class="subtitle">
+      {{#if month}}
+        Período: {{month}}/{{year}}
+      {{else}}
+        Ano: {{year}}
+      {{/if}}
+    </p>
     <p class="subtitle">Relatório de Resultado Contábil</p>
   </header>
 
   <table class="dre-table">
-    <!-- Receita Bruta -->
+    <!-- Receitas -->
     <tr class="section-header">
       <td colspan="2">Receitas</td>
     </tr>
@@ -165,7 +171,7 @@
       </td>
     </tr>
 
-    <!-- Despesas Operacionais -->
+    <!-- Despesas Operacionais + Repasses Ministeriais -->
     <tr class="section-header">
       <td colspan="2">Despesas Operacionais</td>
     </tr>
@@ -173,6 +179,12 @@
       <td class="label">Despesas Administrativas e Operacionais</td>
       <td class="amount {{#if (isExpense despesasOperacionais)}}negative{{/if}}">
         {{formatExpense despesasOperacionais}}
+      </td>
+    </tr>
+    <tr class="line-item">
+      <td class="label">Repasses e Contribuições Ministeriais</td>
+      <td class="amount {{#if (isExpense repassesMinisteriais)}}negative{{/if}}">
+        {{formatExpense repassesMinisteriais}}
       </td>
     </tr>
     <tr class="subtotal">
@@ -193,6 +205,17 @@
       </td>
     </tr>
 
+    <!-- Investimentos (CAPEX) - informativo, não afeta o resultado -->
+    <tr class="section-header">
+      <td colspan="2">Investimentos (CAPEX)</td>
+    </tr>
+    <tr class="line-item">
+      <td class="label">Aquisições de mobiliário, equipamentos e outros bens permanentes</td>
+      <td class="amount {{#if (isExpense investimentosCAPEX)}}negative{{/if}}">
+        {{formatExpense investimentosCAPEX}}
+      </td>
+    </tr>
+
     <!-- Resultado Líquido -->
     <tr class="total">
       <td>Resultado Líquido do Período</td>
@@ -204,16 +227,31 @@
 
   <div class="notes">
     <h3>Notas Explicativas</h3>
-    <p><strong>Receita Bruta:</strong> Total de entradas operacionais (dízimos, ofertas, doações).</p>
-    <p><strong>Custos Diretos:</strong> Custos diretamente relacionados à prestação de serviços e projetos.</p>
-    <p><strong>Despesas Operacionais:</strong> Gastos necessários para manter as atividades diárias (energia, água, materiais, etc.).</p>
-    <p><strong>Resultados Extraordinários:</strong> Receitas e despesas não recorrentes ou não operacionais.</p>
-    <p><strong>Nota:</strong> Este relatório considera apenas os valores que já foram confirmados e que impactam diretamente o resultado financeiro da igreja no período analisado.</p>
+    <p><strong>Receita Bruta:</strong> Total de entradas operacionais (dízimos, ofertas, doações e contribuições
+      recorrentes).</p>
+    <p><strong>Custos Diretos:</strong> Custos diretamente relacionados à realização de projetos, eventos e atividades
+      específicas.</p>
+    <p><strong>Despesas Operacionais:</strong> Gastos necessários para manter as atividades diárias da igreja (aluguel,
+      energia, água, materiais, transporte, etc.).</p>
+    <p><strong>Repasses e Contribuições Ministeriais:</strong> Valores enviados,para a diretoria ou missões.</p>
+    <p><strong>Investimentos (CAPEX):</strong> Aquisição de bens permanentes usados na estrutura da igreja (cadeiras,
+      mesas, equipamentos, mobiliário, etc.). Estes valores impactam o patrimônio da igreja, mas não o resultado
+      operacional do período.</p>
+    <p><strong>Resultados Extraordinários:</strong> Receitas e despesas não recorrentes ou que não fazem parte da
+      operação normal da igreja.</p>
+    <p><strong>Nota:</strong> Este relatório considera apenas lançamentos já confirmados que impactam diretamente o
+      resultado ou o patrimônio da igreja no período analisado.</p>
   </div>
 
   <div class="metadata">
     <p>Demonstração do Resultado do Exercício (DRE)</p>
     <p>Relatório gerado automaticamente pelo sistema de gestão financeira</p>
-    <p>{{#if month}}Competência: {{month}}/{{year}}{{else}}Competência: {{year}}{{/if}}</p>
+    <p>
+      {{#if month}}
+        Competência: {{month}}/{{year}}
+      {{else}}
+        Competência: {{year}}
+      {{/if}}
+    </p>
   </div>
 </div>

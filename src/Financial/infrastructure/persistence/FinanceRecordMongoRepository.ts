@@ -1,9 +1,7 @@
 import { FinanceRecord } from "@/Financial/domain"
 import { IFinancialRecordRepository } from "../../domain/interfaces"
 import {
-  AvailabilityAccountMaster,
   ConceptType,
-  CostCenterMaster,
   FinancialRecordStatus,
   StatementCategory,
   StatementCategorySummary,
@@ -127,84 +125,6 @@ export class FinanceRecordMongoRepository
       records: result[0].records,
       tithesOfTithes: ((result[0].total ?? 0) * 10) / 100,
     }
-  }
-
-  async fetchAvailableAccounts(filter: {
-    churchId: string
-    year: number
-    month?: number
-  }): Promise<AvailabilityAccountMaster[]> {
-    this.logger.info(
-      `Fetch available accounts params: ${JSON.stringify(filter)}`
-    )
-
-    this.dbCollectionName = "availability_accounts_master"
-
-    const { churchId, year, month } = filter
-
-    const collection = await this.collection()
-
-    const mustConditions = [
-      { text: { query: churchId, path: "churchId" } },
-      { equals: { value: Number(year), path: "year" } },
-    ]
-
-    if (month !== undefined) {
-      mustConditions.push({ equals: { value: Number(month), path: "month" } })
-    }
-
-    const result = await collection
-      .aggregate([
-        {
-          $search: {
-            index: "availabilityAccountMasterIndex",
-            compound: {
-              must: mustConditions,
-            },
-          },
-        },
-      ])
-      .toArray()
-
-    return result.map((r) => AvailabilityAccountMaster.fromPrimitives(r))
-  }
-
-  async fetchCostCenters(filter: {
-    churchId: string
-    year: number
-    month?: number
-  }): Promise<CostCenterMaster[]> {
-    this.logger.info(`Fetch costs center params: ${JSON.stringify(filter)}`)
-
-    this.dbCollectionName = "cost_centers_master"
-
-    const { churchId, year, month } = filter
-
-    const collection = await this.collection()
-
-    const mustConditions = [
-      { text: { query: churchId, path: "churchId" } },
-      { equals: { value: Number(year), path: "year" } },
-    ]
-
-    if (month !== undefined) {
-      mustConditions.push({ equals: { value: Number(month), path: "month" } })
-    }
-
-    const result = await collection
-      .aggregate([
-        {
-          $search: {
-            index: "costCentersMasterIndex",
-            compound: {
-              must: mustConditions,
-            },
-          },
-        },
-      ])
-      .toArray()
-
-    return result.map((r) => CostCenterMaster.fromPrimitives(r))
   }
 
   async fetchStatementCategories(filter: {

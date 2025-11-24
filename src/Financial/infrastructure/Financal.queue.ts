@@ -7,6 +7,7 @@ import {
   FinancialConfigurationMongoRepository,
 } from "./persistence"
 import {
+  RebuildAvailabilityMasterAccountJob,
   UpdateAvailabilityAccountBalanceJob,
   UpdateFinancialRecordJob,
 } from "../applications"
@@ -14,8 +15,17 @@ import { UpdateCostCenterMasterJob } from "../applications/jobs/UpdateCostCenter
 import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
+import { RebuildCostCenterMasterJob } from "@/Financial/applications/jobs/RebuildCostCenterMaster.job"
 
 export const FinancialQueue = (): IDefinitionQueue[] => [
+  {
+    useClass: RebuildCostCenterMasterJob,
+    inject: [CostCenterMasterMongoRepository.getInstance()],
+  },
+  {
+    useClass: RebuildAvailabilityMasterAccountJob,
+    inject: [AvailabilityAccountMasterMongoRepository.getInstance()],
+  },
   {
     useClass: UpdateCostCenterMasterJob,
     inject: [

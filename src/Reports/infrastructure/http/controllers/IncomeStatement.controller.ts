@@ -4,6 +4,10 @@ import { FinanceRecordMongoRepository } from "../../../../Financial/infrastructu
 import { IncomeStatement } from "../../../applications"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { ChurchMongoRepository } from "../../../../Church/infrastructure"
+import {
+  AvailabilityAccountMasterMongoRepository,
+  CostCenterMasterMongoRepository,
+} from "@/Financial/infrastructure/persistence"
 
 /**
  * IncomeStatementController
@@ -65,6 +69,8 @@ export const IncomeStatementController = async (
   try {
     const result = await new IncomeStatement(
       FinanceRecordMongoRepository.getInstance(),
+      CostCenterMasterMongoRepository.getInstance(),
+      AvailabilityAccountMasterMongoRepository.getInstance(),
       ChurchMongoRepository.getInstance()
     ).execute(req)
 

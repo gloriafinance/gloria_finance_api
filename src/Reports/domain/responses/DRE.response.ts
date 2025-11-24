@@ -4,8 +4,10 @@ export type DREResponse = {
   custosDiretos: number
   resultadoBruto: number
   despesasOperacionais: number
-  resultadoOperacional: number
+  repassesMinisteriais: number
+  investimentosCAPEX: number
   resultadosExtraordinarios: number
+  resultadoOperacional: number
   resultadoLiquido: number
   year?: number
   month?: number

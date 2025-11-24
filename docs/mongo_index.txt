@@ -5,17 +5,75 @@ db["financial_records"].createIndex(
     churchId: 1,
     date: 1,
     status: 1,
-    "financialConcept.affectsResult": 1
+    "financialConcept.statementCategory": 1
   },
   {
-    name: "idx_financial_records_income_statement",
+    name: "idx_dre_core",
     background: true,
     partialFilterExpression: {
-      status: { $in: [Object] },
-      "financialConcept.affectsResult": true
+      status: { $in: ["CLEARED", "RECONCILED"] }
     }
   }
 );
+
+db["financial_records"].createIndex(
+  {
+    churchId: 1,
+    date: 1,
+    status: 1,
+    "availabilityAccount.availabilityAccountId": 1,
+    type: 1
+  },
+  {
+    name: "idx_cashflow",
+    background: true,
+    partialFilterExpression: {
+      "financialConcept.affectsCashFlow": true,
+      status: { $in: ["CLEARED", "RECONCILED"] }
+    }
+  }
+);
+
+db["financial_records"].createIndex(
+  {
+    churchId: 1,
+    date: 1,
+    status: 1,
+    "costCenter.costCenterId": 1
+  },
+  {
+    name: "idx_cost_centers",
+    background: true,
+    partialFilterExpression: {
+      status: { $in: ["CLEARED", "RECONCILED"] },
+      $or: [
+        { "financialConcept.affectsResult": true },
+        { "financialConcept.affectsBalance": true }
+      ]
+    }
+  }
+);
+
+db["financial_records"].createIndex(
+  {
+    financialRecordId: 1
+  },
+  {
+    unique: true,
+    background: true,
+    name: "idx_financialRecordId"
+  }
+);
+
+db["financial_records"].createIndex(
+  {
+    churchId: 1,
+    date: 1,
+    status: 1,
+    type: 1
+  },
+  { background: true, name: "idx_full_record_scan" }
+)
 
 db["cost_centers_master"].createSearchIndex({
   name: "costCentersMasterIndex",
