@@ -69,11 +69,11 @@ jobs:
           cat > start.js << 'EOL'
             // Este script simplemente carga tsconfig-paths y luego el app principal
             require('tsconfig-paths/register');
-            require('./dist/src/app.js');
+            require('./dist/app.js');
           EOL
 
           # Configurar PM2 para ejecutar la aplicación
-          pm2 stop church_financial_api --wait-time 10000 || true
+          pm2 stop church_financial_api || true
           pm2 delete church_financial_api || true
 
           # Iniciar la aplicación con PM2

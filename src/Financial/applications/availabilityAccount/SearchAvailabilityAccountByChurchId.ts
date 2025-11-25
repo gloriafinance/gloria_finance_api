@@ -7,8 +7,9 @@ export class SearchAvailabilityAccountByChurchId {
   ) {}
 
   async execute(churchId: string): Promise<AvailabilityAccount[]> {
-    return this.availabilityAccountRepository.searchAvailabilityAccountsByChurchId(
-      churchId
-    )
+    return this.availabilityAccountRepository.list({
+      churchId,
+      active: true,
+    })
   }
 }

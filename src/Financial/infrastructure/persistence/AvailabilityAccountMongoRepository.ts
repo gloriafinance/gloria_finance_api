@@ -44,11 +44,9 @@ export class AvailabilityAccountMongoRepository
     })
   }
 
-  async searchAvailabilityAccountsByChurchId(
-    churchId: string
-  ): Promise<AvailabilityAccount[]> {
+  async list(filter: object): Promise<AvailabilityAccount[]> {
     const collection = await this.collection()
-    const documents = await collection.find({ churchId }).toArray()
+    const documents = await collection.find(filter).toArray()
 
     return documents.map((document) =>
       AvailabilityAccount.fromPrimitives({

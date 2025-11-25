@@ -4,7 +4,6 @@ import {
   AccountPayableNotFound,
   AccountPayableStatus,
   IAccountPayableRepository,
-  InstallmentNotFound,
   PayAccountPayableRequest,
   SupplierType,
 } from "@/AccountsPayable/domain"
@@ -161,7 +160,7 @@ describe("PayAccountPayable", () => {
   const availabilityAccountRepository = {
     one: jest.fn(),
     upsert: jest.fn(),
-    searchAvailabilityAccountsByChurchId: jest.fn(),
+    list: jest.fn(),
   } as jest.Mocked<IAvailabilityAccountRepository>
 
   const queueService = {

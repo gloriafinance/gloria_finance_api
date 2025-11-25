@@ -1,11 +1,9 @@
-import { AvailabilityAccount } from "../AvailabilityAccount"
+import { AvailabilityAccount } from "@/Financial/domain"
 
 export interface IAvailabilityAccountRepository {
   upsert(availabilityAccount: AvailabilityAccount): Promise<void>
 
   one(filter: object): Promise<AvailabilityAccount | undefined>
 
-  searchAvailabilityAccountsByChurchId(
-    churchId: string
-  ): Promise<AvailabilityAccount[]>
+  list(filter: object): Promise<AvailabilityAccount[]>
 }
