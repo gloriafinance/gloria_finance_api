@@ -2,8 +2,8 @@ import { Response } from "express"
 import { Logger } from "@/Shared/adapter"
 import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
 
-export function CacheController(prefix: string, ttlSeconds: number = 300) {
-  const logger = Logger(CacheController.name)
+export function Cache(prefix: string, ttlSeconds: number = 300) {
+  const logger = Logger(Cache.name)
   const cacheService = CacheService.getInstance()
 
   return function (

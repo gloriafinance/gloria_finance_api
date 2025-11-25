@@ -8,6 +8,7 @@ import {
   ISupplierRepository,
   Supplier,
   SupplierType,
+  TaxDocumentType,
 } from "@/AccountsPayable/domain"
 import { CreateAccountPayable } from "@/AccountsPayable/applications"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
@@ -81,13 +82,27 @@ class SupplierRepositoryMock implements ISupplierRepository {
   }
 }
 
+const baseTaxDocument = {
+  type: TaxDocumentType.INVOICE,
+  number: "0001",
+  date: new Date(),
+}
+
+const withTaxDocument = <T extends object>(params: T): T & {
+  taxDocument: typeof baseTaxDocument
+} => ({
+  ...params,
+  taxDocument: baseTaxDocument,
+})
+
 function testAccountPayableTaxCalculation(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-001",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "12345678901",
-      name: "Construtora Monte",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-001",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "12345678901",
+        name: "Construtora Monte",
       phone: "11999999999",
     },
     churchId: "church-001",
@@ -102,7 +117,8 @@ function testAccountPayableTaxCalculation(): void {
       { taxType: "ISS", percentage: 5 },
       { taxType: "PIS", percentage: 1.65 },
     ],
-  })
+    })
+  )
 
   const taxes = account.getTaxes()
   assert.strictEqual(taxes.length, 2, "Two taxes should be registered")
@@ -206,12 +222,13 @@ async function testCreateAccountPayablePersistsTaxes(): Promise<void> {
 }
 
 function testAccountPayableSupportsExemptInvoices(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-002",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "12345678901",
-      name: "Arquitetura Sagrada Ltda",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-002",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "12345678901",
+        name: "Arquitetura Sagrada Ltda",
       phone: "11988889999",
     },
     churchId: "church-003",
@@ -222,15 +239,16 @@ function testAccountPayableSupportsExemptInvoices(): void {
         dueDate: new Date("2025-02-20T00:00:00.000Z"),
       },
     ],
-    taxMetadata: {
-      status: AccountPayableTaxStatus.EXEMPT,
-      taxExempt: true,
-      exemptionReason: "Serviço enquadrado no art. 150, VI, b da CF",
-      cstCode: "041",
-      observation:
-        "NF emitida sem destaque de imposto por imunidade tributária",
-    },
-  })
+      taxMetadata: {
+        status: AccountPayableTaxStatus.EXEMPT,
+        taxExempt: true,
+        exemptionReason: "Serviço enquadrado no art. 150, VI, b da CF",
+        cstCode: "041",
+        observation:
+          "NF emitida sem destaque de imposto por imunidade tributária",
+      },
+    })
+  )
 
   assert.strictEqual(account.getTaxes().length, 0)
   assert.strictEqual(account.getTaxAmountTotal(), 0)
@@ -256,12 +274,13 @@ function testAccountPayableSupportsExemptInvoices(): void {
 }
 
 function testAccountPayableSupportsCommitmentsWithoutInvoice(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-011",
-      supplierType: SupplierType.INDIVIDUAL,
-      supplierDNI: "32165498700",
-      name: "João da Silva",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-011",
+        supplierType: SupplierType.INDIVIDUAL,
+        supplierDNI: "32165498700",
+        name: "João da Silva",
       phone: "11977776666",
     },
     churchId: "church-011",
@@ -280,12 +299,13 @@ function testAccountPayableSupportsCommitmentsWithoutInvoice(): void {
         dueDate: new Date("2024-10-10T00:00:00.000Z"),
       },
     ],
-    taxMetadata: {
-      status: AccountPayableTaxStatus.NOT_APPLICABLE,
-      taxExempt: true,
-      observation: "Contrato particular assinado com pessoa física",
-    },
-  })
+      taxMetadata: {
+        status: AccountPayableTaxStatus.NOT_APPLICABLE,
+        taxExempt: true,
+        observation: "Contrato particular assinado com pessoa física",
+      },
+    })
+  )
 
   assert.strictEqual(account.getTaxes().length, 0)
   assert.strictEqual(account.getTaxAmountTotal(), 0)
@@ -320,12 +340,13 @@ function testAccountPayableSupportsCommitmentsWithoutInvoice(): void {
 }
 
 function testAccountPayableStoresMixedTaxStatuses(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-010",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "22345678901",
-      name: "Serviços de Climatização",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-010",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "22345678901",
+        name: "Serviços de Climatização",
       phone: "11922221111",
     },
     churchId: "church-010",
@@ -349,7 +370,8 @@ function testAccountPayableStoresMixedTaxStatuses(): void {
         status: AccountPayableTaxStatus.SUBSTITUTION,
       },
     ],
-  })
+    })
+  )
 
   const taxes = account.getTaxes()
   assert.strictEqual(taxes.length, 2)
@@ -376,12 +398,13 @@ function testAccountPayableStoresMixedTaxStatuses(): void {
 }
 
 function testAccountPayableDefaultsToSubstitutionWhenOnlySubstitutedLines(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-011",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "32345678901",
-      name: "Transporte Litúrgico",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-011",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "32345678901",
+        name: "Transporte Litúrgico",
       phone: "11911110000",
     },
     churchId: "church-011",
@@ -395,7 +418,8 @@ function testAccountPayableDefaultsToSubstitutionWhenOnlySubstitutedLines(): voi
         status: AccountPayableTaxStatus.SUBSTITUTION,
       },
     ],
-  })
+    })
+  )
 
   const taxes = account.getTaxes()
   assert.strictEqual(taxes.length, 1)
@@ -415,23 +439,25 @@ function testAccountPayableDefaultsToSubstitutionWhenOnlySubstitutedLines(): voi
 }
 
 function testAccountPayableDefaultsTaxMetadataForUntaxedInvoices(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-003",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "12345678901",
-      name: "Limpeza e Cia",
-      phone: "11977776666",
-    },
-    churchId: "church-004",
-    description: "Serviço de limpeza pontual",
-    installments: [
-      {
-        amount: 500,
-        dueDate: new Date("2025-05-10T00:00:00.000Z"),
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-003",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "12345678901",
+        name: "Limpeza e Cia",
+        phone: "11977776666",
       },
-    ],
-  })
+      churchId: "church-004",
+      description: "Serviço de limpeza pontual",
+      installments: [
+        {
+          amount: 500,
+          dueDate: new Date("2025-05-10T00:00:00.000Z"),
+        },
+      ],
+    })
+  )
 
   assert.strictEqual(account.getTaxes().length, 0)
   assert.strictEqual(account.getTaxAmountTotal(), 0)
@@ -446,12 +472,13 @@ function testAccountPayableDefaultsTaxMetadataForUntaxedInvoices(): void {
 }
 
 function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-004",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "12345678901",
-      name: "Serviços de Jardinagem",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-004",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "12345678901",
+        name: "Serviços de Jardinagem",
       phone: "11966665555",
     },
     churchId: "church-005",
@@ -466,12 +493,13 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
       { taxType: "ISS", percentage: 5 },
       { taxType: "INSS", percentage: 11 },
     ],
-    taxMetadata: {
-      taxExempt: true,
-      status: AccountPayableTaxStatus.EXEMPT,
-      exemptionReason: "Serviço vinculado à finalidade essencial",
-    },
-  })
+      taxMetadata: {
+        taxExempt: true,
+        status: AccountPayableTaxStatus.EXEMPT,
+        exemptionReason: "Serviço vinculado à finalidade essencial",
+      },
+    })
+  )
 
   assert.strictEqual(
     account.getTaxes().length,
@@ -495,19 +523,21 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
 
 function testAccountPayableSupportsScenarioBWithoutInstallments(): void {
   const amountTotal = 3500
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-007",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "98765432100",
-      name: "Engenharia Estrutural",
-      phone: "11933332222",
-    },
-    churchId: "church-008",
-    description: "Montagem de estrutura metálica",
-    amountTotal,
-    taxes: [{ taxType: "ISS", percentage: 3 }],
-  })
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-007",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "98765432100",
+        name: "Engenharia Estrutural",
+        phone: "11933332222",
+      },
+      churchId: "church-008",
+      description: "Montagem de estrutura metálica",
+      amountTotal,
+      taxes: [{ taxType: "ISS", percentage: 3 }],
+    })
+  )
 
   const expectedIss = Number(((amountTotal * 3) / 100).toFixed(2))
 
@@ -525,28 +555,31 @@ function testAccountPayableSupportsScenarioBWithoutInstallments(): void {
 
 function testAccountPayableRequiresAmountTotalForScenarioB(): void {
   assert.throws(() => {
-    AccountPayable.create({
-      supplier: {
-        supplierId: "supplier-008",
-        supplierType: SupplierType.SUPPLIER,
-        supplierDNI: "98765432100",
-        name: "Serviços Técnicos",
-        phone: "11933335555",
-      },
-      churchId: "church-009",
-      description: "Consultoria estrutural",
-    })
+    AccountPayable.create(
+      withTaxDocument({
+        supplier: {
+          supplierId: "supplier-008",
+          supplierType: SupplierType.SUPPLIER,
+          supplierDNI: "98765432100",
+          name: "Serviços Técnicos",
+          phone: "11933335555",
+        },
+        churchId: "church-009",
+        description: "Consultoria estrutural",
+      })
+    )
   }, InvalidInstallmentsConfiguration)
 }
 
 function testAccountPayableRejectsMismatchedInstallments(): void {
   assert.throws(() => {
-    AccountPayable.create({
-      supplier: {
-        supplierId: "supplier-005",
-        supplierType: SupplierType.SUPPLIER,
-        supplierDNI: "12345678901",
-        name: "Elétrica Luz Viva",
+    AccountPayable.create(
+      withTaxDocument({
+        supplier: {
+          supplierId: "supplier-005",
+          supplierType: SupplierType.SUPPLIER,
+          supplierDNI: "12345678901",
+          name: "Elétrica Luz Viva",
         phone: "11955554444",
       },
       churchId: "church-006",
@@ -562,17 +595,19 @@ function testAccountPayableRejectsMismatchedInstallments(): void {
         },
       ],
       amountTotal: 1200,
-    })
+      })
+    )
   }, InvalidInstallmentsConfiguration)
 }
 
 function testAccountPayableStatusTransitionsWithPayments(): void {
-  const account = AccountPayable.create({
-    supplier: {
-      supplierId: "supplier-006",
-      supplierType: SupplierType.SUPPLIER,
-      supplierDNI: "12345678901",
-      name: "Construções Gerais",
+  const account = AccountPayable.create(
+    withTaxDocument({
+      supplier: {
+        supplierId: "supplier-006",
+        supplierType: SupplierType.SUPPLIER,
+        supplierDNI: "12345678901",
+        name: "Construções Gerais",
       phone: "11944443333",
     },
     churchId: "church-007",
@@ -587,7 +622,8 @@ function testAccountPayableStatusTransitionsWithPayments(): void {
         dueDate: new Date("2025-10-10T00:00:00.000Z"),
       },
     ],
-  })
+    })
+  )
 
   assert.strictEqual(account.getStatus(), AccountPayableStatus.PENDING)
 
@@ -673,4 +709,6 @@ async function runTests() {
   }
 }
 
-runTests()
+test("business tax scenarios run", async () => {
+  await runTests()
+})

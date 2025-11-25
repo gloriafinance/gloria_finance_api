@@ -17,7 +17,13 @@ describe("FinancialConcept impact flags", () => {
       true,
       ConceptType.INCOME,
       StatementCategory.REVENUE,
-      churchStub
+      churchStub,
+      {
+        affectsCashFlow: true,
+        affectsResult: true,
+        affectsBalance: false,
+        isOperational: true,
+      }
     )
 
     expect(concept.getAffectsCashFlow()).toBe(true)
@@ -37,6 +43,10 @@ describe("FinancialConcept impact flags", () => {
       statementCategory: StatementCategory.OPEX,
       createdAt: new Date().toISOString(),
       churchId: "church-001",
+      affectsCashFlow: true,
+      affectsResult: true,
+      affectsBalance: false,
+      isOperational: true,
     })
 
     expect(concept.getAffectsCashFlow()).toBe(true)
@@ -53,7 +63,12 @@ describe("FinancialConcept impact flags", () => {
       ConceptType.INCOME,
       StatementCategory.OTHER,
       churchStub,
-      { affectsBalance: true, isOperational: false }
+      {
+        affectsCashFlow: true,
+        affectsResult: true,
+        affectsBalance: true,
+        isOperational: false,
+      }
     )
 
     expect(concept.getAffectsCashFlow()).toBe(true)
@@ -69,7 +84,13 @@ describe("FinancialConcept impact flags", () => {
       true,
       ConceptType.PURCHASE,
       StatementCategory.OTHER,
-      churchStub
+      churchStub,
+      {
+        affectsCashFlow: true,
+        affectsResult: false,
+        affectsBalance: true,
+        isOperational: false,
+      }
     )
 
     expect(concept.getAffectsResult()).toBe(false)

@@ -1,2 +1,2 @@
-export { CacheController } from "./Cache.decorator"
+export { Cache } from "./Cache.decorator"
 export * from "./Cache.decorator"

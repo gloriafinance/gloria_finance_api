@@ -8,3 +8,4 @@ export * from "./DREMaster"
 
 export * from "./responses/DRE.response"
 export * from "./responses/IncomeStatement.response"
+export * from "./responses/Trend.response"

@@ -3,11 +3,11 @@ import { HttpStatus } from "@/Shared/domain"
 import { AllSupplier, RegisterSuppliers } from "@/AccountsPayable/applications"
 import { SupplierMongoRepository } from "@/AccountsPayable/infrastructure/persistence"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { CacheController } from "@/Shared/decorators"
+import { Cache } from "@/Shared/decorators"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 
 export class SupplierController {
-  @CacheController("suppliers", 600)
+  @Cache("suppliers", 600)
   static async listSupplier(churchId: string, res: Response) {
     try {
       res
