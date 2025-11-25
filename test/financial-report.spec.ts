@@ -329,7 +329,7 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       ) {
         current.expenses += Math.abs(record.amount)
       } else if (record.type === ConceptType.REVERSAL) {
-        current.reversal += Math.abs(record.amount)
+        current.reversal -= Math.abs(record.amount)
       }
 
       categoryTotals.set(category, current)
@@ -718,11 +718,18 @@ const sampleRecords: SampleRecord[] = [
   },
 ]
 
-const expectedTotals = {
-  income: 1250,
+const movementExpected = {
+  income: 1400,
   expenses: 550,
   reversal: -150,
-  net: 700,
+  net: 1000,
+}
+
+const incomeStatementExpected = {
+  revenue: 1550,
+  operatingExpenses: 550,
+  reversalAdjustments: -150,
+  netIncome: 1000,
 }
 
 describe("Financial reporting consistency", () => {
@@ -763,10 +770,10 @@ describe("Financial reporting consistency", () => {
     assert.strictEqual(fakePdf.templateUsed, "financial/finance-record-report")
 
     const summary = fakePdf.payload.summary
-    assert.strictEqual(summary.totalIncome, expectedTotals.income)
-    assert.strictEqual(summary.totalExpenses, expectedTotals.expenses)
-    assert.strictEqual(summary.totalReversal, expectedTotals.reversal)
-    assert.strictEqual(summary.netResult, expectedTotals.net)
+    assert.strictEqual(summary.totalIncome, movementExpected.income)
+    assert.strictEqual(summary.totalExpenses, movementExpected.expenses)
+    assert.strictEqual(summary.totalReversal, movementExpected.reversal)
+    assert.strictEqual(summary.netResult, movementExpected.net)
 
     const reversalRow = summary.totalsByType.find(
       (row) => row.type === ConceptType.REVERSAL
@@ -774,14 +781,14 @@ describe("Financial reporting consistency", () => {
     assert.ok(reversalRow, "Reversal row should exist in summary totals")
     assert.strictEqual(
       reversalRow!.signedTotal,
-      Math.abs(expectedTotals.reversal)
+      Math.abs(movementExpected.reversal)
     )
 
     const reversalRecord = fakePdf.payload.records.find(
       (record: any) => record.type === "REVERSAL"
     )
     assert.ok(reversalRecord, "Reversal record should be present in the PDF")
-    assert.strictEqual(reversalRecord.amount, expectedTotals.reversal)
+    assert.strictEqual(reversalRecord.amount, movementExpected.reversal)
   })
 
   it("computes income statement totals using type-only classification", async () => {
@@ -800,26 +807,32 @@ describe("Financial reporting consistency", () => {
 
     const response = await incomeStatement.execute(request)
 
-    assert.strictEqual(response.summary.revenue, expectedTotals.income)
+    assert.strictEqual(
+      response.summary.revenue,
+      incomeStatementExpected.revenue
+    )
     assert.strictEqual(
       response.summary.operatingExpenses,
-      expectedTotals.expenses
+      incomeStatementExpected.operatingExpenses
     )
     assert.strictEqual(
       response.summary.operatingIncome,
-      expectedTotals.income - expectedTotals.expenses
+      incomeStatementExpected.revenue - incomeStatementExpected.operatingExpenses
     )
     assert.strictEqual(
       response.summary.reversalAdjustments,
-      expectedTotals.reversal
+      incomeStatementExpected.reversalAdjustments
     )
-    assert.strictEqual(response.summary.netIncome, expectedTotals.net)
+    assert.strictEqual(
+      response.summary.netIncome,
+      incomeStatementExpected.netIncome
+    )
 
     const otherCategory = response.breakdown.find(
       (item) => item.category === StatementCategory.OTHER
     )
     assert.ok(otherCategory, "Other category should be present in breakdown")
-    assert.strictEqual(otherCategory!.income, 250)
+    assert.strictEqual(otherCategory!.income, 550)
     assert.strictEqual(otherCategory!.expenses, 50)
     assert.strictEqual(
       otherCategory!.net,
@@ -1008,9 +1021,9 @@ describe("Financial reporting consistency", () => {
       2
     )
 
-    expect(response.summary.revenue).toBeCloseTo(3755.05, 2)
+    expect(response.summary.revenue).toBeCloseTo(3958.05, 2)
     expect(response.summary.operatingExpenses).toBeCloseTo(2199.03, 2)
-    expect(response.summary.netIncome).toBeCloseTo(1556.02, 2)
+    expect(response.summary.netIncome).toBeCloseTo(1759.02, 2)
 
     const ministryCategory = response.breakdown.find(
       (item) => item.category === StatementCategory.MINISTRY_TRANSFERS
