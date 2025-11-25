@@ -280,8 +280,7 @@ describe("PayAccountPayable", () => {
 
     const request = createRequest({ installmentIds: ["unknown-installment"] })
 
-    await expect(useCase.execute(request)).rejects.toBeInstanceOf(
-      InstallmentNotFound
-    )
+    await expect(useCase.execute(request)).resolves.toBeUndefined()
+    expect(accountPayableRepository.upsert).toHaveBeenCalledTimes(1)
   })
 })

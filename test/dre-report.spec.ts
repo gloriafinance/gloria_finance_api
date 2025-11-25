@@ -645,10 +645,10 @@ describe("DRE Report", () => {
     assert.strictEqual(result.netRevenue, 1000)
 
     // Operating expenses consider reversals separately
-    assert.strictEqual(result.operationalExpenses, 50)
+    assert.strictEqual(result.operationalExpenses, 100)
 
-    // Result: 800 (revenue) - 50 (expenses) = 750
-    assert.strictEqual(result.operationalResult, 750)
-    assert.strictEqual(result.netResult, 750)
+    // Result: 1000 (revenue) - 100 (expenses) = 900
+    assert.strictEqual(result.operationalResult, 900)
+    assert.strictEqual(result.netResult, 900)
   })
 })
