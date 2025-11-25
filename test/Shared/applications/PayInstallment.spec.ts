@@ -20,7 +20,7 @@ describe("PayInstallment", () => {
       dueDate: new Date(),
     }
 
-    const remaining = PayInstallment(installment, 40, "tx-1", logger)
+    const remaining = PayInstallment(installment, 40, logger)
 
     expect(remaining).toBe(-60)
     //expect(installment.amountPaid).toBe(40)
@@ -38,7 +38,7 @@ describe("PayInstallment", () => {
       dueDate: new Date(),
     }
 
-    const remaining = PayInstallment(installment, 80, "tx-2", logger)
+    const remaining = PayInstallment(installment, 80, logger)
 
     expect(remaining).toBe(20)
     expect(installment.amountPaid).toBe(100)
@@ -56,7 +56,7 @@ describe("PayInstallment", () => {
       dueDate: new Date(),
     }
 
-    const remaining = PayInstallment(installment, 50, "tx-3", logger)
+    const remaining = PayInstallment(installment, 50, logger)
 
     expect(remaining).toBe(undefined)
     expect(installment.amountPaid).toBe(100)

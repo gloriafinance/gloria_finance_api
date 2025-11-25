@@ -1,7 +1,6 @@
 import { PayAccountPayable } from "@/AccountsPayable/applications/PayAccountPayable"
 import {
   AccountPayable,
-  AccountPayableChurchMismatch,
   AccountPayableNotFound,
   AccountPayableStatus,
   IAccountPayableRepository,
@@ -147,11 +146,9 @@ const createRequest = (
   installmentId: overrides.installmentId ?? "installment-1",
   installmentIds: overrides.installmentIds ?? ["installment-1"],
   availabilityAccountId: overrides.availabilityAccountId ?? "availability-1",
-  churchId: overrides.churchId ?? "church-1",
   amount: overrides.amount ?? AmountValue.create(100),
   file: overrides.file,
-  voucher: overrides.voucher,
-  concept: overrides.concept ?? createConcept(overrides.churchId ?? "church-1"),
+  createdBy: overrides.createdBy ?? "user-1",
 })
 
 describe("PayAccountPayable", () => {
@@ -252,16 +249,6 @@ describe("PayAccountPayable", () => {
 
     await expect(useCase.execute(createRequest())).rejects.toBeInstanceOf(
       AccountPayableNotFound
-    )
-  })
-
-  it("throws AccountPayableChurchMismatch when the church does not match", async () => {
-    accountPayableRepository.one.mockResolvedValueOnce(createAccountPayable())
-
-    const request = createRequest({ churchId: "church-2" })
-
-    await expect(useCase.execute(request)).rejects.toBeInstanceOf(
-      AccountPayableChurchMismatch
     )
   })
 

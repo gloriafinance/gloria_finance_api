@@ -14,9 +14,9 @@ paths:
       description: |
         Retorna a Demonstração do Resultado do Exercício (DRE) para uma igreja específica.
         O relatório filtra apenas registros financeiros com status CLEARED ou RECONCILED e que afetam o resultado (affectsResult = true).
-      tags: [DRE Reports]
+      tags: [ DRE Reports ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: churchId
           in: query
@@ -82,9 +82,9 @@ paths:
       description: |
         Retorna a Demonstração do Resultado do Exercício (DRE) como um arquivo PDF para download.
         O PDF é formatado seguindo o padrão brasileiro de demonstrações contábeis.
-      tags: [DRE Reports]
+      tags: [ DRE Reports ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: churchId
           in: query
@@ -123,6 +123,84 @@ paths:
               schema:
                 type: string
                 example: 'attachment; filename="dre-2024-5.pdf"'
+        '400':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão para acessar relatórios DRE
+        '404':
+          description: Igreja não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/finance/dre/trend:
+    get:
+      summary: Gera comparação de tendências DRE (mês atual vs anterior)
+      description: |
+        Retorna a comparação de indicadores DRE do mês solicitado com o mês anterior.
+        Permite identificar tendências de crescimento/decrescimento nas métricas financeiras.
+        Automaticamente calcula o mês anterior, incluindo rollback de ano (Janeiro 2025 → Dezembro 2024).
+      tags: [ DRE Reports ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: churchId
+          in: query
+          required: true
+          description: Identificador único da igreja
+          schema:
+            type: string
+            example: church-001
+        - name: year
+          in: query
+          required: true
+          description: Ano de referência do relatório (mês atual)
+          schema:
+            type: integer
+            example: 2025
+        - name: month
+          in: query
+          required: true
+          description: Mês de referência (1-12) para comparação
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 11
+      responses:
+        '200':
+          description: Relatório de tendências gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendResponse'
+              example:
+                period:
+                  year: 2025
+                  month: 11
+                trend:
+                  revenue:
+                    current: 4441.10
+                    previous: 3643.05
+                  opex:
+                    current: 1518.55
+                    previous: 1829.57
+                  transfers:
+                    current: 388.00
+                    previous: 369.46
+                  capex:
+                    current: 721.47
+                    previous: 721.47
+                  netIncome:
+                    current: 1167.01
+                    previous: 890.55
         '400':
           description: Parâmetros inválidos
           content:
@@ -212,6 +290,70 @@ components:
           format: double
           description: Resultado líquido do período (operationalResult + extraordinaryResults - capexInvestments)
           example: 3015.55
+
+    TrendResponse:
+      type: object
+      required:
+        - period
+        - trend
+      properties:
+        period:
+          type: object
+          required:
+            - year
+            - month
+          properties:
+            year:
+              type: integer
+              description: Ano do período atual
+              example: 2025
+            month:
+              type: integer
+              description: Mês do período atual (1-12)
+              minimum: 1
+              maximum: 12
+              example: 11
+        trend:
+          type: object
+          required:
+            - revenue
+            - opex
+            - transfers
+            - capex
+            - netIncome
+          properties:
+            revenue:
+              $ref: '#/components/schemas/TrendValue'
+              description: Comparação de receita bruta (mês atual vs anterior)
+            opex:
+              $ref: '#/components/schemas/TrendValue'
+              description: Comparação de despesas operacionais (mês atual vs anterior)
+            transfers:
+              $ref: '#/components/schemas/TrendValue'
+              description: Comparação de transferências ministeriais (mês atual vs anterior)
+            capex:
+              $ref: '#/components/schemas/TrendValue'
+              description: Comparação de investimentos CAPEX (mês atual vs anterior)
+            netIncome:
+              $ref: '#/components/schemas/TrendValue'
+              description: Comparação de resultado líquido (mês atual vs anterior)
+
+    TrendValue:
+      type: object
+      required:
+        - current
+        - previous
+      properties:
+        current:
+          type: number
+          format: double
+          description: Valor do período atual
+          example: 4441.10
+        previous:
+          type: number
+          format: double
+          description: Valor do período anterior
+          example: 3643.05
 
     Error:
       type: object

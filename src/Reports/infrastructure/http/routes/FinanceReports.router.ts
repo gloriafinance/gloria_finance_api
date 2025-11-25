@@ -6,6 +6,7 @@ import { IncomeStatementController } from "../controllers/IncomeStatement.contro
 import { IncomeStatementPdfController } from "../controllers/IncomeStatementPdf.controller"
 import { DREController } from "../controllers/DRE.controller"
 import { DREPdfController } from "../controllers/DREPdf.controller"
+import { TrendController } from "../controllers/Trend.controller"
 
 const reportFinanceRouter = Router()
 
@@ -62,6 +63,20 @@ reportFinanceRouter.get(
   Can("financial_records", "reports"),
   async (req, res) => {
     await DREPdfController(
+      req.query as unknown as BaseReportRequest & {
+        month: number
+      },
+      res
+    )
+  }
+)
+
+reportFinanceRouter.get(
+  "/dre/trend",
+  PermissionMiddleware,
+  Can("financial_records", "reports"),
+  async (req, res) => {
+    await TrendController.handle(
       req.query as unknown as BaseReportRequest & {
         month: number
       },

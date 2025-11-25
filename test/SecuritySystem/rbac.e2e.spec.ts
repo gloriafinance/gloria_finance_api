@@ -13,7 +13,7 @@ import {
   Role,
   UserAssignment,
 } from "@/SecuritySystem/domain"
-import { UserPermissionsCache } from "@/Shared/infrastructure"
+import { CacheService } from "@/Shared/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 
 const JWT_SECRET = "test-secret"
@@ -209,7 +209,7 @@ describe("RBAC endpoints", () => {
       .spyOn(UserAssignmentMongoRepository, "getInstance")
       .mockReturnValue(assignmentRepository as any)
 
-    const cache = UserPermissionsCache.getInstance()
+    const cache = CacheService.getInstance()
     AuthorizationService.getInstance(
       assignmentRepository as any,
       rolePermissionRepository as any,

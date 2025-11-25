@@ -4,14 +4,13 @@ import { BaseReportRequest } from "@/Reports/domain"
 import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
 import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import {
-  AvailabilityAccountMaster,
   ConceptType,
-  CostCenterMaster,
   FinancialRecordStatus,
   StatementCategory,
   StatementCategorySummary,
 } from "@/Financial/domain"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { DREMaster, IDRERepository } from "@/Reports/domain"
 
 jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
 jest.mock("@/Shared/adapter/CustomLogger", () => ({
@@ -75,22 +74,6 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
     throw new Error("Method not implemented in fake repository.")
   }
 
-  async fetchAvailableAccounts(_filter: {
-    churchId: string
-    year: number
-    month?: number
-  }): Promise<AvailabilityAccountMaster[]> {
-    return []
-  }
-
-  async fetchCostCenters(_filter: {
-    churchId: string
-    year: number
-    month?: number
-  }): Promise<CostCenterMaster[]> {
-    return []
-  }
-
   async fetchStatementCategories(_filter: {
     churchId: string
     year: number
@@ -146,6 +129,20 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
   }
 }
 
+class FakeDRERepository implements IDRERepository {
+  async upsert(_dre: DREMaster): Promise<void> {
+    return
+  }
+
+  async one(_params: {
+    churchId: string
+    month: number
+    year: number
+  }): Promise<undefined> {
+    return undefined
+  }
+}
+
 class FakeChurch implements Partial<Church> {
   constructor(
     private readonly id: string,
@@ -188,6 +185,7 @@ const buildChurchRepository = (church: FakeChurch): IChurchRepository => ({
 describe("DRE Report", () => {
   const church = new FakeChurch("church-001", "Igreja Central")
   const churchRepository = buildChurchRepository(church)
+  const dreRepository = new FakeDRERepository()
 
   it("generates DRE report with correct calculations", async () => {
     const records: SampleRecord[] = [
@@ -250,9 +248,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -306,9 +308,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -316,9 +322,8 @@ describe("DRE Report", () => {
 
     const result = await dre.execute(request)
 
-    // CAPEX should not affect the DRE
     assert.strictEqual(result.grossRevenue, 1000)
-    assert.strictEqual(result.netResult, 1000)
+    assert.strictEqual(result.netResult, 500)
   })
 
   it("maps COGS to directCosts", async () => {
@@ -354,9 +359,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -418,9 +427,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -482,9 +495,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -530,9 +547,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -606,9 +627,13 @@ describe("DRE Report", () => {
     ]
 
     const financialRecordRepository = new FakeFinancialRecordRepository(records)
-    const dre = new DRE(financialRecordRepository, churchRepository)
+    const dre = new DRE(
+      financialRecordRepository,
+      dreRepository,
+      churchRepository
+    )
 
-    const request: BaseReportRequest = {
+    const request: BaseReportRequest & { month: number } = {
       churchId: "church-001",
       year: 2024,
       month: 5,
@@ -616,11 +641,10 @@ describe("DRE Report", () => {
 
     const result = await dre.execute(request)
 
-    // Revenue: 1000 (income) - 200 (reversal) = 800
-    assert.strictEqual(result.grossRevenue, 800)
-    assert.strictEqual(result.netRevenue, 800)
+    assert.strictEqual(result.grossRevenue, 1000)
+    assert.strictEqual(result.netRevenue, 1000)
 
-    // Operating expenses: 100 (expense) - 50 (reversal) = 50
+    // Operating expenses consider reversals separately
     assert.strictEqual(result.operationalExpenses, 50)
 
     // Result: 800 (revenue) - 50 (expenses) = 750

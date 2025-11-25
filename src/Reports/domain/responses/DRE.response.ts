@@ -1,14 +1,14 @@
 export type DREResponse = {
-  grossRevenue: number
-  netRevenue: number
-  directCosts: number
-  grossProfit: number
-  operationalExpenses: number
-  ministryTransfers: number
-  capexInvestments: number
-  extraordinaryResults: number
-  operationalResult: number
-  netResult: number
+  grossRevenue: number //receitaBruta
+  netRevenue: number //receitaLiquida
+  directCosts: number //custosDiretos
+  grossProfit: number //resultadoBruto
+  operationalExpenses: number //despesasOperacionais
+  ministryTransfers: number //repassesMinisteriais
+  capexInvestments: number //investimentosCAPEX
+  extraordinaryResults: number //resultadosExtraordinarios
+  operationalResult: number //resultadoOperacional
+  netResult: number //resultadoLiquido
   year?: number
   month?: number
 }

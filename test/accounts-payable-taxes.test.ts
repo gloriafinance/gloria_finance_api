@@ -673,4 +673,6 @@ async function runTests() {
   }
 }
 
-runTests()
+test("business tax scenarios run", async () => {
+  await runTests()
+})

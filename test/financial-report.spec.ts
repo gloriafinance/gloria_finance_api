@@ -12,7 +12,11 @@ import {
 import { IncomeStatement } from "@/Reports/applications/IncomeStatement"
 import { BaseReportRequest } from "@/Reports/domain"
 import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import {
+  IAvailabilityAccountMasterRepository,
+  ICostCenterMasterRepository,
+  IFinancialRecordRepository,
+} from "@/Financial/domain/interfaces"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { IStorageService, IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
@@ -101,7 +105,7 @@ const parseCsvRecords = (csvText: string): SampleRecord[] => {
     const conceptName = conceito || "N/A"
 
     const statementCategory = /d[ií]zimos de d[ií]zimos/i.test(conceptName)
-      ? StatementCategory.MINISTRY_CONTRIBUTIONS
+      ? StatementCategory.MINISTRY_TRANSFERS
       : tipo === "Receita"
         ? StatementCategory.REVENUE
         : StatementCategory.OPEX
@@ -325,7 +329,7 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       ) {
         current.expenses += Math.abs(record.amount)
       } else if (record.type === ConceptType.REVERSAL) {
-        current.reversal -= Math.abs(record.amount)
+        current.reversal += Math.abs(record.amount)
       }
 
       categoryTotals.set(category, current)
@@ -337,6 +341,180 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       expenses: totals.expenses,
       reversal: totals.reversal,
     }))
+  }
+}
+
+class FakeAvailabilityAccountMasterRepository
+  implements IAvailabilityAccountMasterRepository
+{
+  constructor(private readonly records: SampleRecord[]) {}
+
+  async one(
+    _availabilityAccountMasterId: string
+  ): Promise<AvailabilityAccountMaster | undefined> {
+    return undefined
+  }
+
+  async search(
+    _churchId: string,
+    _month: number,
+    _year: number
+  ): Promise<AvailabilityAccountMaster[] | undefined> {
+    return []
+  }
+
+  async upsert(_accountMaster: AvailabilityAccountMaster): Promise<void> {
+    return
+  }
+
+  async rebuildAvailabilityAccountsMaster(
+    _filter: { churchId: string; year: number; month: number }
+  ): Promise<void> {
+    return
+  }
+
+  async fetchAvailableAccounts(
+    _filter: { churchId: string; year: number; month?: number }
+  ): Promise<AvailabilityAccountMaster[]> {
+    const realizedStatuses = new Set<FinancialRecordStatus>([
+      FinancialRecordStatus.CLEARED,
+      FinancialRecordStatus.RECONCILED,
+    ])
+
+    const totals = new Map<
+      string,
+      { name: string; totalInput: number; totalOutput: number }
+    >()
+
+    for (const record of this.records) {
+      if (!record.availabilityAccount) continue
+      if (!record.status || !realizedStatuses.has(record.status)) continue
+
+      const key = record.availabilityAccount.accountName
+      const current = totals.get(key) ?? {
+        name: key,
+        totalInput: 0,
+        totalOutput: 0,
+      }
+
+      const normalizedAmount =
+        record.type === ConceptType.REVERSAL
+          ? -Math.abs(record.amount)
+          : Math.abs(record.amount)
+
+      if (
+        record.type === ConceptType.INCOME ||
+        record.type === ConceptType.REVERSAL
+      ) {
+        current.totalInput += normalizedAmount
+      } else if (
+        record.type === ConceptType.OUTGO ||
+        record.type === ConceptType.PURCHASE
+      ) {
+        current.totalOutput += normalizedAmount
+      }
+
+      totals.set(key, current)
+    }
+
+    return Array.from(totals.values()).map((item) =>
+      AvailabilityAccountMaster.fromPrimitives({
+        id: undefined,
+        month: undefined,
+        year: undefined,
+        totalInput: item.totalInput,
+        totalOutput: item.totalOutput,
+        availabilityAccount: {
+          availabilityAccountId: item.name,
+          accountName: item.name,
+          symbol: "",
+        },
+        availabilityAccountMasterId: `test-${item.name}`,
+        churchId: "church-001",
+      })
+    )
+  }
+}
+
+class FakeCostCenterMasterRepository implements ICostCenterMasterRepository {
+  constructor(private readonly records: SampleRecord[]) {}
+
+  async one(
+    _costCenterMasterId: string
+  ): Promise<CostCenterMaster | undefined> {
+    return undefined
+  }
+
+  async search(
+    _churchId: string,
+    _month: number,
+    _year: number
+  ): Promise<CostCenterMaster[]> {
+    return []
+  }
+
+  async upsert(_costCenterMaster: CostCenterMaster): Promise<void> {
+    return
+  }
+
+  async rebuildCostCentersMaster(
+    _filter: { churchId: string; year: number; month?: number }
+  ): Promise<void> {
+    return
+  }
+
+  async fetchCostCenters(
+    _filter: { churchId: string; year: number; month?: number }
+  ): Promise<CostCenterMaster[]> {
+    const realizedStatuses = new Set<FinancialRecordStatus>([
+      FinancialRecordStatus.CLEARED,
+      FinancialRecordStatus.RECONCILED,
+    ])
+
+    const totals = new Map<
+      string,
+      { name: string; total: number; lastMove?: Date }
+    >()
+
+    for (const record of this.records) {
+      if (!record.costCenter) continue
+      if (!record.status || !realizedStatuses.has(record.status)) continue
+
+      if (
+        record.type !== ConceptType.OUTGO &&
+        record.type !== ConceptType.PURCHASE
+      ) {
+        continue
+      }
+
+      const key = record.costCenter.name
+      const normalizedAmount = Math.abs(record.amount)
+
+      const current = totals.get(key) ?? {
+        name: key,
+        total: 0,
+        lastMove: undefined,
+      }
+      current.total += normalizedAmount
+      current.lastMove = record.date
+      totals.set(key, current)
+    }
+
+    return Array.from(totals.values()).map((item) =>
+      CostCenterMaster.fromPrimitives({
+        id: undefined,
+        month: undefined,
+        year: undefined,
+        total: item.total,
+        costCenter: {
+          costCenterId: item.name,
+          costCenterName: item.name,
+        },
+        costCenterMasterId: `test-${item.name}`,
+        churchId: "church-001",
+        lastMove: item.lastMove,
+      })
+    )
   }
 }
 
@@ -553,6 +731,11 @@ describe("Financial reporting consistency", () => {
   const financialRecordRepository = new FakeFinancialRecordRepository(
     sampleRecords
   )
+  const availabilityAccountMasterRepository =
+    new FakeAvailabilityAccountMasterRepository(sampleRecords)
+  const costCenterMasterRepository = new FakeCostCenterMasterRepository(
+    sampleRecords
+  )
 
   it("generates movement report summary aligned with type rules", async () => {
     const fakePdf = new FakePdfAdapter()
@@ -604,6 +787,8 @@ describe("Financial reporting consistency", () => {
   it("computes income statement totals using type-only classification", async () => {
     const incomeStatement = new IncomeStatement(
       financialRecordRepository,
+      costCenterMasterRepository,
+      availabilityAccountMasterRepository,
       churchRepository
     )
 
@@ -666,6 +851,8 @@ describe("Financial reporting consistency", () => {
 
     const statement = new IncomeStatement(
       financialRecordRepository,
+      costCenterMasterRepository,
+      availabilityAccountMasterRepository,
       churchRepository
     )
 
@@ -683,7 +870,7 @@ describe("Financial reporting consistency", () => {
   })
 
   it("ignores pending and non-result records while counting realized income", async () => {
-    const focusedRepository = new FakeFinancialRecordRepository([
+    const focusedRecords: SampleRecord[] = [
       {
         financialRecordId: "rec-realized-1",
         churchId: "church-001",
@@ -736,10 +923,18 @@ describe("Financial reporting consistency", () => {
           affectsResult: true,
         },
       },
-    ])
+    ]
+    const focusedRepository = new FakeFinancialRecordRepository(focusedRecords)
+    const focusedAvailabilityAccountRepository =
+      new FakeAvailabilityAccountMasterRepository(focusedRecords)
+    const focusedCostCenterRepository = new FakeCostCenterMasterRepository(
+      focusedRecords
+    )
 
     const incomeStatement = new IncomeStatement(
       focusedRepository,
+      focusedCostCenterRepository,
+      focusedAvailabilityAccountRepository,
       churchRepository
     )
 
@@ -759,7 +954,17 @@ describe("Financial reporting consistency", () => {
   it("aggregates full monthly flows including reversals, all accounts and cost centers", async () => {
     const csvRecords = parseCsvRecords(csvSample)
     const repository = new FakeFinancialRecordRepository(csvRecords)
-    const incomeStatement = new IncomeStatement(repository, churchRepository)
+    const availabilityAccountMasterRepository =
+      new FakeAvailabilityAccountMasterRepository(csvRecords)
+    const costCenterMasterRepository = new FakeCostCenterMasterRepository(
+      csvRecords
+    )
+    const incomeStatement = new IncomeStatement(
+      repository,
+      costCenterMasterRepository,
+      availabilityAccountMasterRepository,
+      churchRepository
+    )
 
     const response = await incomeStatement.execute({
       churchId: "church-001",

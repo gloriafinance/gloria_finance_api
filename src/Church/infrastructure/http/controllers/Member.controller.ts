@@ -13,7 +13,7 @@ import {
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 import { Response } from "express"
-import { CacheController } from "@/Shared/decorators"
+import { Cache } from "@/Shared/decorators"
 
 export class MemberController {
   static async createOrUpdate(memberRequest: MemberRequest, res: Response) {
@@ -56,7 +56,7 @@ export class MemberController {
     }
   }
 
-  @CacheController("members", 600)
+  @Cache("members", 600)
   static async all(churchId: string, res: Response) {
     try {
       const members = await new AllMember(

@@ -17,7 +17,13 @@ describe("FinancialConcept impact flags", () => {
       true,
       ConceptType.INCOME,
       StatementCategory.REVENUE,
-      churchStub
+      churchStub,
+      {
+        affectsCashFlow: true,
+        affectsResult: true,
+        affectsBalance: false,
+        isOperational: true,
+      }
     )
 
     expect(concept.getAffectsCashFlow()).toBe(true)
@@ -69,7 +75,13 @@ describe("FinancialConcept impact flags", () => {
       true,
       ConceptType.PURCHASE,
       StatementCategory.OTHER,
-      churchStub
+      churchStub,
+      {
+        affectsCashFlow: true,
+        affectsResult: false,
+        affectsBalance: true,
+        isOperational: false,
+      }
     )
 
     expect(concept.getAffectsResult()).toBe(false)
