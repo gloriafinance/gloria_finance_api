@@ -4,6 +4,7 @@ export { Permission } from "./Permission"
 export { Role } from "./Role"
 export { UserAssignment } from "./UserAssignment"
 export { BASE_PERMISSIONS, BASE_ROLES } from "./constants/rbac"
+export { UserPolicies, PolicyStatus } from "./types/user-policies.type"
 
 export { ProfileType } from "./enums/profileType.enum"
 
@@ -22,6 +23,7 @@ export { IPasswordAdapter } from "./interfaces/PasswordAdapter.interface"
 
 export { CreateUserRequest } from "./requests/CreateUser.request"
 export { FilterUserRequest } from "./requests/FilterUser.request"
+export { AcceptPoliciesRequest } from "./requests/AcceptPolicies.request"
 
 export { UserNotFound } from "./exceptions/UserNotFound"
 export { UserDisabled } from "./exceptions/UserDisabled"

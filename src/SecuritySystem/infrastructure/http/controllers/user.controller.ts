@@ -1,4 +1,5 @@
 import {
+  AcceptPolicies,
   ChangePassword,
   CreateOrUpdateUser,
   MakeLogin,
@@ -12,23 +13,31 @@ import { PasswordAdapter } from "../../adapters/Password.adapter"
 import { HttpStatus } from "@/Shared/domain"
 
 import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { CreateUserRequest, FilterUserRequest } from "../../../domain"
+import {
+  AcceptPoliciesRequest,
+  CreateUserRequest,
+  FilterUserRequest,
+} from "../../../domain"
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "@/Shared/adapter"
-import { Response } from "express"
+import { Request, Response } from "express"
+import { Controller, Get, Post, Put, Use } from "@abejarano/ts-express-server"
+import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"
-import randomString from "../../../../Shared/helpers/randomString"
-import { QueueService } from "@/Shared/infrastructure"
+import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
 
 export type userLoginPayload = {
   email: string
   password: string
 }
 
+@Controller("/api/v1/user")
 export class UserController {
-  static async login(payload: userLoginPayload, res) {
-    const logger = Logger("LoginController")
+  private logger = Logger(UserController.name)
 
+  @Post("/login")
+  async login(req: Request, res: Response) {
+    const payload = req.body as unknown as userLoginPayload
     try {
       const { user, token } = await new MakeLogin(
         UserMongoRepository.getInstance(),
@@ -52,38 +61,86 @@ export class UserController {
         token,
       })
     } catch (e) {
-      logger.error(`login error`, e)
+      this.logger.error(`login error`, e)
       domainResponse(e, res)
     }
   }
 
-  static async createOrUpdateUser(payload: CreateUserRequest, res) {
-    const logger = Logger("CreateOrUpdateUserController")
+  @Put("/edit-user/:userId")
+  @Post("/create")
+  @Use(PermissionMiddleware)
+  async createOrUpdateUser(req: Request, res: Response) {
     try {
       const user = await new CreateOrUpdateUser(
         UserMongoRepository.getInstance(),
         new PasswordAdapter()
-      ).execute(payload)
+      ).execute({
+        ...(req.body as unknown as CreateUserRequest),
+        userId: req.params.userId,
+      })
 
       const response = user.toPrimitives()
       delete response.password
 
-      res.status(HttpStatus.OK).json({
+      res.status(HttpStatus.OK).send({
         message: "Usuario actualizado",
-        data: response,
+        ...response,
       })
     } catch (e) {
-      logger.error(`create usuario error`, e)
+      this.logger.error(`create usuario error`, e)
       domainResponse(e, res)
     }
   }
 
-  static async fetchAllUser(req: FilterUserRequest, res) {
+  @Post("/accept-policies")
+  @Use(PermissionMiddleware)
+  async acceptPolicies(req: Request, res: Response) {
+    try {
+      const payload = req.body as AcceptPoliciesRequest
+      if (!req.auth?.userId) {
+        return res.status(HttpStatus.UNAUTHORIZED).send({
+          message: "Unauthorized.",
+        })
+      }
+
+      if (
+        !payload?.privacyPolicyVersion ||
+        !payload?.sensitiveDataPolicyVersion
+      ) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          message:
+            "privacyPolicyVersion and sensitiveDataPolicyVersion are required",
+        })
+      }
+
+      const user = await new AcceptPolicies(
+        UserMongoRepository.getInstance()
+      ).execute(
+        req.auth.userId,
+        payload.privacyPolicyVersion,
+        payload.sensitiveDataPolicyVersion
+      )
+
+      const response = user.toPrimitives()
+      delete response.password
+
+      res.status(HttpStatus.OK).send({
+        message: "Policies accepted",
+        ...response,
+      })
+    } catch (e) {
+      this.logger.error(`accept policies error`, e)
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/")
+  async fetchAllUser(req: Request, res: Response) {
     const logger = Logger("FetchAllUserController")
     try {
       const result = await new FetchAllUsers(
         UserMongoRepository.getInstance()
-      ).execute(req)
+      ).execute(req.query as unknown as FilterUserRequest)
 
       res.status(HttpStatus.OK).send({
         data: result,
@@ -93,27 +150,54 @@ export class UserController {
       domainResponse(e, res)
     }
   }
-}
 
-export const recoveryPassword = async (email: string, res: Response) => {
-  const logger = Logger("GenerateTemporalPasswordController")
-  try {
-    const temporalPassword = randomString(10)
+  @Post("/recovery-password")
+  async recoveryPassword(req: Request, res: Response) {
+    try {
+      const temporalPassword = randomString(10)
 
-    const user = await new ChangePassword(
-      UserMongoRepository.getInstance(),
-      new PasswordAdapter()
-    ).execute(email, temporalPassword)
+      const user = await new ChangePassword(
+        UserMongoRepository.getInstance(),
+        new PasswordAdapter()
+      ).execute(req.body.email ?? "", temporalPassword)
 
-    new SendMailChangePassword(QueueService.getInstance()).execute(
-      user,
-      temporalPassword
-    )
+      new SendMailChangePassword(QueueService.getInstance()).execute(
+        user,
+        temporalPassword
+      )
 
-    res.status(HttpStatus.OK).send({
-      message: "Temporal password generated",
-    })
-  } catch (e) {
-    domainResponse(e, res)
+      res.status(HttpStatus.OK).send({
+        message: "Temporal password generated",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/change-password")
+  async changePassword(req: Request, res: Response) {
+    const payload = req.body as {
+      email: string
+      newPassword: string
+      oldPassword: string
+    }
+    try {
+      await new MakeLogin(
+        UserMongoRepository.getInstance(),
+        new PasswordAdapter(),
+        new AuthTokenAdapter()
+      ).execute(payload.email, payload.oldPassword)
+
+      await new ChangePassword(
+        UserMongoRepository.getInstance(),
+        new PasswordAdapter()
+      ).execute(payload.email, payload.newPassword)
+
+      res.status(200).send({
+        message: "Senha alterada com sucesso",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
   }
 }

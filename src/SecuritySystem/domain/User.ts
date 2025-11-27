@@ -1,6 +1,7 @@
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { UserPolicies } from "./types/user-policies.type"
 
 export class User extends AggregateRoot {
   isActive: boolean
@@ -13,6 +14,7 @@ export class User extends AggregateRoot {
   private churchId: string
   private memberId?: string
   private lastLogin?: Date
+  private policies?: UserPolicies
 
   static create(
     name: string,
@@ -47,6 +49,7 @@ export class User extends AggregateRoot {
     u.name = data.name
     u.memberId = data.memberId
     u.lastLogin = data.lastLogin ?? null
+    u.policies = data.policies
 
     return u
   }
@@ -84,6 +87,10 @@ export class User extends AggregateRoot {
     return this.memberId
   }
 
+  getPolicies(): UserPolicies | undefined {
+    return this.policies
+  }
+
   setEmail(email: string): User {
     this.email = email
     return this
@@ -96,6 +103,26 @@ export class User extends AggregateRoot {
 
   updateLastLogin(): User {
     this.lastLogin = DateBR()
+    return this
+  }
+
+  acceptPolicies(
+    privacyPolicyVersion: string,
+    sensitiveDataPolicyVersion: string
+  ): User {
+    const acceptedAt = DateBR()
+    this.policies = {
+      privacyPolicy: {
+        accepted: true,
+        version: privacyPolicyVersion,
+        acceptedAt,
+      },
+      sensitiveDataPolicy: {
+        accepted: true,
+        version: sensitiveDataPolicyVersion,
+        acceptedAt,
+      },
+    }
     return this
   }
 
@@ -120,6 +147,7 @@ export class User extends AggregateRoot {
       churchId: this.churchId,
       memberId: this.memberId,
       lastLogin: this.lastLogin,
+      policies: this.policies,
     }
   }
 }
