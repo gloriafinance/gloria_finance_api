@@ -1,6 +1,8 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { FinancialConcept } from "../../domain"
-import { IFinancialConceptRepository } from "../../domain/interfaces"
+import {
+  FinancialConcept,
+  IFinancialConceptRepository,
+} from "@/FinanceConfig/domain"
 
 export class FinancialConceptMongoRepository
   extends MongoRepository<FinancialConcept>

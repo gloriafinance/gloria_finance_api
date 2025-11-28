@@ -8,10 +8,10 @@ import {
   CustomerStatus,
   OnboardingStatus,
 } from "@/Customers/domain/enums/CustomerStatus.enum"
-import { FirstLoadFinancialConcepts } from "@/Financial/applications"
 import { GenerateFinancialMonths } from "@/ConsolidatedFinancial/applications"
 import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import { FirstLoadFinancialConcepts } from "@/FinanceConfig/applications"
 
 type OnboardingCustomerJobArgs = {
   customer: Customer

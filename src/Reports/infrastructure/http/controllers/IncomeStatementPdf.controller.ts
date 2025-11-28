@@ -6,11 +6,9 @@ import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
 import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 import { NoOpStorage } from "@/Shared/infrastructure"
-import {
-  AvailabilityAccountMasterMongoRepository,
-  CostCenterMasterMongoRepository,
-} from "@/Financial/infrastructure/persistence"
+import { CostCenterMasterMongoRepository } from "@/Financial/infrastructure/persistence"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
 
 export const IncomeStatementPdfController = async (
   req: BaseReportRequest,

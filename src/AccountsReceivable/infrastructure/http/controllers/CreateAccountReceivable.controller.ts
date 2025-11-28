@@ -8,7 +8,7 @@ import { FindChurchById } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import { QueueService } from "@/Shared/infrastructure"
-import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
+import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
 /**
  * @function CreateAccountReceivableController

@@ -1,5 +1,5 @@
-import { IAvailabilityAccountRepository } from "../../domain/interfaces"
-import { AvailabilityAccount } from "../../domain"
+import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
+import { AvailabilityAccount } from "../../../Financial/domain"
 
 export class SearchAvailabilityAccountByChurchId {
   constructor(

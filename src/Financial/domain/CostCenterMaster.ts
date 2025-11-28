@@ -1,4 +1,4 @@
-import { CostCenter } from "./CostCenter"
+import { CostCenter } from "../../FinanceConfig/domain/CostCenter"
 import { DateBR } from "@/Shared/helpers"
 import MasterBalanceIdentifier from "../applications/helpers/MasterBalanceIdentifier"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"

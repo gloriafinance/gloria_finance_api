@@ -14,10 +14,7 @@ import {
 } from "@/Financial/domain/interfaces"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { IQueueService, IStorageService } from "@/Shared/domain"
-import {
-  DispatchCreateFinancialRecord,
-  FindAvailabilityAccountByAvailabilityAccountId,
-} from "@/Financial/applications"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
 import {
@@ -27,6 +24,7 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class PayAccountPayable {
   private logger = Logger(PayAccountPayable.name)

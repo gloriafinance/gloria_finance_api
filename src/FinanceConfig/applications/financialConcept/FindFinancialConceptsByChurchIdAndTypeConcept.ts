@@ -1,6 +1,6 @@
-import { ConceptType } from "../../domain"
+import { ConceptType } from "../../../Financial/domain"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { IFinancialConceptRepository } from "../../domain/interfaces"
+import { IFinancialConceptRepository } from "../../../Financial/domain/interfaces"
 
 export class FindFinancialConceptsByChurchIdAndTypeConcept {
   constructor(

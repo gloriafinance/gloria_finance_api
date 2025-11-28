@@ -1,13 +1,11 @@
 import { Response } from "express"
 import { BaseReportRequest } from "../../../domain"
-import { FinanceRecordMongoRepository } from "../../../../Financial/infrastructure"
+import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
 import { IncomeStatement } from "../../../applications"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { ChurchMongoRepository } from "../../../../Church/infrastructure"
-import {
-  AvailabilityAccountMasterMongoRepository,
-  CostCenterMasterMongoRepository,
-} from "@/Financial/infrastructure/persistence"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { CostCenterMasterMongoRepository } from "@/Financial/infrastructure/persistence"
+import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
 
 /**
  * IncomeStatementController

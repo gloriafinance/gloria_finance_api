@@ -1,7 +1,4 @@
-export { FinancialConfigurationMongoRepository } from "./FinancialConfigurationMongoRepository"
 export { FinanceRecordMongoRepository } from "./FinanceRecordMongoRepository"
 export { OnlineContributionsMongoRepository } from "./OnlineContributionsMongoRepository"
-export { AvailabilityAccountMasterMongoRepository } from "./AvailabilityAccountMasterMongoRepository"
-export { AvailabilityAccountMongoRepository } from "./AvailabilityAccountMongoRepository"
+export { AvailabilityAccountMongoRepository } from "../../../FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 export { CostCenterMasterMongoRepository } from "./CostCenterMasterMongoRepository"
-export { FinancialConceptMongoRepository } from "./FinancialConceptMongoRepository"

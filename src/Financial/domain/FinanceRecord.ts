@@ -1,7 +1,7 @@
-import { FinancialConcept } from "./FinancialConcept"
+import { FinancialConcept } from "../../FinanceConfig/domain/FinancialConcept"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
-import { AccountType } from "./enums/AccountType.enum"
+import { AccountType } from "../../FinanceConfig/domain/enums/AccountType.enum"
 import { CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 import {
   FinancialRecordSource,

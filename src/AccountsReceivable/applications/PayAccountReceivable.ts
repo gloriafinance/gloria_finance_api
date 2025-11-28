@@ -7,10 +7,7 @@ import {
   PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
 import { IQueueService } from "@/Shared/domain"
-import {
-  DispatchCreateFinancialRecord,
-  FindAvailabilityAccountByAvailabilityAccountId,
-} from "@/Financial/applications"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import {
   FinancialRecordSource,
   FinancialRecordStatus,
@@ -22,6 +19,7 @@ import {
 } from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class PayAccountReceivable {
   private logger = Logger(PayAccountReceivable.name)

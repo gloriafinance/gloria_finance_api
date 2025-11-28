@@ -1,21 +1,23 @@
 import { IDefinitionQueue } from "@/Shared/domain"
 import {
-  AvailabilityAccountMasterMongoRepository,
   AvailabilityAccountMongoRepository,
   CostCenterMasterMongoRepository,
   FinanceRecordMongoRepository,
-  FinancialConfigurationMongoRepository,
 } from "./persistence"
 import {
   RebuildAvailabilityMasterAccountJob,
-  UpdateAvailabilityAccountBalanceJob,
   UpdateFinancialRecordJob,
 } from "../applications"
-import { UpdateCostCenterMasterJob } from "../applications/jobs/UpdateCostCenterMaster.job"
-import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
+import {
+  CreateFinancialRecordJob,
+  RebuildCostCenterMasterJob,
+  UpdateCostCenterMasterJob,
+} from "@/Financial/applications"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
-import { RebuildCostCenterMasterJob } from "@/Financial/applications/jobs/RebuildCostCenterMaster.job"
+import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
+import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
+import { UpdateAvailabilityAccountBalanceJob } from "@/Financial/applications/jobs/UpdateAvailabilityAccountBalance.job"
 
 export const FinancialQueue = (): IDefinitionQueue[] => [
   {

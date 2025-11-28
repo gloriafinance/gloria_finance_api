@@ -6,14 +6,10 @@ import { Logger } from "@/Shared/adapter"
 import { FindMemberById } from "@/Church/applications"
 import { MemberMongoRepository } from "@/Church/infrastructure"
 import {
-  FindFinancialConceptByChurchIdAndFinancialConceptId,
   ListContributions,
   RegisterContributionsOnline,
 } from "@/Financial/applications"
-import {
-  AvailabilityAccountMongoRepository,
-  FinancialConceptMongoRepository,
-} from "@/Financial/infrastructure/persistence"
+import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import {
   AvailabilityAccountNotFound,
   ContributionRequest,
@@ -26,6 +22,8 @@ import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import MemberContributionsDTO from "@/Financial/infrastructure/http/dto/MemberContributions.dto"
+import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "@/FinanceConfig/applications"
+import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
 @Controller("/api/v1/me/contribution")
 export class ContributionMemberController {

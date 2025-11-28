@@ -1,10 +1,10 @@
 import { Logger } from "@/Shared/adapter"
+import { ICacheService } from "@/Shared/domain"
 import {
   IPermissionRepository,
   IRolePermissionRepository,
   IUserAssignmentRepository,
 } from "@/SecuritySystem/domain"
-import { CacheService } from "@/Shared/infrastructure"
 
 export type AuthorizationContext = {
   roles: string[]
@@ -19,14 +19,14 @@ export class AuthorizationService {
     private readonly userAssignmentRepository: IUserAssignmentRepository,
     private readonly rolePermissionRepository: IRolePermissionRepository,
     private readonly permissionRepository: IPermissionRepository,
-    private readonly cache: CacheService
+    private readonly cache: ICacheService
   ) {}
 
   static getInstance(
     userAssignmentRepository: IUserAssignmentRepository,
     rolePermissionRepository: IRolePermissionRepository,
     permissionRepository: IPermissionRepository,
-    cache: CacheService
+    cache: ICacheService
   ): AuthorizationService {
     if (AuthorizationService.instance) {
       return AuthorizationService.instance

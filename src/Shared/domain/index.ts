@@ -19,6 +19,7 @@ export { IQueueService } from "./interfaces/QueueService.interface"
 export { IQueue } from "./interfaces/Queue.interface"
 export { IDefinitionQueue } from "./interfaces/QueueItem.interface"
 export { IXLSExportAdapter } from "./interfaces/ExcelExport.interface"
+export { ICacheService } from "./interfaces/CacheService.interface"
 export * from "./interfaces/RealTimeEventService.interface"
 
 export * from "./types/ReportFile.type"

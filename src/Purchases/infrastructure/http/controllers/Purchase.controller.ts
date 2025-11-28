@@ -6,17 +6,17 @@ import { Response } from "express"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
-import {
-  AvailabilityAccountMongoRepository,
-  FinancialConceptMongoRepository,
-  FinancialConfigurationMongoRepository,
-} from "@/Financial/infrastructure/persistence"
+import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
 import { StorageGCP } from "@/Shared/infrastructure"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
 
 export const RecordPurchaseController = async (
   request: RecordPurchaseRequest,

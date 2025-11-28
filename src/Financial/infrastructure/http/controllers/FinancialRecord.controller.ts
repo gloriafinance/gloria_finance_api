@@ -10,23 +10,25 @@ import {
   FinancialRecordSource,
   FinancialRecordStatus,
 } from "../../../domain"
-import {
-  CancelFinancialRecord,
-  FindAvailabilityAccountByAvailabilityAccountId,
-  FindCostCenterByCostCenterId,
-  FindFinancialConceptByChurchIdAndFinancialConceptId,
-} from "@/Financial/applications"
+import { CancelFinancialRecord } from "@/Financial/applications"
 import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
-  FinancialConceptMongoRepository,
-  FinancialConfigurationMongoRepository,
 } from "../../persistence"
 import { Response } from "express"
 import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { toFinancialRecordType } from "@/Financial/domain/mappers"
+import {
+  FindAvailabilityAccountByAvailabilityAccountId,
+  FindCostCenterByCostCenterId,
+  FindFinancialConceptByChurchIdAndFinancialConceptId,
+} from "@/FinanceConfig/applications"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
 
 export const FinancialRecordController = async (
   request: FinancialRecordRequest & { createdBy: string },
