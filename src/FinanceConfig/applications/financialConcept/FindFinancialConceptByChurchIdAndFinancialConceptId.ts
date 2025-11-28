@@ -1,4 +1,4 @@
-import { IFinancialConceptRepository } from "../../domain/interfaces"
+import { IFinancialConceptRepository } from "../../../Financial/domain/interfaces"
 import { GenericException } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 

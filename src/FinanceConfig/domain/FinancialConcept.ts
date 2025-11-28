@@ -1,6 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { ConceptType } from "./enums/ConcepType.enum"
-import { StatementCategory } from "./enums/StatementCategory.enum"
+import { StatementCategory } from "../../Financial/domain/enums/StatementCategory.enum"
 import { Church } from "@/Church/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"

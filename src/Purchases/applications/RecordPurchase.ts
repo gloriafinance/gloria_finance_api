@@ -6,11 +6,7 @@ import {
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import {
-  DispatchCreateFinancialRecord,
-  FindAvailabilityAccountByAvailabilityAccountId,
-  FindCostCenterByCostCenterId,
-} from "@/Financial/applications"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { Purchase } from "../domain"
 import { IQueueService } from "@/Shared/domain"
 import {
@@ -19,6 +15,10 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
+import {
+  FindAvailabilityAccountByAvailabilityAccountId,
+  FindCostCenterByCostCenterId,
+} from "@/FinanceConfig/applications"
 
 export class RecordPurchase {
   private logger = Logger(RecordPurchase.name)

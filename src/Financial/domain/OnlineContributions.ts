@@ -1,10 +1,10 @@
 import { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Member } from "@/Church/domain"
-import { FinancialConcept } from "./FinancialConcept"
+import { FinancialConcept } from "../../FinanceConfig/domain/FinancialConcept"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 import { DateBR } from "@/Shared/helpers"
-import { AvailabilityAccount } from "./AvailabilityAccount"
+import { AvailabilityAccount } from "../../FinanceConfig/domain/AvailabilityAccount"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AmountValue } from "@/Shared/domain"
 

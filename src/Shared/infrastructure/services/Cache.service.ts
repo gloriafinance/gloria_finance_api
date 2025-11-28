@@ -1,4 +1,6 @@
-export class CacheService {
+import { ICacheService } from "@/Shared/domain"
+
+export class CacheService implements ICacheService {
   private static instance: CacheService
   private cache: Map<string, { data: any; expiry: number }> = new Map()
 
@@ -15,7 +17,7 @@ export class CacheService {
     this.cache.set(key, { data: value, expiry })
   }
 
-  get<T>(key: string): Promise<T | null> {
+  async get<T>(key: string): Promise<T | null> {
     const cached = this.cache.get(key)
 
     if (!cached) {

@@ -9,7 +9,7 @@ import {
   UpdateAvailabilityAccountBalanceRequest,
 } from "../../domain"
 
-import { UpdateAvailabilityAccountMaster } from "../availabilityAccount/UpdateAvailabilityAccountMaster"
+import { UpdateAvailabilityAccountMaster } from "@/Financial/applications/UpdateAvailabilityAccountMaster"
 import { Logger } from "@/Shared/adapter"
 
 export class UpdateAvailabilityAccountBalanceJob implements IQueue {

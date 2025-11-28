@@ -1,9 +1,9 @@
-import { IAvailabilityAccountRepository } from "../../domain/interfaces"
+import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
 import {
   AvailabilityAccount,
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
-} from "../../domain"
+} from "../../../Financial/domain"
 import { Logger } from "@/Shared/adapter"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {

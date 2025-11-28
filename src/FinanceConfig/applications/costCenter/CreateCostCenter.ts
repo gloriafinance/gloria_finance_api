@@ -1,5 +1,9 @@
-import { CostCenter, CostCenterExists, CostCenterRequest } from "../../domain"
-import { IFinancialConfigurationRepository } from "../../domain/interfaces"
+import {
+  CostCenter,
+  CostCenterExists,
+  CostCenterRequest,
+} from "../../../Financial/domain"
+import { IFinancialConfigurationRepository } from "../../../Financial/domain/interfaces"
 import { IMemberRepository, Member, MemberNotFound } from "@/Church/domain"
 
 import { Logger } from "@/Shared/adapter"

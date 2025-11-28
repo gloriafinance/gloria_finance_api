@@ -5,13 +5,15 @@ import { QueueService, StorageGCP } from "@/Shared/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
-  FinancialConceptMongoRepository,
-  FinancialConfigurationMongoRepository,
 } from "@/Financial/infrastructure/persistence"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import { PayAccountPayable } from "@/AccountsPayable/applications/PayAccountPayable"
 import { AccountsPayableMongoRepository } from "@/AccountsPayable/infrastructure/persistence/AccountsPayableMongoRepository"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
 
 /**
  * @function PayAccountPayableController

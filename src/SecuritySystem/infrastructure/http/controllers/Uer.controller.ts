@@ -21,7 +21,15 @@ import {
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "@/Shared/adapter"
 import { Request, Response } from "express"
-import { Controller, Get, Post, Put, Use } from "@abejarano/ts-express-server"
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Use,
+} from "@abejarano/ts-express-server"
 import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"
 import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
@@ -32,12 +40,11 @@ export type userLoginPayload = {
 }
 
 @Controller("/api/v1/user")
-export class UserController {
-  private logger = Logger(UserController.name)
+export class UerController {
+  private logger = Logger(UerController.name)
 
   @Post("/login")
-  async login(req: Request, res: Response) {
-    const payload = req.body as unknown as userLoginPayload
+  async login(@Body() payload: userLoginPayload, res: Response) {
     try {
       const { user, token } = await new MakeLogin(
         UserMongoRepository.getInstance(),
@@ -69,14 +76,18 @@ export class UserController {
   @Put("/edit-user/:userId")
   @Post("/create")
   @Use(PermissionMiddleware)
-  async createOrUpdateUser(req: Request, res: Response) {
+  async createOrUpdateUser(
+    @Body() payload: CreateUserRequest,
+    @Param("userId") userId: string,
+    res: Response
+  ) {
     try {
       const user = await new CreateOrUpdateUser(
         UserMongoRepository.getInstance(),
         new PasswordAdapter()
       ).execute({
-        ...(req.body as unknown as CreateUserRequest),
-        userId: req.params.userId,
+        ...payload,
+        userId,
       })
 
       const response = user.toPrimitives()
@@ -94,9 +105,12 @@ export class UserController {
 
   @Post("/accept-policies")
   @Use(PermissionMiddleware)
-  async acceptPolicies(req: Request, res: Response) {
+  async acceptPolicies(
+    @Body() payload: AcceptPoliciesRequest,
+    req: Request,
+    res: Response
+  ) {
     try {
-      const payload = req.body as AcceptPoliciesRequest
       if (!req.auth?.userId) {
         return res.status(HttpStatus.UNAUTHORIZED).send({
           message: "Unauthorized.",
@@ -135,12 +149,12 @@ export class UserController {
   }
 
   @Get("/")
-  async fetchAllUser(req: Request, res: Response) {
+  async fetchAllUser(@Param() filter: FilterUserRequest, res: Response) {
     const logger = Logger("FetchAllUserController")
     try {
       const result = await new FetchAllUsers(
         UserMongoRepository.getInstance()
-      ).execute(req.query as unknown as FilterUserRequest)
+      ).execute(filter)
 
       res.status(HttpStatus.OK).send({
         data: result,
@@ -152,14 +166,14 @@ export class UserController {
   }
 
   @Post("/recovery-password")
-  async recoveryPassword(req: Request, res: Response) {
+  async recoveryPassword(@Body() req: any, res: Response) {
     try {
       const temporalPassword = randomString(10)
 
       const user = await new ChangePassword(
         UserMongoRepository.getInstance(),
         new PasswordAdapter()
-      ).execute(req.body.email ?? "", temporalPassword)
+      ).execute(req.email ?? "", temporalPassword)
 
       new SendMailChangePassword(QueueService.getInstance()).execute(
         user,
@@ -175,12 +189,15 @@ export class UserController {
   }
 
   @Post("/change-password")
-  async changePassword(req: Request, res: Response) {
-    const payload = req.body as {
+  async changePassword(
+    @Body()
+    payload: {
       email: string
       newPassword: string
       oldPassword: string
-    }
+    },
+    res: Response
+  ) {
     try {
       await new MakeLogin(
         UserMongoRepository.getInstance(),

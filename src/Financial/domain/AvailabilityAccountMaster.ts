@@ -1,6 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import IdentifyAvailabilityAccountMaster from "../applications/helpers/MasterBalanceIdentifier"
-import { AvailabilityAccount } from "./AvailabilityAccount"
+import { AvailabilityAccount } from "../../FinanceConfig/domain/AvailabilityAccount"
 import { DateBR } from "@/Shared/helpers"
 
 export class AvailabilityAccountMaster extends AggregateRoot {

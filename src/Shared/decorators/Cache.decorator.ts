@@ -47,7 +47,7 @@ export function Cache(prefix: string, ttlSeconds: number = 300) {
       }
 
       // Intentamos obtener de la caché
-      const cachedResult = cacheService.get(cacheKey)
+      const cachedResult = await cacheService.get(cacheKey)
 
       if (cachedResult) {
         logger.info(`Cache hit for ${cacheKey}`)
@@ -61,7 +61,11 @@ export function Cache(prefix: string, ttlSeconds: number = 300) {
       const originalSend = res.send
       res.send = function (body) {
         // Guardamos en caché antes de enviar
-        cacheService.set(cacheKey, body, ttlSeconds)
+        cacheService
+          .set(cacheKey, body, ttlSeconds)
+          .catch((error) =>
+            logger.error(`Cache set failed for ${cacheKey}`, error)
+          )
         // Restauramos el método original y lo llamamos
         res.send = originalSend
         return res.send(body)

@@ -13,7 +13,8 @@ import patrimonyRouter from "@/Patrimony/infrastructure/http/routes/Asset.routes
 import rbacRouter from "@/SecuritySystem/infrastructure/http/routes/rbac.routes"
 import { financialControllers } from "@/Financial/infrastructure/http/controllers"
 import { consolidatedFinancialControllers } from "@/ConsolidatedFinancial/infrastructure/http/controllers"
-import { UserController } from "@/SecuritySystem/infrastructure/http/controllers/user.controller"
+import { UerController } from "@/SecuritySystem/infrastructure/http/controllers/Uer.controller"
+import { financeConfigControllers } from "@/FinanceConfig/infrastructure/controllers"
 
 export const routerModule = () =>
   new RoutesModule([
@@ -35,5 +36,6 @@ export const controllersModule = () =>
   new ControllersModule([
     ...financialControllers(),
     ...consolidatedFinancialControllers(),
-    UserController,
+    ...financeConfigControllers(),
+    UerController,
   ])

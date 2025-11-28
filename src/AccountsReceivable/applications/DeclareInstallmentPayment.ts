@@ -7,14 +7,12 @@ import {
   InstallmentNotFound,
 } from "@/AccountsReceivable/domain"
 import { ContributionRequest } from "@/Financial/domain"
-import {
-  FindAvailabilityAccountByAvailabilityAccountId,
-  RegisterContributionsOnline,
-} from "@/Financial/applications"
+import { RegisterContributionsOnline } from "@/Financial/applications"
 import { AmountValue } from "@/Shared/domain"
 import { IMemberRepository } from "@/Church/domain"
 import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { FindMemberById } from "@/Church/applications"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class DeclareInstallmentPayment {
   private logger = Logger(DeclareInstallmentPayment.name)

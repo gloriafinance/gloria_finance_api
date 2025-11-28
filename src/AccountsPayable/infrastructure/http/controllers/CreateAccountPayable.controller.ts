@@ -9,7 +9,7 @@ import {
   SupplierMongoRepository,
 } from "@/AccountsPayable/infrastructure/persistence"
 import { QueueService } from "@/Shared/infrastructure"
-import { FinancialConceptMongoRepository } from "@/Financial/infrastructure/persistence"
+import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
 /**
  * @function CreateAccountPayableController

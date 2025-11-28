@@ -1,6 +1,6 @@
-import { IAvailabilityAccountMasterRepository } from "../../domain/interfaces"
-import { AvailabilityAccount, AvailabilityAccountMaster } from "../../domain"
-import IdentifyAvailabilityAccountMaster from "../helpers/MasterBalanceIdentifier"
+import { IAvailabilityAccountMasterRepository } from "../domain/interfaces"
+import { AvailabilityAccount, AvailabilityAccountMaster } from "../domain"
+import IdentifyAvailabilityAccountMaster from "./helpers/MasterBalanceIdentifier"
 import { Logger } from "@/Shared/adapter"
 
 export class UpdateAvailabilityAccountMaster {
