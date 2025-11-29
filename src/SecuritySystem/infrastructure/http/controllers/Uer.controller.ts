@@ -28,6 +28,8 @@ import {
   Param,
   Post,
   Put,
+  Req,
+  Res,
   Use,
 } from "@abejarano/ts-express-server"
 import randomString from "@/Shared/helpers/randomString"
@@ -107,8 +109,8 @@ export class UerController {
   @Use(PermissionMiddleware)
   async acceptPolicies(
     @Body() payload: AcceptPoliciesRequest,
-    req: Request,
-    res: Response
+    @Req() req: Request,
+    @Res() res: Response
   ) {
     try {
       if (!req.auth?.userId) {
