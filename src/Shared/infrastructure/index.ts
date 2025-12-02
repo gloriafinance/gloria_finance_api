@@ -10,3 +10,5 @@ export { TelegramNotificationJob } from "./telegram"
 
 export * from "./services/Cache.service"
 export * from "./services/PermissionDescriptionResolver.service"
+
+export * from "./types/AuthenticatedRequest.type"
