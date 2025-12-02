@@ -1,0 +1,32 @@
+import { Logger } from "@/Shared/adapter"
+import {
+  IScheduleItemRepository,
+  ScheduleItem,
+  ScheduleItemNotFoundException,
+} from "@/Schedule/domain"
+
+export class GetScheduleItem {
+  private readonly logger = Logger(GetScheduleItem.name)
+
+  constructor(
+    private readonly scheduleItemRepository: IScheduleItemRepository
+  ) {}
+
+  async execute(params: {
+    churchId: string
+    scheduleItemId: string
+  }): Promise<ScheduleItem> {
+    this.logger.info("Fetching schedule item detail", params)
+
+    const scheduleItem = await this.scheduleItemRepository.findById(
+      params.churchId,
+      params.scheduleItemId
+    )
+
+    if (!scheduleItem) {
+      throw new ScheduleItemNotFoundException()
+    }
+
+    return scheduleItem
+  }
+}
