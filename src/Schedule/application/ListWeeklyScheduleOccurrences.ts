@@ -1,10 +1,11 @@
 import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
-  LocationPrimitives,
-  RecurrencePattern,
+  LocationDTO,
+  RecurrencePatternDTO,
   ScheduleItemException,
-  ScheduleItemType,
+  ScheduleItemTypeEnum,
+  ScheduleItemVisibility,
   WeeklyScheduleOccurrenceDTO,
   WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain"
@@ -53,8 +54,8 @@ export class ListWeeklyScheduleOccurrences {
 
     return scheduleItems
       .filter((item) =>
-        request.visibilityScope === "PUBLIC"
-          ? item.getVisibility() === "PUBLIC"
+        request.visibilityScope === ScheduleItemVisibility.PUBLIC
+          ? item.getVisibility() === ScheduleItemVisibility.PUBLIC
           : true
       )
       .flatMap((item) =>
@@ -62,7 +63,7 @@ export class ListWeeklyScheduleOccurrences {
           item.getScheduleItemId(),
           item.getTitle(),
           item.getType(),
-          item.getLocation().toPrimitives(),
+          item.getLocation(),
           item.getRecurrencePattern(),
           item.getVisibility(),
           weekStart,
@@ -74,15 +75,15 @@ export class ListWeeklyScheduleOccurrences {
   private expandOccurrences(
     scheduleItemId: string,
     title: string,
-    type: ScheduleItemType,
-    location: LocationPrimitives,
-    recurrencePattern: RecurrencePattern,
-    visibility: "PUBLIC" | "INTERNAL_LEADERS",
+    type: ScheduleItemTypeEnum,
+    location: LocationDTO,
+    recurrencePattern: RecurrencePatternDTO,
+    visibility: ScheduleItemVisibility,
     weekStart: Date,
     weekEnd: Date
   ): WeeklyScheduleOccurrenceDTO[] {
     const targetIndex =
-      this.dayOfWeekIndex[recurrencePattern.getDayOfWeek()] ?? undefined
+      this.dayOfWeekIndex[recurrencePattern.dayOfWeek] ?? undefined
     if (targetIndex === undefined) {
       return []
     }
@@ -92,11 +93,11 @@ export class ListWeeklyScheduleOccurrences {
     const occurrenceDate = new Date(weekStart)
     occurrenceDate.setDate(weekStart.getDate() + offset)
 
-    if (occurrenceDate < recurrencePattern.getStartDate()) {
+    if (occurrenceDate < recurrencePattern.startDate) {
       return []
     }
 
-    const recurrenceEndDate = recurrencePattern.getEndDate()
+    const recurrenceEndDate = recurrencePattern.endDate
     if (recurrenceEndDate && occurrenceDate > recurrenceEndDate) {
       return []
     }
@@ -105,10 +106,10 @@ export class ListWeeklyScheduleOccurrences {
       return []
     }
 
-    const startTime = recurrencePattern.getTime()
+    const startTime = recurrencePattern.time
     const endTime = this.calculateEndTime(
       startTime,
-      recurrencePattern.getDurationMinutes(),
+      recurrencePattern.durationMinutes,
       occurrenceDate
     )
 

@@ -33,6 +33,9 @@ export default async (
     "recurrencePattern.startDate": "required|dateFormat:YYYY-MM-DD",
     "recurrencePattern.endDate": "dateFormat:YYYY-MM-DD",
     visibility: `required|string|in:${visibilityValues}`,
+    director: "required|string",
+    preacher: "string",
+    observations: "string",
   }
 
   const v = new Validator(payload, rules)

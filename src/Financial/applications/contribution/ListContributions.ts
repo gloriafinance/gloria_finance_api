@@ -7,7 +7,7 @@ import {
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
-import { UTCStringToDateBR } from "@/Shared/helpers"
+import { StringToDate } from "@/Shared/helpers"
 
 export class ListContributions {
   constructor(
@@ -28,7 +28,7 @@ export class ListContributions {
         new Map<string, string | Date>([
           ["field", "paidAt"],
           ["operator", Operator.GTE],
-          ["value", UTCStringToDateBR(reqFilters.startDate)],
+          ["value", StringToDate(reqFilters.startDate)],
         ])
       )
     }
@@ -38,7 +38,7 @@ export class ListContributions {
         new Map<string, string | Date>([
           ["field", "paidAt"],
           ["operator", Operator.LTE],
-          ["value", UTCStringToDateBR(reqFilters.endDate)],
+          ["value", StringToDate(reqFilters.endDate)],
         ])
       )
     }

@@ -18,10 +18,10 @@ export class ActivateScheduleItem {
   }): Promise<void> {
     this.logger.info("Activating schedule item", params)
 
-    const scheduleItem = await this.scheduleItemRepository.findById(
-      params.churchId,
-      params.scheduleItemId
-    )
+    const scheduleItem = await this.scheduleItemRepository.one({
+      churchId: params.churchId,
+      scheduleItemId: params.scheduleItemId,
+    })
 
     if (!scheduleItem) {
       throw new ScheduleItemNotFoundException()
@@ -29,6 +29,6 @@ export class ActivateScheduleItem {
 
     scheduleItem.activate(params.currentUserId)
 
-    await this.scheduleItemRepository.update(scheduleItem)
+    await this.scheduleItemRepository.upsert(scheduleItem)
   }
 }

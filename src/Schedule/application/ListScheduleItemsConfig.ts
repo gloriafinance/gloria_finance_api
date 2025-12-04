@@ -2,8 +2,16 @@ import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
   ListScheduleItemsFiltersRequest,
-  ScheduleItemConfigDTO,
+  ScheduleItem,
 } from "@/Schedule/domain"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  Order,
+  OrderTypes,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class ListScheduleItemsConfig {
   private readonly logger = Logger(ListScheduleItemsConfig.name)
@@ -14,28 +22,57 @@ export class ListScheduleItemsConfig {
 
   async execute(
     request: ListScheduleItemsFiltersRequest
-  ): Promise<ScheduleItemConfigDTO[]> {
+  ): Promise<Paginate<ScheduleItem>> {
     this.logger.info("Listing schedule item configurations", request)
 
-    const scheduleItems = await this.scheduleItemRepository.findManyByChurch(
-      request.churchId,
-      request.filters
-    )
+    return await this.scheduleItemRepository.list(this.prepareCriteria(request))
+  }
 
-    return scheduleItems.map((item) => ({
-      scheduleItemId: item.getScheduleItemId(),
-      churchId: item.getChurchId(),
-      type: item.getType(),
-      title: item.getTitle(),
-      description: item.getDescription(),
-      location: item.getLocation().toPrimitives(),
-      recurrencePattern: item.getRecurrencePattern().toPrimitives(),
-      visibility: item.getVisibility(),
-      isActive: item.getIsActive(),
-      createdAt: item.getCreatedAt(),
-      createdByUserId: item.getCreatedByUserId(),
-      updatedAt: item.getUpdatedAt(),
-      updatedByUserId: item.getUpdatedByUserId(),
-    }))
+  private prepareCriteria(request: ListScheduleItemsFiltersRequest) {
+    const filters: Array<Map<string, any>> = []
+
+    filters.push(
+      new Map([
+        ["field", "churchId"],
+        ["operator", Operator.EQUAL],
+        ["value", request.churchId],
+      ])
+    )
+    if (request?.type) {
+      filters.push(
+        new Map([
+          ["field", "type"],
+          ["operator", Operator.EQUAL],
+          ["value", request.type],
+        ])
+      )
+    }
+
+    if (request?.visibility) {
+      filters.push(
+        new Map([
+          ["field", "visibility"],
+          ["operator", Operator.EQUAL],
+          ["value", request.visibility],
+        ])
+      )
+    }
+
+    if (request?.isActive !== undefined) {
+      filters.push(
+        new Map<string, any>([
+          ["field", "isActive"],
+          ["operator", Operator.EQUAL],
+          ["value", request.isActive],
+        ])
+      )
+    }
+
+    return new Criteria(
+      Filters.fromValues(filters),
+      Order.fromValues("createdAt", OrderTypes.DESC),
+      Number(request.perPage),
+      Number(request.page)
+    )
   }
 }

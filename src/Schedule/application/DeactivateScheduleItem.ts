@@ -18,10 +18,10 @@ export class DeactivateScheduleItem {
   }): Promise<void> {
     this.logger.info("Deactivating schedule item", params)
 
-    const scheduleItem = await this.scheduleItemRepository.findById(
-      params.churchId,
-      params.scheduleItemId
-    )
+    const scheduleItem = await this.scheduleItemRepository.one({
+      churchId: params.churchId,
+      scheduleItemId: params.scheduleItemId,
+    })
 
     if (!scheduleItem) {
       throw new ScheduleItemNotFoundException()
@@ -29,6 +29,6 @@ export class DeactivateScheduleItem {
 
     scheduleItem.deactivate(params.currentUserId)
 
-    await this.scheduleItemRepository.update(scheduleItem)
+    await this.scheduleItemRepository.upsert(scheduleItem)
   }
 }

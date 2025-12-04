@@ -1,9 +1,10 @@
 export * from "./ScheduleItem"
-export * from "./types/ScheduleItem.type"
+
+export * from "./enums/ScheduleItemType.enum"
 export * from "./types/ScheduleItem.dto.type"
-export * from "./valueObjects/Location"
-export * from "./valueObjects/RecurrencePattern"
+
 export * from "./interfaces/ScheduleItemRepository.interface"
 export * from "./requests/ScheduleItem.request"
+
 export * from "./exceptions/ScheduleItemException"
 export * from "./exceptions/ScheduleItemNotFoundException"

@@ -9,7 +9,7 @@ import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
-import { DateBR, UTCStringToDateBR } from "@/Shared/helpers"
+import { DateBR, StringToDate } from "@/Shared/helpers"
 
 export class RegisterContributionsOnline {
   private logger = Logger("RegisterContributionsOnline")
@@ -67,7 +67,7 @@ export class RegisterContributionsOnline {
       voucherPath,
       observation,
       availabilityAccount,
-      UTCStringToDateBR(paidAt),
+      StringToDate(paidAt),
       {
         accountReceivableId: accountReceivableId,
         installmentId: installmentId,

@@ -1,12 +1,9 @@
 import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { GenericException } from "@/Shared/domain"
-import { IChurchRepository } from "@/Church/domain"
+import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
 import {
   CreateScheduleItemRequest,
   IScheduleItemRepository,
-  Location,
-  RecurrencePattern,
   ScheduleItem,
 } from "@/Schedule/domain"
 
@@ -23,7 +20,7 @@ export class CreateScheduleItem {
 
     const church = await this.churchRepository.one(request.churchId)
     if (!church) {
-      throw new GenericException("Church not found")
+      throw new ChurchNotFound()
     }
 
     const scheduleItem = ScheduleItem.create({
@@ -31,14 +28,17 @@ export class CreateScheduleItem {
       type: request.type,
       title: request.title,
       description: request.description,
-      location: Location.create(request.location),
-      recurrencePattern: RecurrencePattern.create(request.recurrencePattern),
+      location: request.location,
+      recurrencePattern: request.recurrencePattern,
       visibility: request.visibility,
+      director: request.director,
+      preacher: request.preacher,
+      observations: request.observations,
       createdByUserId: request.currentUserId,
       createdAt: DateBR(),
     })
 
-    await this.scheduleItemRepository.create(scheduleItem)
+    await this.scheduleItemRepository.upsert(scheduleItem)
 
     return scheduleItem
   }

@@ -1,27 +1,12 @@
 import { ScheduleItem } from "../ScheduleItem"
-import {
-  ScheduleItemType,
-  ScheduleItemVisibility,
-} from "../types/ScheduleItem.type"
-
-export type ScheduleItemFilters = {
-  type?: ScheduleItemType
-  visibility?: ScheduleItemVisibility
-  isActive?: boolean
-}
+import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface IScheduleItemRepository {
-  create(scheduleItem: ScheduleItem): Promise<void>
+  upsert(scheduleItem: ScheduleItem): Promise<void>
 
-  update(scheduleItem: ScheduleItem): Promise<void>
+  one(filter: object): Promise<ScheduleItem | undefined>
 
-  findById(
-    churchId: string,
-    scheduleItemId: string
-  ): Promise<ScheduleItem | null>
+  list(criteria: Criteria): Promise<Paginate<ScheduleItem>>
 
-  findManyByChurch(
-    churchId: string,
-    filters?: ScheduleItemFilters
-  ): Promise<ScheduleItem[]>
+  findManyByChurch(churchId: string, filters?: any): Promise<ScheduleItem[]>
 }

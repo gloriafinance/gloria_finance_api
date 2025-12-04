@@ -1,40 +1,44 @@
-import { LocationPrimitives } from "../valueObjects/Location"
-import { RecurrencePatternPrimitives } from "../valueObjects/RecurrencePattern"
 import {
-  ScheduleItemType,
+  LocationDTO,
+  RecurrencePatternDTO,
+  ScheduleItemTypeEnum,
   ScheduleItemVisibility,
-} from "../types/ScheduleItem.type"
+} from "@/Schedule/domain"
+import { ListParams } from "@/Shared/domain"
 
 export type CreateScheduleItemRequest = {
   churchId: string
-  type: ScheduleItemType
+  type: ScheduleItemTypeEnum
   title: string
   description?: string
-  location: LocationPrimitives
-  recurrencePattern: RecurrencePatternPrimitives
+  location: LocationDTO
+  recurrencePattern: RecurrencePatternDTO
   visibility: ScheduleItemVisibility
+  director: string
+  preacher?: string
+  observations?: string
   currentUserId: string
 }
 
 export type UpdateScheduleItemRequest = {
   churchId: string
   scheduleItemId: string
-  title?: string
+  title: string
   description?: string
-  location?: LocationPrimitives
-  recurrencePattern?: RecurrencePatternPrimitives
+  location?: LocationDTO
+  recurrencePattern?: RecurrencePatternDTO
   visibility?: ScheduleItemVisibility
+  director?: string
+  preacher?: string
+  observations?: string
   currentUserId: string
 }
 
 export type ListScheduleItemsFiltersRequest = {
-  churchId: string
-  filters?: {
-    type?: ScheduleItemType
-    visibility?: ScheduleItemVisibility
-    isActive?: boolean
-  }
-}
+  type?: ScheduleItemTypeEnum
+  visibility?: ScheduleItemVisibility
+  isActive?: boolean
+} & ListParams
 
 export type WeeklyScheduleOccurrencesRequest = {
   churchId: string

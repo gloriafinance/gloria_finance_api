@@ -1,38 +1,22 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { v4 as uuid } from "uuid"
-import { DateBR } from "@/Shared/helpers"
-import { Location, LocationPrimitives } from "./valueObjects/Location"
-import {
-  RecurrencePattern,
-  RecurrencePatternPrimitives,
-} from "./valueObjects/RecurrencePattern"
-import {
-  ScheduleItemType,
-  ScheduleItemVisibility,
-} from "./types/ScheduleItem.type"
-import { ScheduleItemException } from "./exceptions/ScheduleItemException"
+import { DateBR, StringToDate } from "@/Shared/helpers"
 
-export type ScheduleItemPrimitives = {
-  scheduleItemId: string
-  churchId: string
-  type: ScheduleItemType
-  title: string
-  description?: string
-  location: LocationPrimitives
-  recurrencePattern: RecurrencePatternPrimitives
-  visibility: ScheduleItemVisibility
-  isActive: boolean
-  createdAt: Date
-  createdByUserId: string
-  updatedAt?: Date
-  updatedByUserId?: string
-}
+import {
+  LocationDTO,
+  RecurrencePatternDTO,
+  ScheduleItemTypeEnum,
+  ScheduleItemVisibility,
+} from "@/Schedule/domain"
 
 type UpdateDetailsParams = {
   title: string
   description?: string
-  location: Location
+  location: LocationDTO
   visibility: ScheduleItemVisibility
+  director: string
+  preacher?: string
+  observations?: string
   updatedByUserId?: string
 }
 
@@ -40,45 +24,42 @@ export class ScheduleItem extends AggregateRoot {
   private id?: string
   private scheduleItemId: string
   private churchId: string
-  private type: ScheduleItemType
+  private type: ScheduleItemTypeEnum
   private title: string
   private description?: string
-  private location: Location
-  private recurrencePattern: RecurrencePattern
+  private location: {
+    name: string
+    address?: string
+  }
+  private recurrencePattern: RecurrencePatternDTO
   private visibility: ScheduleItemVisibility
-  private isActive: boolean
+  private director: string
+  private preacher?: string
+  private observations?: string
+  private active: boolean
   private createdAt: Date
   private createdByUserId: string
   private updatedAt?: Date
   private updatedByUserId?: string
 
-  getId(): string {
-    return this.id
-  }
-
   static create(params: {
     churchId: string
-    type: ScheduleItemType
+    type: ScheduleItemTypeEnum
     title: string
     description?: string
-    location: Location
-    recurrencePattern: RecurrencePattern
+    location: {
+      name: string
+      address?: string
+    }
+    recurrencePattern: RecurrencePatternDTO
     visibility: ScheduleItemVisibility
+    director: string
+    preacher?: string
+    observations?: string
     createdByUserId: string
     createdAt?: Date
   }): ScheduleItem {
-    if (!params.churchId) {
-      throw new ScheduleItemException("churchId is required")
-    }
-
-    if (!params.createdByUserId) {
-      throw new ScheduleItemException("createdByUserId is required")
-    }
-
     const title = params.title?.trim()
-    if (!title) {
-      throw new ScheduleItemException("title is required")
-    }
 
     const scheduleItem = new ScheduleItem()
     scheduleItem.scheduleItemId = uuid()
@@ -87,9 +68,14 @@ export class ScheduleItem extends AggregateRoot {
     scheduleItem.title = title
     scheduleItem.description = params.description?.trim()
     scheduleItem.location = params.location
-    scheduleItem.recurrencePattern = params.recurrencePattern
+    scheduleItem.recurrencePattern = ScheduleItem.normalizeRecurrencePattern(
+      params.recurrencePattern
+    )
     scheduleItem.visibility = params.visibility
-    scheduleItem.isActive = true
+    scheduleItem.director = params.director.trim()
+    scheduleItem.preacher = params.preacher?.trim()
+    scheduleItem.observations = params.observations?.trim()
+    scheduleItem.active = true
     scheduleItem.createdAt = params.createdAt ?? DateBR()
     scheduleItem.createdByUserId = params.createdByUserId
 
@@ -104,49 +90,55 @@ export class ScheduleItem extends AggregateRoot {
     scheduleItem.type = plainData.type
     scheduleItem.title = plainData.title
     scheduleItem.description = plainData.description
-    scheduleItem.location = Location.fromPrimitives(plainData.location)
-    scheduleItem.recurrencePattern = RecurrencePattern.fromPrimitives(
+    scheduleItem.location = plainData.location
+    scheduleItem.recurrencePattern = ScheduleItem.normalizeRecurrencePattern(
       plainData.recurrencePattern
     )
     scheduleItem.visibility = plainData.visibility
-    scheduleItem.isActive = plainData.isActive
-    scheduleItem.createdAt = new Date(plainData.createdAt)
+    scheduleItem.director = plainData.director ?? ""
+    scheduleItem.preacher = plainData.preacher
+    scheduleItem.observations = plainData.observations
+    scheduleItem.active = plainData.isActive ?? plainData.active ?? true
+    scheduleItem.createdAt = StringToDate(plainData.createdAt)
     scheduleItem.createdByUserId = plainData.createdByUserId
     scheduleItem.updatedAt = plainData.updatedAt
-      ? new Date(plainData.updatedAt)
+      ? StringToDate(plainData.updatedAt)
       : undefined
     scheduleItem.updatedByUserId = plainData.updatedByUserId
     return scheduleItem
   }
 
-  updateDetails(params: UpdateDetailsParams): void {
-    const title = params.title?.trim()
-    if (!title) {
-      throw new ScheduleItemException("title is required")
-    }
+  getId(): string {
+    return this.id
+  }
 
-    this.title = title
+  updateDetails(params: UpdateDetailsParams): void {
+    this.title = params.title?.trim()
     this.description = params.description?.trim()
     this.location = params.location
     this.visibility = params.visibility
+    this.director = params.director.trim()
+    this.preacher = params.preacher?.trim()
+    this.observations = params.observations?.trim()
     this.touch(params.updatedByUserId)
   }
 
   updateRecurrence(
-    recurrencePattern: RecurrencePattern,
+    recurrencePattern: RecurrencePatternDTO,
     updatedByUserId?: string
   ): void {
-    this.recurrencePattern = recurrencePattern
+    this.recurrencePattern =
+      ScheduleItem.normalizeRecurrencePattern(recurrencePattern)
     this.touch(updatedByUserId)
   }
 
   deactivate(updatedByUserId?: string): void {
-    this.isActive = false
+    this.active = false
     this.touch(updatedByUserId)
   }
 
   activate(updatedByUserId?: string): void {
-    this.isActive = true
+    this.active = true
     this.touch(updatedByUserId)
   }
 
@@ -158,7 +150,7 @@ export class ScheduleItem extends AggregateRoot {
     return this.churchId
   }
 
-  getType(): ScheduleItemType {
+  getType(): ScheduleItemTypeEnum {
     return this.type
   }
 
@@ -170,11 +162,11 @@ export class ScheduleItem extends AggregateRoot {
     return this.description
   }
 
-  getLocation(): Location {
+  getLocation(): LocationDTO {
     return this.location
   }
 
-  getRecurrencePattern(): RecurrencePattern {
+  getRecurrencePattern(): RecurrencePatternDTO {
     return this.recurrencePattern
   }
 
@@ -182,8 +174,20 @@ export class ScheduleItem extends AggregateRoot {
     return this.visibility
   }
 
+  getDirector(): string {
+    return this.director
+  }
+
+  getPreacher(): string | undefined {
+    return this.preacher
+  }
+
+  getObservations(): string | undefined {
+    return this.observations
+  }
+
   getIsActive(): boolean {
-    return this.isActive
+    return this.active
   }
 
   getCreatedAt(): Date {
@@ -202,17 +206,20 @@ export class ScheduleItem extends AggregateRoot {
     return this.updatedByUserId
   }
 
-  toPrimitives(): ScheduleItemPrimitives {
+  toPrimitives() {
     return {
       scheduleItemId: this.scheduleItemId,
       churchId: this.churchId,
       type: this.type,
       title: this.title,
       description: this.description,
-      location: this.location.toPrimitives(),
-      recurrencePattern: this.recurrencePattern.toPrimitives(),
+      location: this.location,
+      recurrencePattern: this.recurrencePattern,
       visibility: this.visibility,
-      isActive: this.isActive,
+      director: this.director,
+      preacher: this.preacher,
+      observations: this.observations,
+      isActive: this.active,
       createdAt: this.createdAt,
       createdByUserId: this.createdByUserId,
       updatedAt: this.updatedAt,
@@ -225,5 +232,19 @@ export class ScheduleItem extends AggregateRoot {
       this.updatedByUserId = updatedByUserId
     }
     this.updatedAt = DateBR()
+  }
+
+  private static normalizeRecurrencePattern(
+    recurrencePattern: RecurrencePatternDTO
+  ): RecurrencePatternDTO {
+    return {
+      ...recurrencePattern,
+      startDate: StringToDate(recurrencePattern.startDate),
+      endDate:
+        recurrencePattern.endDate !== undefined &&
+        recurrencePattern.endDate !== null
+          ? StringToDate(recurrencePattern.endDate)
+          : (recurrencePattern.endDate ?? undefined),
+    }
   }
 }

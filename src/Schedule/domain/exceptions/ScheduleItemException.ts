@@ -1,10 +1,11 @@
 import { DomainException } from "@/Shared/domain"
 
 export class ScheduleItemException extends DomainException {
-  constructor(message: string, code = "schedule_item_error", data?: []) {
+  message: string
+  name = "SCHEDULE_ITEM_ERROR"
+
+  constructor(message: string) {
     super()
     this.message = message
-    this.name = code
-    this.data = data
   }
 }

@@ -1,9 +1,9 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
-  IScheduleItemRepository,
-  ScheduleItem,
-  ScheduleItemFilters,
-} from "@/Schedule/domain"
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
+import { IScheduleItemRepository, ScheduleItem } from "@/Schedule/domain"
 
 export class ScheduleItemMongoRepository
   extends MongoRepository<ScheduleItem>
@@ -20,60 +20,81 @@ export class ScheduleItemMongoRepository
   }
 
   collectionName(): string {
-    return "schedule_evetns"
+    return "schedule_events"
   }
 
-  async create(scheduleItem: ScheduleItem): Promise<void> {
-    await this.ensureIndexes()
-    const collection = await this.collection()
-
-    await collection.updateOne(
-      {
-        churchId: scheduleItem.getChurchId(),
-        scheduleItemId: scheduleItem.getScheduleItemId(),
-      },
-      {
-        $set: scheduleItem.toPrimitives() as any,
-      },
-      { upsert: true }
-    )
+  async upsert(scheduleItem: ScheduleItem): Promise<void> {
+    await this.persist(scheduleItem.getId(), scheduleItem)
   }
 
-  async update(scheduleItem: ScheduleItem): Promise<void> {
-    await this.ensureIndexes()
+  // async create(scheduleItem: ScheduleItem): Promise<void> {
+  //   await this.ensureIndexes()
+  //   const collection = await this.collection()
+  //
+  //   await collection.updateOne(
+  //     {
+  //       churchId: scheduleItem.getChurchId(),
+  //       scheduleItemId: scheduleItem.getScheduleItemId(),
+  //     },
+  //     {
+  //       $set: scheduleItem.toPrimitives() as any,
+  //     },
+  //     { upsert: true }
+  //   )
+  // }
+  //
+  // async update(scheduleItem: ScheduleItem): Promise<void> {
+  //   await this.ensureIndexes()
+  //   const collection = await this.collection()
+  //
+  //   await collection.updateOne(
+  //     {
+  //       churchId: scheduleItem.getChurchId(),
+  //       scheduleItemId: scheduleItem.getScheduleItemId(),
+  //     },
+  //     {
+  //       $set: scheduleItem.toPrimitives() as any,
+  //     }
+  //   )
+  // }
+
+  // async findById(
+  //   churchId: string,
+  //   scheduleItemId: string
+  // ): Promise<ScheduleItem | null> {
+  //   const collection = await this.collection()
+  //   const result = await collection.findOne({ churchId, scheduleItemId })
+  //
+  //   if (!result) {
+  //     return null
+  //   }
+  //
+  //   return ScheduleItem.fromPrimitives({
+  //     id: result._id,
+  //     ...result,
+  //   })
+  // }
+
+  async one(filter: object): Promise<ScheduleItem | undefined> {
     const collection = await this.collection()
-
-    await collection.updateOne(
-      {
-        churchId: scheduleItem.getChurchId(),
-        scheduleItemId: scheduleItem.getScheduleItemId(),
-      },
-      {
-        $set: scheduleItem.toPrimitives() as any,
-      }
-    )
-  }
-
-  async findById(
-    churchId: string,
-    scheduleItemId: string
-  ): Promise<ScheduleItem | null> {
-    const collection = await this.collection()
-    const result = await collection.findOne({ churchId, scheduleItemId })
-
-    if (!result) {
-      return null
+    const data = await collection.findOne(filter)
+    if (!data) {
+      return undefined
     }
-
     return ScheduleItem.fromPrimitives({
-      id: result._id,
-      ...result,
+      id: data._id,
+      ...data,
     })
+  }
+
+  async list(criteria: Criteria): Promise<Paginate<ScheduleItem>> {
+    const result = await this.searchByCriteria<ScheduleItem>(criteria)
+    return this.paginate<ScheduleItem>(result)
   }
 
   async findManyByChurch(
     churchId: string,
-    filters?: ScheduleItemFilters
+    filters?: any
   ): Promise<ScheduleItem[]> {
     const collection = await this.collection()
     const query: Record<string, unknown> = {
@@ -100,17 +121,5 @@ export class ScheduleItemMongoRepository
         ...document,
       })
     )
-  }
-
-  private async ensureIndexes(): Promise<void> {
-    if (this.indexesInitialized) {
-      return
-    }
-
-    const collection = await this.collection()
-    await collection.createIndex({ churchId: 1, isActive: 1 })
-    await collection.createIndex({ churchId: 1, type: 1 })
-
-    this.indexesInitialized = true
   }
 }

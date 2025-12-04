@@ -31,6 +31,9 @@ export default async (
     "recurrencePattern.startDate": "sometimes|dateFormat:YYYY-MM-DD",
     "recurrencePattern.endDate": "sometimes|dateFormat:YYYY-MM-DD",
     visibility: `sometimes|string|in:${visibilityValues}`,
+    director: "sometimes|string",
+    preacher: "sometimes|string",
+    observations: "sometimes|string",
   }
 
   const v = new Validator(payload, rules)

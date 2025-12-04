@@ -129,7 +129,7 @@ accountsReceivableRoutes.post(
 accountsReceivableRoutes.patch(
   "/confirm-payment-commitment",
   PermissionMiddleware,
-  Can("accounts_receivable", "commitments"),
+  // Can("accounts_receivable", "commitments"),
   async (req, res) => {
     await ConfirmOrDenyPaymentCommitmentController(req.body, res)
   }

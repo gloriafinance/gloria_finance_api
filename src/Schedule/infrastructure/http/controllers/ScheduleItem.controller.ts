@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   Use,
 } from "@abejarano/ts-express-server"
@@ -40,35 +41,36 @@ import UpdateScheduleItemValidator from "../validators/UpdateScheduleItem.valida
 import ScheduleItemsQueryValidator from "../validators/ScheduleItemsQuery.validator"
 import WeeklyScheduleQueryValidator from "../validators/WeeklyScheduleQuery.validator"
 
-import { ensureChurchScope } from "../utils/scheduleScope"
 import { mapToConfigDTO } from "../utils/scheduleMapper"
+import { ScheduleItemVisibility } from "@/Schedule/domain"
+import { ensureChurchScope } from "../utils/scheduleScope"
 
 type WeeklyScheduleQuery = Pick<
   WeeklyScheduleOccurrencesRequest,
   "weekStartDate" | "visibilityScope"
 >
 
-@Controller("/api/v1/schedule/churches/:churchId")
+@Controller("/api/v1/schedule")
 export class ScheduleController {
   private readonly scheduleItemRepository =
     ScheduleItemMongoRepository.getInstance()
   private readonly churchRepository = ChurchMongoRepository.getInstance()
 
-  @Post("/schedule-items")
+  @Post("/")
   @Use([
     PermissionMiddleware,
     Can("schedule", ["configure", "manage"]),
     CreateScheduleItemValidator,
   ])
   async createScheduleItem(
-    @Param("churchId") churchId: string,
     @Body() body: CreateScheduleItemRequest,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       const scheduleItem = await new CreateScheduleItem(
         this.scheduleItemRepository,
         this.churchRepository
@@ -84,26 +86,26 @@ export class ScheduleController {
     }
   }
 
-  @Get("/schedule-items")
+  @Get("/")
   @Use([
     PermissionMiddleware,
     Can("schedule", ["configure", "manage", "read"]),
     ScheduleItemsQueryValidator,
   ])
   async listScheduleItems(
-    @Param("churchId") churchId: string,
-    @Query() query: ListScheduleItemsFiltersRequest["filters"],
+    @Query() query: ListScheduleItemsFiltersRequest,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       const scheduleItems = await new ListScheduleItemsConfig(
         this.scheduleItemRepository
       ).execute({
         churchId,
-        filters: query,
+        ...query,
       })
 
       res.status(HttpStatus.OK).send(scheduleItems)
@@ -112,17 +114,17 @@ export class ScheduleController {
     }
   }
 
-  @Get("/schedule-items/:scheduleItemId")
+  @Get("/:scheduleItemId")
   @Use([PermissionMiddleware, Can("schedule", ["configure", "manage", "read"])])
   async getScheduleItem(
-    @Param("churchId") churchId: string,
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       const scheduleItem = await new GetScheduleItem(
         this.scheduleItemRepository
       ).execute({
@@ -136,22 +138,22 @@ export class ScheduleController {
     }
   }
 
-  @Put("/schedule-items/:scheduleItemId")
+  @Put("/:scheduleItemId")
   @Use([
     PermissionMiddleware,
     Can("schedule", ["configure", "manage"]),
     UpdateScheduleItemValidator,
   ])
   async updateScheduleItem(
-    @Param("churchId") churchId: string,
     @Param("scheduleItemId") scheduleItemId: string,
     @Body() body: UpdateScheduleItemRequest,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       await new UpdateScheduleItem(this.scheduleItemRepository).execute({
         ...body,
         churchId,
@@ -172,17 +174,17 @@ export class ScheduleController {
     }
   }
 
-  @Delete("/schedule-items/:scheduleItemId")
+  @Delete("/:scheduleItemId")
   @Use([PermissionMiddleware, Can("schedule", ["configure", "manage"])])
   async deactivateScheduleItem(
-    @Param("churchId") churchId: string,
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       await new DeactivateScheduleItem(this.scheduleItemRepository).execute({
         churchId,
         scheduleItemId,
@@ -197,17 +199,17 @@ export class ScheduleController {
     }
   }
 
-  @Post("/schedule-items/:scheduleItemId/reactivate")
+  @Post("/:scheduleItemId/reactivate")
   @Use([PermissionMiddleware, Can("schedule", ["configure", "manage"])])
   async activateScheduleItem(
-    @Param("churchId") churchId: string,
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       await new ActivateScheduleItem(this.scheduleItemRepository).execute({
         churchId,
         scheduleItemId,
@@ -222,25 +224,24 @@ export class ScheduleController {
     }
   }
 
-  @Get("/schedule/weekly")
+  @Get("/weekly")
   @Use([PermissionMiddleware, WeeklyScheduleQueryValidator])
   async weeklySchedule(
-    @Param("churchId") churchId: string,
     @Query() query: WeeklyScheduleQuery,
     @Res() res: Response,
-    req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest
   ) {
-    try {
-      // validation handled by middleware
-      if (!ensureChurchScope(req, res, churchId)) return
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
 
+    try {
       const visibilityScope =
         query.visibilityScope ||
         (req.auth?.permissions?.some((permission) =>
           ["schedule:manage", "schedule:configure"].includes(permission)
         )
-          ? "INTERNAL_LEADERS"
-          : "PUBLIC")
+          ? ScheduleItemVisibility.INTERNAL_LEADERS
+          : ScheduleItemVisibility.PUBLIC)
 
       const occurrences = await new ListWeeklyScheduleOccurrences(
         this.scheduleItemRepository

@@ -18,10 +18,10 @@ export class GetScheduleItem {
   }): Promise<ScheduleItem> {
     this.logger.info("Fetching schedule item detail", params)
 
-    const scheduleItem = await this.scheduleItemRepository.findById(
-      params.churchId,
-      params.scheduleItemId
-    )
+    const scheduleItem = await this.scheduleItemRepository.one({
+      churchId: params.churchId,
+      scheduleItemId: params.scheduleItemId,
+    })
 
     if (!scheduleItem) {
       throw new ScheduleItemNotFoundException()
