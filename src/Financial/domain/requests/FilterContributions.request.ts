@@ -5,8 +5,8 @@ export type FilterContributionsRequest = {
   status: OnlineContributionsStatus
   memberId: string
   churchId: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   page: number
   perPage: number
 }

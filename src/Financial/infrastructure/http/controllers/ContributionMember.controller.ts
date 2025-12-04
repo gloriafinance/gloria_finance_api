@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Use } from "@abejarano/ts-express-server"
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
 import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import { Request, Response } from "express"
 import ContributionValidator from "../validators/Contribution.validator"
@@ -14,6 +23,8 @@ import {
   AvailabilityAccountNotFound,
   ContributionRequest,
   FilterContributionsRequest,
+  FinancialConcept,
+  MemberContributionType,
   OnlineContributions,
 } from "@/Financial/domain"
 import { OnlineContributionsMongoRepository } from "@/Financial/infrastructure"
@@ -22,7 +33,6 @@ import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import MemberContributionsDTO from "@/Financial/infrastructure/http/dto/MemberContributions.dto"
-import { FindFinancialConceptByChurchIdAndFinancialConceptId } from "@/FinanceConfig/applications"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
 @Controller("/api/v1/me/contribution")
@@ -35,11 +45,15 @@ export class ContributionMemberController {
     Can("financial_records", ["add_contributions", "adm_contributions"]),
     ContributionValidator,
   ])
-  async createContribution(req: Request, res: Response) {
+  async createContribution(
+    @Body() payload: ContributionRequest,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
     const file = req.files?.file ?? null
 
     const request = {
-      ...(req.body as ContributionRequest),
+      ...payload,
       memberId: req.auth.memberId,
       bankTransferReceipt: file,
     }
@@ -51,10 +65,27 @@ export class ContributionMemberController {
         MemberMongoRepository.getInstance()
       ).execute(request.memberId)
 
-      const financialConcept =
-        await new FindFinancialConceptByChurchIdAndFinancialConceptId(
-          FinancialConceptMongoRepository.getInstance()
-        ).execute(member.getChurchId(), request.financialConceptId)
+      let financialConcept: FinancialConcept | undefined
+      if (payload.contributionType === MemberContributionType.TITHE) {
+        financialConcept =
+          await FinancialConceptMongoRepository.getInstance().one({
+            churchId: member.getChurchId(),
+            name: "Dízimos de Membros",
+          })
+      }
+
+      if (payload.contributionType === MemberContributionType.OFFERING) {
+        if (!request.financialConceptId) {
+          throw new Error(
+            "financialConceptId is required for offering contributions"
+          )
+        }
+
+        financialConcept =
+          await FinancialConceptMongoRepository.getInstance().one({
+            financialConceptId: payload.financialConceptId,
+          })
+      }
 
       const availabilityAccount =
         await AvailabilityAccountMongoRepository.getInstance().one({
@@ -69,7 +100,17 @@ export class ContributionMemberController {
         OnlineContributionsMongoRepository.getInstance(),
         StorageGCP.getInstance(process.env.BUCKET_FILES),
         FinancialYearMongoRepository.getInstance()
-      ).execute(request, availabilityAccount, member, financialConcept)
+      ).execute(
+        {
+          amount: request.amount,
+          observation: request.observation,
+          paidAt: request.paidAt,
+          bankTransferReceipt: request.bankTransferReceipt,
+        },
+        availabilityAccount,
+        member,
+        financialConcept
+      )
 
       res.status(HttpStatus.CREATED).send({
         message: "successful contribution registration",
@@ -84,9 +125,13 @@ export class ContributionMemberController {
     PermissionMiddleware,
     Can("financial_records", ["list_contributions", "adm_contributions"]),
   ])
-  async list(req: Request, res: Response) {
+  async list(
+    @Query() query: FilterContributionsRequest,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
     let filter = {
-      ...(req.query as unknown as FilterContributionsRequest),
+      ...query,
       churchId: req.auth.churchId,
       memberId: req.auth.memberId,
     }

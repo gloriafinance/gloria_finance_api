@@ -1,10 +1,9 @@
 import { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Member } from "@/Church/domain"
-import { FinancialConcept } from "../../FinanceConfig/domain/FinancialConcept"
+import { AvailabilityAccount, FinancialConcept } from "@/FinanceConfig/domain"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 import { DateBR } from "@/Shared/helpers"
-import { AvailabilityAccount } from "../../FinanceConfig/domain/AvailabilityAccount"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AmountValue } from "@/Shared/domain"
 
@@ -22,6 +21,7 @@ export class OnlineContributions extends AggregateRoot {
   private availabilityAccount: AvailabilityAccount
   private accountReceivableId?: string
   private installmentId?: string
+  private paidAt: Date
 
   static create(
     amount: AmountValue,
@@ -30,6 +30,7 @@ export class OnlineContributions extends AggregateRoot {
     bankTransferReceipt: string,
     observation: string = "",
     availabilityAccount: AvailabilityAccount,
+    paidAt: Date,
     reference?: {
       accountReceivableId?: string
       installmentId?: string
@@ -46,6 +47,7 @@ export class OnlineContributions extends AggregateRoot {
     contributions.createdAt = DateBR()
     contributions.financialConcept = financialConcept
     contributions.availabilityAccount = availabilityAccount
+    contributions.paidAt = paidAt
 
     if (financialConcept.isDisable()) {
       throw new FinancialConceptDisable()
@@ -77,6 +79,7 @@ export class OnlineContributions extends AggregateRoot {
     )
     contributions.accountReceivableId = plainData.accountReceivableId
     contributions.installmentId = plainData.installmentId
+    contributions.paidAt = plainData.paidAt
 
     return contributions
   }
@@ -129,6 +132,10 @@ export class OnlineContributions extends AggregateRoot {
     return this.bankTransferReceipt
   }
 
+  getPaidAt() {
+    return this.paidAt
+  }
+
   toPrimitives() {
     return {
       contributionId: this.contributionId,
@@ -143,6 +150,7 @@ export class OnlineContributions extends AggregateRoot {
       availabilityAccount: this.availabilityAccount,
       accountReceivableId: this.accountReceivableId,
       installmentId: this.installmentId,
+      paidAt: this.paidAt,
     }
   }
 }

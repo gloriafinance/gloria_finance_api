@@ -20,6 +20,8 @@ export { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.ex
 export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
 export * from "./exceptions/FinancialMovementNotFound.exception"
 
+export * from "./enums/MemberContributionType.enum"
+export * from "./enums/MemberPaymentChannel.enum"
 export { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 export * from "../../FinanceConfig/domain/enums/ConcepType.enum"
 export { StatementCategory } from "./enums/StatementCategory.enum"
