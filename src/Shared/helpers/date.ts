@@ -1,14 +1,12 @@
-export const DateBR = () => {
-  const currentDate = new Date()
+import * as dayjs from "dayjs"
+import * as utc from "dayjs/plugin/utc"
+import * as timezone from "dayjs/plugin/timezone"
 
-  // Obtener el offset en minutos de São Paulo (-3 horas)
-  const saoPauloOffset = -3 * 60
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
-  // Ajustar la fecha sumando el offset (en milisegundos)
-  const adjustedTime = currentDate.getTime() + saoPauloOffset * 60 * 1000
-
-  // Crear un nuevo objeto Date ajustado
-  return new Date(adjustedTime)
+export const DateBR = (): Date => {
+  return dayjs.tz(new Date(), "America/Sao_Paulo").toDate()
 }
 
 export const UTCStringToDateBR = (dateString: any): Date => {
@@ -16,13 +14,15 @@ export const UTCStringToDateBR = (dateString: any): Date => {
     return dateString
   }
 
-  const [datePart, timePart] = dateString.split("T")
-  const [y, m, day] = datePart.split("-").map(Number)
-  const [h, min, secAndMs] = timePart.split(":")
-  const sec = Number(secAndMs === undefined ? 0 : secAndMs.split(".")[0])
+  // const [datePart, timePart] = dateString.split("T")
+  // const [y, m, day] = datePart.split("-").map(Number)
+  // const [h, min, secAndMs] = timePart.split(":")
+  // const sec = Number(secAndMs === undefined ? 0 : secAndMs.split(".")[0])
+  //
+  // // crea fecha interpretando los componentes como hora local:
+  // const dAsLocal = new Date(y, m - 1, day, Number(h), Number(min), sec)
+  //
+  // return dAsLocal
 
-  // crea fecha interpretando los componentes como hora local:
-  const dAsLocal = new Date(y, m - 1, day, Number(h), Number(min), sec)
-
-  return dAsLocal
+  return dayjs.tz(dateString, "America/Sao_Paulo").toDate()
 }

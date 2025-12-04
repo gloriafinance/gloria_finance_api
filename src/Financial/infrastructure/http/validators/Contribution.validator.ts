@@ -11,9 +11,10 @@ export default async (req, res, next) => {
   const rule = {
     amount: "required|numeric",
     availabilityAccountId: "required|string",
-    financialConceptId: "required|string",
-    accountReceivableId: "string",
-    installmentId: "string",
+    financialConceptId: "string",
+    contributionType: "required|string|in:OFFERING,TITHE",
+    paidAt: "required|date",
+    observation: "string",
   }
 
   const customMessage = {

@@ -1,11 +1,11 @@
+import { MemberContributionType } from "@/Financial/domain"
+
 export type ContributionRequest = {
-  memberId: string
   amount: number
   bankTransferReceipt: any
-  financialConceptId: string
+  financialConceptId?: string
+  contributionType: MemberContributionType
   availabilityAccountId: string
-  month: string
+  paidAt: string
   observation?: string
-  accountReceivableId?: string
-  installmentId?: string
 }

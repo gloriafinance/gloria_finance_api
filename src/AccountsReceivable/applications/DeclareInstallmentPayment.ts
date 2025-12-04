@@ -6,13 +6,13 @@ import {
   IAccountsReceivableRepository,
   InstallmentNotFound,
 } from "@/AccountsReceivable/domain"
-import { ContributionRequest } from "@/Financial/domain"
 import { RegisterContributionsOnline } from "@/Financial/applications"
 import { AmountValue } from "@/Shared/domain"
 import { IMemberRepository } from "@/Church/domain"
 import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { FindMemberById } from "@/Church/applications"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { DateBR } from "@/Shared/helpers"
 
 export class DeclareInstallmentPayment {
   private logger = Logger(DeclareInstallmentPayment.name)
@@ -54,20 +54,17 @@ export class DeclareInstallmentPayment {
       throw new InstallmentNotFound(request.installmentId)
     }
 
-    const contributionRequest: ContributionRequest = {
-      memberId: member.getMemberId(),
-      amount: AmountValue.create(request.amount).getValue(),
-      bankTransferReceipt: request.file || request.voucher,
-      financialConceptId: account.getFinancialConcept().getFinancialConceptId(),
-      availabilityAccountId: request.availabilityAccountId,
-      month: new Date().toISOString(),
-      observation: `Pagamento de compromisso ${account.getAccountReceivableId()} - parcela ${installment.installmentId}`,
-      accountReceivableId: account.getAccountReceivableId(),
-      installmentId: installment.installmentId,
-    }
+    const paidAt = DateBR().toISOString().slice(0, 10)
 
     await this.registerContributionsOnline.execute(
-      contributionRequest,
+      {
+        amount: AmountValue.create(request.amount).getValue(),
+        bankTransferReceipt: request.file || request.voucher,
+        paidAt,
+        observation: `Pagamento de compromisso ${account.getAccountReceivableId()} - parcela ${installment.installmentId}`,
+        accountReceivableId: account.getAccountReceivableId(),
+        installmentId: installment.installmentId,
+      },
       availabilityAccount,
       member,
       account.getFinancialConcept()

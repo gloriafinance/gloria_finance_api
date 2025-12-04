@@ -1,6 +1,6 @@
 {
   "name": "church_financial_api",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
@@ -33,6 +33,7 @@
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "bull": "^4.16.5",
+    "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "express-basic-auth": "^1.2.1",
     "handlebars": "^4.7.8",

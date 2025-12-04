@@ -1,6 +1,5 @@
 import {
   AvailabilityAccount,
-  ContributionRequest,
   FinancialConcept,
   OnlineContributions,
 } from "../../domain"
@@ -10,7 +9,7 @@ import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
-import { DateBR } from "@/Shared/helpers"
+import { DateBR, UTCStringToDateBR } from "@/Shared/helpers"
 
 export class RegisterContributionsOnline {
   private logger = Logger("RegisterContributionsOnline")
@@ -22,26 +21,39 @@ export class RegisterContributionsOnline {
   ) {}
 
   async execute(
-    contributionRequest: ContributionRequest,
+    params: {
+      amount: number
+      observation?: string
+      paidAt: string
+      bankTransferReceipt: any
+      installmentId?: string
+      accountReceivableId?: string
+    },
     availabilityAccount: AvailabilityAccount,
     member: Member,
     financialConcept: FinancialConcept
   ) {
     this.logger.info(
-      `RegisterContributionsOnline contributionRequest: ${JSON.stringify(contributionRequest)} member: ${member.getName()} financialConcept: ${financialConcept.getName()}`
+      `RegisterContributionsOnline contributionRequest: ${JSON.stringify(params)} member: ${member.getName()} financialConcept: ${financialConcept.getName()}`
     )
 
+    const {
+      bankTransferReceipt,
+      paidAt,
+      accountReceivableId,
+      installmentId,
+      observation,
+      amount,
+    } = params
     const date = DateBR()
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: member.getChurchId(),
-      month: contributionRequest.month
-        ? Number(contributionRequest.month)
-        : date.getUTCMonth() + 1,
+      month: new Date(paidAt).getUTCMonth() + 1,
       year: date.getFullYear(),
     })
 
-    let voucher = contributionRequest.bankTransferReceipt
+    let voucher = bankTransferReceipt
     if (voucher && typeof voucher !== "string") {
       voucher = await this.storageService.uploadFile(voucher)
     }
@@ -49,15 +61,16 @@ export class RegisterContributionsOnline {
     const voucherPath = (voucher as string) || ""
 
     const contribution: OnlineContributions = OnlineContributions.create(
-      AmountValue.create(contributionRequest.amount),
+      AmountValue.create(amount),
       member,
       financialConcept,
       voucherPath,
-      contributionRequest.observation,
+      observation,
       availabilityAccount,
+      UTCStringToDateBR(paidAt),
       {
-        accountReceivableId: contributionRequest.accountReceivableId,
-        installmentId: contributionRequest.installmentId,
+        accountReceivableId: accountReceivableId,
+        installmentId: installmentId,
       }
     )
 

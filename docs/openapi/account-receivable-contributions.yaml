@@ -12,6 +12,117 @@ servers:
 security:
   - bearerAuth: [ ]
 paths:
+  /api/v1/me/contribution:
+    post:
+      summary: Registra una contribución en línea del miembro autenticado
+      description: El miembro envía el comprobante (opcional) y la solicitud queda pendiente de verificación.
+      tags: [ Member Contributions ]
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - amount
+                - availabilityAccountId
+                - contributionType
+                - paidAt
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  example: 120.5
+                availabilityAccountId:
+                  type: string
+                  description: Cuenta de disponibilidad donde se registrará el ingreso.
+                contributionType:
+                  type: string
+                  enum: [ TITHE, OFFERING ]
+                  description: |
+                    - `TITHE`: el backend busca automáticamente el concepto "Dízimos de Membros" para la iglesia.
+                    - `OFFERING`: requiere `financialConceptId`.
+                financialConceptId:
+                  type: string
+                  description: Requerido cuando contributionType = `OFFERING`.
+                paidAt:
+                  type: string
+                  format: date-time
+                  description: Fecha/hora en que se realizó el pago.
+                observation:
+                  type: string
+                  description: Nota opcional del miembro.
+                file:
+                  type: string
+                  format: binary
+                  description: Comprobante de transferencia bancaria (opcional).
+      responses:
+        "201":
+          description: Contribución registrada exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: successful contribution registration
+        "400":
+          description: Error de dominio (por ejemplo, cuenta de disponibilidad no encontrada).
+        "403":
+          description: Permiso faltante (`financial_records:add_contributions` o `financial_records:adm_contributions`).
+        "422":
+          description: Validación fallida.
+    get:
+      summary: Lista contribuciones en línea declaradas por el miembro autenticado
+      tags: [ Member Contributions ]
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ PENDING_VERIFICATION, PROCESSED, REJECTED ]
+          description: Filtra por estado de verificación.
+        - in: query
+          name: financialConceptId
+          schema:
+            type: string
+          description: Filtra por concepto financiero aplicado.
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+          description: Fecha inicial (inclusive) para filtrar por creación.
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+          description: Fecha final (inclusive) para filtrar por creación.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Lista paginada de contribuciones del miembro.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberContributionList"
+        "403":
+          description: Permiso faltante (`financial_records:list_contributions` o `financial_records:adm_contributions`).
   /api/v1/account-receivable/member/commitments:
     get:
       summary: Lista compromisos de contribución del miembro
@@ -231,3 +342,61 @@ components:
               type: string
             address:
               type: string
+    MemberContribution:
+      type: object
+      properties:
+        contributionId:
+          type: string
+        amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [ PENDING_VERIFICATION, PROCESSED, REJECTED ]
+        createdAt:
+          type: string
+          format: date-time
+        bankTransferReceipt:
+          type: string
+          description: URL o identificador del comprobante almacenado.
+        bankId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [ TITHE, OFFERING ]
+        availabilityAccount:
+          type: object
+          properties:
+            accountName:
+              type: string
+            symbol:
+              type: string
+        member:
+          type: object
+          properties:
+            memberId:
+              type: string
+            name:
+              type: string
+            churchId:
+              type: string
+        financeConcept:
+          type: object
+          properties:
+            financialConceptId:
+              type: string
+            name:
+              type: string
+    MemberContributionList:
+      type: object
+      properties:
+        count:
+          type: integer
+        nextPag:
+          type: integer
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberContribution"
