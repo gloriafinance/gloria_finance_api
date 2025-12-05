@@ -2,6 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
   AccountReceivableType,
+  AccountsReceivableStatus,
   FilterMemberAccountReceivableRequest,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
@@ -62,6 +63,14 @@ export class ListMemberAccountReceivable {
           ["field", "status"],
           ["operator", Operator.EQUAL],
           ["value", request.status],
+        ])
+      )
+    } else {
+      filters.push(
+        new Map([
+          ["field", "status"],
+          ["operator", Operator.EQUAL],
+          ["value", AccountsReceivableStatus.PENDING],
         ])
       )
     }
