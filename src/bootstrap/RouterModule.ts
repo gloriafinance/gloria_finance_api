@@ -15,6 +15,7 @@ import { financialControllers } from "@/Financial/infrastructure/http/controller
 import { consolidatedFinancialControllers } from "@/ConsolidatedFinancial/infrastructure/http/controllers"
 import { UerController } from "@/SecuritySystem/infrastructure/http/controllers/Uer.controller"
 import { financeConfigControllers } from "@/FinanceConfig/infrastructure/controllers"
+import { scheduleControllers } from "@/Schedule/infrastructure/http/controllers"
 
 export const routerModule = () =>
   new RoutesModule([
@@ -37,5 +38,6 @@ export const controllersModule = () =>
     ...financialControllers(),
     ...consolidatedFinancialControllers(),
     ...financeConfigControllers(),
+    ...scheduleControllers(),
     UerController,
   ])

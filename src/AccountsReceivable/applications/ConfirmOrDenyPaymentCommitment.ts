@@ -7,24 +7,23 @@ import {
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import { GeneratePDFAdapter, Logger } from "@/Shared/adapter"
-import { Church, IChurchRepository, IMinisterRepository } from "@/Church/domain"
-import { FindChurchById, FindMinisterById } from "@/Church/applications"
-import { IQueueService } from "@/Shared/domain"
+import { Church, IChurchRepository, IMemberRepository } from "@/Church/domain"
+import { FindChurchById } from "@/Church/applications"
 
 export class ConfirmOrDenyPaymentCommitment {
   private logger = Logger(ConfirmOrDenyPaymentCommitment.name)
   private searchChurch: FindChurchById
-  private searchMinister: FindMinisterById
+  //private searchMinister: FindMinisterById
 
   constructor(
     private readonly accountReceivableRepository: IAccountsReceivableRepository,
     private readonly pdfAdapter: GeneratePDFAdapter,
     private readonly churchRepository: IChurchRepository,
-    private readonly ministerRepository: IMinisterRepository,
-    private readonly queueService: IQueueService
+    //private readonly ministerRepository: IMinisterRepository,
+    private readonly memberRepository: IMemberRepository
   ) {
     this.searchChurch = new FindChurchById(this.churchRepository)
-    this.searchMinister = new FindMinisterById(this.ministerRepository)
+    //this.searchMinister = new FindMinisterById(this.ministerRepository)
   }
 
   async execute(
@@ -64,7 +63,10 @@ export class ConfirmOrDenyPaymentCommitment {
     account: AccountReceivable,
     church: Church
   ): Promise<void> {
-    const minister = await this.searchMinister.execute(church.getMinisterId())
+    // const minister = await this.searchMinister.execute(church.getMinisterId())
+    const minister = await this.memberRepository.one({
+      memberId: church.getMinisterId(),
+    })
 
     const contract = await this.pdfAdapter
       .htmlTemplate("payment_commitment_contract", {
@@ -89,8 +91,10 @@ export class ConfirmOrDenyPaymentCommitment {
           address: church.getAddress(),
           legalRepresentative: {
             name: minister.getName(),
-            role: minister.getMinisterType(),
-            dni: minister.getDNI(),
+            //role: minister.getMinisterType(),
+            role: "Pastor",
+            //dni: minister.getDNI(),
+            dni: minister.getDni(),
           },
         },
       })

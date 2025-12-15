@@ -1,0 +1,291 @@
+openapi: 3.0.1
+info:
+  title: Church Finance API - Schedule Context
+  version: '1.0'
+tags:
+  - name: Schedule
+    description: Configuração e agenda semanal recorrente da igreja
+paths:
+  /api/v1/schedule:
+    get:
+      summary: Lista itens de agenda configurados
+      description: Retorna a configuração recorrente dos itens de agenda da igreja (não expande ocorrências).
+      tags: [ Schedule ]
+      parameters:
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/ScheduleItemType'
+        - in: query
+          name: visibility
+          schema:
+            $ref: '#/components/schemas/ScheduleVisibility'
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de configurações de agenda
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleItemConfig'
+    post:
+      summary: Cria um item de agenda
+      description: Registra um item recorrente semanal na agenda da igreja.
+      tags: [ Schedule ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleItemPayload'
+      responses:
+        '201':
+          description: Item criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleItemConfig'
+  /api/v1/schedule/{scheduleItemId}:
+    get:
+      summary: Detalhe de um item de agenda
+      description: Obtém os dados configurados de um item de agenda específico.
+      tags: [ Schedule ]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleItemId'
+      responses:
+        '200':
+          description: Item encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleItemConfig'
+    put:
+      summary: Atualiza um item de agenda
+      description: Atualiza campos editáveis (título, descrição, local, recorrência, visibilidade).
+      tags: [ Schedule ]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleItemUpdatePayload'
+      responses:
+        '200':
+          description: Item atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleItemConfig'
+    delete:
+      summary: Desativa (soft delete) um item de agenda
+      description: Marca o item de agenda como inativo (isActive=false).
+      tags: [ Schedule ]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleItemId'
+      responses:
+        '200':
+          description: Item desativado
+  /api/v1/schedule/{scheduleItemId}/reactivate:
+    post:
+      summary: Reativa um item de agenda
+      description: Reativa um item previamente desativado.
+      operationId: reactivateScheduleItem
+      tags: [ Schedule ]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleItemId'
+      responses:
+        '200':
+          description: Item reativado
+  /api/v1/schedule/weekly:
+    get:
+      summary: Agenda semanal expandida
+      description: Expande a configuração semanal para as ocorrências na faixa de 7 dias iniciando em weekStartDate.
+      tags: [ Schedule ]
+      parameters:
+        - in: query
+          name: weekStartDate
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: visibilityScope
+          schema:
+            $ref: '#/components/schemas/ScheduleVisibility'
+      responses:
+        '200':
+          description: Lista de ocorrências semanais
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WeeklyOccurrence'
+components:
+  parameters:
+    ScheduleItemId:
+      in: path
+      name: scheduleItemId
+      required: true
+      schema:
+        type: string
+  schemas:
+    ScheduleItemType:
+      type: string
+      enum:
+        - SERVICE
+        - CELL
+        - MINISTRY_MEETING
+        - REGULAR_EVENT
+        - OTHER
+    ScheduleVisibility:
+      type: string
+      enum:
+        - PUBLIC
+        - INTERNAL_LEADERS
+    Location:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+      required: [ name ]
+    RecurrencePattern:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ WEEKLY ]
+        dayOfWeek:
+          type: string
+          enum:
+            - SUNDAY
+            - MONDAY
+            - TUESDAY
+            - WEDNESDAY
+            - THURSDAY
+            - FRIDAY
+            - SATURDAY
+        time:
+          type: string
+          example: "10:00"
+        durationMinutes:
+          type: integer
+          minimum: 1
+        timezone:
+          type: string
+          example: America/Sao_Paulo
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          nullable: true
+      required:
+        - type
+        - dayOfWeek
+        - time
+        - durationMinutes
+        - timezone
+        - startDate
+    ScheduleItemPayload:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ScheduleItemType'
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        recurrencePattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        visibility:
+          $ref: '#/components/schemas/ScheduleVisibility'
+        director:
+          type: string
+        preacher:
+          type: string
+        observations:
+          type: string
+      required:
+        - type
+        - title
+        - location
+        - recurrencePattern
+        - visibility
+        - director
+    ScheduleItemUpdatePayload:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        recurrencePattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        visibility:
+          $ref: '#/components/schemas/ScheduleVisibility'
+        director:
+          type: string
+        preacher:
+          type: string
+        observations:
+          type: string
+    ScheduleItemConfig:
+      allOf:
+        - $ref: '#/components/schemas/ScheduleItemPayload'
+        - type: object
+          properties:
+            scheduleItemId:
+              type: string
+            churchId:
+              type: string
+            isActive:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            createdByUserId:
+              type: string
+            updatedAt:
+              type: string
+              format: date-time
+              nullable: true
+            updatedByUserId:
+              type: string
+              nullable: true
+    WeeklyOccurrence:
+      type: object
+      properties:
+        scheduleItemId:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/ScheduleItemType'
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: "10:00"
+        endTime:
+          type: string
+          example: "11:30"
+        location:
+          $ref: '#/components/schemas/Location'
+        visibility:
+          $ref: '#/components/schemas/ScheduleVisibility'
