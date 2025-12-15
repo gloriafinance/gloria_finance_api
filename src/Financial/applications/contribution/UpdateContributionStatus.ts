@@ -9,20 +9,22 @@ import {
   TypeOperationMoney,
 } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
-import { Logger } from "../../../Shared/adapter"
-import { AmountValue, IQueueService } from "../../../Shared/domain"
-import { DispatchCreateFinancialRecord } from "@/Financial/applications/dispatchers/DispatchCreateFinancialRecord"
-import { DateBR } from "../../../Shared/helpers"
-import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
+import { Logger } from "@/Shared/adapter"
+import { AmountValue, IQueueService } from "@/Shared/domain"
+import {
+  DispatchCreateFinancialRecord,
+  DispatchUpdateAvailabilityAccountBalance,
+} from "@/Financial/applications"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
 import {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
+import { DateBR } from "@/Shared/helpers"
 
 export class UpdateContributionStatus {
-  private logger = Logger("UpdateContributionStatus")
+  private logger = Logger(UpdateContributionStatus.name)
 
   constructor(
     private readonly contributionRepository: IOnlineContributionsRepository,
@@ -71,20 +73,6 @@ export class UpdateContributionStatus {
       amount: contribution.getAmount(),
     })
 
-    new DispatchCreateFinancialRecord(this.queueService).execute({
-      financialConcept: concept,
-      amount: contribution.getAmount(),
-      churchId: contribution.getMember().getChurchId(),
-      date: DateBR(),
-      createdBy,
-      financialRecordType: FinancialRecordType.INCOME,
-      source: FinancialRecordSource.AUTO,
-      status: FinancialRecordStatus.RECONCILED,
-      availabilityAccount: contribution.getAvailabilityAccount(),
-      voucher: contribution.getBankTransferReceipt(),
-      description: concept.getName(),
-    })
-
     if (
       contribution.getAccountReceivableId() &&
       contribution.getInstallmentId()
@@ -108,6 +96,22 @@ export class UpdateContributionStatus {
         concept: concept.getName(),
         createdBy: createdBy,
       })
+
+      return
     }
+
+    new DispatchCreateFinancialRecord(this.queueService).execute({
+      financialConcept: concept,
+      amount: contribution.getAmount(),
+      churchId: contribution.getMember().getChurchId(),
+      date: DateBR(),
+      createdBy,
+      financialRecordType: FinancialRecordType.INCOME,
+      source: FinancialRecordSource.AUTO,
+      status: FinancialRecordStatus.RECONCILED,
+      availabilityAccount: contribution.getAvailabilityAccount(),
+      voucher: contribution.getBankTransferReceipt(),
+      description: concept.getName(),
+    })
   }
 }
