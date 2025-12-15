@@ -2,6 +2,10 @@ openapi: 3.0.1
 info:
   title: Church Finance API - Schedule Context
   version: '1.0'
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
 tags:
   - name: Schedule
     description: Configuração e agenda semanal recorrente da igreja
@@ -129,6 +133,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/WeeklyOccurrence'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     ScheduleItemId:
       in: path

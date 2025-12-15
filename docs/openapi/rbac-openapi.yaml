@@ -1,4 +1,8 @@
 openapi: 3.0.1
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
 tags:
   - name: RBAC
     description: Gestión de roles y permisos
@@ -97,3 +101,9 @@ paths:
       responses:
         '200':
           description: Lista de permisos
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

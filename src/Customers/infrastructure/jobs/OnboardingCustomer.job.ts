@@ -19,7 +19,6 @@ type OnboardingCustomerJobArgs = {
     openingDate: Date
     registerNumber?: string
   }
-  lang?: string
 }
 export class OnboardingCustomerJob implements IQueue {
   private logger = Logger(OnboardingCustomerJob.name)
@@ -33,9 +32,9 @@ export class OnboardingCustomerJob implements IQueue {
   ) {}
 
   async handle(args: OnboardingCustomerJobArgs): Promise<any> {
-    this.logger.info(`OnboardingCustomerJob started`, args)
+    this.logger.info(`  started`, args)
 
-    const { church: churchData, lang } = args
+    const { church: churchData } = args
 
     const customer = Customer.fromPrimitives(args.customer)
 
@@ -58,7 +57,7 @@ export class OnboardingCustomerJob implements IQueue {
     await new FirstLoadFinancialConcepts(
       this.financialConceptRepository,
       this.churchRepository
-    ).execute({ churchId: church.getChurchId(), lang })
+    ).execute({ churchId: church.getChurchId(), lang: customer.getLang() })
 
     await new GenerateFinancialMonths(this.financialYearRepository).execute({
       churchId: church.getChurchId(),

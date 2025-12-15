@@ -35,6 +35,8 @@ import {
 import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"
 import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
+import { FindChurchById } from "@/Church/applications"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
 
 export type userLoginPayload = {
   email: string
@@ -42,8 +44,8 @@ export type userLoginPayload = {
 }
 
 @Controller("/api/v1/user")
-export class UerController {
-  private logger = Logger(UerController.name)
+export class UserController {
+  private logger = Logger(UserController.name)
 
   @Post("/login")
   async login(@Body() payload: userLoginPayload, res: Response) {
@@ -54,6 +56,10 @@ export class UerController {
         new AuthTokenAdapter()
       ).execute(payload.email, payload.password)
 
+      const church = await new FindChurchById(
+        ChurchMongoRepository.getInstance()
+      ).execute(user.getChurchId())
+
       const roles =
         await UserAssignmentMongoRepository.getInstance().findByUser(
           user.getChurchId(),
@@ -63,9 +69,14 @@ export class UerController {
       const responseUser = user.toPrimitives()
 
       delete responseUser.password
+      delete responseUser.churchId
 
       res.status(HttpStatus.OK).send({
         ...responseUser,
+        church: {
+          churchId: user.getChurchId(),
+          name: church?.getName() || "",
+        },
         roles: roles.getRoles(),
         token,
       })

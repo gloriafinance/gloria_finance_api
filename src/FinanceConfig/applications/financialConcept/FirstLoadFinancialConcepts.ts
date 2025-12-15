@@ -61,7 +61,10 @@ export class FirstLoadFinancialConcepts {
     lang = lang || "pt-BR"
 
     const rawData = fs.readFileSync(
-      path.resolve(__dirname, `@/fixtures/financialConcepts_${lang}.json`),
+      path.resolve(
+        __dirname,
+        `../../../fixtures/financialConcepts_${lang}.json`
+      ),
       "utf-8"
     )
     return JSON.parse(rawData) as rawFinancialConcept[]

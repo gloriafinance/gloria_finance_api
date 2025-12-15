@@ -1,0 +1,227 @@
+openapi: 3.0.1
+info:
+  title: Church Finance API - Onboarding
+  version: '1.0'
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
+tags:
+  - name: Onboarding
+    description: Registro y seguimiento de clientes durante el onboarding
+paths:
+  /api/v1/onboarding:
+    post:
+      summary: Crea un cliente y arranca el onboarding
+      description: Registra los datos del representante y la iglesia para iniciar el flujo de onboarding.
+      tags: [ Onboarding ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerPayload'
+      responses:
+        '201':
+          description: Cliente creado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Customer created successfully
+                  customerId:
+                    type: string
+                required: [ message, customerId ]
+    get:
+      summary: Lista clientes en onboarding (paginado)
+      description: Devuelve los clientes registrados ordenados por fecha de creación descendente.
+      tags: [ Onboarding ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        '200':
+          description: Página de clientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPagination'
+    patch:
+      summary: Actualiza el estado de onboarding
+      description: Marca el onboarding como completado y dispara la creación de la iglesia cuando status es COMPLETED.
+      tags: [ Onboarding ]
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOnboardingPayload'
+      responses:
+        '200':
+          description: Flujo de onboarding iniciado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Onboarding process started
+                required: [ message ]
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CustomerStatus:
+      type: string
+      enum: [ ACTIVE, INACTIVE, SUSPENDED ]
+    OnboardingStatus:
+      type: string
+      enum: [ PENDING, IN_PROGRESS, COMPLETED ]
+    CustomerRepresentative:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        rol:
+          type: string
+      required: [ name, email, phone, rol ]
+    CustomerAddress:
+      type: object
+      properties:
+        street:
+          type: string
+        number:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+          nullable: true
+        country:
+          type: string
+      required: [ street, number, city, country ]
+    CreateCustomerPayload:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          $ref: '#/components/schemas/CustomerAddress'
+        representative:
+          $ref: '#/components/schemas/CustomerRepresentative'
+        lang:
+          type: string
+          enum: [ pt-BR, es, en ]
+      required:
+        - name
+        - email
+        - phone
+        - address
+        - representative
+    Customer:
+      type: object
+      properties:
+        customerId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          $ref: '#/components/schemas/CustomerAddress'
+        representative:
+          $ref: '#/components/schemas/CustomerRepresentative'
+        tenantId:
+          type: string
+          description: Identificador de la iglesia (tenant) cuando el onboarding fue completado
+          nullable: true
+        plan:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/CustomerStatus'
+        onboardingStatus:
+          $ref: '#/components/schemas/OnboardingStatus'
+        createdAt:
+          type: string
+          format: date-time
+        lang:
+          type: string
+      required:
+        - customerId
+        - name
+        - email
+        - phone
+        - address
+        - representative
+        - status
+        - onboardingStatus
+        - createdAt
+    CustomerPagination:
+      type: object
+      properties:
+        nextPag:
+          oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+      required: [ count, results ]
+    UpdateOnboardingPayload:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/OnboardingStatus'
+        customerId:
+          type: string
+        church:
+          type: object
+          properties:
+            openingDate:
+              type: string
+              format: date
+            registerNumber:
+              type: string
+              nullable: true
+          required: [ openingDate ]
+      required:
+        - status
+        - customerId
+        - church

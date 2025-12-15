@@ -7,8 +7,8 @@ info:
     que luego se procesan como contribuciones en línea y, tras su aprobación, aplican el pago
     a la cuenta por cobrar correspondiente.
 servers:
-  - url: https://api.example.com
-    description: Producción (reemplazar)
+  - url: http://localhost:5200
+    description: Desarrollo local
 security:
   - bearerAuth: [ ]
 paths:

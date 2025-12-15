@@ -90,6 +90,10 @@ export class Customer extends AggregateRoot {
     return this.address
   }
 
+  getLang() {
+    return this.lang
+  }
+
   setPlan(plan: string) {
     this.plan = plan
   }

@@ -2,6 +2,10 @@ openapi: 3.0.1
 info:
   title: Church Finance API - Financial Concepts
   version: '1.0'
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
 paths:
   /financial-concepts:
     get:
@@ -77,6 +81,11 @@ paths:
         '201':
           description: Lançamento criado
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     FinancialConcept:
       type: object

@@ -36,7 +36,7 @@ export class CustomerMongoRepository
     if (!data) {
       return undefined
     }
-    return Customer.fromPrimitives(data)
+    return Customer.fromPrimitives({ ...data, id: data._id.toString() })
   }
 
   async upsert(customer: Customer): Promise<void> {

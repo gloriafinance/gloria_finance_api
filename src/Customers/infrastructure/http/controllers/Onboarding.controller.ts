@@ -1,4 +1,4 @@
-import { OnboardingStatus } from "@/Customers/domain/enums/CustomerStatus.enum"
+import { Customer, ICreateCustomer, OnboardingStatus } from "@/Customers/domain"
 import { Response } from "express"
 import { QueueService } from "@/Shared/infrastructure"
 import { HttpStatus, QueueName } from "@/Shared/domain"
@@ -15,8 +15,6 @@ import {
   Use,
 } from "@abejarano/ts-express-server"
 import CustomerValidator from "../validators/Customer.validator"
-import { ICreateCustomer } from "@/Customers/domain/interfaces/CreateCustomer"
-import { Customer } from "@/Customers/domain/Customer"
 import {
   Criteria,
   Filters,
@@ -55,8 +53,8 @@ export class OnboardingController {
       const criteria = new Criteria(
         new Filters([]),
         Order.fromValues("createdAt", OrderTypes.DESC),
-        query.perPage,
-        query.page
+        Number(query.perPage) ?? 10,
+        Number(query.page)
       )
       const customers =
         await CustomerMongoRepository.getInstance().list(criteria)
@@ -87,7 +85,7 @@ export class OnboardingController {
 
         QueueService.getInstance().dispatch(QueueName.OnboardingCustomerJob, {
           church: req.church,
-          customer: customer.toPrimitives(),
+          customer: { ...customer.toPrimitives(), id: customer.getId() },
         })
       }
 

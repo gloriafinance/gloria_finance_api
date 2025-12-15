@@ -75,7 +75,7 @@ class CustomLogger {
 
     return {
       message: ` ${message}`,
-      data: context,
+      ...context,
       ...{ name: `${this.name} ${requestId}` },
     }
   }

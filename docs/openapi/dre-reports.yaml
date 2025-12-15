@@ -5,8 +5,10 @@ info:
     Endpoints para geração de relatórios DRE (Demonstração do Resultado do Exercício).
     O DRE é um relatório contábil que apresenta o resultado das operações da igreja em um período específico.
   version: '1.0'
+security:
+  - bearerAuth: [ ]
 servers:
-  - url: /api/v1
+  - url: http://localhost:5200/api/v1
 paths:
   /reports/finance/dre:
     get:
@@ -16,7 +18,7 @@ paths:
         O relatório filtra apenas registros financeiros com status CLEARED ou RECONCILED e que afetam o resultado (affectsResult = true).
       tags: [ DRE Reports ]
       security:
-        - BearerAuth: [ ]
+        - bearerAuth: [ ]
       parameters:
         - name: churchId
           in: query
@@ -84,7 +86,7 @@ paths:
         O PDF é formatado seguindo o padrão brasileiro de demonstrações contábeis.
       tags: [ DRE Reports ]
       security:
-        - BearerAuth: [ ]
+        - bearerAuth: [ ]
       parameters:
         - name: churchId
           in: query
@@ -149,7 +151,7 @@ paths:
         Automaticamente calcula o mês anterior, incluindo rollback de ano (Janeiro 2025 → Dezembro 2024).
       tags: [ DRE Reports ]
       security:
-        - BearerAuth: [ ]
+        - bearerAuth: [ ]
       parameters:
         - name: churchId
           in: query
@@ -220,7 +222,7 @@ paths:
 
 components:
   securitySchemes:
-    BearerAuth:
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT

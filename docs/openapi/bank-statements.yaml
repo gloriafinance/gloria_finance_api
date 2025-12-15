@@ -2,6 +2,10 @@ openapi: 3.0.1
 info:
   title: Church Finance API - Bank Statements
   version: '1.0'
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
 tags:
   - name: Bank Statements
     description: Fluxo de conciliação bancária
