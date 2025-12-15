@@ -114,3 +114,6 @@ db["availability_accounts_master"].createSearchIndex({
       }
   }
 })
+
+db["schedule_events"].createIndex({ churchId: 1, isActive: 1 })
+db["schedule_events"].createIndex({ churchId: 1, type: 1 })

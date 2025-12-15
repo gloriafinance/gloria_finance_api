@@ -41,13 +41,26 @@ export class ListMemberAccountReceivable {
       ])
     )
 
-    filters.push(
-      new Map([
-        ["field", "type"],
-        ["operator", Operator.EQUAL],
-        ["value", request.type || AccountReceivableType.CONTRIBUTION],
-      ])
-    )
+    if (request.type) {
+      filters.push(
+        new Map([
+          ["field", "type"],
+          ["operator", Operator.EQUAL],
+          ["value", request.type],
+        ])
+      )
+    } else {
+      filters.push(
+        new Map<string, any>([
+          ["field", "type"],
+          ["operator", Operator.IN],
+          [
+            "value",
+            [AccountReceivableType.CONTRIBUTION, AccountReceivableType.LOAN],
+          ],
+        ])
+      )
+    }
 
     filters.push(
       new Map([
@@ -77,7 +90,7 @@ export class ListMemberAccountReceivable {
 
     return new Criteria(
       Filters.fromValues(filters),
-      Order.fromValues("createdAt", OrderTypes.DESC),
+      Order.fromValues("createdAt", OrderTypes.ASC),
       Number(request.perPage),
       Number(request.page)
     )

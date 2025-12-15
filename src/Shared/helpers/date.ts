@@ -9,7 +9,7 @@ export const DateBR = (): Date => {
   return dayjs.tz(new Date(), "America/Sao_Paulo").toDate()
 }
 
-export const UTCStringToDateBR = (dateString: any): Date => {
+export const StringToDate = (dateString: any): Date => {
   if (typeof dateString !== "string") {
     return dateString
   }
