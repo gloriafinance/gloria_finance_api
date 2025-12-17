@@ -13,4 +13,5 @@ export type ChurchRequest = {
   openingDate: Date
   regionId: string
   status: ChurchStatus
+  lang?: string
 }

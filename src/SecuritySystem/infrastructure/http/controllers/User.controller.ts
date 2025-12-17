@@ -34,7 +34,11 @@ import {
 } from "@abejarano/ts-express-server"
 import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"
-import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
+import {
+  AuthenticatedRequest,
+  PermissionMiddleware,
+  QueueService,
+} from "@/Shared/infrastructure"
 import { FindChurchById } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 
@@ -76,6 +80,7 @@ export class UserController {
         church: {
           churchId: user.getChurchId(),
           name: church?.getName() || "",
+          lang: church.getLang(),
         },
         roles: roles.getRoles(),
         token,
@@ -162,12 +167,17 @@ export class UserController {
   }
 
   @Get("/")
-  async fetchAllUser(@Param() filter: FilterUserRequest, res: Response) {
+  @Use(PermissionMiddleware)
+  async fetchAllUser(
+    @Param() filter: FilterUserRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     const logger = Logger("FetchAllUserController")
     try {
       const result = await new FetchAllUsers(
         UserMongoRepository.getInstance()
-      ).execute(filter)
+      ).execute({ ...filter, churchId: req.auth.churchId })
 
       res.status(HttpStatus.OK).send({
         data: result,

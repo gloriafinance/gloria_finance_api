@@ -46,6 +46,7 @@ export class OnboardingCustomerJob implements IQueue {
       status: ChurchStatus.ACTIVE,
       registerNumber: churchData.registerNumber,
       openingDate: churchData.openingDate,
+      lang: customer.getLang(),
     })
 
     customer.setStatus(CustomerStatus.ACTIVE)

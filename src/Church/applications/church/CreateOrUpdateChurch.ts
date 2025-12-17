@@ -13,7 +13,7 @@ import { Logger } from "@/Shared/adapter"
 // } from "../../../OrganizacionalStructure/domain";
 
 export class CreateOrUpdateChurch {
-  private logger = Logger("CreateOrUpdateChurch")
+  private logger = Logger(CreateOrUpdateChurch.name)
 
   constructor(
     private readonly churchRepository: IChurchRepository
@@ -70,17 +70,18 @@ export class CreateOrUpdateChurch {
     this.logger.info(`Registrar iglesia ${JSON.stringify(churchRequest)}`)
     //const region: Region = await this.getRegion(churchRequest.regionId);
 
-    return Church.create(
-      churchRequest.name,
-      churchRequest.city,
-      churchRequest.address,
-      churchRequest.street,
-      churchRequest.number,
-      churchRequest.postalCode,
-      churchRequest.email,
-      churchRequest.openingDate,
+    return Church.create({
+      name: churchRequest.name,
+      city: churchRequest.city,
+      address: churchRequest.address,
+      street: churchRequest.street,
+      number: churchRequest.number,
+      postalCode: churchRequest.postalCode,
+      email: churchRequest.email,
+      openingDate: churchRequest.openingDate,
+      lang: churchRequest.lang,
       //region,
-      churchRequest.registerNumber
-    )
+      registerNumber: churchRequest.registerNumber,
+    })
   }
 }

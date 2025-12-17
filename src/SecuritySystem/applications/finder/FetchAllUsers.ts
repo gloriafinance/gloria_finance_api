@@ -53,6 +53,16 @@ export class FetchAllUsers {
       )
     }
 
+    if (reqFilter.churchId) {
+      filters.push(
+        new Map<string, string | boolean>([
+          ["field", "churchId"],
+          ["operator", Operator.EQUAL],
+          ["value", reqFilter.churchId],
+        ])
+      )
+    }
+
     return new Criteria(
       Filters.fromValues(filters),
       Order.fromValues("createdAt", OrderTypes.DESC),

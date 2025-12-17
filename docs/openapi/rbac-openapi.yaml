@@ -6,7 +6,186 @@ security:
 tags:
   - name: RBAC
     description: Gestión de roles y permisos
+  - name: Users
+    description: Autenticación y administración de usuarios
 paths:
+  /api/v1/user/login:
+    post:
+      tags: [ Users ]
+      summary: Inicia sesión de usuario
+      description: Autentica al usuario y devuelve el token JWT junto con los datos básicos y roles asignados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginPayload'
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales inválidas
+  /api/v1/user/create:
+    post:
+      tags: [ Users ]
+      summary: Crea un usuario
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserPayload'
+      responses:
+        '200':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Falta permiso
+  /api/v1/user/edit-user/{userId}:
+    put:
+      tags: [ Users ]
+      summary: Actualiza un usuario
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserPayload'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Falta permiso
+  /api/v1/user/accept-policies:
+    post:
+      tags: [ Users ]
+      summary: Acepta políticas de privacidad y datos sensibles
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptPoliciesPayload'
+      responses:
+        '200':
+          description: Políticas aceptadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: No autenticado
+  /api/v1/user:
+    get:
+      tags: [ Users ]
+      summary: Lista usuarios
+      description: Devuelve usuarios paginados filtrando por estado y flag de superusuario.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: page
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - in: query
+          name: isSuperuser
+          schema:
+            type: string
+            enum: [ 'true', 'false' ]
+        - in: query
+          name: isActive
+          schema:
+            type: string
+            enum: [ 'true', 'false' ]
+      responses:
+        '200':
+          description: Usuarios paginados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPagination'
+        '403':
+          description: Falta permiso
+  /api/v1/user/recovery-password:
+    post:
+      tags: [ Users ]
+      summary: Genera contraseña temporal y envía correo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryPasswordPayload'
+      responses:
+        '200':
+          description: Contraseña temporal generada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Temporal password generated
+        '404':
+          description: Usuario no encontrado
+  /api/v1/user/change-password:
+    post:
+      tags: [ Users ]
+      summary: Cambia la contraseña del usuario
+      description: Valida la contraseña actual y la reemplaza por una nueva.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordPayload'
+      responses:
+        '200':
+          description: Contraseña cambiada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Senha alterada com sucesso
+        '401':
+          description: Credenciales inválidas
+        '404':
+          description: Usuario no encontrado
   /api/v1/rbac/permissions/bootstrap:
     post:
       tags: [RBAC]
@@ -107,3 +286,152 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    LoginPayload:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserResponse'
+        - type: object
+          required: [ church, roles, token ]
+          properties:
+            church:
+              type: object
+              properties:
+                churchId:
+                  type: string
+                name:
+                  type: string
+              required: [ churchId, name ]
+            roles:
+              type: array
+              items:
+                type: string
+            token:
+              type: string
+              description: JWT para llamadas autenticadas
+    CreateUserPayload:
+      type: object
+      required: [ name, email, password, isActive, churchId ]
+      properties:
+        userId:
+          type: string
+          description: Solo para actualizaciones; se ignora en creación
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        isActive:
+          type: boolean
+        churchId:
+          type: string
+        memberId:
+          type: string
+          nullable: true
+    UpdateUserPayload:
+      allOf:
+        - $ref: '#/components/schemas/CreateUserPayload'
+      required:
+        - email
+        - isActive
+    AcceptPoliciesPayload:
+      type: object
+      required: [ privacyPolicyVersion, sensitiveDataPolicyVersion ]
+      properties:
+        privacyPolicyVersion:
+          type: string
+        sensitiveDataPolicyVersion:
+          type: string
+    UserResponse:
+      type: object
+      required:
+        - userId
+        - name
+        - email
+        - isActive
+        - churchId
+        - createdAt
+        - isSuperUser
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        isActive:
+          type: boolean
+        churchId:
+          type: string
+        memberId:
+          type: string
+          nullable: true
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        policies:
+          type: object
+          nullable: true
+          properties:
+            privacyPolicy:
+              $ref: '#/components/schemas/PolicyAcceptance'
+            sensitiveDataPolicy:
+              $ref: '#/components/schemas/PolicyAcceptance'
+        isSuperUser:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    PolicyAcceptance:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        version:
+          type: string
+        acceptedAt:
+          type: string
+          format: date-time
+    UserPagination:
+      type: object
+      properties:
+        nextPag:
+          oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+      required: [ count, results ]
+    RecoveryPasswordPayload:
+      type: object
+      required: [ email ]
+      properties:
+        email:
+          type: string
+    ChangePasswordPayload:
+      type: object
+      required: [ email, newPassword, oldPassword ]
+      properties:
+        email:
+          type: string
+          format: email
+        newPassword:
+          type: string
+        oldPassword:
+          type: string

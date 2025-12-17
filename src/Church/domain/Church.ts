@@ -18,22 +18,37 @@ export class Church extends AggregateRoot {
   private email: string
   private openingDate: Date
   private ministerId: string
+  private lang: string
   //private region: Region;
   private status: ChurchStatus
   private createdAt: Date
 
-  static create(
-    name: string,
-    city: string,
-    address: string,
-    street: string,
-    number: string,
-    postalCode: string,
-    email: string,
-    openingDate: Date,
+  static create(params: {
+    name: string
+    city: string
+    address: string
+    street: string
+    number: string
+    postalCode: string
+    email: string
+    openingDate: Date
     //region: Region,
+    lang: string
     registerNumber?: string
-  ): Church {
+  }): Church {
+    const {
+      name,
+      city,
+      address,
+      street,
+      number,
+      postalCode,
+      registerNumber = "",
+      email,
+      openingDate,
+      lang,
+      //region,
+    } = params
     const c: Church = new Church()
 
     c.name = name
@@ -45,6 +60,7 @@ export class Church extends AggregateRoot {
     c.registerNumber = registerNumber
     c.email = email
     c.openingDate = openingDate
+    c.lang = lang
     //c.region = region;
     c.createdAt = DateBR()
     c.churchId = IdentifyEntity.get(`church`)
@@ -68,6 +84,7 @@ export class Church extends AggregateRoot {
     c.email = plainData.email
     c.openingDate = plainData.openingDate
     c.ministerId = plainData.ministerId
+    c.lang = plainData.lang ?? "pt-BR"
     //c.region = Region.fromPrimitives(plainData.region);
     c.status = plainData.status
 
@@ -86,6 +103,10 @@ export class Church extends AggregateRoot {
 
   getChurchId(): string {
     return this.churchId
+  }
+
+  getLang(): string {
+    return this.lang
   }
 
   // setRegion(region: Region) {
@@ -158,6 +179,7 @@ export class Church extends AggregateRoot {
       createdAt: this.createdAt,
       ministerId: this.ministerId ?? null,
       status: this.status,
+      lang: this.lang,
     }
   }
 }
