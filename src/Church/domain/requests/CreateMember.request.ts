@@ -1,5 +1,6 @@
-export type MemberRequest = {
-  memberId?: string
+import { MemberSettings } from "@/Church/domain"
+
+export type CreateMemberRequest = {
   name: string
   email: string
   phone: string
@@ -10,4 +11,5 @@ export type MemberRequest = {
   churchId: string
   birthdate: Date
   active: boolean
+  settings?: MemberSettings
 }

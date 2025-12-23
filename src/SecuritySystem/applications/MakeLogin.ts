@@ -1,5 +1,4 @@
 import {
-  IAuthToken,
   InvalidPassword,
   IPasswordAdapter,
   IUserRepository,
@@ -14,8 +13,7 @@ export class MakeLogin {
 
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly passwordAdapter: IPasswordAdapter,
-    private readonly authToken: IAuthToken
+    private readonly passwordAdapter: IPasswordAdapter
   ) {}
 
   async execute(emailUser: string, passUser: string) {
@@ -40,16 +38,6 @@ export class MakeLogin {
 
     await this.userRepository.upsert(user)
 
-    return {
-      user,
-      token: this.authToken.createToken({
-        churchId: user.getChurchId(),
-        userId: user.getUserId(),
-        email: user.getEmail(),
-        name: user.getName(),
-        memberId: user.getMemberId(),
-        isSuperUser: user.isSuperUser,
-      }),
-    }
+    return user
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "church_financial_api",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
@@ -36,6 +36,7 @@
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "express-basic-auth": "^1.2.1",
+    "firebase-admin": "^13.6.0",
     "handlebars": "^4.7.8",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",

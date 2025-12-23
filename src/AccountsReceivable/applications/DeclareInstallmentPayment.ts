@@ -45,7 +45,7 @@ export class DeclareInstallmentPayment {
     const availabilityAccount =
       await new FindAvailabilityAccountByAvailabilityAccountId(
         this.availabilityAccountRepository
-      ).execute(request.availabilityAccountId, member.getChurchId())
+      ).execute(request.availabilityAccountId, member.getChurch().churchId)
 
     const installment = account.getInstallment(request.installmentId)
 

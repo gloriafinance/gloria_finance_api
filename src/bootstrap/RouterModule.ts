@@ -1,6 +1,5 @@
 import { ControllersModule, RoutesModule } from "@abejarano/ts-express-server"
 import churchRouters from "@/Church/infrastructure/http/routes/Church.routers"
-import memberRouters from "@/Church/infrastructure/http/routes/Member.routers"
 import ministerRoute from "@/Church/infrastructure/http/routes/Minsiter.routers"
 import financialRouter from "@/Financial/infrastructure/http/routes"
 import bankingRoutes from "@/Banking/infrastructure/http/routes"
@@ -17,11 +16,12 @@ import { UserController } from "@/SecuritySystem/infrastructure/http/controllers
 import { financeConfigControllers } from "@/FinanceConfig/infrastructure/controllers"
 import { scheduleControllers } from "@/Schedule/infrastructure/http/controllers"
 import { OnboardingController } from "@/Customers/infrastructure/http/controllers/Onboarding.controller"
+import { NotificationController } from "@/Shared/infrastructure/controllers/Notification.controller"
+import { MemberController } from "@/Church/infrastructure/http/controllers/Member.controller"
 
 export const routerModule = () =>
   new RoutesModule([
     { path: "/api/v1/church", router: churchRouters },
-    { path: "/api/v1/church/member", router: memberRouters },
     { path: "/api/v1/minister", router: ministerRoute },
     { path: "/api/v1/finance", router: financialRouter },
     { path: "/api/v1/bank", router: bankingRoutes },
@@ -40,6 +40,8 @@ export const controllersModule = () =>
     ...consolidatedFinancialControllers(),
     ...financeConfigControllers(),
     ...scheduleControllers(),
+    MemberController,
     UserController,
     OnboardingController,
+    NotificationController,
   ])

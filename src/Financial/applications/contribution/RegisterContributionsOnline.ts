@@ -48,7 +48,7 @@ export class RegisterContributionsOnline {
     const date = DateBR()
 
     await new FinancialMonthValidator(this.financialYearRepository).validate({
-      churchId: member.getChurchId(),
+      churchId: member.getChurch().churchId,
       month: new Date(paidAt).getUTCMonth() + 1,
       year: date.getFullYear(),
     })

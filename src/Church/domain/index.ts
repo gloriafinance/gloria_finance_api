@@ -16,8 +16,11 @@ export { ChurchDTO } from "./type/Church.dto.type"
 export { MinisterRequest } from "./requests/MinisterRequest"
 export { ChurchRequest } from "./requests/Church.request"
 export { ChurchPaginateRequest } from "./requests/ChurchPaginate.request"
-export { MemberRequest } from "./requests/Member.request"
+export { CreateMemberRequest } from "./requests/CreateMember.request"
+export { UpdateMemberRequest } from "./requests/UpdateMember.request"
 export { MemberPaginateRequest } from "./requests/MemberPaginate.request"
 
 export { ChurchStatus } from "./enums/ChurchStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"
+
+export * from "./type/MemberSettings.type"

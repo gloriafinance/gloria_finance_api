@@ -8,5 +8,7 @@ export interface IMemberRepository {
 
   list(criteria: Criteria): Promise<Paginate<Member>>
 
+  list(filter: object): Promise<Member[]>
+
   all(churchId: string): Promise<Member[]>
 }

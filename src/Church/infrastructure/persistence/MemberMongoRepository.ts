@@ -27,9 +27,24 @@ export class MemberMongoRepository
     await this.persist(member.getId(), member)
   }
 
-  async list(criteria: Criteria): Promise<Paginate<Member>> {
-    const result = await this.searchByCriteria<Member>(criteria)
-    return this.paginate<Member>(result)
+  list(criteria: Criteria): Promise<Paginate<Member>>
+  list(filter: object): Promise<Member[]>
+
+  async list(arg: Criteria | object): Promise<Paginate<Member> | Member[]> {
+    if (arg instanceof Criteria) {
+      const result = await this.searchByCriteria<Member>(arg)
+      return this.paginate<Member>(result)
+    }
+
+    const collection = await this.collection()
+    const result = await collection.find(arg).toArray()
+
+    return result.map((item) =>
+      Member.fromPrimitives({
+        ...item,
+        id: item._id.toString(),
+      })
+    )
   }
 
   async one(filter: object): Promise<Member | undefined> {

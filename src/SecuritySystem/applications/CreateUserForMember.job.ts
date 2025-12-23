@@ -37,7 +37,7 @@ export class CreateUserForMemberJob implements IQueue {
       email: member.getEmail(),
       password: member.getDni().replace(".", "").replace("-", ""),
       isActive: true,
-      churchId: member.getChurchId(),
+      churchId: member.getChurch().churchId,
     })
   }
 }

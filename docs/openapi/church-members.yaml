@@ -1,0 +1,293 @@
+openapi: 3.0.1
+info:
+  title: Church Finance API - Church Members
+  version: '1.0'
+servers:
+  - url: http://localhost:5200
+security:
+  - bearerAuth: [ ]
+tags:
+  - name: Church Members
+    description: Gestão de membros (cadastro e atualização)
+paths:
+  /api/v1/church/member:
+    post:
+      summary: Cria um membro
+      description: Registra um novo membro e dispara o job de criação de usuário.
+      tags: [ Church Members ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMemberPayload'
+      responses:
+        '201':
+          description: Membro criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+  /api/v1/church/member/{memberId}:
+    get:
+      summary: Busca um membro por id
+      tags: [ Church Members ]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Membro encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+    put:
+      summary: Atualiza um membro
+      description: Atualiza campos do membro; o único campo obrigatório é o `memberId`.
+      tags: [ Church Members ]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberPayload'
+      responses:
+        '200':
+          description: Membro atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+  /api/v1/church/member/list:
+    get:
+      summary: Lista membros (paginado)
+      tags: [ Church Members ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - in: query
+          name: search
+          schema:
+            type: string
+            nullable: true
+        - in: query
+          name: churchId
+          schema:
+            type: string
+            nullable: true
+      responses:
+        '200':
+          description: Página de membros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  nextPag:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                    nullable: true
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Member'
+                required: [ count, results ]
+  /api/v1/church/member/all:
+    get:
+      summary: Lista todos os membros por igreja
+      tags: [ Church Members ]
+      responses:
+        '200':
+          description: Lista de membros
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    MemberId:
+      in: path
+      name: memberId
+      required: true
+      schema:
+        type: string
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [ message ]
+    MemberSettings:
+      type: object
+      properties:
+        notifyPaymentCommitments:
+          type: boolean
+        notifyChurchEvents:
+          type: boolean
+        notifyStatusContributions:
+          type: boolean
+        platform:
+          type: string
+          enum: [ android, ios, web ]
+          nullable: true
+        deviceId:
+          type: string
+          nullable: true
+        token:
+          type: string
+          nullable: true
+        lang:
+          type: string
+      required:
+        - notifyPaymentCommitments
+        - notifyChurchEvents
+        - notifyStatusContributions
+        - lang
+    Member:
+      type: object
+      properties:
+        memberId:
+          type: string
+        church:
+          type: object
+          properties:
+            churchId:
+              type: string
+            name:
+              type: string
+          required: [ churchId, name ]
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        dni:
+          type: string
+        conversionDate:
+          type: string
+          format: date-time
+        baptismDate:
+          type: string
+          format: date-time
+          nullable: true
+        birthdate:
+          type: string
+          format: date-time
+        isMinister:
+          type: boolean
+        isTreasurer:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/MemberSettings'
+        active:
+          type: boolean
+      required:
+        - memberId
+        - church
+        - name
+        - email
+        - phone
+        - createdAt
+        - dni
+        - conversionDate
+        - birthdate
+        - isMinister
+        - isTreasurer
+        - settings
+        - active
+    CreateMemberPayload:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        dni:
+          type: string
+        conversionDate:
+          type: string
+          example: '2025-01-01'
+        baptismDate:
+          type: string
+          nullable: true
+          example: '2025-01-01'
+        isTreasurer:
+          type: boolean
+        churchId:
+          type: string
+        birthdate:
+          type: string
+          example: '2000-01-01'
+        active:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/MemberSettings'
+      required:
+        - name
+        - email
+        - phone
+        - dni
+        - conversionDate
+        - isTreasurer
+        - churchId
+        - birthdate
+        - active
+    UpdateMemberPayload:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        dni:
+          type: string
+        conversionDate:
+          type: string
+          example: '2025-01-01'
+        baptismDate:
+          type: string
+          nullable: true
+          example: '2025-01-01'
+        isTreasurer:
+          type: boolean
+        birthdate:
+          type: string
+          example: '2000-01-01'
+        active:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/MemberSettings'
+

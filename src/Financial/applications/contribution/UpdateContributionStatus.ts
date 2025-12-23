@@ -90,7 +90,7 @@ export class UpdateContributionStatus {
         availabilityAccountId: contribution
           .getAvailabilityAccount()
           .getAvailabilityAccountId(),
-        churchId: contribution.getMember().getChurchId(),
+        churchId: contribution.getMember().getChurch().churchId,
         amount: AmountValue.create(contribution.getAmount()),
         voucher: contribution.getBankTransferReceipt(),
         concept: concept.getName(),
@@ -103,7 +103,7 @@ export class UpdateContributionStatus {
     new DispatchCreateFinancialRecord(this.queueService).execute({
       financialConcept: concept,
       amount: contribution.getAmount(),
-      churchId: contribution.getMember().getChurchId(),
+      churchId: contribution.getMember().getChurch().churchId,
       date: DateBR(),
       createdBy,
       financialRecordType: FinancialRecordType.INCOME,

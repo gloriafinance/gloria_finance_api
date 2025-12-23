@@ -7,11 +7,15 @@ import {
   Order,
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
+import { Logger } from "@/Shared/adapter"
 
 export class SearchMembers {
+  private logger = Logger(SearchMembers.name)
+
   constructor(private readonly memberRepository: IMemberRepository) {}
 
   async execute(request: MemberPaginateRequest) {
+    this.logger.info(`search members with criteria:`, request)
     return await this.memberRepository.list(await this.prepareCriteria(request))
   }
 
@@ -33,7 +37,7 @@ export class SearchMembers {
     if (request.churchId) {
       filters.push(
         new Map([
-          ["field", "churchId"],
+          ["field", "church.churchId"],
           ["operator", Operator.EQUAL],
           ["value", request.churchId],
         ])

@@ -38,7 +38,7 @@ export class OnlineContributions extends AggregateRoot {
   ): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.member = member
-    contributions.churchId = member.getChurchId()
+    contributions.churchId = member.getChurch().churchId
     contributions.contributionId = IdentifyEntity.get(`contribution`)
     contributions.bankTransferReceipt = bankTransferReceipt
 

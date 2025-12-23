@@ -1,8 +1,4 @@
-import {
-  CreateScheduleItem,
-  ListScheduleItemsConfig,
-  ListWeeklyScheduleOccurrences,
-} from "@/Schedule/application"
+import { CreateScheduleItem, ListScheduleItemsConfig, ListWeeklyScheduleOccurrences, } from "@/Schedule/application"
 import {
   DayOfWeek,
   RecurrenceType,
@@ -10,18 +6,20 @@ import {
   ScheduleItemTypeEnum,
   ScheduleItemVisibility,
 } from "@/Schedule/domain"
-import { CreateScheduleItemRequest } from "@/Schedule/domain/requests/ScheduleItem.request"
+import {
+  CreateScheduleItemRequest,
+  ListScheduleItemsFiltersRequest
+} from "@/Schedule/domain/requests/ScheduleItem.request"
 import { IScheduleItemRepository } from "@/Schedule/domain/interfaces/ScheduleItemRepository.interface"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { Church } from "@/Church/domain/Church"
 import { IChurchRepository } from "@/Church/domain/interfaces/ChurchRepository.interface"
 import { ChurchStatus } from "@/Church/domain/enums/ChurchStatus.enum"
 import { ChurchDTO } from "@/Church/domain"
-import { ListScheduleItemsFiltersRequest } from "@/Schedule/domain/requests/ScheduleItem.request"
 
 class InMemoryScheduleItemRepository implements IScheduleItemRepository {
-  private items: ScheduleItem[] = []
   public lastCriteria?: Criteria
+  private items: ScheduleItem[] = []
 
   async upsert(scheduleItem: ScheduleItem): Promise<void> {
     const index = this.items.findIndex(
@@ -149,7 +147,7 @@ describe("Schedule module", () => {
       churchId: "church-1",
       type: ScheduleItemTypeEnum.SERVICE,
       title: "Morning Service",
-      description: "Traditional service",
+      description: "Traditional services",
       location: { name: "Main Auditorium", address: "Street 1" },
       recurrencePattern: {
         type: RecurrenceType.WEEKLY,
@@ -305,7 +303,6 @@ describe("Schedule module", () => {
     expect(mondayPublic.getIsActive()).toBe(true)
     expect(wednesdayInternal.getIsActive()).toBe(true)
     expect(futureSeries.getIsActive()).toBe(true)
-
     ;(mondayPublic as any).scheduleItemId = "monday-public"
     ;(wednesdayInternal as any).scheduleItemId = "wednesday-internal"
     ;(futureSeries as any).scheduleItemId = "future-series"

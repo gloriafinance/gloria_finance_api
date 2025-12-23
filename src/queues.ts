@@ -13,6 +13,9 @@ import { BankingQueue } from "@/Banking/infrastructure/Banking.queue"
 import { SecuritySystemQueue } from "@/SecuritySystem/infrastructure/SecuritySystem.queue"
 import { CustomerQueue } from "@/Customers/infrastructure/Customer.queue"
 import { PurchasesQueue } from "@/Purchases/infrastructure/Purchases.queue"
+import { NotifyFCMJob } from "@/Notifications/infrastructure/NotifyFCM.job"
+import { NotificationMongoRepository } from "@/Notifications/infrastructure/persistence"
+import { FCMNotificationService } from "@/Notifications/infrastructure/services/FCMNotification.service"
 
 export const Queues = (): IDefinitionQueue[] => [
   ...BankingQueue({
@@ -35,6 +38,14 @@ export const Queues = (): IDefinitionQueue[] => [
   },
   {
     useClass: TelegramNotificationJob,
+    delay: 4,
+  },
+  {
+    useClass: NotifyFCMJob,
+    inject: [
+      NotificationMongoRepository.getInstance(),
+      FCMNotificationService.getInstance(),
+    ],
     delay: 4,
   },
 ]

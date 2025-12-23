@@ -1,7 +1,8 @@
-import { IdentifyEntity } from "../../Shared/adapter"
+import { IdentifyEntity } from "@/Shared/adapter"
 import { Church } from "./Church"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { MemberSettings } from "@/Church/domain"
 
 export class Member extends AggregateRoot {
   public isTreasurer: boolean
@@ -16,21 +17,41 @@ export class Member extends AggregateRoot {
   private conversionDate: Date
   private baptismDate?: Date
   private birthdate: Date
-  private churchId: string
+  //private churchId: string
+  private church: {
+    churchId: string
+    name: string
+  }
   private active: boolean
+  private settings: MemberSettings
 
-  static create(
-    name: string,
-    phone: string,
-    dni: string,
-    church: Church,
-    birthdate: Date,
-    email: string,
-    conversionDate: Date,
-    isTreasurer: boolean,
-    isMinister: boolean,
+  static create(params: {
+    name: string
+    phone: string
+    dni: string
+    church: Church
+    birthdate: Date
+    email: string
+    conversionDate: Date
+    isTreasurer: boolean
+    isMinister: boolean
+    settings?: MemberSettings
     baptismDate?: Date
-  ): Member {
+  }): Member {
+    const {
+      name,
+      phone,
+      dni,
+      church,
+      birthdate,
+      email,
+      conversionDate,
+      isTreasurer,
+      isMinister,
+      settings,
+      baptismDate,
+    } = params
+
     const m: Member = new Member()
     m.name = name
     m.email = email.toLowerCase()
@@ -39,12 +60,26 @@ export class Member extends AggregateRoot {
     m.dni = dni
     m.conversionDate = conversionDate
     m.baptismDate = baptismDate
-    m.churchId = church.getChurchId()
+
+    m.church = { churchId: church.getChurchId(), name: church.getName() }
+    //m.churchId = church.getChurchId()
+
     m.birthdate = birthdate
     m.memberId = IdentifyEntity.get(`member`)
     m.isTreasurer = isTreasurer
     m.isMinister = isMinister
     m.active = true
+
+    if (!settings) {
+      m.settings = {
+        notifyPaymentCommitments: true,
+        notifyChurchEvents: true,
+        notifyStatusContributions: true,
+        lang: church.getLang(),
+      }
+    } else {
+      m.settings = settings
+    }
 
     return m
   }
@@ -62,9 +97,20 @@ export class Member extends AggregateRoot {
     m.birthdate = plainData.birthdate
     m.isMinister = plainData.isMinister
     m.isTreasurer = plainData.isTreasurer
-    m.churchId = plainData.churchId
+
+    m.church = plainData.church
+    //m.churchId = plainData.church.churchId
+
     m.id = plainData.id
     m.active = plainData.active
+    m.settings = plainData.settings
+      ? plainData.settings
+      : {
+          notificationPaymentCommitments: true,
+          notificationChurchEvents: true,
+          notificationStatusContributions: true,
+          lang: "pt-BR",
+        }
 
     return m
   }
@@ -77,8 +123,8 @@ export class Member extends AggregateRoot {
     return this.phone
   }
 
-  getChurchId(): string {
-    return this.churchId
+  getChurch(): { churchId: string; name: string } {
+    return this.church
   }
 
   getEmail(): string {
@@ -113,6 +159,10 @@ export class Member extends AggregateRoot {
     this.conversionDate = conversionDate
   }
 
+  setSettings(settings: MemberSettings) {
+    this.settings = settings
+  }
+
   setBaptismDate(baptismDate: Date) {
     this.baptismDate = baptismDate
   }
@@ -133,10 +183,14 @@ export class Member extends AggregateRoot {
     this.active = true
   }
 
+  getSettings() {
+    return this.settings
+  }
+
   toPrimitives(): any {
     return {
       memberId: this.memberId,
-      churchId: this.churchId,
+      church: this.church,
       name: this.name,
       email: this.email,
       phone: this.phone,
@@ -147,6 +201,7 @@ export class Member extends AggregateRoot {
       birthdate: this.birthdate,
       isMinister: this.isMinister,
       isTreasurer: this.isTreasurer,
+      settings: this.settings,
       active: this.active,
     }
   }

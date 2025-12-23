@@ -67,10 +67,22 @@ export class ContributionMemberController {
 
       let financialConcept: FinancialConcept | undefined
       if (payload.contributionType === MemberContributionType.TITHE) {
+        let name: string
+        switch (member.getSettings().lang) {
+          case "en":
+            name = "Member Tithes"
+            break
+          case "es":
+            name = "Diezmos de Miembros"
+            break
+          default:
+            name = "Dízimos de Membros"
+        }
+
         financialConcept =
           await FinancialConceptMongoRepository.getInstance().one({
-            churchId: member.getChurchId(),
-            name: "Dízimos de Membros",
+            churchId: member.getChurch().churchId,
+            name,
           })
       }
 

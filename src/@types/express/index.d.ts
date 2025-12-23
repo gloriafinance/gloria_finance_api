@@ -6,6 +6,7 @@ declare global {
       roles: string[]
       permissions: string[]
       isSuperuser?: boolean
+      lang: string
     }
 
     interface Request {

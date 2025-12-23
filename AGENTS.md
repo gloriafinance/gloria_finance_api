@@ -20,6 +20,7 @@ Follow the conventions below when extending or modifying the codebase.
 - **Queue System**: Bull (v4.16.5) with Redis
 - **Authentication**: JWT (jsonwebtoken v9.0.2)
 - **Logging**: Pino (v10.0.0)
+- **Request Validation**: `node-input-validator` (used heavily via Express middlewares under `src/**/infrastructure/http/validators`)
 
 ### Important Notes
 
@@ -193,6 +194,9 @@ export class SearchPurchase {
   `domainResponse` (`src/Shared/helpers/domainResponse.ts`)
 - Route definitions (`*.routes.ts` or `*.routers.ts`) register controllers and attach middlewares such as
   `PermissionMiddleware`
+- Request validation is typically done at the HTTP boundary using `node-input-validator` middlewares (see
+  `src/**/infrastructure/http/validators/*.validator.ts`); invalid payloads usually return
+  `HttpStatus.UNPROCESSABLE_ENTITY` with `v.errors`
 - **No decorators**: Routes are registered manually with Express Router
 
 ### Persistence Adapters (Using @abejarano/ts-mongodb-criteria)

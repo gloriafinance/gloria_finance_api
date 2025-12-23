@@ -1,0 +1,5 @@
+export * from "./AssignChurch.validator"
+export * from "./Church.validator"
+export * from "./CreateMember.validator"
+export * from "./Mininister.validator"
+export * from "./UpdateMember.validator"

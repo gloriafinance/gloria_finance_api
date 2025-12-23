@@ -39,8 +39,8 @@ import {
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
-import { FindChurchById } from "@/Church/applications"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { FindMemberById } from "@/Church/applications"
+import { MemberMongoRepository } from "@/Church/infrastructure"
 
 export type userLoginPayload = {
   email: string
@@ -54,21 +54,30 @@ export class UserController {
   @Post("/login")
   async login(@Body() payload: userLoginPayload, res: Response) {
     try {
-      const { user, token } = await new MakeLogin(
+      const user = await new MakeLogin(
         UserMongoRepository.getInstance(),
-        new PasswordAdapter(),
-        new AuthTokenAdapter()
+        new PasswordAdapter()
       ).execute(payload.email, payload.password)
 
-      const church = await new FindChurchById(
-        ChurchMongoRepository.getInstance()
-      ).execute(user.getChurchId())
+      const member = await new FindMemberById(
+        MemberMongoRepository.getInstance()
+      ).execute(user.getMemberId())
 
       const roles =
         await UserAssignmentMongoRepository.getInstance().findByUser(
           user.getChurchId(),
           user.getUserId()
         )
+
+      const token = new AuthTokenAdapter().createToken({
+        churchId: user.getChurchId(),
+        userId: user.getUserId(),
+        email: user.getEmail(),
+        name: user.getName(),
+        memberId: user.getMemberId(),
+        lang: member.getSettings().lang,
+        isSuperUser: user.isSuperUser,
+      })
 
       const responseUser = user.toPrimitives()
 
@@ -78,9 +87,9 @@ export class UserController {
       res.status(HttpStatus.OK).send({
         ...responseUser,
         church: {
-          churchId: user.getChurchId(),
-          name: church?.getName() || "",
-          lang: church.getLang(),
+          churchId: member?.getChurch()?.churchId,
+          name: member?.getChurch()?.name,
+          lang: member?.getSettings()?.lang,
         },
         roles: roles.getRoles(),
         token,
@@ -224,8 +233,7 @@ export class UserController {
     try {
       await new MakeLogin(
         UserMongoRepository.getInstance(),
-        new PasswordAdapter(),
-        new AuthTokenAdapter()
+        new PasswordAdapter()
       ).execute(payload.email, payload.oldPassword)
 
       await new ChangePassword(
