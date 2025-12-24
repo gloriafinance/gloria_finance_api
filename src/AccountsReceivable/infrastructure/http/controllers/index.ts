@@ -1,6 +1,7 @@
-export { CreateAccountReceivableController } from "./CreateAccountReceivable.controller"
-export { ListAccountReceivableController } from "./ListAccountReceivable.controller"
-export { PayAccountReceivableController } from "./PayAccountReceivable.controller"
-export * from "./ConfirmOrDenyPaymentCommitment.controller"
-export { ListMemberAccountReceivableController } from "./ListMemberAccountReceivable.controller"
-export { DeclareInstallmentPaymentController } from "./DeclareInstallmentPayment.controller"
+import { AccountReceivableForMemberController } from "./AccountReceivableForMember.controller"
+import { AccountReceivableController } from "./AccountReceivable.controller"
+
+export const accountsReceivableControllers = () => [
+  AccountReceivableController,
+  AccountReceivableForMemberController,
+]

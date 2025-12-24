@@ -3,7 +3,6 @@ import churchRouters from "@/Church/infrastructure/http/routes/Church.routers"
 import ministerRoute from "@/Church/infrastructure/http/routes/Minsiter.routers"
 import financialRouter from "@/Financial/infrastructure/http/routes"
 import bankingRoutes from "@/Banking/infrastructure/http/routes"
-import accountsReceivableRoutes from "@/AccountsReceivable/infrastructure/http/AccountsReceivable.routes"
 import groupAccountsPayableRoutes from "@/AccountsPayable/infrastructure/http/routes"
 import worldRoute from "@/World/infrastructure/http/routes/World.route"
 import reportsRouter from "@/Reports/infrastructure/http/routes"
@@ -18,6 +17,7 @@ import { scheduleControllers } from "@/Schedule/infrastructure/http/controllers"
 import { OnboardingController } from "@/Customers/infrastructure/http/controllers/Onboarding.controller"
 import { NotificationController } from "@/Shared/infrastructure/controllers/Notification.controller"
 import { MemberController } from "@/Church/infrastructure/http/controllers/Member.controller"
+import { accountsReceivableControllers } from "@/AccountsReceivable/infrastructure/http/controllers"
 
 export const routerModule = () =>
   new RoutesModule([
@@ -25,7 +25,6 @@ export const routerModule = () =>
     { path: "/api/v1/minister", router: ministerRoute },
     { path: "/api/v1/finance", router: financialRouter },
     { path: "/api/v1/bank", router: bankingRoutes },
-    { path: "/api/v1/account-receivable", router: accountsReceivableRoutes },
     { path: "/api/v1/account-payable", router: groupAccountsPayableRoutes },
     { path: "/api/v1/world", router: worldRoute },
     { path: "/api/v1/reports", router: reportsRouter },
@@ -36,6 +35,7 @@ export const routerModule = () =>
 
 export const controllersModule = () =>
   new ControllersModule([
+    ...accountsReceivableControllers(),
     ...financialControllers(),
     ...consolidatedFinancialControllers(),
     ...financeConfigControllers(),
