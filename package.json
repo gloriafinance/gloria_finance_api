@@ -73,23 +73,6 @@
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"
   },
-  "overrides": {
-    "@jest/reporters": {
-      "glob": "10.4.6"
-    },
-    "express-handlebars": {
-      "glob": "11.0.4"
-    },
-    "jest-config": {
-      "glob": "10.4.6"
-    },
-    "jest-runtime": {
-      "glob": "10.4.6"
-    },
-    "rimraf": {
-      "glob": "10.4.6"
-    }
-  },
   "nodemonConfig": {
     "watch": [
       "src"

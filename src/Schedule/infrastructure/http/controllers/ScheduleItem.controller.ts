@@ -33,7 +33,6 @@ import {
 } from "@/Schedule/domain/requests/ScheduleItem.request"
 import {
   AuthenticatedRequest,
-  Can,
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
 import CreateScheduleItemValidator from "../validators/CreateScheduleItem.validator"
@@ -59,7 +58,7 @@ export class ScheduleController {
   @Post("/")
   @Use([
     PermissionMiddleware,
-    Can("schedule", ["configure", "manage"]),
+    //Can("schedule", ["configure", "manage"]),
     CreateScheduleItemValidator,
   ])
   async createScheduleItem(
@@ -89,7 +88,7 @@ export class ScheduleController {
   @Get("/")
   @Use([
     PermissionMiddleware,
-    Can("schedule", ["configure", "manage", "read"]),
+    // Can("schedule", ["configure", "manage", "read"]),
     ScheduleItemsQueryValidator,
   ])
   async listScheduleItems(
@@ -115,7 +114,10 @@ export class ScheduleController {
   }
 
   @Get("/:scheduleItemId")
-  @Use([PermissionMiddleware, Can("schedule", ["configure", "manage", "read"])])
+  @Use([
+    PermissionMiddleware,
+    //  Can("schedule", ["configure", "manage", "read"])
+  ])
   async getScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
@@ -141,7 +143,7 @@ export class ScheduleController {
   @Put("/:scheduleItemId")
   @Use([
     PermissionMiddleware,
-    Can("schedule", ["configure", "manage"]),
+    //Can("schedule", ["configure", "manage"]),
     UpdateScheduleItemValidator,
   ])
   async updateScheduleItem(
@@ -175,7 +177,10 @@ export class ScheduleController {
   }
 
   @Delete("/:scheduleItemId")
-  @Use([PermissionMiddleware, Can("schedule", ["configure", "manage"])])
+  @Use([
+    PermissionMiddleware,
+    //  Can("schedule", ["configure", "manage"])
+  ])
   async deactivateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
@@ -200,7 +205,10 @@ export class ScheduleController {
   }
 
   @Post("/:scheduleItemId/reactivate")
-  @Use([PermissionMiddleware, Can("schedule", ["configure", "manage"])])
+  @Use([
+    PermissionMiddleware,
+    //  Can("schedule", ["configure", "manage"])
+  ])
   async activateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
     @Res() res: Response,
