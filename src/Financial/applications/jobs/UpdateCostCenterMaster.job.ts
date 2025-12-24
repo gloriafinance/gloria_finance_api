@@ -5,10 +5,10 @@ import {
 
 import { CostCenter, CostCenterMaster } from "../../domain"
 import MasterBalanceIdentifier from "../helpers/MasterBalanceIdentifier"
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 
-export class UpdateCostCenterMasterJob implements IQueue {
+export class UpdateCostCenterMasterJob implements IJob {
   private logger = Logger("UpdateCostCenterMaster")
 
   constructor(

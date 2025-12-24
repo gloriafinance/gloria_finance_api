@@ -3,7 +3,7 @@ import {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { IQueue, IQueueService } from "@/Shared/domain"
+import { IJob, IQueueService } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import {
   ConceptType,
@@ -16,7 +16,7 @@ import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
 import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 
-export class UpdateFinancialRecordJob implements IQueue {
+export class UpdateFinancialRecordJob implements IJob {
   private logger = Logger(UpdateFinancialRecordJob.name)
 
   constructor(

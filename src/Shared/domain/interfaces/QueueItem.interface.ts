@@ -1,7 +1,7 @@
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 
 export interface IDefinitionQueue {
-  useClass: new (...args: any[]) => IQueue
+  useClass: new (...args: any[]) => IJob
   inject?: any[]
   /**
    * Delay in seconds

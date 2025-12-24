@@ -1,9 +1,9 @@
-import { IQueue, IStorageService } from "@/Shared/domain"
+import { IJob, IStorageService } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import { IPurchaseRepository } from "@/Purchases/domain/interfaces"
 import { Purchase } from "@/Purchases/domain"
 
-export class DeletePurchasesJob implements IQueue {
+export class DeletePurchasesJob implements IJob {
   private logger = Logger(DeletePurchasesJob.name)
 
   constructor(

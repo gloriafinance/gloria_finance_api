@@ -1,14 +1,21 @@
-import { AccountReceivableRequest } from "@/AccountsReceivable/domain"
+import {
+  AccountReceivableRequest,
+  AccountReceivableType,
+} from "@/AccountsReceivable/domain"
 import { Response } from "express"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { CreateAccountReceivable } from "@/AccountsReceivable/applications"
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import { HttpStatus } from "@/Shared/domain"
 import { FindChurchById } from "@/Church/applications"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
+import {
+  ChurchMongoRepository,
+  MemberMongoRepository,
+} from "@/Church/infrastructure"
 import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import { QueueService } from "@/Shared/infrastructure"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
+import { NotifyPaymentCommitment } from "@/Notifications/applications"
 
 /**
  * @function CreateAccountReceivableController
@@ -30,11 +37,23 @@ export const CreateAccountReceivableController = async (
       ChurchMongoRepository.getInstance()
     ).execute(req.churchId)
 
-    await new CreateAccountReceivable(
+    const account = await new CreateAccountReceivable(
       AccountsReceivableMongoRepository.getInstance(),
       FinancialConceptMongoRepository.getInstance(),
       new SendMailPaymentCommitment(QueueService.getInstance())
     ).execute({ ...req, church: church })
+
+    if (
+      req.type === AccountReceivableType.CONTRIBUTION ||
+      req.type === AccountReceivableType.LOAN
+    ) {
+      await new NotifyPaymentCommitment(
+        MemberMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute({
+        account,
+      })
+    }
 
     res
       .status(HttpStatus.CREATED)

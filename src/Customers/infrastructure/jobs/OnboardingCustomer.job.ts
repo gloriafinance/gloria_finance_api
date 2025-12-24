@@ -1,4 +1,4 @@
-import { IQueue, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/Shared/domain"
 import { CreateOrUpdateChurch } from "@/Church/applications"
 import { ChurchStatus, IChurchRepository } from "@/Church/domain"
 import { Customer } from "@/Customers/domain/Customer"
@@ -20,7 +20,7 @@ type OnboardingCustomerJobArgs = {
     registerNumber?: string
   }
 }
-export class OnboardingCustomerJob implements IQueue {
+export class OnboardingCustomerJob implements IJob {
   private logger = Logger(OnboardingCustomerJob.name)
 
   constructor(

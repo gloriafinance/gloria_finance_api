@@ -20,7 +20,7 @@ export class CreateAccountReceivable {
 
   async execute(
     requestAccountReceivable: AccountReceivableRequest
-  ): Promise<void> {
+  ): Promise<AccountReceivable> {
     this.logger.info(
       `Start Create Account Receivable`,
       requestAccountReceivable
@@ -70,5 +70,7 @@ export class CreateAccountReceivable {
     await this.accountReceivableRepository.upsert(account)
 
     this.logger.info(`CreateAccountReceivable finish`)
+
+    return account
   }
 }

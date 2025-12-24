@@ -6,7 +6,7 @@ import {
   IAssetRepository,
   ImportInventoryRequest,
 } from "../domain"
-import { IQueue, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/Shared/domain"
 import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
 
 type InventoryCsvRow = {
@@ -89,7 +89,7 @@ const parseInventoryStatus = (
   return AssetInventoryStatus.CONFIRMED
 }
 
-export class ProcessInventoryFromFileJob implements IQueue {
+export class ProcessInventoryFromFileJob implements IJob {
   private readonly logger = Logger(ProcessInventoryFromFileJob.name)
 
   constructor(

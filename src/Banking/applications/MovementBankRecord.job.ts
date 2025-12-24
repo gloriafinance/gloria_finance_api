@@ -1,4 +1,4 @@
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import {
   IBankRepository,
@@ -7,7 +7,7 @@ import {
   MovementBankRequest,
 } from "@/Banking/domain"
 
-export class MovementBankRecordJob implements IQueue {
+export class MovementBankRecordJob implements IJob {
   private logger = Logger("MovementBankRecord")
 
   constructor(

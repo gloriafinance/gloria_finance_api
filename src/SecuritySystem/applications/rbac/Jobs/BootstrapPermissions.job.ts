@@ -11,7 +11,7 @@ import {
   Role,
 } from "@/SecuritySystem/domain"
 import { Logger } from "@/Shared/adapter"
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { CreateOrUpdateUser } from "@/SecuritySystem/applications"
 
 export type BootstrapPermissionsRequest = {
@@ -23,7 +23,7 @@ export type BootstrapPermissionsRequest = {
   }
 }
 
-export class BootstrapPermissionsJob implements IQueue {
+export class BootstrapPermissionsJob implements IJob {
   private readonly logger = Logger(BootstrapPermissionsJob.name)
 
   constructor(

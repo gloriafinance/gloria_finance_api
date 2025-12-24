@@ -1,11 +1,11 @@
 import { Member } from "@/Church/domain"
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { IPasswordAdapter, IUserRepository, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
 import { Logger } from "@/Shared/adapter"
 
-export class CreateUserForMemberJob implements IQueue {
+export class CreateUserForMemberJob implements IJob {
   private logger = Logger(CreateUserForMemberJob.name)
 
   constructor(

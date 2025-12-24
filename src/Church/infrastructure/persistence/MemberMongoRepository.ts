@@ -59,9 +59,12 @@ export class MemberMongoRepository
       : undefined
   }
 
-  async all(churchId: string): Promise<Member[]> {
+  async all(churchId: string, filter?: object): Promise<Member[]> {
     const collection = await this.collection()
-    const result = await collection.find({ churchId }).toArray()
+
+    const result = filter
+      ? await collection.find({ churchId, ...filter }).toArray()
+      : await collection.find({ churchId }).toArray()
 
     return result.map((item) =>
       Member.fromPrimitives({

@@ -1,8 +1,8 @@
 import { ICostCenterMasterRepository } from "@/Financial/domain/interfaces"
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 
-export class RebuildCostCenterMasterJob implements IQueue {
+export class RebuildCostCenterMasterJob implements IJob {
   private logger = Logger(RebuildCostCenterMasterJob.name)
 
   constructor(

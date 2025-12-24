@@ -1,4 +1,4 @@
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import {
   IAvailabilityAccountMasterRepository,
   IAvailabilityAccountRepository,
@@ -12,7 +12,7 @@ import {
 import { UpdateAvailabilityAccountMaster } from "@/Financial/applications/UpdateAvailabilityAccountMaster"
 import { Logger } from "@/Shared/adapter"
 
-export class UpdateAvailabilityAccountBalanceJob implements IQueue {
+export class UpdateAvailabilityAccountBalanceJob implements IJob {
   private logger = Logger("UpdateAvailabilityAccountBalance")
 
   constructor(

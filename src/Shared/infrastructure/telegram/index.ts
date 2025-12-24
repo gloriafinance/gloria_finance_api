@@ -1,5 +1,5 @@
 import axios from "axios"
-import { IQueue } from "../../domain"
+import { IJob } from "../../domain"
 
 const chatId = process.env.TELEGRAM_CHAT_ID
 
@@ -21,7 +21,7 @@ const TelegramSendMessage = async (message: string) => {
   }
 }
 
-export class TelegramNotificationJob implements IQueue {
+export class TelegramNotificationJob implements IJob {
   async handle(args: any): Promise<void> {
     await TelegramSendMessage(args.message)
   }

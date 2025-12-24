@@ -1,6 +1,6 @@
 import { promises as fs } from "fs"
 import { Logger } from "@/Shared/adapter/CustomLogger"
-import { IQueue, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/Shared/domain"
 import {
   Bank,
   BankStatement,
@@ -23,7 +23,7 @@ type ImportBankStatementJobPayload = {
   uploadedBy: string
 }
 
-export class ImportBankStatementJob implements IQueue {
+export class ImportBankStatementJob implements IJob {
   private readonly logger = Logger(ImportBankStatementJob.name)
 
   constructor(

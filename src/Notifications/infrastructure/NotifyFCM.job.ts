@@ -1,24 +1,15 @@
-import { IMemberRepository } from "@/Church/domain"
+import { IMemberRepository, Member } from "@/Church/domain"
 import { Logger } from "@/Shared/adapter"
 import {
   INotificationRepository,
   NotificationInbox,
+  NotificationRequest,
   NotificationsTopic,
 } from "@/Notifications/domain"
-import { IQueue } from "@/Shared/domain"
-import { FCMNotificationService } from "@/Notifications/infrastructure/services/FCMNotification.service"
+import { IJob } from "@/Shared/domain"
+import { FCMNotificationService } from "./services/FCMNotification.service"
 
-type request = {
-  memberId: string[]
-  title: NotificationsTopic
-  body: string
-  data: {
-    type: NotificationsTopic
-    id: string
-    deepLink: string
-  }
-}
-export class NotifyFCMJob implements IQueue {
+export class NotifyFCMJob implements IJob {
   private logger = Logger(NotifyFCMJob.name)
 
   constructor(
@@ -27,12 +18,25 @@ export class NotifyFCMJob implements IQueue {
     private readonly fcmService: FCMNotificationService
   ) {}
 
-  async handle(args: request): Promise<any> {
+  async handle(args: NotificationRequest): Promise<any> {
     this.logger.info(`Processing FCM job for member ${args.memberId}`, args)
+
+    if (!args.memberId || args.memberId.length === 0) {
+      // es para notificar a todos los miembros
+      return this.notifyAllMembers(args)
+    }
 
     const members = await this.memberRepository.list({
       memberId: { $in: args.memberId },
     })
+
+    await this.notifyMembers({ ...args, members })
+  }
+
+  private async notifyMembers(
+    args: NotificationRequest & { members: Member[] }
+  ) {
+    const { members } = args
 
     args.data = { ...args.data, deepLink: this.getDeepLink(args.data) }
 
@@ -62,6 +66,14 @@ export class NotifyFCMJob implements IQueue {
     })
 
     this.logger.info(`finished FCM job for member ${args.memberId}`)
+  }
+
+  private async notifyAllMembers(args: NotificationRequest): Promise<void> {
+    const members = await this.memberRepository.all(args.churchId, {
+      active: true,
+    })
+
+    await this.notifyMembers({ ...args, members })
   }
 
   // Genera el deep link según el tipo de notificación, para que la app abra la pantalla correcta

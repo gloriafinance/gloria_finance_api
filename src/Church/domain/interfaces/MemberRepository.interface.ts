@@ -10,5 +10,5 @@ export interface IMemberRepository {
 
   list(filter: object): Promise<Member[]>
 
-  all(churchId: string): Promise<Member[]>
+  all(churchId: string, filter?: object): Promise<Member[]>
 }

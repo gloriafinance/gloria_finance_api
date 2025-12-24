@@ -1,9 +1,9 @@
-import { IQueue } from "@/Shared/domain"
+import { IJob } from "@/Shared/domain"
 import { Mail } from "./types/mail.type"
 import { SendMailService } from "./service/SendMail.service"
 import { Logger } from "@/Shared/adapter"
 
-export class SendMailJob implements IQueue {
+export class SendMailJob implements IJob {
   private logger = Logger("SendMail")
 
   async handle(args: any): Promise<void> {

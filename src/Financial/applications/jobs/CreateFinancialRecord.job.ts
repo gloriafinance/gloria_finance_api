@@ -1,7 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { IQueue, IQueueService, IStorageService } from "@/Shared/domain"
+import { IJob, IQueueService, IStorageService } from "@/Shared/domain"
 import {
   AvailabilityAccount,
   ConceptType,
@@ -19,7 +19,7 @@ import {
 } from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 
-export class CreateFinancialRecordJob implements IQueue {
+export class CreateFinancialRecordJob implements IJob {
   private logger = Logger(CreateFinancialRecordJob.name)
   private unitOfWork: UnitOfWork
 
