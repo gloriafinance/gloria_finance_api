@@ -1,12 +1,12 @@
-import { ScheduleItem } from "../ScheduleItem"
+import { ScheduleEvent } from "../ScheduleEvent"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface IScheduleItemRepository {
-  upsert(scheduleItem: ScheduleItem): Promise<void>
+  upsert(scheduleItem: ScheduleEvent): Promise<void>
 
-  one(filter: object): Promise<ScheduleItem | undefined>
+  one(filter: object): Promise<ScheduleEvent | undefined>
 
-  list(criteria: Criteria): Promise<Paginate<ScheduleItem>>
+  list(criteria: Criteria): Promise<Paginate<ScheduleEvent>>
 
-  findManyByChurch(churchId: string, filters?: any): Promise<ScheduleItem[]>
+  findManyByChurch(churchId: string, filters?: any): Promise<ScheduleEvent[]>
 }

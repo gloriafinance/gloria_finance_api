@@ -2,7 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
   ScheduleItemNotFoundException,
-  UpdateScheduleItemRequest,
+  UpdateScheduleEventRequest,
 } from "@/Schedule/domain"
 
 export class UpdateScheduleItem {
@@ -12,7 +12,7 @@ export class UpdateScheduleItem {
     private readonly scheduleItemRepository: IScheduleItemRepository
   ) {}
 
-  async execute(request: UpdateScheduleItemRequest): Promise<void> {
+  async execute(request: UpdateScheduleEventRequest): Promise<void> {
     this.logger.info("Updating schedule item", request)
 
     const scheduleItem = await this.scheduleItemRepository.one({

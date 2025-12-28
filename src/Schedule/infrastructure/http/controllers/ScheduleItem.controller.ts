@@ -26,9 +26,9 @@ import {
 import { ScheduleItemMongoRepository } from "@/Schedule/infrastructure"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
-  CreateScheduleItemRequest,
-  ListScheduleItemsFiltersRequest,
-  UpdateScheduleItemRequest,
+  CreateScheduleEventRequest,
+  ListScheduleEventsFiltersRequest,
+  UpdateScheduleEventRequest,
   WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
 import {
@@ -41,7 +41,7 @@ import ScheduleItemsQueryValidator from "../validators/ScheduleItemsQuery.valida
 import WeeklyScheduleQueryValidator from "../validators/WeeklyScheduleQuery.validator"
 
 import { mapToConfigDTO } from "../utils/scheduleMapper"
-import { ScheduleItemVisibility } from "@/Schedule/domain"
+import { ScheduleEventVisibility } from "@/Schedule/domain"
 import { ensureChurchScope } from "../utils/scheduleScope"
 
 type WeeklyScheduleQuery = Pick<
@@ -51,10 +51,6 @@ type WeeklyScheduleQuery = Pick<
 
 @Controller("/api/v1/schedule")
 export class ScheduleController {
-  private readonly scheduleItemRepository =
-    ScheduleItemMongoRepository.getInstance()
-  private readonly churchRepository = ChurchMongoRepository.getInstance()
-
   @Post("/")
   @Use([
     PermissionMiddleware,
@@ -62,7 +58,7 @@ export class ScheduleController {
     CreateScheduleItemValidator,
   ])
   async createScheduleItem(
-    @Body() body: CreateScheduleItemRequest,
+    @Body() body: CreateScheduleEventRequest,
     @Res() res: Response,
     @Req() req: AuthenticatedRequest
   ) {
@@ -71,8 +67,8 @@ export class ScheduleController {
 
     try {
       const scheduleItem = await new CreateScheduleItem(
-        this.scheduleItemRepository,
-        this.churchRepository
+        ScheduleItemMongoRepository.getInstance(),
+        ChurchMongoRepository.getInstance()
       ).execute({
         ...body,
         churchId,
@@ -92,7 +88,7 @@ export class ScheduleController {
     ScheduleItemsQueryValidator,
   ])
   async listScheduleItems(
-    @Query() query: ListScheduleItemsFiltersRequest,
+    @Query() query: ListScheduleEventsFiltersRequest,
     @Res() res: Response,
     @Req() req: AuthenticatedRequest
   ) {
@@ -101,7 +97,7 @@ export class ScheduleController {
 
     try {
       const scheduleItems = await new ListScheduleItemsConfig(
-        this.scheduleItemRepository
+        ScheduleItemMongoRepository.getInstance()
       ).execute({
         churchId,
         ...query,
@@ -128,7 +124,7 @@ export class ScheduleController {
 
     try {
       const scheduleItem = await new GetScheduleItem(
-        this.scheduleItemRepository
+        ScheduleItemMongoRepository.getInstance()
       ).execute({
         churchId,
         scheduleItemId,
@@ -148,7 +144,7 @@ export class ScheduleController {
   ])
   async updateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
-    @Body() body: UpdateScheduleItemRequest,
+    @Body() body: UpdateScheduleEventRequest,
     @Res() res: Response,
     @Req() req: AuthenticatedRequest
   ) {
@@ -156,7 +152,9 @@ export class ScheduleController {
     if (!churchId) return
 
     try {
-      await new UpdateScheduleItem(this.scheduleItemRepository).execute({
+      await new UpdateScheduleItem(
+        ScheduleItemMongoRepository.getInstance()
+      ).execute({
         ...body,
         churchId,
         scheduleItemId,
@@ -164,7 +162,7 @@ export class ScheduleController {
       })
 
       const scheduleItem = await new GetScheduleItem(
-        this.scheduleItemRepository
+        ScheduleItemMongoRepository.getInstance()
       ).execute({
         churchId,
         scheduleItemId,
@@ -190,7 +188,9 @@ export class ScheduleController {
     if (!churchId) return
 
     try {
-      await new DeactivateScheduleItem(this.scheduleItemRepository).execute({
+      await new DeactivateScheduleItem(
+        ScheduleItemMongoRepository.getInstance()
+      ).execute({
         churchId,
         scheduleItemId,
         currentUserId: req.auth?.userId,
@@ -218,7 +218,9 @@ export class ScheduleController {
     if (!churchId) return
 
     try {
-      await new ActivateScheduleItem(this.scheduleItemRepository).execute({
+      await new ActivateScheduleItem(
+        ScheduleItemMongoRepository.getInstance()
+      ).execute({
         churchId,
         scheduleItemId,
         currentUserId: req.auth?.userId,
@@ -248,11 +250,11 @@ export class ScheduleController {
         (req.auth?.permissions?.some((permission) =>
           ["schedule:manage", "schedule:configure"].includes(permission)
         )
-          ? ScheduleItemVisibility.INTERNAL_LEADERS
-          : ScheduleItemVisibility.PUBLIC)
+          ? ScheduleEventVisibility.INTERNAL_LEADERS
+          : ScheduleEventVisibility.PUBLIC)
 
       const occurrences = await new ListWeeklyScheduleOccurrences(
-        this.scheduleItemRepository
+        ScheduleItemMongoRepository.getInstance()
       ).execute({
         churchId,
         weekStartDate: query.weekStartDate,

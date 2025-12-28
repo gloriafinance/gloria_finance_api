@@ -1,7 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
-  ScheduleItem,
+  ScheduleEvent,
   ScheduleItemNotFoundException,
 } from "@/Schedule/domain"
 
@@ -15,7 +15,7 @@ export class GetScheduleItem {
   async execute(params: {
     churchId: string
     scheduleItemId: string
-  }): Promise<ScheduleItem> {
+  }): Promise<ScheduleEvent> {
     this.logger.info("Fetching schedule item detail", params)
 
     const scheduleItem = await this.scheduleItemRepository.one({

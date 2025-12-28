@@ -25,7 +25,10 @@ export default async (
     "location.address": "sometimes|string",
     "recurrencePattern.type": "sometimes|string|in:WEEKLY",
     "recurrencePattern.dayOfWeek": `sometimes|string|in:${dayOfWeekValues}`,
-    "recurrencePattern.time": "sometimes|regex:/^([01]\\d|2[0-3]):[0-5]\\d$/",
+    "recurrencePattern.time": [
+      "sometimes",
+      ["regex", "^([01]\\d|2[0-3]):[0-5]\\d$"],
+    ],
     "recurrencePattern.durationMinutes": "sometimes|integer|min:1",
     "recurrencePattern.timezone": "sometimes|string",
     "recurrencePattern.startDate": "sometimes|dateFormat:YYYY-MM-DD",

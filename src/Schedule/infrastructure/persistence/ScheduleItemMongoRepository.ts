@@ -3,10 +3,10 @@ import {
   MongoRepository,
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
-import { IScheduleItemRepository, ScheduleItem } from "@/Schedule/domain"
+import { IScheduleItemRepository, ScheduleEvent } from "@/Schedule/domain"
 
 export class ScheduleItemMongoRepository
-  extends MongoRepository<ScheduleItem>
+  extends MongoRepository<ScheduleEvent>
   implements IScheduleItemRepository
 {
   private static instance: ScheduleItemMongoRepository
@@ -23,7 +23,7 @@ export class ScheduleItemMongoRepository
     return "schedule_events"
   }
 
-  async upsert(scheduleItem: ScheduleItem): Promise<void> {
+  async upsert(scheduleItem: ScheduleEvent): Promise<void> {
     await this.persist(scheduleItem.getId(), scheduleItem)
   }
 
@@ -75,27 +75,27 @@ export class ScheduleItemMongoRepository
   //   })
   // }
 
-  async one(filter: object): Promise<ScheduleItem | undefined> {
+  async one(filter: object): Promise<ScheduleEvent | undefined> {
     const collection = await this.collection()
     const data = await collection.findOne(filter)
     if (!data) {
       return undefined
     }
-    return ScheduleItem.fromPrimitives({
+    return ScheduleEvent.fromPrimitives({
       id: data._id,
       ...data,
     })
   }
 
-  async list(criteria: Criteria): Promise<Paginate<ScheduleItem>> {
-    const result = await this.searchByCriteria<ScheduleItem>(criteria)
-    return this.paginate<ScheduleItem>(result)
+  async list(criteria: Criteria): Promise<Paginate<ScheduleEvent>> {
+    const result = await this.searchByCriteria<ScheduleEvent>(criteria)
+    return this.paginate<ScheduleEvent>(result)
   }
 
   async findManyByChurch(
     churchId: string,
     filters?: any
-  ): Promise<ScheduleItem[]> {
+  ): Promise<ScheduleEvent[]> {
     const collection = await this.collection()
     const query: Record<string, unknown> = {
       churchId,
@@ -116,7 +116,7 @@ export class ScheduleItemMongoRepository
     const result = await collection.find(query).toArray()
 
     return result.map((document) =>
-      ScheduleItem.fromPrimitives({
+      ScheduleEvent.fromPrimitives({
         id: document._id,
         ...document,
       })

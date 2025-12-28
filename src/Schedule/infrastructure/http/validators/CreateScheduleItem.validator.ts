@@ -27,14 +27,17 @@ export default async (
     "location.address": "string",
     "recurrencePattern.type": "required|string|in:WEEKLY",
     "recurrencePattern.dayOfWeek": `required|string|in:${dayOfWeekValues}`,
-    "recurrencePattern.time": "required|regex:/^([01]\\d|2[0-3]):[0-5]\\d$/",
+    "recurrencePattern.time": [
+      "required",
+      ["regex", "^([01]\\d|2[0-3]):[0-5]\\d$"],
+    ],
     "recurrencePattern.durationMinutes": "required|integer|min:1",
     "recurrencePattern.timezone": "required|string",
     "recurrencePattern.startDate": "required|dateFormat:YYYY-MM-DD",
     "recurrencePattern.endDate": "dateFormat:YYYY-MM-DD",
     visibility: `required|string|in:${visibilityValues}`,
     director: "required|string",
-    preacher: "string",
+    preacher: "required|string",
     observations: "string",
   }
 

@@ -1,8 +1,8 @@
 import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
-  ListScheduleItemsFiltersRequest,
-  ScheduleItem,
+  ListScheduleEventsFiltersRequest,
+  ScheduleEvent,
 } from "@/Schedule/domain"
 import {
   Criteria,
@@ -21,15 +21,16 @@ export class ListScheduleItemsConfig {
   ) {}
 
   async execute(
-    request: ListScheduleItemsFiltersRequest
-  ): Promise<Paginate<ScheduleItem>> {
+    request: ListScheduleEventsFiltersRequest
+  ): Promise<Paginate<ScheduleEvent>> {
     this.logger.info("Listing schedule item configurations", request)
 
     return await this.scheduleItemRepository.list(this.prepareCriteria(request))
   }
 
-  private prepareCriteria(request: ListScheduleItemsFiltersRequest) {
+  private prepareCriteria(request: ListScheduleEventsFiltersRequest) {
     const filters: Array<Map<string, any>> = []
+    const normalizedIsActive = this.normalizeBoolean(request?.isActive)
 
     filters.push(
       new Map([
@@ -58,12 +59,12 @@ export class ListScheduleItemsConfig {
       )
     }
 
-    if (request?.isActive !== undefined) {
+    if (normalizedIsActive !== undefined) {
       filters.push(
         new Map<string, any>([
           ["field", "isActive"],
           ["operator", Operator.EQUAL],
-          ["value", request.isActive],
+          ["value", normalizedIsActive],
         ])
       )
     }
@@ -74,5 +75,18 @@ export class ListScheduleItemsConfig {
       Number(request.perPage),
       Number(request.page)
     )
+  }
+
+  private normalizeBoolean(value?: unknown): boolean | undefined {
+    if (typeof value === "boolean") return value
+    if (typeof value === "number") {
+      return value === 1 ? true : value === 0 ? false : undefined
+    }
+    if (typeof value === "string") {
+      const normalized = value.toLowerCase()
+      if (["true", "1"].includes(normalized)) return true
+      if (["false", "0"].includes(normalized)) return false
+    }
+    return undefined
   }
 }
