@@ -1,14 +1,18 @@
-import { CreateScheduleItem, ListScheduleItemsConfig, ListWeeklyScheduleOccurrences, } from "@/Schedule/application"
+import {
+  CreateScheduleItem,
+  ListScheduleItemsConfig,
+  ListWeeklyScheduleOccurrences,
+} from "@/Schedule/application"
 import {
   DayOfWeek,
   RecurrenceType,
-  ScheduleItem,
-  ScheduleItemTypeEnum,
-  ScheduleItemVisibility,
+  ScheduleEvent,
+  ScheduleEventType,
+  ScheduleEventVisibility,
 } from "@/Schedule/domain"
 import {
-  CreateScheduleItemRequest,
-  ListScheduleItemsFiltersRequest
+  CreateScheduleEventRequest,
+  ListScheduleEventsFiltersRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
 import { IScheduleItemRepository } from "@/Schedule/domain/interfaces/ScheduleItemRepository.interface"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
@@ -19,9 +23,9 @@ import { ChurchDTO } from "@/Church/domain"
 
 class InMemoryScheduleItemRepository implements IScheduleItemRepository {
   public lastCriteria?: Criteria
-  private items: ScheduleItem[] = []
+  private items: ScheduleEvent[] = []
 
-  async upsert(scheduleItem: ScheduleItem): Promise<void> {
+  async upsert(scheduleItem: ScheduleEvent): Promise<void> {
     const index = this.items.findIndex(
       (item) => item.getScheduleItemId() === scheduleItem.getScheduleItemId()
     )
@@ -36,7 +40,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
   async one(filter: {
     churchId?: string
     scheduleItemId?: string
-  }): Promise<ScheduleItem | undefined> {
+  }): Promise<ScheduleEvent | undefined> {
     return this.items.find((item) => {
       if (filter.churchId && item.getChurchId() !== filter.churchId) {
         return false
@@ -51,7 +55,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
     })
   }
 
-  async list(criteria: Criteria): Promise<Paginate<ScheduleItem>> {
+  async list(criteria: Criteria): Promise<Paginate<ScheduleEvent>> {
     this.lastCriteria = criteria
     return {
       count: this.items.length,
@@ -63,7 +67,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
   async findManyByChurch(
     churchId: string,
     filters?: any
-  ): Promise<ScheduleItem[]> {
+  ): Promise<ScheduleEvent[]> {
     return this.items.filter((item) => {
       if (item.getChurchId() !== churchId) {
         return false
@@ -84,7 +88,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
     })
   }
 
-  getAll(): ScheduleItem[] {
+  getAll(): ScheduleEvent[] {
     return this.items
   }
 }
@@ -141,11 +145,11 @@ const buildChurch = () =>
 
 describe("Schedule module", () => {
   it("restores schedule items from primitives using isActive flag and date normalization", () => {
-    const scheduleItem = ScheduleItem.fromPrimitives({
+    const scheduleItem = ScheduleEvent.fromPrimitives({
       id: "mongo-id",
       scheduleItemId: "event-1",
       churchId: "church-1",
-      type: ScheduleItemTypeEnum.SERVICE,
+      type: ScheduleEventType.SERVICE,
       title: "Morning Service",
       description: "Traditional services",
       location: { name: "Main Auditorium", address: "Street 1" },
@@ -158,7 +162,7 @@ describe("Schedule module", () => {
         startDate: "2025-01-01",
         endDate: "2025-02-01",
       },
-      visibility: ScheduleItemVisibility.PUBLIC,
+      visibility: ScheduleEventVisibility.PUBLIC,
       director: "John Doe",
       preacher: "Jane Smith",
       observations: "Arrive early",
@@ -182,9 +186,9 @@ describe("Schedule module", () => {
 
     const useCase = new CreateScheduleItem(repo, churchRepo)
 
-    const request: CreateScheduleItemRequest = {
+    const request: CreateScheduleEventRequest = {
       churchId: church.getChurchId(),
-      type: ScheduleItemTypeEnum.SERVICE,
+      type: ScheduleEventType.SERVICE,
       title: " Domingo da Família ",
       description: "  Culto principal ",
       location: { name: "Templo Central", address: "Rua A" },
@@ -197,7 +201,7 @@ describe("Schedule module", () => {
         startDate: "2025-02-02",
         endDate: "2025-02-23",
       } as any,
-      visibility: ScheduleItemVisibility.PUBLIC,
+      visibility: ScheduleEventVisibility.PUBLIC,
       director: "Pr. Silva",
       preacher: "Maria",
       observations: "Trazer visitantes",
@@ -219,7 +223,7 @@ describe("Schedule module", () => {
     const repo = new InMemoryScheduleItemRepository()
     const useCase = new ListScheduleItemsConfig(repo)
 
-    const filters: ListScheduleItemsFiltersRequest = {
+    const filters: ListScheduleEventsFiltersRequest = {
       churchId: "church-1",
       page: 1,
       perPage: 10,
@@ -239,9 +243,9 @@ describe("Schedule module", () => {
   it("expands occurrences within the requested week and respects visibility scope", async () => {
     const repo = new InMemoryScheduleItemRepository()
 
-    const mondayPublic = ScheduleItem.create({
+    const mondayPublic = ScheduleEvent.create({
       churchId: "church-1",
-      type: ScheduleItemTypeEnum.SERVICE,
+      type: ScheduleEventType.SERVICE,
       title: "Segunda oração",
       description: "",
       location: { name: "Sede", address: "Rua A" },
@@ -253,15 +257,15 @@ describe("Schedule module", () => {
         timezone: "America/Sao_Paulo",
         startDate: new Date("2025-01-01T00:00:00Z"),
       },
-      visibility: ScheduleItemVisibility.PUBLIC,
+      visibility: ScheduleEventVisibility.PUBLIC,
       director: "Director A",
       preacher: "Preacher A",
       observations: "Obs A",
       createdByUserId: "user-1",
     })
-    const wednesdayInternal = ScheduleItem.create({
+    const wednesdayInternal = ScheduleEvent.create({
       churchId: "church-1",
-      type: ScheduleItemTypeEnum.MINISTRY_MEETING,
+      type: ScheduleEventType.MINISTRY_MEETING,
       title: "Reunião de líderes",
       description: "",
       location: { name: "Sala 2" },
@@ -273,15 +277,15 @@ describe("Schedule module", () => {
         timezone: "America/Sao_Paulo",
         startDate: new Date("2025-01-01T00:00:00Z"),
       },
-      visibility: ScheduleItemVisibility.INTERNAL_LEADERS,
+      visibility: ScheduleEventVisibility.INTERNAL_LEADERS,
       director: "Director B",
       preacher: undefined,
       observations: undefined,
       createdByUserId: "user-1",
     })
-    const futureSeries = ScheduleItem.create({
+    const futureSeries = ScheduleEvent.create({
       churchId: "church-1",
-      type: ScheduleItemTypeEnum.REGULAR_EVENT,
+      type: ScheduleEventType.REGULAR_EVENT,
       title: "Série especial",
       description: "",
       location: { name: "Anexo" },
@@ -293,7 +297,7 @@ describe("Schedule module", () => {
         timezone: "America/Sao_Paulo",
         startDate: new Date("2025-05-01T00:00:00Z"),
       },
-      visibility: ScheduleItemVisibility.PUBLIC,
+      visibility: ScheduleEventVisibility.PUBLIC,
       director: "Director C",
       preacher: "Preacher C",
       observations: "Obs C",
@@ -321,7 +325,7 @@ describe("Schedule module", () => {
     const publicOccurrences = await useCase.execute({
       churchId: "church-1",
       weekStartDate: "2025-02-23",
-      visibilityScope: ScheduleItemVisibility.PUBLIC,
+      visibilityScope: ScheduleEventVisibility.PUBLIC,
     })
 
     expect(publicOccurrences).toHaveLength(1)
@@ -334,7 +338,7 @@ describe("Schedule module", () => {
     const leaderOccurrences = await useCase.execute({
       churchId: "church-1",
       weekStartDate: "2025-02-23",
-      visibilityScope: ScheduleItemVisibility.INTERNAL_LEADERS,
+      visibilityScope: ScheduleEventVisibility.INTERNAL_LEADERS,
     })
 
     expect(leaderOccurrences).toHaveLength(2)

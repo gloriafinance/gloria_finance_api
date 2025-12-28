@@ -1,30 +1,30 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { v4 as uuid } from "uuid"
 import { DateBR, StringToDate } from "@/Shared/helpers"
 
 import {
   LocationDTO,
   RecurrencePatternDTO,
-  ScheduleItemTypeEnum,
-  ScheduleItemVisibility,
+  ScheduleEventType,
+  ScheduleEventVisibility,
 } from "@/Schedule/domain"
+import { IdentifyEntity } from "@/Shared/adapter"
 
 type UpdateDetailsParams = {
   title: string
   description?: string
   location: LocationDTO
-  visibility: ScheduleItemVisibility
+  visibility: ScheduleEventVisibility
   director: string
   preacher?: string
   observations?: string
   updatedByUserId?: string
 }
 
-export class ScheduleItem extends AggregateRoot {
+export class ScheduleEvent extends AggregateRoot {
   private id?: string
-  private scheduleItemId: string
+  private scheduleEventId: string
   private churchId: string
-  private type: ScheduleItemTypeEnum
+  private type: ScheduleEventType
   private title: string
   private description?: string
   private location: {
@@ -32,9 +32,9 @@ export class ScheduleItem extends AggregateRoot {
     address?: string
   }
   private recurrencePattern: RecurrencePatternDTO
-  private visibility: ScheduleItemVisibility
+  private visibility: ScheduleEventVisibility
   private director: string
-  private preacher?: string
+  private preacher: string
   private observations?: string
   private active: boolean
   private createdAt: Date
@@ -44,7 +44,7 @@ export class ScheduleItem extends AggregateRoot {
 
   static create(params: {
     churchId: string
-    type: ScheduleItemTypeEnum
+    type: ScheduleEventType
     title: string
     description?: string
     location: {
@@ -52,28 +52,28 @@ export class ScheduleItem extends AggregateRoot {
       address?: string
     }
     recurrencePattern: RecurrencePatternDTO
-    visibility: ScheduleItemVisibility
+    visibility: ScheduleEventVisibility
     director: string
-    preacher?: string
+    preacher: string
     observations?: string
     createdByUserId: string
     createdAt?: Date
-  }): ScheduleItem {
+  }): ScheduleEvent {
     const title = params.title?.trim()
 
-    const scheduleItem = new ScheduleItem()
-    scheduleItem.scheduleItemId = uuid()
+    const scheduleItem = new ScheduleEvent()
+    scheduleItem.scheduleEventId = IdentifyEntity.get("schedule")
     scheduleItem.churchId = params.churchId
     scheduleItem.type = params.type
     scheduleItem.title = title
     scheduleItem.description = params.description?.trim()
     scheduleItem.location = params.location
-    scheduleItem.recurrencePattern = ScheduleItem.normalizeRecurrencePattern(
+    scheduleItem.recurrencePattern = ScheduleEvent.normalizeRecurrencePattern(
       params.recurrencePattern
     )
     scheduleItem.visibility = params.visibility
     scheduleItem.director = params.director.trim()
-    scheduleItem.preacher = params.preacher?.trim()
+    scheduleItem.preacher = params.preacher.trim()
     scheduleItem.observations = params.observations?.trim()
     scheduleItem.active = true
     scheduleItem.createdAt = params.createdAt ?? DateBR()
@@ -82,16 +82,16 @@ export class ScheduleItem extends AggregateRoot {
     return scheduleItem
   }
 
-  static fromPrimitives(plainData: any): ScheduleItem {
-    const scheduleItem = new ScheduleItem()
+  static fromPrimitives(plainData: any): ScheduleEvent {
+    const scheduleItem = new ScheduleEvent()
     scheduleItem.id = plainData.id
-    scheduleItem.scheduleItemId = plainData.scheduleItemId
+    scheduleItem.scheduleEventId = plainData.scheduleEventId
     scheduleItem.churchId = plainData.churchId
     scheduleItem.type = plainData.type
     scheduleItem.title = plainData.title
     scheduleItem.description = plainData.description
     scheduleItem.location = plainData.location
-    scheduleItem.recurrencePattern = ScheduleItem.normalizeRecurrencePattern(
+    scheduleItem.recurrencePattern = ScheduleEvent.normalizeRecurrencePattern(
       plainData.recurrencePattern
     )
     scheduleItem.visibility = plainData.visibility
@@ -106,6 +106,20 @@ export class ScheduleItem extends AggregateRoot {
       : undefined
     scheduleItem.updatedByUserId = plainData.updatedByUserId
     return scheduleItem
+  }
+
+  private static normalizeRecurrencePattern(
+    recurrencePattern: RecurrencePatternDTO
+  ): RecurrencePatternDTO {
+    return {
+      ...recurrencePattern,
+      startDate: StringToDate(recurrencePattern.startDate),
+      endDate:
+        recurrencePattern.endDate !== undefined &&
+        recurrencePattern.endDate !== null
+          ? StringToDate(recurrencePattern.endDate)
+          : (recurrencePattern.endDate ?? undefined),
+    }
   }
 
   getId(): string {
@@ -128,7 +142,7 @@ export class ScheduleItem extends AggregateRoot {
     updatedByUserId?: string
   ): void {
     this.recurrencePattern =
-      ScheduleItem.normalizeRecurrencePattern(recurrencePattern)
+      ScheduleEvent.normalizeRecurrencePattern(recurrencePattern)
     this.touch(updatedByUserId)
   }
 
@@ -143,14 +157,14 @@ export class ScheduleItem extends AggregateRoot {
   }
 
   getScheduleItemId(): string {
-    return this.scheduleItemId
+    return this.scheduleEventId
   }
 
   getChurchId(): string {
     return this.churchId
   }
 
-  getType(): ScheduleItemTypeEnum {
+  getType(): ScheduleEventType {
     return this.type
   }
 
@@ -170,7 +184,7 @@ export class ScheduleItem extends AggregateRoot {
     return this.recurrencePattern
   }
 
-  getVisibility(): ScheduleItemVisibility {
+  getVisibility(): ScheduleEventVisibility {
     return this.visibility
   }
 
@@ -208,7 +222,7 @@ export class ScheduleItem extends AggregateRoot {
 
   toPrimitives() {
     return {
-      scheduleItemId: this.scheduleItemId,
+      scheduleItemId: this.scheduleEventId,
       churchId: this.churchId,
       type: this.type,
       title: this.title,
@@ -232,19 +246,5 @@ export class ScheduleItem extends AggregateRoot {
       this.updatedByUserId = updatedByUserId
     }
     this.updatedAt = DateBR()
-  }
-
-  private static normalizeRecurrencePattern(
-    recurrencePattern: RecurrencePatternDTO
-  ): RecurrencePatternDTO {
-    return {
-      ...recurrencePattern,
-      startDate: StringToDate(recurrencePattern.startDate),
-      endDate:
-        recurrencePattern.endDate !== undefined &&
-        recurrencePattern.endDate !== null
-          ? StringToDate(recurrencePattern.endDate)
-          : (recurrencePattern.endDate ?? undefined),
-    }
   }
 }

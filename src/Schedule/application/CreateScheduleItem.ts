@@ -2,9 +2,9 @@ import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
 import {
-  CreateScheduleItemRequest,
+  CreateScheduleEventRequest,
   IScheduleItemRepository,
-  ScheduleItem,
+  ScheduleEvent,
 } from "@/Schedule/domain"
 
 export class CreateScheduleItem {
@@ -15,7 +15,7 @@ export class CreateScheduleItem {
     private readonly churchRepository: IChurchRepository
   ) {}
 
-  async execute(request: CreateScheduleItemRequest): Promise<ScheduleItem> {
+  async execute(request: CreateScheduleEventRequest): Promise<ScheduleEvent> {
     this.logger.info("Creating schedule item", request)
 
     const church = await this.churchRepository.one(request.churchId)
@@ -23,7 +23,7 @@ export class CreateScheduleItem {
       throw new ChurchNotFound()
     }
 
-    const scheduleItem = ScheduleItem.create({
+    const scheduleItem = ScheduleEvent.create({
       churchId: church.getChurchId(),
       type: request.type,
       title: request.title,

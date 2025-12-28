@@ -1,8 +1,8 @@
 import {
   DayOfWeek,
   RecurrenceType,
-  ScheduleItemTypeEnum,
-  ScheduleItemVisibility,
+  ScheduleEventType,
+  ScheduleEventVisibility,
 } from "@/Schedule/domain"
 
 export type LocationDTO = {
@@ -13,12 +13,12 @@ export type LocationDTO = {
 export type ScheduleItemConfigDTO = {
   scheduleItemId: string
   churchId: string
-  type: ScheduleItemTypeEnum
+  type: ScheduleEventType
   title: string
   description?: string
   location: LocationDTO
   recurrencePattern: RecurrencePatternDTO
-  visibility: ScheduleItemVisibility
+  visibility: ScheduleEventVisibility
   director: string
   preacher?: string
   observations?: string
@@ -32,12 +32,12 @@ export type ScheduleItemConfigDTO = {
 export type WeeklyScheduleOccurrenceDTO = {
   scheduleItemId: string
   title: string
-  type: ScheduleItemTypeEnum
+  type: ScheduleEventType
   date: string
   startTime: string
   endTime: string
   location: LocationDTO
-  visibility: ScheduleItemVisibility
+  visibility: ScheduleEventVisibility
 }
 
 export type RecurrencePatternDTO = {

@@ -1,4 +1,4 @@
-export enum ScheduleItemTypeEnum {
+export enum ScheduleEventType {
   SERVICE = "SERVICE",
   CELL = "CELL",
   MINISTRY_MEETING = "MINISTRY_MEETING",
@@ -6,7 +6,7 @@ export enum ScheduleItemTypeEnum {
   OTHER = "OTHER",
 }
 
-export enum ScheduleItemVisibility {
+export enum ScheduleEventVisibility {
   PUBLIC = "PUBLIC",
   INTERNAL_LEADERS = "INTERNAL_LEADERS",
 }

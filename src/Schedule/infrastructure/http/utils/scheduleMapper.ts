@@ -1,6 +1,6 @@
-import { ScheduleItem } from "@/Schedule/domain"
+import { ScheduleEvent } from "@/Schedule/domain"
 
-export const mapToConfigDTO = (scheduleItem: ScheduleItem) => ({
+export const mapToConfigDTO = (scheduleItem: ScheduleEvent) => ({
   scheduleItemId: scheduleItem.getScheduleItemId(),
   churchId: scheduleItem.getChurchId(),
   type: scheduleItem.getType(),

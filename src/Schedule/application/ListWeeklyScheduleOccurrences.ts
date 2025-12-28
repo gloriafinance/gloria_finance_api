@@ -3,9 +3,9 @@ import {
   IScheduleItemRepository,
   LocationDTO,
   RecurrencePatternDTO,
+  ScheduleEventType,
+  ScheduleEventVisibility,
   ScheduleItemException,
-  ScheduleItemTypeEnum,
-  ScheduleItemVisibility,
   WeeklyScheduleOccurrenceDTO,
   WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain"
@@ -54,8 +54,8 @@ export class ListWeeklyScheduleOccurrences {
 
     return scheduleItems
       .filter((item) =>
-        request.visibilityScope === ScheduleItemVisibility.PUBLIC
-          ? item.getVisibility() === ScheduleItemVisibility.PUBLIC
+        request.visibilityScope === ScheduleEventVisibility.PUBLIC
+          ? item.getVisibility() === ScheduleEventVisibility.PUBLIC
           : true
       )
       .flatMap((item) =>
@@ -75,10 +75,10 @@ export class ListWeeklyScheduleOccurrences {
   private expandOccurrences(
     scheduleItemId: string,
     title: string,
-    type: ScheduleItemTypeEnum,
+    type: ScheduleEventType,
     location: LocationDTO,
     recurrencePattern: RecurrencePatternDTO,
-    visibility: ScheduleItemVisibility,
+    visibility: ScheduleEventVisibility,
     weekStart: Date,
     weekEnd: Date
   ): WeeklyScheduleOccurrenceDTO[] {
