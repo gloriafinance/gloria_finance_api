@@ -7,21 +7,15 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
  * Generar los meses financieros para todas las iglesias.
  *
  */
-export const GenerateFinancialMonthsService = async () => {
-  const currencyDate = DateBR()
-
-  const newYear = currencyDate.getFullYear() + 1
-
+export const GenerateFinancialMonthsService = async (year: number) => {
   const churches = await ChurchMongoRepository.getInstance().all()
-
   const generateFinancialMonthsClass = new GenerateFinancialMonths(
     FinancialYearMongoRepository.getInstance()
   )
-
   for (const church of churches) {
     await generateFinancialMonthsClass.execute({
       churchId: church.getChurchId(),
-      year: newYear,
+      year,
     })
   }
 }

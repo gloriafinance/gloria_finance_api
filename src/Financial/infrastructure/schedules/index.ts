@@ -2,7 +2,7 @@ import * as dayjs from "dayjs"
 import { DateBR } from "@/Shared/helpers"
 import * as cron from "node-cron"
 import { CloseFinancialMonthService } from "../services/CloseFinancialMonth.service"
-import { GenerateFinancialMonthsService } from "@/Financial/infrastructure/services/GenerateFinancialMonths.service"
+import { GenerateFinancialMonthsService } from "@/ConsolidatedFinancial/infrastructure/services"
 
 const isLastDayMonth = (): boolean => {
   const now = dayjs.tz("America/Sao_Paulo")
@@ -21,7 +21,7 @@ export const FinancialSchedules = () => {
       }
 
       if (isDecember()) {
-        GenerateFinancialMonthsService()
+        GenerateFinancialMonthsService(DateBR().getFullYear() + 1)
       }
     },
 
