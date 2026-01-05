@@ -14,6 +14,7 @@ export class User extends AggregateRoot {
   private memberId?: string
   private lastLogin?: Date
   private policies?: UserPolicies
+  private churchId: string
   isSuperUser: boolean
 
   private constructor() {
@@ -31,11 +32,12 @@ export class User extends AggregateRoot {
     u.email = email
     u.password = password
 
-    u.userId = Urn.create({ entity: `user`, churchId: Urn.id(churchId) })
+    u.userId = Urn.create({ entity: "user", churchId: Urn.id(churchId) })
 
     u.createdAt = DateBR()
     u.isActive = true
     u.name = name
+    u.churchId = churchId
 
     u.isSuperUser = isSuperUser
 
@@ -55,6 +57,7 @@ export class User extends AggregateRoot {
     u.lastLogin = data.lastLogin ?? null
     u.policies = data.policies
     u.isSuperUser = data.isSuperUser ?? false
+    u.churchId = data.churchId
 
     return u
   }
@@ -65,7 +68,11 @@ export class User extends AggregateRoot {
   }
 
   getChurchId(): string {
-    return Urn.urnForKey(this.userId, "church")
+    if (Urn.isValid(this.userId)) {
+      return Urn.urnForKey(this.userId, "church")
+    }
+
+    return this.churchId
   }
 
   getId(): string {
@@ -153,6 +160,7 @@ export class User extends AggregateRoot {
       lastLogin: this.lastLogin,
       policies: this.policies,
       isSuperUser: this.isSuperUser,
+      churchId: this.churchId,
     }
   }
 }

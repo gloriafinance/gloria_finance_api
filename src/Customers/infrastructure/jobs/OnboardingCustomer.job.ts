@@ -70,6 +70,7 @@ export class OnboardingCustomerJob implements IJob {
       QueueName.BootstrapPermissionsJob,
       {
         churchId: church.getChurchId(),
+        roles: ["ADMIN"],
         user: {
           isSuperUser: true,
           name: customer.getName(),

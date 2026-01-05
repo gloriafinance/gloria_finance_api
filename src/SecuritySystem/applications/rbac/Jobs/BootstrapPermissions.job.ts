@@ -16,6 +16,7 @@ import { CreateOrUpdateUser } from "@/SecuritySystem/applications"
 
 export type BootstrapPermissionsRequest = {
   churchId: string
+  roles: string[]
   userId?: string
   user?: {
     isSuperUser: boolean
@@ -43,13 +44,14 @@ export class BootstrapPermissionsJob implements IJob {
     await this.ensureBaseRoles(request.churchId)
 
     if (request.user) {
-      const userId = await this.createUser(request)
-      await this.assignAdminToCreator(request.churchId, userId)
+      request.userId = await this.createUser(request)
     }
 
-    if (request.userId) {
-      await this.assignAdminToCreator(request.churchId, request.userId)
-    }
+    await this.assignRoleToCreator(
+      request.churchId,
+      request.userId,
+      request.roles
+    )
 
     this.logger.info(
       `finished bootstrapping permissions for church ${request.churchId}`
@@ -129,14 +131,15 @@ export class BootstrapPermissionsJob implements IJob {
     this.logger.info(`Finished ensuring base roles for church ${churchId}`)
   }
 
-  private async assignAdminToCreator(
+  private async assignRoleToCreator(
     churchId: string,
-    userId: string
+    userId: string,
+    roles: string[]
   ): Promise<void> {
     const assignment = await this.userAssignmentRepository.assignRoles(
       churchId,
       userId,
-      ["ADMIN"]
+      roles
     )
 
     this.logger.info(

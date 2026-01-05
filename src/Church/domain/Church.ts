@@ -19,6 +19,7 @@ export class Church extends AggregateRoot {
   private openingDate: Date
   private ministerId: string
   private lang: string
+  private country: string
   //private region: Region;
   private status: ChurchStatus
   private createdAt: Date
@@ -34,6 +35,7 @@ export class Church extends AggregateRoot {
     openingDate: Date
     //region: Region,
     lang: string
+    country?: string
     registerNumber?: string
   }): Church {
     const {
@@ -47,6 +49,8 @@ export class Church extends AggregateRoot {
       email,
       openingDate,
       lang,
+      country,
+
       //region,
     } = params
     const c: Church = new Church()
@@ -61,6 +65,7 @@ export class Church extends AggregateRoot {
     c.email = email
     c.openingDate = openingDate
     c.lang = lang
+    c.country = country
     //c.region = region;
     c.createdAt = DateBR()
     c.churchId = IdentifyEntity.get(`church`)
@@ -88,6 +93,7 @@ export class Church extends AggregateRoot {
     //c.region = Region.fromPrimitives(plainData.region);
     c.status = plainData.status
 
+    c.country = plainData.country ?? "BR"
     c.createdAt = plainData.createdAt
 
     return c
@@ -143,6 +149,10 @@ export class Church extends AggregateRoot {
     this.openingDate = openingDate
   }
 
+  getCountry() {
+    return this.country
+  }
+
   getName(): string {
     return this.name
   }
@@ -180,6 +190,7 @@ export class Church extends AggregateRoot {
       ministerId: this.ministerId ?? null,
       status: this.status,
       lang: this.lang,
+      country: this.country,
     }
   }
 }

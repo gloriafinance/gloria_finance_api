@@ -45,6 +45,7 @@ export class RbacController {
       ).handle({
         churchId: auth.churchId,
         userId: targetUserId,
+        roles: ["ADMIN"],
       })
 
       await this.authorizationService.invalidateUserCache(
