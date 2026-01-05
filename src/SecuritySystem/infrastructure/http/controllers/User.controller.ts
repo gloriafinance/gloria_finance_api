@@ -67,6 +67,18 @@ export class UserController {
         churchId: string
         name: string
         lang: string
+        country: string
+      }
+
+      const c = await new FindChurchById(
+        ChurchMongoRepository.getInstance()
+      ).execute(user.getChurchId())
+
+      church = {
+        churchId: c.getChurchId(),
+        name: c.getName(),
+        lang: c.getLang(),
+        country: c.getCountry(),
       }
 
       if (!user.isSuperUser) {
@@ -75,19 +87,10 @@ export class UserController {
         ).execute(user.getMemberId())
 
         church = {
+          ...church,
           churchId: member?.getChurch()?.churchId,
           name: member?.getChurch()?.name,
           lang: member?.getSettings()?.lang,
-        }
-      } else {
-        const c = await new FindChurchById(
-          ChurchMongoRepository.getInstance()
-        ).execute(user.getChurchId())
-
-        church = {
-          churchId: c.getChurchId(),
-          name: c.getName(),
-          lang: c.getLang(),
         }
       }
 

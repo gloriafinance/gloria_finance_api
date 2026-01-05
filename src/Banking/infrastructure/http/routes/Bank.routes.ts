@@ -16,7 +16,7 @@ bankRoute.post(
     PermissionMiddleware,
     Can("banking", "manage"),
     bankValidator,
-    bankBRValidator,
+    //bankBRValidator,
   ],
   async (req, res) => {
     await CreateOrUpdateBankController(req.body as BankRequest, res)

@@ -1,16 +1,18 @@
 import { Member } from "@/Church/domain"
-import { IJob } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/Shared/domain"
 import { IPasswordAdapter, IUserRepository, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
 import { Logger } from "@/Shared/adapter"
+import { BootstrapPermissionsRequest } from "./rbac/Jobs/BootstrapPermissions.job"
 
 export class CreateUserForMemberJob implements IJob {
   private logger = Logger(CreateUserForMemberJob.name)
 
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly passwordAdapter: IPasswordAdapter
+    private readonly passwordAdapter: IPasswordAdapter,
+    private readonly queueService: IQueueService
   ) {}
 
   async handle(args: any): Promise<void> {
@@ -28,7 +30,7 @@ export class CreateUserForMemberJob implements IJob {
     }
     this.logger.info("Create user")
 
-    await new CreateOrUpdateUser(
+    const user = await new CreateOrUpdateUser(
       this.userRepository,
       this.passwordAdapter
     ).execute({
@@ -40,5 +42,14 @@ export class CreateUserForMemberJob implements IJob {
       churchId: member.getChurch().churchId,
       isSuperUser: false,
     })
+
+    this.queueService.dispatch<BootstrapPermissionsRequest>(
+      QueueName.BootstrapPermissionsJob,
+      {
+        churchId: member.getChurch().churchId,
+        roles: ["MEMBER"],
+        userId: user.getUserId(),
+      }
+    )
   }
 }

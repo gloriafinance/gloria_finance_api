@@ -1,5 +1,5 @@
 import { Church } from "@/Church/domain"
-import { IdentifyEntity } from "@/Shared/adapter"
+import { IdentifyEntity, Urn } from "@/Shared/adapter"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { TypeBankAccount } from "@/Banking/domain"
 
@@ -7,12 +7,12 @@ export class Bank extends AggregateRoot {
   private id?: string
   private accountType: TypeBankAccount
   private bankId: string
-  private churchId: string
   private active: boolean
   private name: string
   private tag: string
   private addressInstancePayment: string
   private bankInstruction: any
+  private churchId: string
 
   static create(
     accountType: TypeBankAccount,
@@ -26,7 +26,12 @@ export class Bank extends AggregateRoot {
     const bank: Bank = new Bank()
     bank.accountType = accountType
     bank.active = active
-    bank.bankId = IdentifyEntity.get(`bank`)
+
+    bank.bankId = Urn.create({
+      entity: "bank",
+      churchId: Urn.id(church.getChurchId()),
+    })
+
     bank.name = name
     bank.tag = tag
     bank.addressInstancePayment = addressInstancePayment
@@ -45,7 +50,7 @@ export class Bank extends AggregateRoot {
     bank.tag = plainData.tag
     bank.addressInstancePayment = plainData.addressInstancePayment
     bank.bankInstruction = plainData.bankInstruction
-    bank.churchId = plainData.churchId
+    bank.churchId = plainData.churchId ?? undefined
     return bank
   }
 
@@ -54,6 +59,10 @@ export class Bank extends AggregateRoot {
   }
 
   getChurchId(): string {
+    if (Urn.isValid(this.bankId)) {
+      return Urn.urnForKey(this.bankId, "church")
+    }
+
     return this.churchId
   }
 
