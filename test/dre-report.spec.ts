@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 import { DRE } from "@/Reports/applications/DRE"
-import { BaseReportRequest } from "@/Reports/domain"
+import { BaseReportRequest, DREMaster, IDRERepository } from "@/Reports/domain"
 import { Church, ChurchDTO, IChurchRepository } from "@/Church/domain"
 import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import {
@@ -10,7 +10,6 @@ import {
   StatementCategorySummary,
 } from "@/Financial/domain"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { DREMaster, IDRERepository } from "@/Reports/domain"
 
 jest.mock("@/app", () => ({ APP_DIR: process.cwd() }))
 jest.mock("@/Shared/adapter/CustomLogger", () => ({
@@ -159,7 +158,7 @@ class FakeChurch implements Partial<Church> {
 }
 
 const buildChurchRepository = (church: FakeChurch): IChurchRepository => ({
-  async one(churchId: string): Promise<Church | undefined> {
+  async findById(churchId: string): Promise<Church | undefined> {
     if (churchId === church.getChurchId()) {
       return church as unknown as Church
     }

@@ -1,12 +1,6 @@
-import { OnlineContributions } from "../OnlineContributions"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { OnlineContributions } from "@/Financial/domain"
+import { IRepository } from "@abejarano/ts-mongodb-criteria"
 
-export interface IOnlineContributionsRepository {
+export interface IOnlineContributionsRepository extends IRepository<OnlineContributions> {
   findById(contributionId: string): Promise<OnlineContributions | undefined>
-
-  upsert(contribution: OnlineContributions): Promise<void>
-
-  findByCriteria(criteria: Criteria): Promise<Paginate<OnlineContributions>>
-
-  findByMemberId(memberId: string): Promise<Paginate<OnlineContributions>>
 }

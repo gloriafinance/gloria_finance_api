@@ -1,4 +1,8 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { IRoleRepository, Role } from "@/SecuritySystem/domain"
 
 export class RoleMongoRepository
@@ -6,6 +10,10 @@ export class RoleMongoRepository
   implements IRoleRepository
 {
   private static instance: RoleMongoRepository
+
+  private constructor() {
+    super(Role)
+  }
 
   static getInstance(): RoleMongoRepository {
     if (!RoleMongoRepository.instance) {
@@ -50,19 +58,11 @@ export class RoleMongoRepository
     })
   }
 
-  async upsert(role: Role): Promise<void> {
-    const collection = await this.collection()
-    const primitive = role.toPrimitives()
-    const { id, ...rest } = primitive
-
-    await collection.updateOne(
-      { churchId: primitive.churchId, roleId: primitive.roleId },
-      { $set: rest },
-      { upsert: true }
-    )
-  }
-
-  async list(churchId: string): Promise<Role[]> {
+  list(churchId: string): Promise<Role[]>
+  list(criteria: Criteria): Promise<Paginate<Role>>
+  override async list(
+    churchId: string | Criteria
+  ): Promise<Role[] | Paginate<Role>> {
     const collection = await this.collection()
     const documents = await collection.find({ churchId }).toArray()
 

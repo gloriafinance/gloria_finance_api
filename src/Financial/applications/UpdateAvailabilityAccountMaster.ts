@@ -26,7 +26,7 @@ export class UpdateAvailabilityAccountMaster {
       `Search AvailabilityAccountMaster ${identifyAvailabilityAccountMaster}`
     )
 
-    let accountMaster = await this.availabilityAccountMasterRepository.one(
+    let accountMaster = await this.availabilityAccountMasterRepository.findById(
       identifyAvailabilityAccountMaster
     )
 

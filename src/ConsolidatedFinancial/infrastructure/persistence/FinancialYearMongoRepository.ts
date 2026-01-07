@@ -1,5 +1,9 @@
 import { FinancialMonth, IFinancialYearRepository } from "../../domain"
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class FinancialYearMongoRepository
   extends MongoRepository<FinancialMonth>
@@ -8,7 +12,7 @@ export class FinancialYearMongoRepository
   private static instance: FinancialYearMongoRepository
 
   constructor() {
-    super()
+    super(FinancialMonth)
   }
 
   static getInstance(): FinancialYearMongoRepository {
@@ -21,10 +25,6 @@ export class FinancialYearMongoRepository
 
   collectionName(): string {
     return "financial_months"
-  }
-
-  async upsert(financialYear: FinancialMonth): Promise<void> {
-    await this.persist(financialYear.getId(), financialYear)
   }
 
   async one(filter: object): Promise<FinancialMonth | undefined> {
@@ -41,7 +41,12 @@ export class FinancialYearMongoRepository
     })
   }
 
-  async list(filter: object): Promise<FinancialMonth[]> {
+  list(criteria: Criteria): Promise<Paginate<FinancialMonth>>
+  list(filter: object): Promise<FinancialMonth[]>
+
+  override async list(
+    filter: Criteria | object
+  ): Promise<FinancialMonth[] | Paginate<FinancialMonth>> {
     const collection = await this.collection()
     const results = await collection.find(filter).sort({ month: 1 }).toArray()
 

@@ -9,7 +9,7 @@ export class WorldMongoRepository
   private collectName: string = "states"
 
   constructor() {
-    super()
+    super(States)
   }
 
   static getInstance(): WorldMongoRepository {

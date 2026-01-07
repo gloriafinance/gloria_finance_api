@@ -20,7 +20,7 @@ export class MovementBankRecordJob implements IJob {
       ...args,
       jobName: MovementBankRecordJob.name,
     })
-    const bank = await this.bankRepository.one(args.bankId)
+    const bank = await this.bankRepository.findById(args.bankId)
 
     const movementBank = MovementBank.create(
       args.amount,

@@ -1,12 +1,6 @@
 import { Supplier } from "../Supplier"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { IRepository } from "@abejarano/ts-mongodb-criteria"
 
-export interface ISupplierRepository {
-  upsert(supplier: Supplier): Promise<void>
-
-  list(criteria: Criteria): Promise<Paginate<Supplier>>
-
-  one(filter: object): Promise<Supplier | null>
-
+export interface ISupplierRepository extends IRepository<Supplier> {
   all(churchId: string): Promise<Supplier[]>
 }

@@ -14,7 +14,7 @@ export class SearchPurchase {
   constructor(private readonly purchaseRepository: IPurchaseRepository) {}
 
   async execute(request: FilterPurchasesRequest): Promise<Paginate<Purchase>> {
-    return await this.purchaseRepository.fetch(this.prepareCriteria(request))
+    return await this.purchaseRepository.list(this.prepareCriteria(request))
   }
 
   private prepareCriteria(request: FilterPurchasesRequest) {

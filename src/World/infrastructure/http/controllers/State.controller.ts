@@ -1,7 +1,7 @@
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { HttpStatus } from "../../../../Shared/domain"
 import { FindStateByCountryId } from "../../../applications"
-import { WorldMongoRepository } from "../../persistence/world-mongo-repository"
+import { WorldMongoRepository } from "../../persistence/WorldMongoRepository"
 
 export const findByCountryIdController = async (countryId: string, res) => {
   try {

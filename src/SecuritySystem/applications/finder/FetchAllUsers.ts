@@ -13,7 +13,7 @@ export class FetchAllUsers {
 
   async execute(reqFilter: FilterUserRequest): Promise<Paginate<User>> {
     const criteria: Criteria = this.prepare(reqFilter)
-    const data = await this.userRepository.fetchCriteria(criteria)
+    const data = await this.userRepository.list(criteria)
 
     return {
       nextPag: data.nextPag,

@@ -1,4 +1,8 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import {
   AvailabilityAccount,
   IAvailabilityAccountRepository,
@@ -9,6 +13,10 @@ export class AvailabilityAccountMongoRepository
   implements IAvailabilityAccountRepository
 {
   private static instance: AvailabilityAccountMongoRepository
+
+  private constructor() {
+    super(AvailabilityAccount)
+  }
 
   static getInstance(): AvailabilityAccountMongoRepository {
     if (!this.instance) {
@@ -21,32 +29,12 @@ export class AvailabilityAccountMongoRepository
     return "availability_accounts"
   }
 
-  async upsert(availabilityAccount: AvailabilityAccount): Promise<void> {
-    const collection = await this.collection()
-    await collection.updateOne(
-      {
-        availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
-      },
-      { $set: availabilityAccount },
-      { upsert: true }
-    )
-  }
+  list(filter: object): Promise<AvailabilityAccount[]>
+  list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
 
-  async one(filter: object): Promise<AvailabilityAccount | undefined> {
-    const collection = await this.collection()
-    const document = await collection.findOne(filter)
-
-    if (!document) {
-      return undefined
-    }
-
-    return AvailabilityAccount.fromPrimitives({
-      ...document,
-      id: document._id,
-    })
-  }
-
-  async list(filter: object): Promise<AvailabilityAccount[]> {
+  override async list(
+    filter: object | Criteria
+  ): Promise<AvailabilityAccount[] | Paginate<AvailabilityAccount>> {
     const collection = await this.collection()
     const documents = await collection.find(filter).toArray()
 

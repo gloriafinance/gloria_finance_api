@@ -6,10 +6,14 @@ import {
 import { IMemberRepository, Member } from "../../domain"
 
 export class MemberMongoRepository
-  extends MongoRepository<any>
+  extends MongoRepository<Member>
   implements IMemberRepository
 {
   private static instance: MemberMongoRepository
+
+  private constructor() {
+    super(Member)
+  }
 
   public static getInstance(): MemberMongoRepository {
     if (MemberMongoRepository.instance) {
@@ -23,17 +27,14 @@ export class MemberMongoRepository
     return "members"
   }
 
-  async upsert(member: Member): Promise<void> {
-    await this.persist(member.getId(), member)
-  }
-
   list(criteria: Criteria): Promise<Paginate<Member>>
   list(filter: object): Promise<Member[]>
 
-  async list(arg: Criteria | object): Promise<Paginate<Member> | Member[]> {
+  override async list(
+    arg: Criteria | object
+  ): Promise<Paginate<Member> | Member[]> {
     if (arg instanceof Criteria) {
-      const result = await this.searchByCriteria<Member>(arg)
-      return this.paginate<Member>(result)
+      return super.list(arg)
     }
 
     const collection = await this.collection()
@@ -45,18 +46,6 @@ export class MemberMongoRepository
         id: item._id.toString(),
       })
     )
-  }
-
-  async one(filter: object): Promise<Member | undefined> {
-    const collection = await this.collection()
-    const result = await collection.findOne(filter)
-
-    return result
-      ? Member.fromPrimitives({
-          ...result,
-          id: result._id.toString(),
-        })
-      : undefined
   }
 
   async all(churchId: string, filter?: object): Promise<Member[]> {

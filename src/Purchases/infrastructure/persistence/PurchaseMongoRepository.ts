@@ -13,6 +13,10 @@ export class PurchaseMongoRepository
 {
   private static instance: PurchaseMongoRepository
 
+  private constructor() {
+    super(Purchase)
+  }
+
   static getInstance(): PurchaseMongoRepository {
     if (!this.instance) {
       this.instance = new PurchaseMongoRepository()
@@ -24,23 +28,22 @@ export class PurchaseMongoRepository
     return "purchases"
   }
 
-  async upsert(purchase: Purchase): Promise<void> {
-    await this.persist(purchase.getId(), purchase)
-  }
-
-  async fetch(criteria: Criteria): Promise<Paginate<PurchaseModel>> {
-    const result = await this.searchByCriteria<PurchaseModel>(criteria)
-
-    return this.paginate<PurchaseModel>(result)
-  }
-
   async delete(purchaseIds: string[]): Promise<void> {
     const collection = await this.collection()
 
     await collection.deleteMany({ purchaseId: { $in: purchaseIds } })
   }
 
-  async list(purchaseIds: string[]): Promise<Purchase[]> {
+  list(criteria: Criteria): Promise<Paginate<PurchaseModel>>
+
+  list(purchaseIds: string[]): Promise<Purchase[]>
+  override async list(
+    purchaseIds: string[] | Criteria
+  ): Promise<Purchase[] | Paginate<PurchaseModel>> {
+    if (purchaseIds instanceof Criteria) {
+      return super.list(purchaseIds)
+    }
+
     const collection = await this.collection()
 
     const purchases = await collection

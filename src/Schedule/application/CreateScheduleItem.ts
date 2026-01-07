@@ -18,7 +18,7 @@ export class CreateScheduleItem {
   async execute(request: CreateScheduleEventRequest): Promise<ScheduleEvent> {
     this.logger.info("Creating schedule item", request)
 
-    const church = await this.churchRepository.one(request.churchId)
+    const church = await this.churchRepository.findById(request.churchId)
     if (!church) {
       throw new ChurchNotFound()
     }

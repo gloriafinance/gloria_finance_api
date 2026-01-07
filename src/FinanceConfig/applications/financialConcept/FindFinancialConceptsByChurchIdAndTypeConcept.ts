@@ -9,7 +9,7 @@ export class FindFinancialConceptsByChurchIdAndTypeConcept {
   ) {}
 
   async execute(churchId: string, typeConcept?: ConceptType) {
-    const church = await this.churchRepository.one(churchId)
+    const church = await this.churchRepository.findById(churchId)
     if (!church) {
       throw new ChurchNotFound()
     }

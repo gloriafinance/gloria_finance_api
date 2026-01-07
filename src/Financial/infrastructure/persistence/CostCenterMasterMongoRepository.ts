@@ -15,6 +15,10 @@ export class CostCenterMasterMongoRepository
   private dbCollectionName = "cost_centers_master"
   private logger = Logger(CostCenterMasterMongoRepository.name)
 
+  private constructor() {
+    super(CostCenterMaster)
+  }
+
   static getInstance(): CostCenterMasterMongoRepository {
     if (!this.instance) {
       this.instance = new CostCenterMasterMongoRepository()
@@ -27,7 +31,9 @@ export class CostCenterMasterMongoRepository
     return this.dbCollectionName
   }
 
-  async one(costCenterMasterId: string): Promise<CostCenterMaster | undefined> {
+  async findById(
+    costCenterMasterId: string
+  ): Promise<CostCenterMaster | undefined> {
     const collection = await this.collection()
     const document = await collection.findOne({
       costCenterMasterId,
@@ -61,10 +67,6 @@ export class CostCenterMasterMongoRepository
         id: document._id,
       })
     )
-  }
-
-  async upsert(costCenterMaster: CostCenterMaster): Promise<void> {
-    await this.persist(costCenterMaster.getId(), costCenterMaster)
   }
 
   async rebuildCostCentersMaster(filter: {

@@ -1,7 +1,7 @@
 import { CostCenterMaster } from "@/Financial/domain"
 
 export interface ICostCenterMasterRepository {
-  one(costCenterMasterId: string): Promise<CostCenterMaster | undefined>
+  findById(costCenterMasterId: string): Promise<CostCenterMaster | undefined>
 
   search(
     churchId: string,

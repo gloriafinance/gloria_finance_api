@@ -4,11 +4,7 @@ import {
   BankStatementStatus,
   IBankStatementRepository,
 } from "@/Banking/domain"
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 const COLLECTION_NAME = "bank_statements"
 
@@ -19,7 +15,7 @@ export class BankStatementMongoRepository
   private static instance: BankStatementMongoRepository
   private readonly logger = Logger(BankStatementMongoRepository.name)
   private constructor() {
-    super()
+    super(BankStatement)
   }
 
   static getInstance(): BankStatementMongoRepository {
@@ -32,10 +28,6 @@ export class BankStatementMongoRepository
 
   collectionName(): string {
     return COLLECTION_NAME
-  }
-
-  async upsert(statement: BankStatement): Promise<void> {
-    await this.persist(statement.getBankStatementId(), statement)
   }
 
   async bulkInsert(statements: BankStatement[]): Promise<void> {
@@ -61,17 +53,6 @@ export class BankStatementMongoRepository
 
       throw error
     }
-  }
-
-  async one(filter: object): Promise<BankStatement | undefined> {
-    const collection = await this.collection()
-    const result = await collection.findOne(filter)
-
-    if (!result) {
-      return undefined
-    }
-
-    return BankStatement.fromPrimitives(result as any)
   }
 
   async updateStatus(
@@ -101,17 +82,5 @@ export class BankStatementMongoRepository
     }
 
     await collection.updateOne({ bankStatementId: statementId }, operations)
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<BankStatement>> {
-    const documents = await this.searchByCriteria<any>(criteria)
-    const pagination = await this.paginate(documents)
-
-    return {
-      ...pagination,
-      results: pagination.results.map((doc) =>
-        BankStatement.fromPrimitives({ ...doc, id: doc._id })
-      ),
-    }
   }
 }

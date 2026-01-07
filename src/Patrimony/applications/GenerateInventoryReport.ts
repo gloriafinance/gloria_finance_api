@@ -115,7 +115,7 @@ export class GenerateInventoryReport {
     summary: InventorySummary,
     request: InventoryReportRequest
   ): Promise<ReportFile> {
-    const church = await this.churchRepository.one(request.churchId)
+    const church = await this.churchRepository.findById(request.churchId)
 
     const templateData = {
       generatedAt: new Date().toISOString(),

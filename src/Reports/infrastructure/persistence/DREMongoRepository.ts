@@ -9,7 +9,7 @@ export class DREMongoRepository
   private dbCollectionName: string = "dre_masters"
 
   private constructor() {
-    super()
+    super(DREMaster)
   }
 
   static getInstance(): DREMongoRepository {
@@ -40,9 +40,5 @@ export class DREMongoRepository
       id: result._id.toString(),
       ...result,
     })
-  }
-
-  async upsert(dre: DREMaster): Promise<void> {
-    await this.persist(dre.getId(), dre)
   }
 }

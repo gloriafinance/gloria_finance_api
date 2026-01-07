@@ -7,11 +7,7 @@ import {
   StatementCategorySummary,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 const REALIZED_STATUSES = [
   FinancialRecordStatus.CLEARED,
@@ -26,8 +22,8 @@ export class FinanceRecordMongoRepository
   private logger = Logger("FinanceRecordMongoRepository")
   private dbCollectionName = "financial_records"
 
-  constructor() {
-    super()
+  private constructor() {
+    super(FinanceRecord)
   }
 
   static getInstance(): FinanceRecordMongoRepository {
@@ -39,29 +35,6 @@ export class FinanceRecordMongoRepository
 
   collectionName(): string {
     return this.dbCollectionName
-  }
-
-  async one(filter: object): Promise<FinanceRecord | undefined> {
-    const collection = await this.collection()
-    const result = await collection.findOne(filter)
-    if (!result) {
-      return undefined
-    }
-
-    return FinanceRecord.fromPrimitives({ ...result, id: result._id })
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<FinanceRecord>> {
-    this.dbCollectionName = "financial_records"
-    const result: FinanceRecord[] =
-      await this.searchByCriteria<FinanceRecord>(criteria)
-
-    return this.paginate<FinanceRecord>(result)
-  }
-
-  async upsert(financialRecord: FinanceRecord): Promise<void> {
-    this.dbCollectionName = "financial_records"
-    await this.persist(financialRecord.getId(), financialRecord)
   }
 
   async deleteByFinancialRecordId(financialRecordId: string): Promise<void> {
@@ -81,6 +54,7 @@ export class FinanceRecordMongoRepository
     const startDate = new Date(Date.UTC(year, month - 1, 1))
     const endDate = new Date(Date.UTC(year, month, 1))
 
+    //TODO Dízimos????? y en los otros idiomas?
     const filters = {
       churchId,
       date: {

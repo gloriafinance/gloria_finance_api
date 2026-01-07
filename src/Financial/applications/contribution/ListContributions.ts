@@ -1,4 +1,4 @@
-import { FilterContributionsRequest } from "../../domain"
+import { FilterContributionsRequest, OnlineContributions } from "../../domain"
 import {
   Criteria,
   Filters,
@@ -15,7 +15,7 @@ export class ListContributions {
   ) {}
 
   async execute(filter: FilterContributionsRequest) {
-    return this.contributionRepository.findByCriteria(
+    return this.contributionRepository.list<OnlineContributions>(
       this.prepareFilter(filter)
     )
   }

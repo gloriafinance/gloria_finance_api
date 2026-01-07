@@ -9,7 +9,7 @@ export class FinBankByBankId {
   async execute(bankId: string) {
     this.logger.info(`Finding bank by bankId: ${bankId}`)
 
-    const bank = await this.bankRepository.one(bankId)
+    const bank = await this.bankRepository.findById(bankId)
 
     if (!bank) {
       this.logger.error(`Bank not found: ${bankId}`)

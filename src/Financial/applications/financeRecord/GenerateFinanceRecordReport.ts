@@ -273,7 +273,7 @@ export class GenerateFinanceRecordReport {
     summary: FinanceRecordSummary,
     request: FinanceRecordReportRequest
   ): Promise<ReportFile> {
-    const church = await this.churchRepository.one(request.churchId)
+    const church = await this.churchRepository.findById(request.churchId)
     const churchName = church?.getName() ?? "Congregação não informada"
 
     const templateData = {

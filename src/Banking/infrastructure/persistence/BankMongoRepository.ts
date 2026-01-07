@@ -3,13 +3,13 @@ import { IBankRepository } from "@/Banking/domain/"
 import { Bank } from "@/Banking/domain/Bank"
 
 export class BankMongoRepository
-  extends MongoRepository<any>
+  extends MongoRepository<Bank>
   implements IBankRepository
 {
   private static instance: BankMongoRepository
 
-  constructor() {
-    super()
+  private constructor() {
+    super(Bank)
   }
 
   static getInstance(): BankMongoRepository {
@@ -23,8 +23,8 @@ export class BankMongoRepository
     return "churches"
   }
 
-  async upsert(bank: Bank): Promise<void> {
-    const collection = await this.collection()
+  override async upsert(bank: Bank): Promise<void> {
+    const collection = await this.collection<Bank>()
 
     await collection.updateOne(
       { churchId: bank.getChurchId() },
@@ -38,7 +38,7 @@ export class BankMongoRepository
     )
   }
 
-  async one(bankId: string): Promise<Bank | undefined> {
+  async findById(bankId: string): Promise<Bank | undefined> {
     const collection = await this.collection()
 
     const result = await collection.findOne<any>(
@@ -57,7 +57,7 @@ export class BankMongoRepository
     })
   }
 
-  async list(churchId: string): Promise<Bank[]> {
+  async all(churchId: string): Promise<Bank[]> {
     const collection = await this.collection()
 
     const result = await collection.findOne<any>(

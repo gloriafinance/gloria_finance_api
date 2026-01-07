@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IMinisterRepository, Minister } from "../../domain"
 
 export class MinisterMongoRepository
@@ -11,8 +7,8 @@ export class MinisterMongoRepository
 {
   private static instance: MinisterMongoRepository
 
-  constructor() {
-    super()
+  private constructor() {
+    super(Minister)
   }
 
   static getInstance(): MinisterMongoRepository {
@@ -32,16 +28,6 @@ export class MinisterMongoRepository
 
   async findById(ministerId: string): Promise<Minister | undefined> {
     return await this.buildMinister({ ministerId })
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<Minister>> {
-    const documents: Minister[] =
-      await this.searchByCriteria<Minister>(criteria)
-    return this.paginate<Minister>(documents)
-  }
-
-  async upsert(minister: Minister): Promise<void> {
-    await this.persist(minister.getId(), minister)
   }
 
   public async allActive() {

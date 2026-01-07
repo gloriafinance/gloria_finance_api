@@ -344,12 +344,10 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
   }
 }
 
-class FakeAvailabilityAccountMasterRepository
-  implements IAvailabilityAccountMasterRepository
-{
+class FakeAvailabilityAccountMasterRepository implements IAvailabilityAccountMasterRepository {
   constructor(private readonly records: SampleRecord[]) {}
 
-  async one(
+  async findById(
     _availabilityAccountMasterId: string
   ): Promise<AvailabilityAccountMaster | undefined> {
     return undefined
@@ -367,15 +365,19 @@ class FakeAvailabilityAccountMasterRepository
     return
   }
 
-  async rebuildAvailabilityAccountsMaster(
-    _filter: { churchId: string; year: number; month: number }
-  ): Promise<void> {
+  async rebuildAvailabilityAccountsMaster(_filter: {
+    churchId: string
+    year: number
+    month: number
+  }): Promise<void> {
     return
   }
 
-  async fetchAvailableAccounts(
-    _filter: { churchId: string; year: number; month?: number }
-  ): Promise<AvailabilityAccountMaster[]> {
+  async fetchAvailableAccounts(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<AvailabilityAccountMaster[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -439,7 +441,7 @@ class FakeAvailabilityAccountMasterRepository
 class FakeCostCenterMasterRepository implements ICostCenterMasterRepository {
   constructor(private readonly records: SampleRecord[]) {}
 
-  async one(
+  async findById(
     _costCenterMasterId: string
   ): Promise<CostCenterMaster | undefined> {
     return undefined
@@ -457,15 +459,19 @@ class FakeCostCenterMasterRepository implements ICostCenterMasterRepository {
     return
   }
 
-  async rebuildCostCentersMaster(
-    _filter: { churchId: string; year: number; month?: number }
-  ): Promise<void> {
+  async rebuildCostCentersMaster(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<void> {
     return
   }
 
-  async fetchCostCenters(
-    _filter: { churchId: string; year: number; month?: number }
-  ): Promise<CostCenterMaster[]> {
+  async fetchCostCenters(_filter: {
+    churchId: string
+    year: number
+    month?: number
+  }): Promise<CostCenterMaster[]> {
     const realizedStatuses = new Set<FinancialRecordStatus>([
       FinancialRecordStatus.CLEARED,
       FinancialRecordStatus.RECONCILED,
@@ -602,7 +608,7 @@ class FakeChurch implements Partial<Church> {
 }
 
 const buildChurchRepository = (church: FakeChurch): IChurchRepository => ({
-  async one(churchId: string): Promise<Church | undefined> {
+  async findById(churchId: string): Promise<Church | undefined> {
     if (churchId === church.getChurchId()) {
       return church as unknown as Church
     }
@@ -817,7 +823,8 @@ describe("Financial reporting consistency", () => {
     )
     assert.strictEqual(
       response.summary.operatingIncome,
-      incomeStatementExpected.revenue - incomeStatementExpected.operatingExpenses
+      incomeStatementExpected.revenue -
+        incomeStatementExpected.operatingExpenses
     )
     assert.strictEqual(
       response.summary.reversalAdjustments,

@@ -3,7 +3,7 @@ import { Bank } from "@/Banking/domain"
 export interface IBankRepository {
   upsert(bank: Bank): Promise<void>
 
-  list(churchId: string): Promise<Bank[]>
+  all(churchId: string): Promise<Bank[]>
 
-  one(bankId: string): Promise<Bank | undefined>
+  findById(bankId: string): Promise<Bank | undefined>
 }

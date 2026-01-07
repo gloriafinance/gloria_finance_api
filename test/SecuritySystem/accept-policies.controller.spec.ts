@@ -1,9 +1,6 @@
 import * as express from "express"
 import * as supertest from "supertest"
-import {
-  IUserRepository,
-  User,
-} from "@/SecuritySystem/domain"
+import { IUserRepository, User } from "@/SecuritySystem/domain"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 class InMemoryUserRepository implements IUserRepository {
@@ -30,7 +27,7 @@ class InMemoryUserRepository implements IUserRepository {
     this.users.set(user.getUserId(), user)
   }
 
-  async fetchCriteria(_payload: Criteria): Promise<Paginate<User>> {
+  async list(_payload: Criteria): Promise<Paginate<User>> {
     return {
       count: this.users.size,
       nextPag: null,
@@ -73,16 +70,13 @@ describe("POST /api/v1/user/accept-policies", () => {
       },
     }))
 
-    const { UserMongoRepository } = await import(
-      "@/SecuritySystem/infrastructure/persistence/UserMongoRepository"
-    )
-    jest
-      .spyOn(UserMongoRepository, "getInstance")
-      .mockReturnValue(repo as any)
+    const { UserMongoRepository } =
+      await import("@/SecuritySystem/infrastructure/persistence/UserMongoRepository")
+    jest.spyOn(UserMongoRepository, "getInstance").mockReturnValue(repo as any)
 
-    const userRoutes = (await import(
-      "@/SecuritySystem/infrastructure/http/routes/user.routes"
-    )).default
+    const userRoutes = (
+      await import("@/SecuritySystem/infrastructure/http/routes/user.routes")
+    ).default
 
     const app = express()
     app.use(express.json())

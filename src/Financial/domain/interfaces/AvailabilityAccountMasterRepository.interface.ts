@@ -1,7 +1,7 @@
 import { AvailabilityAccountMaster } from "@/Financial/domain"
 
 export interface IAvailabilityAccountMasterRepository {
-  one(
+  findById(
     availabilityAccountMasterId: string
   ): Promise<AvailabilityAccountMaster | undefined>
 

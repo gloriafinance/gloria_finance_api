@@ -1,15 +1,15 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
-import { Church, ChurchDTO, IChurchRepository } from "../../domain"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Church, IChurchRepository } from "../../domain"
 
 export class ChurchMongoRepository
   extends MongoRepository<Church>
   implements IChurchRepository
 {
   private static instance: ChurchMongoRepository
+
+  private constructor() {
+    super(Church)
+  }
 
   static getInstance(): ChurchMongoRepository {
     if (ChurchMongoRepository.instance) {
@@ -23,7 +23,7 @@ export class ChurchMongoRepository
     return "churches"
   }
 
-  async one(churchId: string): Promise<Church | undefined> {
+  async findById(churchId: string): Promise<Church | undefined> {
     const collection = await this.collection()
     const result = await collection.findOne({ churchId: churchId })
 
@@ -33,24 +33,12 @@ export class ChurchMongoRepository
     return Church.fromPrimitives({ id: result._id.toString(), ...result })
   }
 
-  async upsert(church: Church): Promise<void> {
-    await this.persist(church.getId(), church)
-  }
-
   async all(): Promise<Church[]> {
     const collection = await this.collection()
     const result = await collection.find().toArray()
     return result.map((r) =>
       Church.fromPrimitives({ id: r._id.toString(), ...r })
     )
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<ChurchDTO>> {
-    const result: ChurchDTO[] = await this.searchByCriteria<ChurchDTO>(
-      criteria,
-      ["financialConcepts", "members"]
-    )
-    return this.paginate<ChurchDTO>(result)
   }
 
   async hasAnAssignedMinister(

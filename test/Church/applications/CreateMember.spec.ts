@@ -72,15 +72,25 @@ describe("CreateMember", () => {
   it("throws when member already exists", async () => {
     memberRepository.one.mockResolvedValue({} as any)
 
-    const useCase = new CreateMember(memberRepository, churchRepository, queueService)
-    await expect(useCase.execute(validRequest())).rejects.toBeInstanceOf(MemberExist)
+    const useCase = new CreateMember(
+      memberRepository,
+      churchRepository,
+      queueService
+    )
+    await expect(useCase.execute(validRequest())).rejects.toBeInstanceOf(
+      MemberExist
+    )
   })
 
   it("creates member, persists and dispatches queue", async () => {
     memberRepository.one.mockResolvedValue(undefined)
-    churchRepository.one.mockResolvedValue(createChurch())
+    churchRepository.findById.mockResolvedValue(createChurch())
 
-    const useCase = new CreateMember(memberRepository, churchRepository, queueService)
+    const useCase = new CreateMember(
+      memberRepository,
+      churchRepository,
+      queueService
+    )
     await useCase.execute(validRequest({ active: false }))
 
     expect(memberRepository.upsert).toHaveBeenCalledTimes(1)

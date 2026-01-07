@@ -1,12 +1,8 @@
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { Church, ChurchDTO } from "@/Church/domain"
+import { IRepository } from "@abejarano/ts-mongodb-criteria"
+import { Church } from "@/Church/domain"
 
-export interface IChurchRepository {
-  one(churchId: string): Promise<Church | undefined>
-
-  upsert(church: Church): Promise<void>
-
-  list(criteria: Criteria): Promise<Paginate<ChurchDTO>>
+export interface IChurchRepository extends IRepository<Church> {
+  findById(churchId: string): Promise<Church | undefined>
 
   listByDistrictId(districtId: string): Promise<Church[]>
 

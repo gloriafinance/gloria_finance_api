@@ -15,8 +15,8 @@ export class AvailabilityAccountMasterMongoRepository
   private dbCollectionName = "availability_accounts_master"
   private logger = Logger(AvailabilityAccountMasterMongoRepository.name)
 
-  constructor() {
-    super()
+  private constructor() {
+    super(AvailabilityAccountMaster)
   }
 
   static getInstance(): AvailabilityAccountMasterMongoRepository {
@@ -31,7 +31,7 @@ export class AvailabilityAccountMasterMongoRepository
     return this.dbCollectionName
   }
 
-  async one(
+  async findById(
     availabilityAccountMasterId: string
   ): Promise<AvailabilityAccountMaster | undefined> {
     const collection = await this.collection()

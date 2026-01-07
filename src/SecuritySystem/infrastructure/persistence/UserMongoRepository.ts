@@ -1,19 +1,17 @@
 import { IUserRepository, User } from "../../domain"
 import { ObjectId } from "mongodb"
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria"
+
+interface Repository extends IUserRepository, IRepository<User> {}
 
 export class UserMongoRepository
   extends MongoRepository<User>
-  implements IUserRepository
+  implements Repository
 {
   private static instance: UserMongoRepository
 
   constructor() {
-    super()
+    super(User)
   }
 
   static getInstance(): UserMongoRepository {
@@ -25,10 +23,6 @@ export class UserMongoRepository
 
   collectionName(): string {
     return "bk_users"
-  }
-
-  async upsert(user: User): Promise<void> {
-    await this.persist(user.getId(), user)
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -45,11 +39,6 @@ export class UserMongoRepository
     if (!result) return undefined
 
     return User.fromPrimitives({ ...result, id: result._id.toString() })
-  }
-
-  async fetchCriteria(payload: Criteria): Promise<Paginate<User>> {
-    const documents = await this.searchByCriteria<User>(payload)
-    return this.paginate<User>(documents)
   }
 
   async updatePassword(user: User): Promise<void> {

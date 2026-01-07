@@ -14,7 +14,7 @@ export class CreateOrUpdateBank {
       return
     }
 
-    const bank: Bank = await this.bankRepository.one(requestBank.bankId)
+    const bank: Bank = await this.bankRepository.findById(requestBank.bankId)
 
     if (!bank) {
       throw new BankNotFound()
@@ -44,7 +44,7 @@ export class CreateOrUpdateBank {
   }
 
   private async getChurch(churchId: string): Promise<Church> {
-    const church = await this.churchRepository.one(churchId)
+    const church = await this.churchRepository.findById(churchId)
     if (!church) throw new ChurchNotFound()
 
     return church

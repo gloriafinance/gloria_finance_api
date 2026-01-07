@@ -7,8 +7,8 @@ export class MovementBankMongoRepository
 {
   private static instance: MovementBankMongoRepository
 
-  constructor() {
-    super()
+  private constructor() {
+    super(MovementBank)
   }
 
   static getInstance(): MovementBankMongoRepository {
@@ -16,10 +16,6 @@ export class MovementBankMongoRepository
       MovementBankMongoRepository.instance = new MovementBankMongoRepository()
     }
     return MovementBankMongoRepository.instance
-  }
-
-  async upsert(movementBank: MovementBank): Promise<void> {
-    await this.persist(movementBank.getId(), movementBank)
   }
 
   collectionName(): string {

@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { ISupplierRepository, Supplier } from "@/AccountsPayable/domain"
 
 export class SupplierMongoRepository
@@ -10,6 +6,10 @@ export class SupplierMongoRepository
   implements ISupplierRepository
 {
   private static instance: SupplierMongoRepository
+
+  private constructor() {
+    super(Supplier)
+  }
 
   public static getInstance(): SupplierMongoRepository {
     if (SupplierMongoRepository.instance) {
@@ -23,27 +23,27 @@ export class SupplierMongoRepository
     return "supplier"
   }
 
-  async upsert(supplier: Supplier): Promise<void> {
-    await this.persist(supplier.getId(), supplier)
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<Supplier | undefined>> {
-    const result = await this.searchByCriteria<Supplier>(criteria)
-    return this.paginate<Supplier>(result)
-  }
-
-  async one(filter: object): Promise<Supplier | null> {
-    const collection = await this.collection()
-
-    const result = await collection.findOne(filter)
-
-    return result
-      ? Supplier.fromPrimitives({
-          ...result,
-          id: result._id.toString(),
-        })
-      : undefined
-  }
+  // async upsert(supplier: Supplier): Promise<void> {
+  //   await this.persist(supplier.getId(), supplier)
+  // }
+  //
+  // async list(criteria: Criteria): Promise<Paginate<Supplier | undefined>> {
+  //   const result = await this.searchByCriteria<Supplier>(criteria)
+  //   return this.paginate<Supplier>(result)
+  // }
+  //
+  // async one(filter: object): Promise<Supplier | null> {
+  //   const collection = await this.collection()
+  //
+  //   const result = await collection.findOne(filter)
+  //
+  //   return result
+  //     ? Supplier.fromPrimitives({
+  //         ...result,
+  //         id: result._id.toString(),
+  //       })
+  //     : undefined
+  // }
 
   async all(churchId: string): Promise<Supplier[]> {
     const collection = await this.collection()

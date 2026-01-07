@@ -6,13 +6,13 @@ import {
 } from "@/FinanceConfig/domain"
 
 export class FinancialConfigurationMongoRepository
-  extends MongoRepository<any>
+  extends MongoRepository<FinancialConcept>
   implements IFinancialConfigurationRepository
 {
   private static instance: FinancialConfigurationMongoRepository
 
   constructor() {
-    super()
+    super(FinancialConcept)
   }
 
   static getInstance(): FinancialConfigurationMongoRepository {
@@ -28,7 +28,7 @@ export class FinancialConfigurationMongoRepository
   }
 
   async upsertFinancialConcept(concept: FinancialConcept): Promise<void> {
-    const collection = await this.collection()
+    const collection = await this.collection<FinancialConcept>()
 
     await collection.updateOne(
       { churchId: concept.getChurchId() },
@@ -49,7 +49,7 @@ export class FinancialConfigurationMongoRepository
   }
 
   async upsertCostCenter(costCenter: CostCenter): Promise<void> {
-    const collection = await this.collection()
+    const collection = await this.collection<FinancialConcept>()
 
     await collection.updateOne(
       {

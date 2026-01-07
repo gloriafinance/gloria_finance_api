@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { OnlineContributions } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
 
@@ -12,8 +8,8 @@ export class OnlineContributionsMongoRepository
 {
   private static instance: OnlineContributionsMongoRepository
 
-  constructor() {
-    super()
+  private constructor() {
+    super(OnlineContributions)
   }
 
   static getInstance(): OnlineContributionsMongoRepository {
@@ -26,23 +22,6 @@ export class OnlineContributionsMongoRepository
 
   collectionName(): string {
     return "contributions"
-  }
-
-  async upsert(contribution: OnlineContributions): Promise<void> {
-    await this.persist(contribution.getId(), contribution)
-  }
-
-  async findByCriteria(
-    criteria: Criteria
-  ): Promise<Paginate<OnlineContributions>> {
-    const documents = await this.searchByCriteria<OnlineContributions>(criteria)
-    return this.paginate<OnlineContributions>(documents)
-  }
-
-  async findByMemberId(
-    memberId: string
-  ): Promise<Paginate<OnlineContributions>> {
-    throw new Error("Method not implemented.")
   }
 
   async findById(

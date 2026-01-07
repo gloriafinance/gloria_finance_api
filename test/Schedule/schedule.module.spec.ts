@@ -96,7 +96,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
 class InMemoryChurchRepository implements IChurchRepository {
   constructor(private readonly church: Church) {}
 
-  async one(churchId: string): Promise<Church | undefined> {
+  async findById(churchId: string): Promise<Church | undefined> {
     if (this.church.getChurchId() === churchId) {
       return this.church
     }

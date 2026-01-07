@@ -171,7 +171,7 @@ const parseDate = (value: unknown): Date | undefined => {
 
 const resolveBankForParsing = async (bankId: string): Promise<Bank> => {
   const parserFactory = BankStatementParserFactory.getInstance()
-  const bank = await BankMongoRepository.getInstance().one(bankId)
+  const bank = await BankMongoRepository.getInstance().findById(bankId)
 
   const canResolve = (bankName: string): boolean => {
     try {

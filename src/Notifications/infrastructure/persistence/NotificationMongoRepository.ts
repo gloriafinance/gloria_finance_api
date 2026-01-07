@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
   INotificationRepository,
   NotificationInbox,
@@ -13,6 +9,10 @@ export class NotificationMongoRepository
   implements INotificationRepository
 {
   private static instance: NotificationMongoRepository
+
+  private constructor() {
+    super(NotificationInbox)
+  }
 
   static getInstance(): NotificationMongoRepository {
     if (!NotificationMongoRepository.instance) {
@@ -30,14 +30,5 @@ export class NotificationMongoRepository
     const collection = await this.collection()
 
     await collection.deleteMany({ userId })
-  }
-
-  async upsert(notification: NotificationInbox): Promise<void> {
-    await this.persist(notification.getId(), notification)
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<NotificationInbox>> {
-    const data = await this.searchByCriteria<NotificationInbox>(criteria)
-    return this.paginate(data)
   }
 }

@@ -9,7 +9,7 @@ export class FindChurchById {
   async execute(churchId: string): Promise<Church> {
     this.logger.info(`Search church by id: ${churchId}`)
 
-    const church: Church = await this.churchRepository.one(churchId)
+    const church: Church = await this.churchRepository.findById(churchId)
     if (!church) {
       this.logger.debug(`Church not found`)
       throw new ChurchNotFound()

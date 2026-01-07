@@ -5,7 +5,7 @@ import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 export interface IPurchaseRepository {
   upsert(purchase: Purchase): Promise<void>
 
-  fetch(criteria: Criteria): Promise<Paginate<PurchaseModel>>
+  list(criteria: Criteria): Promise<Paginate<PurchaseModel>>
 
   list(purchaseIds: string[]): Promise<Purchase[]>
 

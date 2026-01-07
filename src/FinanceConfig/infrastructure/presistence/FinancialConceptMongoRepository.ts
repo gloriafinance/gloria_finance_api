@@ -10,6 +10,10 @@ export class FinancialConceptMongoRepository
 {
   private static instance: FinancialConceptMongoRepository
 
+  private constructor() {
+    super(FinancialConcept)
+  }
+
   static getInstance(): FinancialConceptMongoRepository {
     if (!FinancialConceptMongoRepository.instance) {
       FinancialConceptMongoRepository.instance =
@@ -22,20 +26,6 @@ export class FinancialConceptMongoRepository
     return "financial_concepts"
   }
 
-  async one(filter: object): Promise<FinancialConcept | undefined> {
-    const collection = await this.collection()
-    const result = await collection.findOne(filter)
-
-    if (!result) {
-      return undefined
-    }
-
-    return FinancialConcept.fromPrimitives({
-      ...result,
-      id: result._id,
-    })
-  }
-
   async listByCriteria(filter: object): Promise<FinancialConcept[]> {
     const collection = await this.collection()
     const result = await collection.find(filter).sort({ name: 1 }).toArray()
@@ -46,9 +36,5 @@ export class FinancialConceptMongoRepository
         id: concept._id,
       })
     )
-  }
-
-  async upsert(financialConcept: FinancialConcept): Promise<void> {
-    await this.persist(financialConcept.getId(), financialConcept)
   }
 }

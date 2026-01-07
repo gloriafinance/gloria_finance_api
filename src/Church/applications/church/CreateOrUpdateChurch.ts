@@ -31,7 +31,7 @@ export class CreateOrUpdateChurch {
       return church
     }
 
-    church = await this.churchRepository.one(churchRequest.churchId)
+    church = await this.churchRepository.findById(churchRequest.churchId)
     if (!church) {
       throw new ChurchNotFound()
     }

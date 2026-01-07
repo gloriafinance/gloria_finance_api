@@ -1,4 +1,4 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { AggregateRoot, MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IRolePermissionRepository } from "@/SecuritySystem/domain"
 
 export class RolePermissionMongoRepository
@@ -6,6 +6,10 @@ export class RolePermissionMongoRepository
   implements IRolePermissionRepository
 {
   private static instance: RolePermissionMongoRepository
+
+  private constructor() {
+    super(AggregateRoot)
+  }
 
   static getInstance(): RolePermissionMongoRepository {
     if (!RolePermissionMongoRepository.instance) {

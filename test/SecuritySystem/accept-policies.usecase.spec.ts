@@ -1,9 +1,5 @@
 import { AcceptPolicies } from "@/SecuritySystem/applications/AcceptPolicies"
-import {
-  IUserRepository,
-  User,
-  UserNotFound,
-} from "@/SecuritySystem/domain"
+import { IUserRepository, User, UserNotFound } from "@/SecuritySystem/domain"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 
 class InMemoryUserRepository implements IUserRepository {
@@ -24,7 +20,7 @@ class InMemoryUserRepository implements IUserRepository {
     this.users.set(user.getUserId(), user)
   }
 
-  async fetchCriteria(_payload: Criteria): Promise<Paginate<User>> {
+  async list(_payload: Criteria): Promise<Paginate<User>> {
     return {
       count: this.users.size,
       nextPag: null,

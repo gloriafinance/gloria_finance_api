@@ -11,6 +11,10 @@ export class UserAssignmentMongoRepository
 {
   private static instance: UserAssignmentMongoRepository
 
+  private constructor() {
+    super(UserAssignment)
+  }
+
   static getInstance(): UserAssignmentMongoRepository {
     if (!UserAssignmentMongoRepository.instance) {
       UserAssignmentMongoRepository.instance =

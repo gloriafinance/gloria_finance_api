@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IScheduleItemRepository, ScheduleEvent } from "@/Schedule/domain"
 
 export class ScheduleItemMongoRepository
@@ -11,6 +7,10 @@ export class ScheduleItemMongoRepository
 {
   private static instance: ScheduleItemMongoRepository
   private indexesInitialized = false
+
+  private constructor() {
+    super(ScheduleEvent)
+  }
 
   static getInstance(): ScheduleItemMongoRepository {
     if (!ScheduleItemMongoRepository.instance) {
@@ -23,58 +23,6 @@ export class ScheduleItemMongoRepository
     return "schedule_events"
   }
 
-  async upsert(scheduleItem: ScheduleEvent): Promise<void> {
-    await this.persist(scheduleItem.getId(), scheduleItem)
-  }
-
-  // async create(scheduleItem: ScheduleItem): Promise<void> {
-  //   await this.ensureIndexes()
-  //   const collection = await this.collection()
-  //
-  //   await collection.updateOne(
-  //     {
-  //       churchId: scheduleItem.getChurchId(),
-  //       scheduleItemId: scheduleItem.getScheduleItemId(),
-  //     },
-  //     {
-  //       $set: scheduleItem.toPrimitives() as any,
-  //     },
-  //     { upsert: true }
-  //   )
-  // }
-  //
-  // async update(scheduleItem: ScheduleItem): Promise<void> {
-  //   await this.ensureIndexes()
-  //   const collection = await this.collection()
-  //
-  //   await collection.updateOne(
-  //     {
-  //       churchId: scheduleItem.getChurchId(),
-  //       scheduleItemId: scheduleItem.getScheduleItemId(),
-  //     },
-  //     {
-  //       $set: scheduleItem.toPrimitives() as any,
-  //     }
-  //   )
-  // }
-
-  // async findById(
-  //   churchId: string,
-  //   scheduleItemId: string
-  // ): Promise<ScheduleItem | null> {
-  //   const collection = await this.collection()
-  //   const result = await collection.findOne({ churchId, scheduleItemId })
-  //
-  //   if (!result) {
-  //     return null
-  //   }
-  //
-  //   return ScheduleItem.fromPrimitives({
-  //     id: result._id,
-  //     ...result,
-  //   })
-  // }
-
   async one(filter: object): Promise<ScheduleEvent | undefined> {
     const collection = await this.collection()
     const data = await collection.findOne(filter)
@@ -85,11 +33,6 @@ export class ScheduleItemMongoRepository
       id: data._id,
       ...data,
     })
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<ScheduleEvent>> {
-    const result = await this.searchByCriteria<ScheduleEvent>(criteria)
-    return this.paginate<ScheduleEvent>(result)
   }
 
   async findManyByChurch(

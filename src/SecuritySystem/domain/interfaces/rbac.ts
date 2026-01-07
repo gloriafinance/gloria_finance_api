@@ -1,17 +1,23 @@
 import { Permission, Role, UserAssignment } from "../index"
+import { Criteria, IRepository, Paginate } from "@abejarano/ts-mongodb-criteria"
 
-export interface IPermissionRepository {
+export interface IPermissionRepository extends IRepository<Permission> {
   findByIds(permissionIds: string[]): Promise<Permission[]>
+
   findByModuleAction(module: string, action: string): Promise<Permission | null>
-  upsert(permission: Permission): Promise<void>
+
   list(): Promise<Permission[]>
+
+  list(criteria: Criteria): Promise<Paginate<Permission>>
 }
 
-export interface IRoleRepository {
+export interface IRoleRepository extends IRepository<Role> {
   findByRoleId(churchId: string, roleId: string): Promise<Role | null>
+
   findByName(churchId: string, name: string): Promise<Role | null>
-  upsert(role: Role): Promise<void>
+
   list(churchId: string): Promise<Role[]>
+  list(criteria: Criteria): Promise<Paginate<Role>>
 }
 
 export interface IRolePermissionRepository {
@@ -20,7 +26,9 @@ export interface IRolePermissionRepository {
     roleId: string,
     permissionIds: string[]
   ): Promise<void>
+
   findPermissionIdsByRole(churchId: string, roleId: string): Promise<string[]>
+
   findPermissionIdsByRoles(
     churchId: string,
     roleIds: string[]
@@ -33,6 +41,8 @@ export interface IUserAssignmentRepository {
     userId: string,
     roles: string[]
   ): Promise<UserAssignment>
+
   findByUser(churchId: string, userId: string): Promise<UserAssignment | null>
+
   findUserIdsByRole(churchId: string, roleId: string): Promise<string[]>
 }

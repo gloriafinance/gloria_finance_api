@@ -1,14 +1,9 @@
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Filter } from "mongodb"
 import {
   Asset,
   AssetListFilters,
   AssetModel,
-  AssetInventoryChecker,
   IAssetRepository,
 } from "@/Patrimony"
 
@@ -17,6 +12,10 @@ export class AssetMongoRepository
   implements IAssetRepository
 {
   private static instance: AssetMongoRepository
+
+  private constructor() {
+    super(Asset)
+  }
 
   static getInstance(): AssetMongoRepository {
     if (!AssetMongoRepository.instance) {
@@ -28,31 +27,6 @@ export class AssetMongoRepository
 
   collectionName(): string {
     return "patrimony_assets"
-  }
-
-  async upsert(asset: Asset): Promise<void> {
-    await this.persist(asset.getId(), asset)
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<AssetModel>> {
-    const documents = await this.searchByCriteria(criteria)
-    const paginated = await this.paginate(documents)
-
-    return {
-      ...paginated,
-      results: paginated.results.map((doc) => this.mapToModel(doc)),
-    }
-  }
-
-  async one(filter: Record<string, unknown>): Promise<Asset | undefined> {
-    const collection = await this.collection()
-    const document = await collection.findOne(filter)
-
-    if (!document) {
-      return undefined
-    }
-
-    return Asset.fromPrimitives(this.mapToPrimitives(document))
   }
 
   async count(filters?: AssetListFilters): Promise<number> {
@@ -156,12 +130,6 @@ export class AssetMongoRepository
       disposal,
       createdAt: document.createdAt ? new Date(document.createdAt) : new Date(),
       updatedAt: document.updatedAt ? new Date(document.updatedAt) : new Date(),
-    }
-  }
-
-  private mapToPrimitives(document: any) {
-    return {
-      ...this.mapToModel(document),
     }
   }
 }

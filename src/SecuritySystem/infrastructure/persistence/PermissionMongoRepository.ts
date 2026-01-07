@@ -1,4 +1,8 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  MongoRepository,
+  Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { IPermissionRepository, Permission } from "@/SecuritySystem/domain"
 
 export class PermissionMongoRepository
@@ -6,6 +10,10 @@ export class PermissionMongoRepository
   implements IPermissionRepository
 {
   private static instance: PermissionMongoRepository
+
+  private constructor() {
+    super(Permission)
+  }
 
   static getInstance(): PermissionMongoRepository {
     if (!PermissionMongoRepository.instance) {
@@ -54,19 +62,10 @@ export class PermissionMongoRepository
     })
   }
 
-  async upsert(permission: Permission): Promise<void> {
-    const collection = await this.collection()
-    const primitive = permission.toPrimitives()
-    const { id, ...rest } = primitive
+  list(): Promise<Permission[]>
 
-    await collection.updateOne(
-      { permissionId: primitive.permissionId },
-      { $set: rest },
-      { upsert: true }
-    )
-  }
-
-  async list(): Promise<Permission[]> {
+  list(criteria: Criteria): Promise<Paginate<Permission>>
+  override async list(): Promise<Permission[] | Paginate<Permission>> {
     const collection = await this.collection()
     const documents = await collection.find({}).toArray()
 

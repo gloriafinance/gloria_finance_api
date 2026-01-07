@@ -39,7 +39,8 @@ export class UpdateCostCenterMasterJob implements IJob {
         churchId
       )
 
-    let costCenterMaster = await this.costCenterMasterRepository.one(identify)
+    let costCenterMaster =
+      await this.costCenterMasterRepository.findById(identify)
 
     if (!costCenterMaster) {
       costCenterMaster = CostCenterMaster.create(costCenter)

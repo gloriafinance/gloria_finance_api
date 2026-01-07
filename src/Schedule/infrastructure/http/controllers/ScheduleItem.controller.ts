@@ -110,6 +110,43 @@ export class ScheduleController {
     }
   }
 
+  @Get("/weekly")
+  @Use([
+    PermissionMiddleware,
+    Can("schedule", ["configure", "read"]),
+    WeeklyScheduleQueryValidator,
+  ])
+  async weeklySchedule(
+    @Query() query: WeeklyScheduleQuery,
+    @Res() res: Response,
+    @Req() req: AuthenticatedRequest
+  ) {
+    const churchId = ensureChurchScope(req, res)
+    if (!churchId) return
+
+    try {
+      const visibilityScope =
+        query.visibilityScope ||
+        (req.auth?.permissions?.some((permission) =>
+          ["schedule:manage", "schedule:configure"].includes(permission)
+        )
+          ? ScheduleEventVisibility.INTERNAL_LEADERS
+          : ScheduleEventVisibility.PUBLIC)
+
+      const occurrences = await new ListWeeklyScheduleOccurrences(
+        ScheduleItemMongoRepository.getInstance()
+      ).execute({
+        churchId,
+        weekStartDate: query.weekStartDate,
+        visibilityScope,
+      })
+
+      res.status(HttpStatus.OK).send(occurrences)
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
   @Get("/:scheduleItemId")
   @Use([PermissionMiddleware, Can("schedule", ["configure", "read"])])
   async getScheduleItem(
@@ -221,43 +258,6 @@ export class ScheduleController {
       res
         .status(HttpStatus.OK)
         .send({ message: "Schedule item activated successfully" })
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Get("/weekly")
-  @Use([
-    PermissionMiddleware,
-    Can("schedule", ["configure", "read"]),
-    WeeklyScheduleQueryValidator,
-  ])
-  async weeklySchedule(
-    @Query() query: WeeklyScheduleQuery,
-    @Res() res: Response,
-    @Req() req: AuthenticatedRequest
-  ) {
-    const churchId = ensureChurchScope(req, res)
-    if (!churchId) return
-
-    try {
-      const visibilityScope =
-        query.visibilityScope ||
-        (req.auth?.permissions?.some((permission) =>
-          ["schedule:manage", "schedule:configure"].includes(permission)
-        )
-          ? ScheduleEventVisibility.INTERNAL_LEADERS
-          : ScheduleEventVisibility.PUBLIC)
-
-      const occurrences = await new ListWeeklyScheduleOccurrences(
-        ScheduleItemMongoRepository.getInstance()
-      ).execute({
-        churchId,
-        weekStartDate: query.weekStartDate,
-        visibilityScope,
-      })
-
-      res.status(HttpStatus.OK).send(occurrences)
     } catch (error) {
       domainResponse(error, res)
     }
