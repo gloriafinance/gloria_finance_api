@@ -6,6 +6,7 @@ import {
 } from "../../domain"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Logger } from "@/Shared/adapter"
+import { Collection } from "mongodb"
 
 export class AvailabilityAccountMasterMongoRepository
   extends MongoRepository<AvailabilityAccountMaster>
@@ -272,5 +273,9 @@ export class AvailabilityAccountMasterMongoRepository
       .toArray()
 
     return result.map((r) => AvailabilityAccountMaster.fromPrimitives(r))
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

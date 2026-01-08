@@ -3,6 +3,7 @@ import {
   AccountPayable,
   IAccountPayableRepository,
 } from "@/AccountsPayable/domain"
+import { Collection } from "mongodb"
 
 export class AccountsPayableMongoRepository
   extends MongoRepository<AccountPayable>
@@ -25,6 +26,10 @@ export class AccountsPayableMongoRepository
 
   collectionName(): string {
     return "accounts_payable"
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 
   // async list(criteria: Criteria): Promise<Paginate<AccountPayable>> {

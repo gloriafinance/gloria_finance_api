@@ -6,6 +6,7 @@ import {
   MongoRepository,
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
 
 export class PurchaseMongoRepository
   extends MongoRepository<Purchase>
@@ -53,5 +54,9 @@ export class PurchaseMongoRepository
     return purchases.map((p) =>
       Purchase.fromPrimitives({ ...p, id: p._id.toString() })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

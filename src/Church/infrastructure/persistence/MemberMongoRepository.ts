@@ -4,6 +4,7 @@ import {
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import { IMemberRepository, Member } from "../../domain"
+import { Collection } from "mongodb"
 
 export class MemberMongoRepository
   extends MongoRepository<Member>
@@ -61,5 +62,9 @@ export class MemberMongoRepository
         id: item._id.toString(),
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

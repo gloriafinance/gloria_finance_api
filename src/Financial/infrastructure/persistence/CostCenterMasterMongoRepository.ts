@@ -6,6 +6,7 @@ import {
 } from "../../domain"
 import { ICostCenterMasterRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
+import { Collection } from "mongodb"
 
 export class CostCenterMasterMongoRepository
   extends MongoRepository<CostCenterMaster>
@@ -225,5 +226,9 @@ export class CostCenterMasterMongoRepository
       .toArray()
 
     return result.map((r) => CostCenterMaster.fromPrimitives(r))
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

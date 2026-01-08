@@ -1,6 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Customer } from "@/Customers/domain/Customer"
 import { ICustomerRepository } from "@/Customers/domain/interfaces/CustomerRepository.interface"
+import { Collection } from "mongodb"
 
 export class CustomerMongoRepository
   extends MongoRepository<Customer>
@@ -23,5 +24,9 @@ export class CustomerMongoRepository
 
   collectionName(): string {
     return "customers"
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

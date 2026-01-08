@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IMinisterRepository, Minister } from "../../domain"
+import { Collection } from "mongodb"
 
 export class MinisterMongoRepository
   extends MongoRepository<Minister>
@@ -69,6 +70,10 @@ export class MinisterMongoRepository
       false,
       Minister.fromPrimitives({ id: result._id.toString(), ...result }),
     ]
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 
   private async buildMinister(filter: {}): Promise<Minister> {

@@ -1,6 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IBankRepository } from "@/Banking/domain/"
 import { Bank } from "@/Banking/domain/Bank"
+import { Collection } from "mongodb"
 
 export class BankMongoRepository
   extends MongoRepository<Bank>
@@ -84,5 +85,9 @@ export class BankMongoRepository
         ...bank,
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

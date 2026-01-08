@@ -1,6 +1,6 @@
 {
   "name": "church_financial_api",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "@abejarano/ts-express-server": "^1.5.3",
-    "@abejarano/ts-mongodb-criteria": "^1.5.2",
+    "@abejarano/ts-mongodb-criteria": "^1.6.0",
     "@bull-board/express": "^6.16.2",
     "@fast-csv/parse": "^5.0.5",
     "@google-cloud/logging": "^11.2.1",

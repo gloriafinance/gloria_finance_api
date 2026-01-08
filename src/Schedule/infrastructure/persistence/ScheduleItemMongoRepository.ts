@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IScheduleItemRepository, ScheduleEvent } from "@/Schedule/domain"
+import { Collection } from "mongodb"
 
 export class ScheduleItemMongoRepository
   extends MongoRepository<ScheduleEvent>
@@ -64,5 +65,9 @@ export class ScheduleItemMongoRepository
         ...document,
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

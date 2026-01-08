@@ -8,6 +8,7 @@ import {
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
 
 const REALIZED_STATUSES = [
   FinancialRecordStatus.CLEARED,
@@ -192,5 +193,9 @@ export class FinanceRecordMongoRepository
       expenses: item.expenses ?? 0,
       reversal: item.reversal ?? 0,
     }))
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

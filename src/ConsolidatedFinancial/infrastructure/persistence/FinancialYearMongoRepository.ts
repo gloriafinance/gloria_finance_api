@@ -4,6 +4,7 @@ import {
   MongoRepository,
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
 
 export class FinancialYearMongoRepository
   extends MongoRepository<FinancialMonth>
@@ -56,5 +57,9 @@ export class FinancialYearMongoRepository
         ...result,
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

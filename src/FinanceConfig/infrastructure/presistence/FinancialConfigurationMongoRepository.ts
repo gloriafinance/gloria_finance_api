@@ -4,6 +4,7 @@ import {
   FinancialConcept,
   IFinancialConfigurationRepository,
 } from "@/FinanceConfig/domain"
+import { Collection } from "mongodb"
 
 export class FinancialConfigurationMongoRepository
   extends MongoRepository<FinancialConcept>
@@ -123,5 +124,9 @@ export class FinancialConfigurationMongoRepository
       )
     }
     return listCostCenter
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

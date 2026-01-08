@@ -4,6 +4,7 @@ import {
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import { IRoleRepository, Role } from "@/SecuritySystem/domain"
+import { Collection } from "mongodb"
 
 export class RoleMongoRepository
   extends MongoRepository<Role>
@@ -72,5 +73,9 @@ export class RoleMongoRepository
         id: document._id?.toString(),
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

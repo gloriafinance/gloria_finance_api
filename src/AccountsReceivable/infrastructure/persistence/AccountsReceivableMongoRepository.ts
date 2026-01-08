@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivable, IAccountsReceivableRepository } from "../../domain"
+import { Collection } from "mongodb"
 
 export class AccountsReceivableMongoRepository
   extends MongoRepository<AccountReceivable>
@@ -22,5 +23,8 @@ export class AccountsReceivableMongoRepository
 
   collectionName(): string {
     return "accounts_receivable"
+  }
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

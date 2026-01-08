@@ -4,6 +4,7 @@ import {
   Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import { IPermissionRepository, Permission } from "@/SecuritySystem/domain"
+import { Collection } from "mongodb"
 
 export class PermissionMongoRepository
   extends MongoRepository<Permission>
@@ -75,5 +76,9 @@ export class PermissionMongoRepository
         id: document._id?.toString(),
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }
