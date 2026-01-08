@@ -1,5 +1,6 @@
 import { AggregateRoot, MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IRolePermissionRepository } from "@/SecuritySystem/domain"
+import { Collection } from "mongodb"
 
 export class RolePermissionMongoRepository
   extends MongoRepository<any>
@@ -70,5 +71,9 @@ export class RolePermissionMongoRepository
     const documents = await collection.find({ churchId, roleId }).toArray()
 
     return documents.map((document) => document.permissionId)
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

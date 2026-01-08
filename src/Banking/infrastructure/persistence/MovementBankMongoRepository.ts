@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { IMovementBankRepository, MovementBank } from "@/Banking/domain"
+import { Collection } from "mongodb"
 
 export class MovementBankMongoRepository
   extends MongoRepository<MovementBank>
@@ -20,5 +21,9 @@ export class MovementBankMongoRepository
 
   collectionName(): string {
     return "movement_bank"
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

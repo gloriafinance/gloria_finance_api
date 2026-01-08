@@ -1,5 +1,6 @@
 import { IWorldRepository, States } from "../../domain"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
 
 export class WorldMongoRepository
   extends MongoRepository<any>
@@ -39,5 +40,9 @@ export class WorldMongoRepository
     return result.map((state) =>
       States.fromPrimitives({ ...state, id: state._id })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

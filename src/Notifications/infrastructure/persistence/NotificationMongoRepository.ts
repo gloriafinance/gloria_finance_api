@@ -3,6 +3,7 @@ import {
   INotificationRepository,
   NotificationInbox,
 } from "@/Notifications/domain"
+import { Collection } from "mongodb"
 
 export class NotificationMongoRepository
   extends MongoRepository<NotificationInbox>
@@ -30,5 +31,9 @@ export class NotificationMongoRepository
     const collection = await this.collection()
 
     await collection.deleteMany({ userId })
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

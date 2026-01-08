@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { DREMaster, IDRERepository } from "@/Reports/domain"
+import { Collection } from "mongodb"
 
 export class DREMongoRepository
   extends MongoRepository<DREMaster>
@@ -40,5 +41,9 @@ export class DREMongoRepository
       id: result._id.toString(),
       ...result,
     })
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

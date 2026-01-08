@@ -1,11 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { Filter } from "mongodb"
-import {
-  Asset,
-  AssetListFilters,
-  AssetModel,
-  IAssetRepository,
-} from "@/Patrimony"
+import { Collection, Filter } from "mongodb"
+import { Asset, AssetListFilters, AssetModel, IAssetRepository, } from "@/Patrimony"
 
 export class AssetMongoRepository
   extends MongoRepository<Asset>
@@ -41,6 +36,10 @@ export class AssetMongoRepository
     const documents = await collection.find(query).sort({ name: 1 }).toArray()
 
     return documents.map((doc) => this.mapToModel(doc))
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 
   private buildQuery(filters?: AssetListFilters, search?: string): Filter<any> {

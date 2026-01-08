@@ -7,6 +7,7 @@ import {
   AvailabilityAccount,
   IAvailabilityAccountRepository,
 } from "@/FinanceConfig/domain"
+import { Collection } from "mongodb"
 
 export class AvailabilityAccountMongoRepository
   extends MongoRepository<AvailabilityAccount>
@@ -44,5 +45,9 @@ export class AvailabilityAccountMongoRepository
         id: document._id,
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

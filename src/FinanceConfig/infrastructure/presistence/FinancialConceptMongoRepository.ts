@@ -3,6 +3,7 @@ import {
   FinancialConcept,
   IFinancialConceptRepository,
 } from "@/FinanceConfig/domain"
+import { Collection } from "mongodb"
 
 export class FinancialConceptMongoRepository
   extends MongoRepository<FinancialConcept>
@@ -36,5 +37,9 @@ export class FinancialConceptMongoRepository
         id: concept._id,
       })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

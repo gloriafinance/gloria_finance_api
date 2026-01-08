@@ -1,5 +1,5 @@
 import { IUserRepository, User } from "../../domain"
-import { ObjectId } from "mongodb"
+import { Collection, ObjectId } from "mongodb"
 import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 interface Repository extends IUserRepository, IRepository<User> {}
@@ -52,5 +52,9 @@ export class UserMongoRepository
         },
       }
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

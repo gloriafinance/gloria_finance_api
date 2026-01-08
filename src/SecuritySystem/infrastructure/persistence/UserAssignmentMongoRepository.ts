@@ -4,6 +4,7 @@ import {
   IUserAssignmentRepository,
   UserAssignment,
 } from "@/SecuritySystem/domain"
+import { Collection } from "mongodb"
 
 export class UserAssignmentMongoRepository
   extends MongoRepository<UserAssignment>
@@ -70,5 +71,9 @@ export class UserAssignmentMongoRepository
       .toArray()
 
     return documents.map((document) => document.userId)
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

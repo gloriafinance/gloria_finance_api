@@ -1,6 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { OnlineContributions } from "../../domain"
 import { IOnlineContributionsRepository } from "../../domain/interfaces"
+import { Collection } from "mongodb"
 
 export class OnlineContributionsMongoRepository
   extends MongoRepository<OnlineContributions>
@@ -38,5 +39,9 @@ export class OnlineContributionsMongoRepository
       id: result._id.toString(),
       ...result,
     })
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

@@ -5,6 +5,7 @@ import {
   IBankStatementRepository,
 } from "@/Banking/domain"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
 
 const COLLECTION_NAME = "bank_statements"
 
@@ -82,5 +83,9 @@ export class BankStatementMongoRepository
     }
 
     await collection.updateOne({ bankStatementId: statementId }, operations)
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }

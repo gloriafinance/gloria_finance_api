@@ -1,5 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Church, IChurchRepository } from "../../domain"
+import { Collection } from "mongodb"
 
 export class ChurchMongoRepository
   extends MongoRepository<Church>
@@ -75,5 +76,9 @@ export class ChurchMongoRepository
     return result.map((church) =>
       Church.fromPrimitives({ id: church._id.toString(), ...church })
     )
+  }
+
+  protected ensureIndexes(collection: Collection): Promise<void> {
+    return Promise.resolve(undefined)
   }
 }
