@@ -1,10 +1,32 @@
-import { Response } from "express"
+import { Request, Response } from "express"
 import { Logger } from "@/Shared/adapter"
 import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
 
 export function Cache(prefix: string, ttlSeconds: number = 300) {
   const logger = Logger(Cache.name)
   const cacheService = CacheService.getInstance()
+  const isResponse = (arg: any): arg is Response =>
+    arg !== null && typeof arg === "object" && "status" in arg && "send" in arg
+  const isRequest = (arg: any): arg is Request =>
+    arg !== null &&
+    typeof arg === "object" &&
+    "method" in arg &&
+    "url" in arg &&
+    "headers" in arg
+  const safeStringify = (value: unknown) => {
+    const seen = new WeakSet()
+    try {
+      return JSON.stringify(value, (_key, val) => {
+        if (typeof val === "object" && val !== null) {
+          if (seen.has(val)) return "[Circular]"
+          seen.add(val)
+        }
+        return val
+      })
+    } catch {
+      return String(value)
+    }
+  }
 
   return function (
     target: any,
@@ -16,16 +38,12 @@ export function Cache(prefix: string, ttlSeconds: number = 300) {
     descriptor.value = async function (...args: any[]) {
       // Obtenemos los parámetros para la clave de caché (todos menos el Response)
       const cacheParams = args
-        .filter((arg) =>
-          arg !== null &&
-          typeof arg === "object" &&
-          "status" in arg &&
-          "send" in arg
-            ? false
-            : true
+        .filter(
+          (arg) =>
+            !isResponse(arg) && !isRequest(arg) && typeof arg !== "function"
         )
         .map((param) =>
-          typeof param === "object" ? JSON.stringify(param) : String(param)
+          typeof param === "object" ? safeStringify(param) : String(param)
         )
         .join(":")
 
@@ -33,13 +51,10 @@ export function Cache(prefix: string, ttlSeconds: number = 300) {
       const cacheKey = `${prefix}:${propertyKey}${cacheParams ? ":" + cacheParams : ""}`
 
       // Buscamos el objeto Response por sus propiedades características
-      const res = args.find(
-        (arg) =>
-          arg !== null &&
-          typeof arg === "object" &&
-          "status" in arg &&
-          "send" in arg
-      ) as Response<any, Record<string, any>>
+      const res = args.find((arg) => isResponse(arg)) as Response<
+        any,
+        Record<string, any>
+      >
 
       if (!res) {
         logger.error(`No response object found for ${cacheKey}`)

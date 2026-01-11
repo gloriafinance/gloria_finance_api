@@ -53,8 +53,10 @@ export class MemberMongoRepository
     const collection = await this.collection()
 
     const result = filter
-      ? await collection.find({ churchId, ...filter }).toArray()
-      : await collection.find({ churchId }).toArray()
+      ? await collection
+          .find({ "church.churchId": churchId, ...filter })
+          .toArray()
+      : await collection.find({ "church.churchId": churchId }).toArray()
 
     return result.map((item) =>
       Member.fromPrimitives({
@@ -64,7 +66,9 @@ export class MemberMongoRepository
     )
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex({ "church.churchId": 1 })
+    await collection.createIndex({ memberId: 1 })
+    await collection.createIndex({ dni: 1 }, { unique: true })
   }
 }

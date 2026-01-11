@@ -1,6 +1,11 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection, Filter } from "mongodb"
-import { Asset, AssetListFilters, AssetModel, IAssetRepository, } from "@/Patrimony"
+import {
+  Asset,
+  AssetListFilters,
+  AssetModel,
+  IAssetRepository,
+} from "@/Patrimony"
 
 export class AssetMongoRepository
   extends MongoRepository<Asset>

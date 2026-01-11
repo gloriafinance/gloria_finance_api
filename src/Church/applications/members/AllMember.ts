@@ -7,7 +7,7 @@ export class AllMember {
   constructor(private readonly memberRepository: IMemberRepository) {}
 
   async execute(churchId: string): Promise<any> {
-    this.logger.info(`search all members`)
+    this.logger.info(`search all members churchId ${churchId}`)
 
     return await this.memberRepository.all(churchId)
   }

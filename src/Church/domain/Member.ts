@@ -17,7 +17,6 @@ export class Member extends AggregateRoot {
   private conversionDate: Date
   private baptismDate?: Date
   private birthdate: Date
-  //private churchId: string
   private church: {
     churchId: string
     name: string
@@ -62,7 +61,6 @@ export class Member extends AggregateRoot {
     m.baptismDate = baptismDate
 
     m.church = { churchId: church.getChurchId(), name: church.getName() }
-    //m.churchId = church.getChurchId()
 
     m.birthdate = birthdate
     m.memberId = IdentifyEntity.get(`member`)
@@ -99,7 +97,6 @@ export class Member extends AggregateRoot {
     m.isTreasurer = plainData.isTreasurer
 
     m.church = plainData.church
-    //m.churchId = plainData.church.churchId
 
     m.id = plainData.id
     m.active = plainData.active
