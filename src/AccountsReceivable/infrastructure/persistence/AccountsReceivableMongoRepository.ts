@@ -24,7 +24,7 @@ export class AccountsReceivableMongoRepository
   collectionName(): string {
     return "accounts_receivable"
   }
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex({ accountReceivableId: 1 }, { unique: true })
   }
 }
