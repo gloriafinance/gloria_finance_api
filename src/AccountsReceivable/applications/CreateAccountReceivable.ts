@@ -36,6 +36,7 @@ export class CreateAccountReceivable {
 
     const account = AccountReceivable.create({
       ...requestAccountReceivable,
+      churchId: requestAccountReceivable.church.getChurchId(),
       financialConcept,
     })
 
