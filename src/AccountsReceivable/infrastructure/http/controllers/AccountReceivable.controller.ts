@@ -9,6 +9,7 @@ import {
   Use,
 } from "@abejarano/ts-express-server"
 import {
+  AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
@@ -56,13 +57,13 @@ export class AccountReceivableController {
   ])
   async create(
     @Body() body: AccountReceivableRequest,
-    @Req() req: Request,
+    @Req() req: AuthenticatedRequest,
     @Res() res: Response
   ) {
     try {
       const church = await new FindChurchById(
         ChurchMongoRepository.getInstance()
-      ).execute(body.churchId)
+      ).execute(req.auth.churchId)
 
       const account = await new CreateAccountReceivable(
         AccountsReceivableMongoRepository.getInstance(),

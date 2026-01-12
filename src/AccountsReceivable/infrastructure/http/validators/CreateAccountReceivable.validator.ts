@@ -9,7 +9,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
   logger.info(`Validating  ${JSON.stringify(payload)}`)
 
-  const rule = {
+  const rule: Record<string, string> = {
     debtor: "required|object",
     "debtor.debtorType": "required|string|in:MEMBER,GROUP,EXTERNAL",
     type: "required|string|in:CONTRIBUTION,SERVICE,INTERINSTITUTIONAL,RENTAL,LOAN,FINANCIAL,LEGAL",
@@ -23,6 +23,10 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     "installments.*.amount": "required|numeric",
     "installments.*.dueDate": "required|dateFormat:YYYY-MM-DD",
     financialConceptId: "required|string",
+  }
+
+  if (payload.type === "CONTRIBUTION") {
+    delete rule["installments.*.amount"]
   }
 
   const v = new Validator(payload, rule)

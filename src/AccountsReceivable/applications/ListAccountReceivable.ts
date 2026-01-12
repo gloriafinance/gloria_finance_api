@@ -23,7 +23,7 @@ export class ListAccountReceivable {
   async execute(
     request: FilterAccountReceivableRequest
   ): Promise<Paginate<AccountReceivable>> {
-    this.logger.info(`Start List Account Receivable`)
+    this.logger.info(`Start List Account Receivable`, request)
 
     return this.accountReceivableRepository.list(this.prepareCriteria(request))
   }
