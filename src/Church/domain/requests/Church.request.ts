@@ -14,4 +14,6 @@ export type ChurchRequest = {
   regionId: string
   status: ChurchStatus
   lang?: string
+  symbolFormatMoney?: string
+  country: string
 }

@@ -68,6 +68,7 @@ export class UserController {
         name: string
         lang: string
         country: string
+        symbolFormatMoney: string
       }
 
       const c = await new FindChurchById(
@@ -79,6 +80,7 @@ export class UserController {
         name: c.getName(),
         lang: c.getLang(),
         country: c.getCountry(),
+        symbolFormatMoney: c.getSymbolFormatMoney(),
       }
 
       if (!user.isSuperUser) {
@@ -107,6 +109,7 @@ export class UserController {
         name: user.getName(),
         memberId: user.getMemberId(),
         lang: church.lang,
+        symbolFormatMoney: church.symbolFormatMoney,
         isSuperUser: user.isSuperUser,
       })
 

@@ -80,6 +80,8 @@ export class CreateOrUpdateChurch {
       email: churchRequest.email,
       openingDate: churchRequest.openingDate,
       lang: churchRequest.lang,
+      symbolFormatMoney: churchRequest.symbolFormatMoney,
+      country: churchRequest.country,
       //region,
       registerNumber: churchRequest.registerNumber,
     })

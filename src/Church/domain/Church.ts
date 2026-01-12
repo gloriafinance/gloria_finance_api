@@ -20,6 +20,7 @@ export class Church extends AggregateRoot {
   private ministerId: string
   private lang: string
   private country: string
+  private symbolFormatMoney: string
   //private region: Region;
   private status: ChurchStatus
   private createdAt: Date
@@ -35,8 +36,9 @@ export class Church extends AggregateRoot {
     openingDate: Date
     //region: Region,
     lang: string
-    country?: string
+    country: string
     registerNumber?: string
+    symbolFormatMoney?: string
   }): Church {
     const {
       name,
@@ -50,7 +52,7 @@ export class Church extends AggregateRoot {
       openingDate,
       lang,
       country,
-
+      symbolFormatMoney,
       //region,
     } = params
     const c: Church = new Church()
@@ -66,6 +68,7 @@ export class Church extends AggregateRoot {
     c.openingDate = openingDate
     c.lang = lang
     c.country = country
+    c.symbolFormatMoney = symbolFormatMoney
     //c.region = region;
     c.createdAt = DateBR()
     c.churchId = IdentifyEntity.get(`church`)
@@ -90,6 +93,7 @@ export class Church extends AggregateRoot {
     c.openingDate = plainData.openingDate
     c.ministerId = plainData.ministerId
     c.lang = plainData.lang ?? "pt-BR"
+    c.symbolFormatMoney = plainData.symbolFormatMoney ?? "R\$"
     //c.region = Region.fromPrimitives(plainData.region);
     c.status = plainData.status
 
@@ -153,6 +157,10 @@ export class Church extends AggregateRoot {
     return this.country
   }
 
+  getSymbolFormatMoney() {
+    return this.symbolFormatMoney
+  }
+
   getName(): string {
     return this.name
   }
@@ -191,6 +199,7 @@ export class Church extends AggregateRoot {
       status: this.status,
       lang: this.lang,
       country: this.country,
+      symbolFormatMoney: this.symbolFormatMoney,
     }
   }
 }
