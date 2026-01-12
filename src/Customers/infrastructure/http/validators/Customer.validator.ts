@@ -14,14 +14,12 @@ export default async (req, res, next) => {
     "representative.phone": "required|string",
     "representative.rol": "required|string",
     name: "required|string",
-    email: "required|email",
-    phone: "required|string",
+    lang: "string|in:pt-BR,es,en",
     "address.street": "required|string",
-    "address.number": "required|string",
+    "address.number": "string",
     "address.city": "required|string",
     "address.postalCode": "string",
-    "address.country": "required|string",
-    lang: "string|in:pt-BR,es,en",
+    "address.country": "required|string|maxLength:2",
   }
 
   const v = new Validator(payload, rule)

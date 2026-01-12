@@ -15,10 +15,15 @@ import {
   Get,
   Param,
   Post,
+  Req,
   Res,
   Use,
 } from "@abejarano/ts-express-server"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import {
+  AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 import AvailabilityAccountValidator from "@/Financial/infrastructure/http/validators/AvailabilityAccount.validator"
 
 @Controller("/api/v1/finance/configuration/availability-account")
@@ -31,6 +36,7 @@ export class AvailabilityAccountController {
   ])
   async createOrUpdateAvailabilityAccount(
     @Body() request: AvailabilityAccountRequest,
+    @Req() req: AuthenticatedRequest,
     @Res() res: Response
   ) {
     try {
@@ -60,7 +66,7 @@ export class AvailabilityAccountController {
 
       await new CreateOrUpdateAvailabilityAccount(
         AvailabilityAccountMongoRepository.getInstance()
-      ).execute(request)
+      ).execute({ ...request, churchId: req.auth.churchId })
 
       if (!request.availabilityAccountId) {
         res.status(HttpStatus.CREATED).send({

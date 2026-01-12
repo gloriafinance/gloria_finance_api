@@ -17,8 +17,6 @@ export class Customer extends AggregateRoot {
     rol: string
   }
   private name: string
-  private email: string
-  private phone: string
   private address: {
     street: string
     number: string
@@ -42,8 +40,6 @@ export class Customer extends AggregateRoot {
     customer.customerId = IdentifyEntity.get(`customer`)
     customer.representative = data.representative
     customer.name = data.name
-    customer.email = data.email
-    customer.phone = data.phone
     customer.address = data.address
     customer.status = CustomerStatus.INACTIVE
     customer.onboardingStatus = OnboardingStatus.PENDING
@@ -59,8 +55,6 @@ export class Customer extends AggregateRoot {
     customer.customerId = data.customerId
     customer.representative = data.representative
     customer.name = data.name
-    customer.email = data.email
-    customer.phone = data.phone
     customer.address = data.address
     customer.tenantId = data.tenantId
     customer.plan = data.plan
@@ -83,7 +77,7 @@ export class Customer extends AggregateRoot {
   }
 
   getEmail() {
-    return this.email
+    return this.representative.email
   }
 
   getAddress(): any {
@@ -115,8 +109,6 @@ export class Customer extends AggregateRoot {
       customerId: this.customerId,
       representative: this.representative,
       name: this.name,
-      email: this.email,
-      phone: this.phone,
       address: this.address,
       tenantId: this.tenantId,
       plan: this.plan,
