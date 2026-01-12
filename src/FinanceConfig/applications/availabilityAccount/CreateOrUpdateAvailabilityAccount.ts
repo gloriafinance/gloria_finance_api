@@ -20,7 +20,7 @@ export class CreateOrUpdateAvailabilityAccount {
 
     if (!requestAvailabilityAccount.availabilityAccountId) {
       await this.registerAvailabilityAccount(requestAvailabilityAccount)
-      this.logger.error(`Finished creating availability account`)
+      this.logger.info(`Finished creating availability account`)
       return
     }
 
