@@ -10,6 +10,7 @@ export type AuthTokenPayload = {
   [key: string]: any
   isSuperUser: boolean
   lang: string
+  symbolFormatMoney: string
 }
 
 export class AuthTokenAdapter implements IAuthToken {

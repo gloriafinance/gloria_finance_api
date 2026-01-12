@@ -1,3 +1,7 @@
-import { ContributionMemberController } from "@/Financial/infrastructure/http/controllers/ContributionMember.controller"
+import { ContributionMemberController } from "./ContributionMember.controller"
+import { ContribuitionController } from "./OnlineContribution.controller"
 
-export const financialControllers = () => [ContributionMemberController]
+export const financialControllers = () => [
+  ContributionMemberController,
+  ContribuitionController,
+]

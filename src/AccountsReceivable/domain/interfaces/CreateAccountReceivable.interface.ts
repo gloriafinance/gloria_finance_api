@@ -22,4 +22,5 @@ export interface ICreateAccountReceivable {
   type: AccountReceivableType
   financialConcept: FinancialConcept
   createdBy: string
+  symbol: string
 }

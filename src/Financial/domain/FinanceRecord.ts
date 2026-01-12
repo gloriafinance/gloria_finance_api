@@ -26,6 +26,7 @@ export class FinanceRecord extends AggregateRoot {
     availabilityAccountId: string
     accountName: string
     accountType: AccountType
+    symbol: string
   }
   private voucher?: string
   private description?: string
@@ -82,6 +83,7 @@ export class FinanceRecord extends AggregateRoot {
         availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
         accountName: availabilityAccount.getAccountName(),
         accountType: availabilityAccount.getType(),
+        symbol: availabilityAccount.getSymbol(),
       }
 
       financialRecord.setStatus(

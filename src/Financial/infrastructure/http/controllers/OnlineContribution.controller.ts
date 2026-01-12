@@ -9,7 +9,12 @@ import {
   UpdateContributionStatus,
 } from "../../../applications"
 import { HttpStatus } from "@/Shared/domain"
-import { QueueService } from "@/Shared/infrastructure"
+import {
+  AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+  QueueService,
+} from "@/Shared/infrastructure"
 import MemberContributionsDTO from "../dto/MemberContributions.dto"
 import {
   AvailabilityAccountMongoRepository,
@@ -20,42 +25,72 @@ import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persist
 import { Logger } from "@/Shared/adapter"
 import { Response } from "express"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import {
+  Controller,
+  Get,
+  Query,
+  Req,
+  Res,
+  Use,
+  Param,
+  Patch,
+} from "@abejarano/ts-express-server"
 
-export const listOnlineContributionsController = async (
-  request: FilterContributionsRequest,
-  res: Response
-) => {
-  const logger = Logger("listOnlineContributionsController")
-  logger.info(`Filtering online contributions with: `, request)
+@Controller("/api/v1/finance/contributions")
+export class ContribuitionController {
+  @Get("/")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", ["list_contributions", "adm_contributions"]),
+  ])
+  async listOnlineContributionsController(
+    @Query() filter: FilterContributionsRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    const logger = Logger("listOnlineContributionsController")
+    logger.info(`Filtering online contributions with: `, filter)
 
-  try {
-    const list: Paginate<OnlineContributions> = await new ListContributions(
-      OnlineContributionsMongoRepository.getInstance()
-    ).execute(request)
+    if (req.auth.isSuperuser && filter.churchId === undefined) {
+      delete filter.churchId
+    } else {
+      filter.churchId = req.auth.churchId
+    }
 
-    res.status(HttpStatus.OK).send(await MemberContributionsDTO(list))
-  } catch (e) {
-    domainResponse(e, res)
+    try {
+      const list: Paginate<OnlineContributions> = await new ListContributions(
+        OnlineContributionsMongoRepository.getInstance()
+      ).execute(filter)
+
+      res.status(HttpStatus.OK).send(await MemberContributionsDTO(list))
+    } catch (e) {
+      domainResponse(e, res)
+    }
   }
-}
 
-export const UpdateContributionStatusController = async (
-  contributionId: string,
-  status: OnlineContributionsStatus,
-  createdBy: string,
-  res: Response
-) => {
-  try {
-    await new UpdateContributionStatus(
-      OnlineContributionsMongoRepository.getInstance(),
-      QueueService.getInstance(),
-      FinanceRecordMongoRepository.getInstance(),
-      AvailabilityAccountMongoRepository.getInstance(),
-      AccountsReceivableMongoRepository.getInstance()
-    ).execute(contributionId, status, createdBy)
+  @Patch("/:contributionId/status/:status")
+  async updateContributionStatusController(
+    @Param()
+    params: { contributionId: string; status: OnlineContributionsStatus },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    try {
+      await new UpdateContributionStatus(
+        OnlineContributionsMongoRepository.getInstance(),
+        QueueService.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        AccountsReceivableMongoRepository.getInstance()
+      ).execute({
+        ...params,
+        createdBy: req.auth.name,
+        symbol: req.auth.symbolFormatMoney,
+      })
 
-    res.status(HttpStatus.OK).send({ message: "Contribution updated" })
-  } catch (e) {
-    domainResponse(e, res)
+      res.status(HttpStatus.OK).send({ message: "Contribution updated" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
   }
 }

@@ -68,7 +68,12 @@ export class AccountReceivableController {
         AccountsReceivableMongoRepository.getInstance(),
         FinancialConceptMongoRepository.getInstance(),
         new SendMailPaymentCommitment(QueueService.getInstance())
-      ).execute({ ...body, createdBy: req.auth.name, church: church })
+      ).execute({
+        ...body,
+        createdBy: req.auth.name,
+        church: church,
+        symbol: req.auth.symbolFormatMoney,
+      })
 
       if (
         body.type === AccountReceivableType.CONTRIBUTION ||
@@ -107,7 +112,7 @@ export class AccountReceivableController {
         churchId: req.auth.churchId,
       })
 
-      logger.info("Response list account receivable", list)
+      logger.info(`Response list account receivable ${list.results.length}`)
 
       res.status(HttpStatus.OK).send(list)
     } catch (e) {

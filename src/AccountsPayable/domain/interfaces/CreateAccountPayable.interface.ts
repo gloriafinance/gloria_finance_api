@@ -30,4 +30,5 @@ export interface ICreateAccountPayable {
   taxAmountTotal?: number
   taxMetadata?: AccountPayableTaxMetadata
   createdBy: string
+  symbol: string
 }

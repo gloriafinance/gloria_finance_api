@@ -37,6 +37,7 @@ export class AccountReceivable extends AggregateRoot {
   private contract?: string
   private financialConcept: FinancialConcept
   private createdBy: string
+  private symbol: string
 
   static create(params: Partial<ICreateAccountReceivable>): AccountReceivable {
     const {
@@ -49,6 +50,7 @@ export class AccountReceivable extends AggregateRoot {
       type,
       financialConcept,
       createdBy,
+      symbol,
     } = params
 
     const accountReceivable: AccountReceivable = new AccountReceivable()
@@ -57,6 +59,7 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.churchId = churchId
     accountReceivable.description = description
     accountReceivable.type = type
+    accountReceivable.symbol = symbol
 
     accountReceivable.amountPaid = amountPaid
     accountReceivable.amountPending = amountPending
@@ -122,6 +125,7 @@ export class AccountReceivable extends AggregateRoot {
       params.financialConcept
     )
     accountReceivable.createdBy = params.createdBy || ""
+    accountReceivable.symbol = params.symbol || "R$"
 
     return accountReceivable
   }
@@ -240,6 +244,7 @@ export class AccountReceivable extends AggregateRoot {
       type: this.type,
       financialConcept: this.financialConcept,
       createdBy: this.createdBy,
+      symbol: this.symbol,
     }
   }
 }

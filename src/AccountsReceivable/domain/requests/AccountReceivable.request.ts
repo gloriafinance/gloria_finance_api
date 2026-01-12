@@ -20,4 +20,5 @@ export type AccountReceivableRequest = {
   type: AccountReceivableType
   financialConceptId: string
   createdBy: string
+  symbol: string
 }

@@ -1,7 +1,6 @@
 import { Request, Response, Router } from "express"
 import { PermissionMiddleware, Can } from "@/Shared/infrastructure"
 import {
-  CreateAccountPayableController,
   ListAccountPayableController,
   PayAccountPayableController,
 } from "@/AccountsPayable/infrastructure/http/controllers"
@@ -11,25 +10,6 @@ import { FilterAccountPayableRequest } from "@/AccountsPayable/domain"
 import PayAccountPayableValidator from "@/AccountsPayable/infrastructure/http/validators/PayAccountPayable.validator"
 
 const accountsPayableRoute = Router()
-
-accountsPayableRoute.post(
-  "/",
-  [
-    PermissionMiddleware,
-    Can("accounts_payable", "manage"),
-    CreateAccountPayableValidator,
-  ],
-  async (req: Request, res: Response) => {
-    await CreateAccountPayableController(
-      {
-        ...req.body,
-        churchId: req.auth.churchId,
-        createdBy: req.auth.name,
-      },
-      res
-    )
-  }
-)
 
 accountsPayableRoute.post(
   "/pay",

@@ -42,6 +42,7 @@ export class AccountPayable extends AggregateRoot {
   private createdAt: Date
   private updatedAt: Date
   private createdBy: string
+  private symbol: string
 
   static create(params: Partial<ICreateAccountPayable>): AccountPayable {
     const {
@@ -54,6 +55,7 @@ export class AccountPayable extends AggregateRoot {
       taxMetadata,
       taxDocument,
       createdBy,
+      symbol,
     } = params
 
     const accountPayable: AccountPayable = new AccountPayable()
@@ -63,6 +65,7 @@ export class AccountPayable extends AggregateRoot {
     accountPayable.createdBy = createdBy
     accountPayable.amountPaid = amountPaid
     accountPayable.status = AccountPayableStatus.PENDING
+    accountPayable.symbol = symbol
 
     const normalizedInstallments = Array.isArray(installments)
       ? installments
@@ -209,6 +212,7 @@ export class AccountPayable extends AggregateRoot {
     )
     accountPayable.taxDocument = params.taxDocument
     accountPayable.createdBy = params.createdBy || ""
+    accountPayable.symbol = params.symbol || "R$"
 
     return accountPayable
   }
@@ -415,6 +419,7 @@ export class AccountPayable extends AggregateRoot {
       taxMetadata: this.taxMetadata,
       taxDocument: this.taxDocument,
       createdBy: this.createdBy,
+      symbol: this.symbol,
     }
   }
 }

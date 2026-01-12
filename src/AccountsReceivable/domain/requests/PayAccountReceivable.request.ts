@@ -12,4 +12,5 @@ export type PayAccountReceivableRequest = {
   voucher?: string
   concept: any
   createdBy: string
+  symbol: string
 }

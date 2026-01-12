@@ -18,6 +18,7 @@ import { OnboardingController } from "@/Customers/infrastructure/http/controller
 import { NotificationController } from "@/Shared/infrastructure/controllers/Notification.controller"
 import { MemberController } from "@/Church/infrastructure/http/controllers/Member.controller"
 import { accountsReceivableControllers } from "@/AccountsReceivable/infrastructure/http/controllers"
+import { AccountPayableController } from "@/AccountsPayable/infrastructure/http/controllers/AccountPayable.controller"
 
 export const routerModule = () =>
   new RoutesModule([
@@ -40,6 +41,8 @@ export const controllersModule = () =>
     ...consolidatedFinancialControllers(),
     ...financeConfigControllers(),
     ...scheduleControllers(),
+
+    AccountPayableController,
     MemberController,
     UserController,
     OnboardingController,

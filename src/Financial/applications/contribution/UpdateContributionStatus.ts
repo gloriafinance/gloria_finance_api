@@ -34,11 +34,14 @@ export class UpdateContributionStatus {
     private readonly accountReceivableRepository: IAccountsReceivableRepository
   ) {}
 
-  async execute(
-    contributionId: string,
-    status: OnlineContributionsStatus,
+  async execute(params: {
+    contributionId: string
+    status: OnlineContributionsStatus
     createdBy: string
-  ): Promise<void> {
+    symbol: string
+  }): Promise<void> {
+    const { contributionId, status, createdBy, symbol } = params
+
     this.logger.info(
       `UpdateContributionStatus contributionId: ${contributionId}, status: ${status}`
     )
@@ -95,6 +98,7 @@ export class UpdateContributionStatus {
         voucher: contribution.getBankTransferReceipt(),
         concept: concept.getName(),
         createdBy: createdBy,
+        symbol,
       })
 
       return

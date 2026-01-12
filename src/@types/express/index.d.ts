@@ -7,6 +7,7 @@ declare global {
       permissions: string[]
       isSuperuser?: boolean
       lang: string
+      symbolFormatMoney: string
     }
 
     interface Request {

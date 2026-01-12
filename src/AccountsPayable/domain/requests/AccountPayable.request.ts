@@ -26,4 +26,5 @@ export type AccountPayableRequest = {
   }[]
   taxMetadata?: AccountPayableTaxMetadata
   createdBy: string
+  symbol: string
 }
