@@ -1,12 +1,10 @@
-import { AmountValue } from "@/Shared/domain"
-
 export type PayAccountPayableRequest = {
   accountPayableId: string
   costCenterId: string
   installmentId: string
   installmentIds: string[]
   availabilityAccountId: string
-  amount: AmountValue
+  //amount: AmountValue
   file?: any
   createdBy: string
 }

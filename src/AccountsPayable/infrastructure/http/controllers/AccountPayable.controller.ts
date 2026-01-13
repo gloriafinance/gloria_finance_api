@@ -7,22 +7,43 @@ import {
 import {
   Body,
   Controller,
+  Get,
   Post,
+  Query,
   Req,
   Res,
   Use,
 } from "@abejarano/ts-express-server"
 import CreateAccountPayableValidator from "../validators/CreateAccountPayable.validator"
+import PayAccountPayableValidator from "../validators/PayAccountPayable.validator"
+import RegisterSupplierValidator from "../validators/RegisterSupplier.validator"
 import { Response } from "express"
-import { AccountPayableRequest } from "@/AccountsPayable/domain"
+import {
+  AccountPayableRequest,
+  FilterAccountPayableRequest,
+  PayAccountPayableRequest,
+} from "@/AccountsPayable/domain"
 import {
   AccountsPayableMongoRepository,
   SupplierMongoRepository,
 } from "../../persistence"
-import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
-import { HttpStatus } from "@/Shared/domain"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
+import { AmountValue, HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { CreateAccountPayable } from "@/AccountsPayable/applications"
+import {
+  AllSupplier,
+  CreateAccountPayable,
+  ListAccountsPayable,
+  PayAccountPayable,
+  RegisterSuppliers,
+} from "@/AccountsPayable/applications"
+import { Cache } from "@/Shared/decorators"
+import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
+import { Logger } from "@/Shared/adapter"
+import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 
 @Controller("/api/v1/account-payable")
 export class AccountPayableController {
@@ -52,6 +73,116 @@ export class AccountPayableController {
       res
         .status(HttpStatus.CREATED)
         .json({ message: "Account payable created successfully" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/pay")
+  @Use([
+    PermissionMiddleware,
+    Can("accounts_payable", "reconcile"),
+    PayAccountPayableValidator,
+  ])
+  async pay(
+    @Body()
+    body: PayAccountPayableRequest & {
+      amount: number
+    },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    try {
+      const installmentIds = body.installmentId.includes(",")
+        ? body.installmentId.split(",")
+        : [body.installmentId]
+
+      await new PayAccountPayable(
+        AvailabilityAccountMongoRepository.getInstance(),
+        AccountsPayableMongoRepository.getInstance(),
+        QueueService.getInstance(),
+        FinancialConceptMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance()
+      ).execute({
+        ...body,
+        createdBy: req.auth.name,
+        installmentIds,
+        amount: AmountValue.create(body.amount),
+        file: req?.files?.file,
+      })
+
+      res
+        .status(HttpStatus.OK)
+        .json({ message: "Account payable paid successfully" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/")
+  @Use([PermissionMiddleware, Can("accounts_payable", "read")])
+  async list(
+    @Query() query: FilterAccountPayableRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    try {
+      const logger = Logger("ListAccountPayableController")
+
+      const list = await new ListAccountsPayable(
+        AccountsPayableMongoRepository.getInstance()
+      ).execute({
+        ...query,
+        churchId: req.auth.churchId,
+      })
+
+      logger.info("Response list account payable", list)
+
+      res.status(HttpStatus.OK).send(list)
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/supplier")
+  @Use([
+    PermissionMiddleware,
+    Can("accounts_payable", "suppliers_manage"),
+    RegisterSupplierValidator,
+  ])
+  async registerSupplier(
+    @Body() body: ISupplier,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    try {
+      await new RegisterSuppliers(
+        SupplierMongoRepository.getInstance()
+      ).execute({
+        ...body,
+        churchId: req.auth.churchId,
+      })
+
+      res.status(HttpStatus.CREATED).json({
+        message: "Successfully registered",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Cache("suppliers", 600)
+  @Get("/supplier")
+  @Use([PermissionMiddleware, Can("accounts_payable", "suppliers_manage")])
+  async listSuppliers(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+    try {
+      res
+        .status(HttpStatus.OK)
+        .send(
+          await new AllSupplier(SupplierMongoRepository.getInstance()).execute(
+            req.auth.churchId
+          )
+        )
     } catch (e) {
       domainResponse(e, res)
     }

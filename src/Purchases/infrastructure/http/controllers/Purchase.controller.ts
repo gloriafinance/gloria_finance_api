@@ -3,12 +3,27 @@ import {
   RecordPurchaseRequest,
 } from "../../../domain/requests"
 import { Response } from "express"
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
-import { StorageGCP } from "@/Shared/infrastructure"
+import {
+  AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+  StorageGCP,
+} from "@/Shared/infrastructure"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
@@ -17,54 +32,82 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
+import PurchaseValidator from "../validators/Purchase.validator"
 
-export const RecordPurchaseController = async (
-  request: RecordPurchaseRequest,
-  res: Response
-) => {
-  try {
-    const date = new Date(request.purchaseDate)
+type RecordPurchasePayload = Omit<
+  RecordPurchaseRequest,
+  "churchId" | "createdBy" | "invoice" | "file"
+>
 
-    await new FinancialMonthValidator(
-      FinancialYearMongoRepository.getInstance()
-    ).validate({
-      churchId: request.churchId,
-      month: date.getUTCMonth() + 1,
-      year: date.getFullYear(),
-    })
+@Controller("/api/v1/purchase")
+export class PurchaseController {
+  @Post("/")
+  @Use([PermissionMiddleware, Can("purchases", "manage"), PurchaseValidator])
+  async record(
+    @Body() body: RecordPurchasePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    const request: RecordPurchaseRequest = {
+      ...body,
+      churchId: req.auth.churchId,
+      file: req.files?.invoice,
+      createdBy: req.auth.name,
+      invoice: "",
+    }
 
-    request.invoice = await StorageGCP.getInstance(
-      process.env.BUCKET_FILES
-    ).uploadFile(request.file)
+    try {
+      const date = new Date(request.purchaseDate)
 
-    await new RecordPurchase(
-      PurchaseMongoRepository.getInstance(),
-      AvailabilityAccountMongoRepository.getInstance(),
-      FinancialConfigurationMongoRepository.getInstance(),
-      FinancialConceptMongoRepository.getInstance(),
-      QueueService.getInstance()
-    ).execute(request)
+      await new FinancialMonthValidator(
+        FinancialYearMongoRepository.getInstance()
+      ).validate({
+        churchId: request.churchId,
+        month: date.getUTCMonth() + 1,
+        year: date.getFullYear(),
+      })
 
-    res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })
-  } catch (e) {
-    await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
-      request.invoice
-    )
-    domainResponse(e, res)
+      request.invoice = await StorageGCP.getInstance(
+        process.env.BUCKET_FILES
+      ).uploadFile(request.file)
+
+      await new RecordPurchase(
+        PurchaseMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance(),
+        FinancialConceptMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute(request)
+
+      res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })
+    } catch (e) {
+      if (request.invoice) {
+        await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
+          request.invoice
+        )
+      }
+      domainResponse(e, res)
+    }
   }
-}
 
-export const listPurchasesController = async (
-  request: FilterPurchasesRequest,
-  res: Response
-) => {
-  try {
-    const list = await new SearchPurchase(
-      PurchaseMongoRepository.getInstance()
-    ).execute(request)
+  @Get("/")
+  @Use([PermissionMiddleware, Can("purchases", "read")])
+  async list(
+    @Query() query: FilterPurchasesRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
+    try {
+      const list = await new SearchPurchase(
+        PurchaseMongoRepository.getInstance()
+      ).execute({
+        ...query,
+        churchId: req.auth.churchId,
+      })
 
-    res.status(HttpStatus.OK).send(await PurchasePaginateDto(list))
-  } catch (e) {
-    return domainResponse(e, res)
+      res.status(HttpStatus.OK).send(await PurchasePaginateDto(list))
+    } catch (e) {
+      return domainResponse(e, res)
+    }
   }
 }

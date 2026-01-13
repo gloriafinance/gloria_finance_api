@@ -1,4 +1,14 @@
-import { Request, Response } from "express"
+import { Response } from "express"
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { HttpStatus } from "@/Shared/domain"
 import {
@@ -20,8 +30,14 @@ import {
   UserMongoRepository,
 } from "@/SecuritySystem/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
-import { CacheService } from "@/Shared/infrastructure"
+import {
+  AuthenticatedRequest,
+  Can,
+  CacheService,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 
+@Controller("/api/v1/rbac")
 export class RbacController {
   private readonly authorizationService = AuthorizationService.getInstance(
     UserAssignmentMongoRepository.getInstance(),
@@ -30,10 +46,16 @@ export class RbacController {
     CacheService.getInstance()
   )
 
-  async bootstrap(req: Request, res: Response) {
+  @Post("/permissions/bootstrap")
+  @Use([PermissionMiddleware, Can("rbac", "bootstrap")])
+  async bootstrap(
+    @Body() body: { userId?: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
-      const targetUserId = req.body.userId ?? auth.userId
+      const targetUserId = body.userId ?? auth.userId
 
       await new BootstrapPermissionsJob(
         PermissionMongoRepository.getInstance(),
@@ -61,15 +83,21 @@ export class RbacController {
     }
   }
 
-  async createRole(req: Request, res: Response) {
+  @Post("/roles")
+  @Use([PermissionMiddleware, Can("rbac", "manage_roles")])
+  async createRole(
+    @Body() body: { name: string; description: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
       const role = await new CreateRole(
         RoleMongoRepository.getInstance()
       ).execute({
         churchId: auth.churchId,
-        name: req.body.name,
-        description: req.body.description,
+        name: body.name,
+        description: body.description,
       })
 
       res.status(HttpStatus.CREATED).send({
@@ -81,11 +109,17 @@ export class RbacController {
     }
   }
 
-  async assignPermissionsToRole(req: Request, res: Response) {
+  @Post("/roles/:id/permissions")
+  @Use([PermissionMiddleware, Can("rbac", "manage_roles")])
+  async assignPermissionsToRole(
+    @Param("id") roleId: string,
+    @Body() body: { permissionIds?: string[] },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
-      const roleId = req.params.id
-      const permissionIds: string[] = req.body.permissionIds ?? []
+      const permissionIds: string[] = body.permissionIds ?? []
 
       const role = await new AssignPermissionsToRole(
         RoleMongoRepository.getInstance(),
@@ -108,10 +142,15 @@ export class RbacController {
     }
   }
 
-  async getRolePermissions(req: Request, res: Response) {
+  @Get("/roles/:id/permissions")
+  @Use([PermissionMiddleware, Can("rbac", "read")])
+  async getRolePermissions(
+    @Param("id") roleId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
-      const roleId = req.params.id
 
       const permissions = await new GetRolePermissions(
         RoleMongoRepository.getInstance(),
@@ -128,11 +167,17 @@ export class RbacController {
     }
   }
 
-  async assignRolesToUser(req: Request, res: Response) {
+  @Post("/users/:id/assignments")
+  @Use([PermissionMiddleware, Can("rbac", "assign_roles")])
+  async assignRolesToUser(
+    @Param("id") userId: string,
+    @Body() body: { roles?: string[] },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
-      const userId = req.params.id
-      const roles: string[] = req.body.roles ?? []
+      const roles: string[] = body.roles ?? []
 
       const assignment = await new AssignRolesToUser(
         RoleMongoRepository.getInstance(),
@@ -153,10 +198,15 @@ export class RbacController {
     }
   }
 
-  async getUserPermissions(req: Request, res: Response) {
+  @Get("/users/:id/permissions")
+  @Use([PermissionMiddleware, Can("rbac", "read")])
+  async getUserPermissions(
+    @Param("id") userId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response
+  ) {
     try {
       const auth = req.auth
-      const userId = req.params.id
 
       const permissions = await new GetUserPermissions(
         this.authorizationService
@@ -173,7 +223,9 @@ export class RbacController {
     }
   }
 
-  async listRoles(req: Request, res: Response) {
+  @Get("/roles")
+  @Use([PermissionMiddleware, Can("rbac", "read")])
+  async listRoles(@Req() req: AuthenticatedRequest, @Res() res: Response) {
     try {
       const auth = req.auth
       const roles = await new ListRoles(
@@ -186,7 +238,9 @@ export class RbacController {
     }
   }
 
-  async listPermissions(_req: Request, res: Response) {
+  @Get("/permissions")
+  @Use([PermissionMiddleware, Can("rbac", "read")])
+  async listPermissions(@Res() res: Response) {
     try {
       const permissions = await new ListPermissions(
         PermissionMongoRepository.getInstance()

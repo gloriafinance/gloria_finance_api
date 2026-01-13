@@ -8,7 +8,7 @@ export class AmountValue extends ValueObject<number> {
   }
 
   static create(value: number): AmountValue {
-    return new AmountValue(value)
+    return new AmountValue(Number(value))
   }
 
   getValue(): number {

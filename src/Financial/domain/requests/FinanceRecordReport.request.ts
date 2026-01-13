@@ -1,4 +1,4 @@
-import { FilterFinanceRecordRequest } from "./FilterFinanceRecord.request"
+import { FilterFinanceRecordRequest } from "@/Financial/domain"
 
 export type FinanceRecordReportFormat = "csv" | "pdf"
 

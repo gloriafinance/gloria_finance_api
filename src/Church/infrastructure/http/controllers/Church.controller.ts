@@ -1,4 +1,4 @@
-import { HttpStatus } from "../../../../Shared/domain"
+import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { Church, ChurchPaginateRequest, ChurchRequest } from "../../../domain"
 import {
@@ -13,6 +13,18 @@ import {
   ChurchMongoRepository,
   MinisterMongoRepository,
 } from "@/Church/infrastructure"
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import { Response } from "express"
 
 type AuthContext = {
   userId: string
@@ -21,8 +33,11 @@ type AuthContext = {
   permissions: string[]
 }
 
+@Controller("/api/v1/church")
 export class ChurchController {
-  static async createOrUpdate(req: ChurchRequest, res) {
+  @Post("/")
+  @Use([PermissionMiddleware, Can("church", "upsert")])
+  async createOrUpdate(@Body() req: ChurchRequest, @Res() res: Response) {
     try {
       const church = await new CreateOrUpdateChurch(
         ChurchMongoRepository.getInstance()
@@ -41,28 +56,38 @@ export class ChurchController {
     }
   }
 
-  static async list(req: ChurchPaginateRequest, res) {
+  @Get("/")
+  @Use(PermissionMiddleware)
+  async list(@Param() req: ChurchPaginateRequest, @Res() res: Response) {
     try {
       const churches = await new SearchChurches(
         ChurchMongoRepository.getInstance()
       ).execute(req)
 
-      res.status(HttpStatus.OK).send({
+      res.status(HttpStatus.OK).send(
+        churches
+        //{
         // data: PaginateChurchDto(
         //   churches,
         //   await MinisterMongoRepository.getInstance().allActive(),
         // ),
-      })
+        //}
+      )
     } catch (e) {
       domainResponse(e, res)
     }
   }
 
-  static async listByDistrictId(districtId: string, res) {
+  @Get("/list/by-district-id")
+  @Use([PermissionMiddleware, Can("church", "search")])
+  async listByDistrictId(
+    @Query() params: { districtId: string },
+    @Res() res: Response
+  ) {
     try {
       const churches = await new SearchChurchesByDistrictId(
         ChurchMongoRepository.getInstance()
-      ).execute(districtId)
+      ).execute(params.districtId)
 
       res.status(HttpStatus.OK).send({
         data: churches,
@@ -72,7 +97,12 @@ export class ChurchController {
     }
   }
 
-  static async findByChurchId(churchId: string, res) {
+  @Get("/:churchId")
+  @Use([PermissionMiddleware, Can("church", "search")])
+  async findByChurchId(
+    @Param("churchId") churchId: string,
+    @Res() res: Response
+  ) {
     try {
       const church: Church = await new FindChurchById(
         ChurchMongoRepository.getInstance()
@@ -84,7 +114,30 @@ export class ChurchController {
     }
   }
 
-  static async listWithoutAssignedMinister(res) {
+  @Post("/remove-minister/:churchId")
+  @Use([PermissionMiddleware, Can("ministers", "manage")])
+  async removeMinister(
+    @Param("churchId") churchId: string,
+    @Res() res: Response
+  ) {
+    try {
+      await new RemoveMinister(
+        MinisterMongoRepository.getInstance(),
+        ChurchMongoRepository.getInstance()
+      ).execute(churchId)
+
+      res.status(HttpStatus.OK).send({ message: "Minister removed" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/without-assigned-minister")
+  @Use([PermissionMiddleware, Can("church", "search")])
+  async listWithoutAssignedMinister(
+    @Query() params: ChurchPaginateRequest,
+    @Res() res: Response
+  ) {
     try {
       const churches = await new WithoutAssignedMinister(
         ChurchMongoRepository.getInstance()
@@ -93,19 +146,6 @@ export class ChurchController {
       res.status(HttpStatus.OK).send({
         data: churches,
       })
-    } catch (e) {
-      domainResponse(e, res)
-    }
-  }
-
-  static async removeMinister(churchId: string, res) {
-    try {
-      await new RemoveMinister(
-        MinisterMongoRepository.getInstance(),
-        ChurchMongoRepository.getInstance()
-      ).execute(churchId)
-
-      res.status(HttpStatus.OK).send({ message: "Minister removed" })
     } catch (e) {
       domainResponse(e, res)
     }

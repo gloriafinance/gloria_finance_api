@@ -23,7 +23,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@abejarano/ts-express-server": "^1.5.3",
+    "@abejarano/ts-express-server": "^1.7.3",
     "@abejarano/ts-mongodb-criteria": "^1.6.2",
     "@bull-board/express": "^6.16.2",
     "@fast-csv/parse": "^5.0.5",

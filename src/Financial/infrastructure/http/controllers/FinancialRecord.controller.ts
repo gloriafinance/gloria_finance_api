@@ -4,20 +4,33 @@ import {
   AccountType,
   ConceptType,
   CostCenter,
+  FilterFinanceRecordRequest,
+  FinanceRecordReportFormat,
+  FinanceRecordReportRequest,
   FinancialConcept,
   FinancialRecordCreateQueue,
   FinancialRecordRequest,
   FinancialRecordSource,
   FinancialRecordStatus,
 } from "../../../domain"
-import { CancelFinancialRecord } from "@/Financial/applications"
-import { QueueService, StorageGCP } from "@/Shared/infrastructure"
+import {
+  CancelFinancialRecord,
+  FetchingFinanceRecord,
+  GenerateFinanceRecordReport,
+} from "@/Financial/applications"
+import {
+  Can,
+  NoOpStorage,
+  PermissionMiddleware,
+  QueueService,
+  StorageGCP,
+} from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
 } from "../../persistence"
-import { Response } from "express"
+import { Request, Response } from "express"
 import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { toFinancialRecordType } from "@/Financial/domain/mappers"
 import {
@@ -29,108 +42,240 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
+import FinancialRecordValidator from "@/Financial/infrastructure/http/validators/FinancialRecord.validator"
+import FinanceRecordPaginateDTO from "@/Financial/infrastructure/http/dto/FinanceRecordPaginate.dto"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import {
+  HandlebarsHTMLAdapter,
+  Logger,
+  PuppeteerAdapter,
+  XLSExportAdapter,
+} from "@/Shared/adapter"
+import { promises as fs } from "node:fs"
 
-export const FinancialRecordController = async (
-  request: FinancialRecordRequest & { createdBy: string },
-  res: Response
-) => {
-  try {
-    const financialConcept =
-      await new FindFinancialConceptByChurchIdAndFinancialConceptId(
-        FinancialConceptMongoRepository.getInstance()
-      ).execute(request.churchId, request.financialConceptId)
+const DEFAULT_PAGE = 1
+const DEFAULT_PER_PAGE = 1000
 
-    const availabilityAccount = await searchAvailabilityAccount(
-      request,
-      financialConcept
-    )
+const sanitizeFormat = (
+  format?: string
+): FinanceRecordReportFormat | undefined => {
+  if (!format) {
+    return undefined
+  }
 
-    let costCenter: CostCenter = undefined
+  const normalized = format.toLowerCase()
 
-    if (
-      financialConcept.getType() === ConceptType.OUTGO &&
-      !request.costCenterId
-    ) {
-      //TODO message em portugues, should be internationalized
-      res.status(HttpStatus.BAD_REQUEST).send({
-        costCenterId: {
-          message: "Deve selecionar um centro de custos.",
-          rule: "required",
-        },
+  if (normalized === "pdf") {
+    return "pdf"
+  }
+
+  return "csv"
+}
+
+@Controller("/api/v1/finance/financial-record")
+export class FinancialRecordController {
+  private logger = Logger(FinancialRecordController.name)
+
+  @Post("/")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "create"),
+    FinancialRecordValidator,
+  ])
+  async financialRecordController(
+    @Body() body: FinancialRecordRequest & { createdBy: string },
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const request = { ...body, churchId: req.auth.churchId }
+    try {
+      const financialConcept =
+        await new FindFinancialConceptByChurchIdAndFinancialConceptId(
+          FinancialConceptMongoRepository.getInstance()
+        ).execute(request.churchId, request.financialConceptId)
+
+      const availabilityAccount = await this.searchAvailabilityAccount(
+        request,
+        financialConcept
+      )
+
+      let costCenter: CostCenter = undefined
+
+      if (
+        financialConcept.getType() === ConceptType.OUTGO &&
+        !request.costCenterId
+      ) {
+        //TODO message em portugues, should be internationalized
+        res.status(HttpStatus.BAD_REQUEST).send({
+          costCenterId: {
+            message: "Deve selecionar um centro de custos.",
+            rule: "required",
+          },
+        })
+        return
+      }
+      if (
+        financialConcept.getType() === ConceptType.OUTGO &&
+        request.costCenterId
+      ) {
+        costCenter = await new FindCostCenterByCostCenterId(
+          FinancialConfigurationMongoRepository.getInstance()
+        ).execute(request.churchId, request.costCenterId)
+      }
+
+      await new CreateFinancialRecordJob(
+        FinancialYearMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        StorageGCP.getInstance(process.env.BUCKET_FILES),
+        QueueService.getInstance()
+      ).handle({
+        ...request,
+        costCenter,
+        financialConcept,
+        financialRecordType: toFinancialRecordType(financialConcept.getType()),
+        availabilityAccount,
+        status: FinancialRecordStatus.CLEARED,
+        source: FinancialRecordSource.MANUAL,
+      } as FinancialRecordCreateQueue)
+
+      res.status(HttpStatus.CREATED).send({
+        message: "successful financial record registration",
       })
-      return
-    }
-    if (
-      financialConcept.getType() === ConceptType.OUTGO &&
-      request.costCenterId
-    ) {
-      costCenter = await new FindCostCenterByCostCenterId(
-        FinancialConfigurationMongoRepository.getInstance()
-      ).execute(request.churchId, request.costCenterId)
-    }
+    } catch (e) {
+      if (request.voucher) {
+        await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
+          request.voucher
+        )
+      }
 
-    await new CreateFinancialRecordJob(
-      FinancialYearMongoRepository.getInstance(),
-      FinanceRecordMongoRepository.getInstance(),
-      StorageGCP.getInstance(process.env.BUCKET_FILES),
-      QueueService.getInstance()
-    ).handle({
-      ...request,
-      costCenter,
-      financialConcept,
-      financialRecordType: toFinancialRecordType(financialConcept.getType()),
-      availabilityAccount,
-      status: FinancialRecordStatus.CLEARED,
-      source: FinancialRecordSource.MANUAL,
-    } as FinancialRecordCreateQueue)
+      return domainResponse(e, res)
+    }
+  }
 
-    res.status(HttpStatus.CREATED).send({
-      message: "successful financial record registration",
-    })
-  } catch (e) {
-    if (request.voucher) {
-      await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
-        request.voucher
+  @Patch("/cancel/:financialRecordId")
+  @Use([PermissionMiddleware, Can("financial_records", "cancel")])
+  async CancelFinancialRecordController(
+    @Param("financialRecordId") financialRecordId: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    try {
+      await new CancelFinancialRecord(
+        FinancialYearMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute({
+        financialRecordId: financialRecordId,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "successful financial record cancellation",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/export")
+  @Use([PermissionMiddleware, Can("financial_records", "reports")])
+  async export(
+    @Query() params: FinanceRecordReportRequest,
+    @Res() res: Response,
+    @Req() req: Request
+  ) {
+    try {
+      const normalizedRequest: FinanceRecordReportRequest = {
+        ...params,
+        churchId: req.auth.churchId,
+        format: sanitizeFormat(params.format),
+        page: params.page ?? DEFAULT_PAGE,
+        perPage: params.perPage ?? DEFAULT_PER_PAGE,
+      }
+
+      this.logger.info("Processando solicitação de relatório financeiro", {
+        ...normalizedRequest,
+        format: normalizedRequest.format ?? "csv",
+      })
+
+      const file = await new GenerateFinanceRecordReport(
+        ChurchMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        new PuppeteerAdapter(
+          new HandlebarsHTMLAdapter(),
+          NoOpStorage.getInstance()
+        ),
+        new XLSExportAdapter()
+      ).execute(normalizedRequest)
+
+      const { path, filename } = file
+
+      res.download(path, filename, (error) => {
+        fs.unlink(path).catch(() => undefined)
+
+        if (error && !res.headersSent) {
+          domainResponse(error, res)
+        }
+      })
+
+      this.logger.info("Relatório financeiro gerado com sucesso")
+    } catch (error) {
+      this.logger.error("Erro ao gerar relatório financeiro", error)
+      domainResponse(error, res)
+    }
+  }
+
+  @Get("/")
+  @Use([PermissionMiddleware, Can("financial_records", "read")])
+  async fetching(
+    @Param() params: FilterFinanceRecordRequest,
+    @Query() q: FilterFinanceRecordRequest,
+    @Res() res: Response,
+    @Req() req: Request
+  ) {
+    try {
+      const filter = { ...q, churchId: req.auth.churchId }
+      this.logger.info(
+        `Filtering financial records with: ${JSON.stringify(filter)}`
+      )
+      const list = await new FetchingFinanceRecord(
+        FinanceRecordMongoRepository.getInstance()
+      ).execute(filter)
+
+      res.status(HttpStatus.OK).send(await FinanceRecordPaginateDTO(list))
+    } catch (e) {
+      return domainResponse(e, res)
+    }
+  }
+
+  private async searchAvailabilityAccount(
+    request: FinancialRecordRequest,
+    financialConcept: FinancialConcept
+  ) {
+    const account = await new FindAvailabilityAccountByAvailabilityAccountId(
+      AvailabilityAccountMongoRepository.getInstance()
+    ).execute(request.availabilityAccountId)
+
+    if (account.getType() === AccountType.INVESTMENT) {
+      throw new GenericException(
+        `Selected availability account does not allow this ${financialConcept.getName()}`
       )
     }
 
-    return domainResponse(e, res)
-  }
-}
-
-const searchAvailabilityAccount = async (
-  request: FinancialRecordRequest,
-  financialConcept: FinancialConcept
-) => {
-  const account = await new FindAvailabilityAccountByAvailabilityAccountId(
-    AvailabilityAccountMongoRepository.getInstance()
-  ).execute(request.availabilityAccountId)
-
-  if (account.getType() === AccountType.INVESTMENT) {
-    throw new GenericException(
-      `Selected availability account does not allow this ${financialConcept.getName()}`
-    )
-  }
-
-  return account
-}
-
-export const CancelFinancialRecordController = async (
-  req: { financialRecordId: string; churchId: string; createdBy: string },
-  res: Response
-) => {
-  try {
-    await new CancelFinancialRecord(
-      FinancialYearMongoRepository.getInstance(),
-      FinanceRecordMongoRepository.getInstance(),
-      AvailabilityAccountMongoRepository.getInstance(),
-      QueueService.getInstance()
-    ).execute(req)
-
-    res.status(HttpStatus.OK).send({
-      message: "successful financial record cancellation",
-    })
-  } catch (e) {
-    domainResponse(e, res)
+    return account
   }
 }

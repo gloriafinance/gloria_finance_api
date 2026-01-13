@@ -1,12 +1,16 @@
 import "reflect-metadata"
 import "dotenv/config"
-import { BootstrapStandardServer } from "@abejarano/ts-express-server"
+import {
+  BootstrapStandardServer,
+  CorsModule,
+} from "@abejarano/ts-express-server"
 import { Queues } from "@/queues"
 import { controllersModule, routerModule } from "@/bootstrap"
 import { FactoryService } from "@/bootstrap/FactoryService"
 import { ServerSocketService } from "@/bootstrap/ServerSocketService"
 import { FinancialSchedules } from "@/Financial/infrastructure/schedules"
 import { StartQueueService } from "@/Shared/infrastructure"
+import { Express } from "express"
 
 export const APP_DIR = __dirname
 
@@ -15,8 +19,12 @@ const server = BootstrapStandardServer(
   routerModule(),
   controllersModule()
 )
-
-StartQueueService(server.getApp(), Queues())
+server.addModule(
+  new CorsModule({
+    origin: "*",
+  })
+)
+StartQueueService(server.getApp() as unknown as Express, Queues())
 
 server.addServices([new FactoryService(), new ServerSocketService()])
 

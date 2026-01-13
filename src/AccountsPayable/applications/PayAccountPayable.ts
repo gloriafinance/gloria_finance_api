@@ -11,7 +11,7 @@ import {
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import { IQueueService } from "@/Shared/domain"
+import { AmountValue, IQueueService } from "@/Shared/domain"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
@@ -35,7 +35,7 @@ export class PayAccountPayable {
     private readonly financialConfigurationRepository: IFinancialConfigurationRepository
   ) {}
 
-  async execute(req: PayAccountPayableRequest) {
+  async execute(req: PayAccountPayableRequest & { amount: AmountValue }) {
     this.logger.info(`Start Pay Account Payable`, req)
 
     const unitOfWork = new UnitOfWork()

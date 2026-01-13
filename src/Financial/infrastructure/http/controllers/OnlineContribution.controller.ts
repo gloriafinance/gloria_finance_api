@@ -28,16 +28,16 @@ import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import {
   Controller,
   Get,
+  Param,
+  Patch,
   Query,
   Req,
   Res,
   Use,
-  Param,
-  Patch,
 } from "@abejarano/ts-express-server"
 
 @Controller("/api/v1/finance/contributions")
-export class ContribuitionController {
+export class ContributionController {
   @Get("/")
   @Use([
     PermissionMiddleware,
