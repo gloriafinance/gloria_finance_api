@@ -195,7 +195,78 @@ export class FinanceRecordMongoRepository
     }))
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      { financialRecordId: 1 },
+      {
+        unique: true,
+        background: true,
+        name: "idx_financialRecordId",
+      }
+    )
+
+    await collection.createIndex(
+      {
+        churchId: 1,
+        date: 1,
+        status: 1,
+        type: 1,
+      },
+      { background: true, name: "idx_full_record_scan" }
+    )
+
+    await collection.createIndex(
+      {
+        churchId: 1,
+        date: 1,
+        status: 1,
+        "availabilityAccount.availabilityAccountId": 1,
+        type: 1,
+      },
+      {
+        name: "idx_cashflow",
+        background: true,
+        partialFilterExpression: {
+          "financialConcept.affectsCashFlow": true,
+          status: { $in: REALIZED_STATUSES },
+        },
+      }
+    )
+
+    await collection.createIndex(
+      {
+        churchId: 1,
+        date: 1,
+        status: 1,
+        "financialConcept.statementCategory": 1,
+      },
+      {
+        name: "idx_dre_core",
+        background: true,
+        partialFilterExpression: {
+          status: { $in: REALIZED_STATUSES },
+        },
+      }
+    )
+
+    await collection.createIndex(
+      {
+        churchId: 1,
+        date: 1,
+        status: 1,
+        "costCenter.costCenterId": 1,
+      },
+      {
+        name: "idx_cost_centers",
+        background: true,
+        partialFilterExpression: {
+          status: { $in: REALIZED_STATUSES },
+          $or: [
+            { "financialConcept.affectsResult": true },
+            { "financialConcept.affectsBalance": true },
+          ],
+        },
+      }
+    )
   }
 }
