@@ -1,9 +1,9 @@
 import { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
-import {
+import { MovementBank } from "@/Banking/domain"
+import type {
   IBankRepository,
   IMovementBankRepository,
-  MovementBank,
   MovementBankRequest,
 } from "@/Banking/domain"
 

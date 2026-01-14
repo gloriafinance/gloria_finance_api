@@ -1,5 +1,4 @@
-import { ConceptType, FinancialConceptRequest } from "@/Financial/domain"
-import { Response } from "express"
+import { ConceptType, type FinancialConceptRequest } from "@/Financial/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
@@ -14,6 +13,7 @@ import {
   Param,
   Post,
   Res,
+  type ServerResponse,
   Use,
 } from "@abejarano/ts-express-server"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
@@ -28,7 +28,7 @@ export class FinancialConceptController {
   ])
   async createOrUpdateFinancialConcept(
     @Body() req: FinancialConceptRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new CreateOrUpdateFinancialConcept(
@@ -51,7 +51,7 @@ export class FinancialConceptController {
   ])
   async findFinancialConceptsByChurchId(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const financial = await new FindFinancialConceptsByChurchIdAndTypeConcept(
@@ -73,7 +73,7 @@ export class FinancialConceptController {
   async findFinancialConceptsByChurchIdAndTypeConcept(
     @Param("churchId") churchId: string,
     @Param("typeConcept") typeConcept: ConceptType,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const financial = await new FindFinancialConceptsByChurchIdAndTypeConcept(

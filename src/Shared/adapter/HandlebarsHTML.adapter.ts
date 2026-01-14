@@ -1,8 +1,13 @@
 import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
-import * as handlebars from "handlebars"
+import Handlebars from "handlebars"
 import * as fs from "fs"
+import * as path from "node:path"
 import { APP_DIR } from "@/app"
 import { Logger } from "@/Shared/adapter/CustomLogger"
+
+const handlebars =
+  (Handlebars as unknown as { default?: typeof Handlebars }).default ||
+  Handlebars
 
 const categoryLabels: Record<string, string> = {
   REVENUE: "Entradas operacionais e doações recorrentes",
@@ -100,16 +105,30 @@ export class HandlebarsHTMLAdapter implements IHTMLAdapter {
   generateHTML(templateName: string, data: any): string {
     this.logger.info(`Generating HTML from template: ${templateName}`, data)
 
-    const loadTemplate = (path: string) => {
-      return fs.readFileSync(path, "utf8")
-    }
-
-    const htmlTemplate = loadTemplate(
-      `${APP_DIR}/templates/${templateName}.hbs`
-    )
+    const templatePath = this.resolveTemplatePath(templateName)
+    const htmlTemplate = fs.readFileSync(templatePath, "utf8")
 
     const template = handlebars.compile(htmlTemplate)
 
     return template(data)
+  }
+
+  private resolveTemplatePath(templateName: string): string {
+    const templateFile = `${templateName}.hbs`
+    const roots = [
+      typeof APP_DIR === "string" ? path.join(APP_DIR, "templates") : undefined,
+      path.join(process.cwd(), "dist", "templates"),
+      path.join(process.cwd(), "src", "templates"),
+      path.join(process.cwd(), "templates"),
+    ].filter(Boolean) as string[]
+
+    for (const root of roots) {
+      const candidate = path.join(root, templateFile)
+      if (fs.existsSync(candidate)) {
+        return candidate
+      }
+    }
+
+    throw new Error(`Invalid path: template ${templateFile} not found`)
   }
 }

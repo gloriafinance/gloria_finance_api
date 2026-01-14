@@ -3,7 +3,6 @@ import { Logger } from "../../adapter"
 import { QueueName } from "../../domain"
 import { QueueDispatcher } from "@/Shared/infrastructure/queue/QueueDispatcher"
 import { RequestContext } from "@abejarano/ts-express-server"
-
 export class QueueProcessor {
   private static instance: QueueProcessor
   private logger = Logger("QueueProcessor")

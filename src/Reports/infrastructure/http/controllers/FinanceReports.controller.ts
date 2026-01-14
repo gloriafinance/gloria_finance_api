@@ -1,7 +1,8 @@
-import { Response } from "express"
 import * as fs from "fs"
 import { Controller, Get, Query, Res, Use } from "@abejarano/ts-express-server"
-import { BaseReportRequest, DREResponse, TrendResponse } from "@/Reports/domain"
+import type { ServerResponse } from "@abejarano/ts-express-server"
+import { DREResponse, TrendResponse } from "@/Reports/domain"
+import type { BaseReportRequest } from "@/Reports/domain"
 import { DRE, IncomeStatement, MonthlyTithes } from "@/Reports/applications"
 import { DREMongoRepository } from "@/Reports/infrastructure/persistence/DREMongoRepository"
 import domainResponse from "@/Shared/helpers/domainResponse"
@@ -47,7 +48,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("reports", "monthly_tithes")])
   async monthlyTithes(
     @Query() query: BaseReportRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const list = await new MonthlyTithes(
@@ -118,7 +119,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("reports", "income_statements")])
   async incomeStatement(
     @Query() query: BaseReportRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const result = await new IncomeStatement(
@@ -138,7 +139,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("reports", "income_statements")])
   async incomeStatementPdf(
     @Query() query: BaseReportRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const incomeStatement = await new IncomeStatement(
@@ -162,11 +163,14 @@ export class FinanceReportsController {
       res.download(pdfPath, fileName, (error) => {
         fs.unlink(pdfPath, () => undefined)
 
-        if (error && !res.headersSent) {
+        //if (error && !res.headersSent) {
+        if (error) {
+          console.log(error)
           domainResponse(error, res)
         }
       })
     } catch (error) {
+      console.log(error)
       domainResponse(error, res)
     }
   }
@@ -217,7 +221,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("financial_records", "reports")])
   async dre(
     @Query() query: BaseReportRequest & { month: number },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const result = await new DRE(
@@ -258,7 +262,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("financial_records", "reports")])
   async drePdf(
     @Query() query: BaseReportRequest & { month: number },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const dreReport = await new DRE(
@@ -281,7 +285,8 @@ export class FinanceReportsController {
       res.download(pdfPath, fileName, (error) => {
         fs.unlink(pdfPath, () => undefined)
 
-        if (error && !res.headersSent) {
+        //if (error && !res.headersSent) {
+        if (error) {
           domainResponse(error, res)
         }
       })
@@ -295,7 +300,7 @@ export class FinanceReportsController {
   @Use([PermissionMiddleware, Can("financial_records", "reports")])
   async dreTrend(
     @Query() query: BaseReportRequest & { month: number },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const normalizedReq = this.normalizeRequest(query)

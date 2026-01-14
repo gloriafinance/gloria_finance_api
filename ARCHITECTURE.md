@@ -7,9 +7,11 @@ This document provides a comprehensive overview of the application's architectur
 ## Architecture Principles
 
 ### 1. Framework-Free DDD
+
 This project implements Domain-Driven Design **without relying on frameworks** like NestJS, Nest.js, Inversify, or TypeDI. All architectural patterns are implemented using pure TypeScript and Express.js.
 
 **Key Characteristics:**
+
 - ✅ **Vanilla Express.js**: Direct HTTP routing without framework wrappers
 - ✅ **Manual Dependency Injection**: Constructor injection without DI containers
 - ✅ **Explicit Module System**: TypeScript modules with path aliases
@@ -134,6 +136,7 @@ src/
 **Purpose**: Contains pure business logic, free from framework and infrastructure dependencies.
 
 **Contents:**
+
 - **Entities/Aggregates**: Extend `AggregateRoot` from `@abejarano/ts-mongodb-criteria`
 - **Value Objects**: Immutable objects representing domain concepts
 - **Interfaces**: Repository contracts (e.g., `IChurchRepository`)
@@ -142,12 +145,14 @@ src/
 - **Domain Exceptions**: Business rule violations
 
 **Rules:**
+
 - ❌ No imports from `infrastructure` or `applications`
 - ❌ No framework dependencies
 - ❌ No database or HTTP concerns
 - ✅ Only imports from `domain`, `Shared/domain`, and standard libraries
 
 **Example:**
+
 ```typescript
 // src/Church/domain/Church.ts
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
@@ -189,11 +194,13 @@ export class Church extends AggregateRoot {
 **Purpose**: Orchestrates domain entities and repository calls to fulfill use cases.
 
 **Contents:**
+
 - **Use Case Classes**: One class per use case with `execute()` method
 - **Application Services**: Coordinate multiple aggregates or external services
 - **Query Builders**: Construct `Criteria` objects for repositories
 
 **Rules:**
+
 - ✅ Import from `domain` and `Shared`
 - ✅ Inject dependencies via constructor
 - ✅ Use domain interfaces, not concrete implementations
@@ -201,11 +208,18 @@ export class Church extends AggregateRoot {
 - ❌ No direct framework dependencies
 
 **Example:**
+
 ```typescript
 // src/Purchases/applications/SearchPurchase.ts
 import { IPurchaseRepository } from "../domain/interfaces"
 import { FilterPurchasesRequest } from "../domain/requests"
-import { Criteria, Filters, Operator, Order, OrderTypes } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  Order,
+  OrderTypes,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class SearchPurchase {
   constructor(private readonly purchaseRepository: IPurchaseRepository) {}
@@ -244,12 +258,14 @@ export class SearchPurchase {
 **Purpose**: Implements external concerns (HTTP, database, queues, storage).
 
 **Contents:**
+
 - **Persistence**: MongoDB repository implementations
 - **HTTP**: Controllers and route definitions
 - **Queues**: Background job handlers
 - **Adapters**: Third-party service integrations
 
 **Rules:**
+
 - ✅ Implements domain interfaces
 - ✅ Handles framework-specific code (Express, MongoDB)
 - ✅ Singleton pattern for repositories
@@ -258,6 +274,7 @@ export class SearchPurchase {
 #### Persistence Layer
 
 **Example:**
+
 ```typescript
 // src/Financial/infrastructure/persistence/AvailabilityAccountMongoRepository.ts
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
@@ -295,6 +312,7 @@ export class AvailabilityAccountMongoRepository
 #### HTTP Layer
 
 **Controllers:**
+
 ```typescript
 // src/Church/infrastructure/http/Church.controller.ts
 import { Request, Response } from "express"
@@ -303,13 +321,13 @@ import { ChurchMongoRepository } from "../persistence/ChurchMongoRepository"
 import { domainResponse } from "@/Shared/helpers/domainResponse"
 
 export class ChurchController {
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: ServerResponse) {
     const useCase = new CreateChurch(ChurchMongoRepository.getInstance())
     const result = await useCase.execute(req.body)
     return domainResponse(result, res)
   }
 
-  async list(req: Request, res: Response) {
+  async list(req: Request, res: ServerResponse) {
     const useCase = new ListChurches(ChurchMongoRepository.getInstance())
     const result = await useCase.execute(req.query)
     return res.json(result)
@@ -318,6 +336,7 @@ export class ChurchController {
 ```
 
 **Routes:**
+
 ```typescript
 // src/Church/infrastructure/http/Church.routes.ts
 import { Router } from "express"
@@ -327,7 +346,11 @@ import { PermissionMiddleware } from "@/Shared/infrastructure/middleware"
 const router = Router()
 const controller = new ChurchController()
 
-router.post("/churches", PermissionMiddleware, controller.create.bind(controller))
+router.post(
+  "/churches",
+  PermissionMiddleware,
+  controller.create.bind(controller)
+)
 router.get("/churches", PermissionMiddleware, controller.list.bind(controller))
 
 export default router
@@ -359,6 +382,7 @@ export default router
 ```
 
 **Key Points:**
+
 - Dependencies point **inward** (toward the domain)
 - Domain layer has **no** outward dependencies
 - Infrastructure implements domain interfaces
@@ -371,6 +395,7 @@ export default router
 Since there's **no DI framework**, we use manual constructor injection:
 
 ### 1. Repository Singleton Pattern
+
 ```typescript
 export class ChurchMongoRepository extends MongoRepository<Church> {
   private static instance: ChurchMongoRepository
@@ -385,6 +410,7 @@ export class ChurchMongoRepository extends MongoRepository<Church> {
 ```
 
 ### 2. Use Case Instantiation
+
 ```typescript
 // In controller
 const repository = ChurchMongoRepository.getInstance()
@@ -393,6 +419,7 @@ const result = await useCase.execute(request)
 ```
 
 ### 3. Service Composition
+
 ```typescript
 export class ComplexUseCase {
   constructor(
@@ -474,6 +501,7 @@ Shared/
 ```
 
 **Usage:**
+
 ```typescript
 import { Logger } from "@/Shared/adapter"
 import { domainResponse } from "@/Shared/helpers/domainResponse"
@@ -485,6 +513,7 @@ import { DomainException } from "@/Shared/domain/exceptions/domain-exception"
 ## Error Handling Strategy
 
 ### Domain Exceptions
+
 ```typescript
 // Shared/domain/exceptions/domain-exception.ts
 export class DomainException extends Error {
@@ -505,10 +534,11 @@ if (!church.isActive()) {
 ```
 
 ### Controller Error Handling
+
 ```typescript
 import { domainResponse } from "@/Shared/helpers/domainResponse"
 
-export async function controllerMethod(req: Request, res: Response) {
+export async function controllerMethod(req: Request, res: ServerResponse) {
   try {
     const result = await useCase.execute(req.body)
     return domainResponse(result, res)
@@ -531,11 +561,13 @@ export async function controllerMethod(req: Request, res: Response) {
 ## Background Processing
 
 ### Queue System
+
 - **Library**: Bull (Redis-backed)
 - **Definition**: `src/queues.ts`
 - **Workers**: `Shared/infrastructure/queue/`
 
 **Example Queue Definition:**
+
 ```typescript
 // src/queues.ts
 export const Queues = (): IDefinitionQueue[] => [
@@ -549,6 +581,7 @@ export const Queues = (): IDefinitionQueue[] => [
 ```
 
 **Queue Worker:**
+
 ```typescript
 export class SendEmailWorker implements IQueue {
   constructor(private emailService: EmailService) {}
@@ -564,6 +597,7 @@ export class SendEmailWorker implements IQueue {
 ## Testing Strategy
 
 ### Unit Tests (Domain & Application)
+
 ```typescript
 // Test domain logic
 describe("Church", () => {
@@ -589,6 +623,7 @@ describe("CreateChurch", () => {
 ```
 
 ### Integration Tests
+
 ```typescript
 import request from "supertest"
 import { app } from "../app"
@@ -637,5 +672,6 @@ describe("POST /churches", () => {
 ---
 
 For more details on specific layers:
+
 - Database operations: See `DATABASE.md`
 - Coding conventions: See `AGENTS.md`

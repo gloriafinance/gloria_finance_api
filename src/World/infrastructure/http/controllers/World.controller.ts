@@ -1,5 +1,6 @@
-import { Response } from "express"
 import { Controller, Get, Param, Res, Use } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { HttpStatus } from "@/Shared/domain"
 import { FindStateByCountryId } from "@/World/applications"
@@ -12,7 +13,7 @@ export class WorldController {
   @Use([PermissionMiddleware, Can("world", "states_read")])
   async listStatesByCountry(
     @Param("countryId") countryId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const states = await new FindStateByCountryId(

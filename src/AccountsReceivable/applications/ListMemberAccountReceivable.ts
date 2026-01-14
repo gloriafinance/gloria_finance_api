@@ -3,7 +3,7 @@ import {
   AccountReceivable,
   AccountReceivableType,
   AccountsReceivableStatus,
-  FilterMemberAccountReceivableRequest,
+  type FilterMemberAccountReceivableRequest,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import {

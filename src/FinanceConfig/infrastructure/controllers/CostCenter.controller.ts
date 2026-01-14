@@ -1,12 +1,11 @@
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "../../../Shared/helpers/domainResponse"
-import { Response } from "express"
 import { MemberMongoRepository } from "@/Church/infrastructure"
 import { CreateCostCenter } from "@/FinanceConfig/applications/costCenter/CreateCostCenter"
 import { UpdateCostCenter } from "@/Financial/applications/UpdateCostCenter"
 import { SearchCostCenterByChurchId } from "@/FinanceConfig/applications"
 import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
-import { CostCenterRequest } from "@/FinanceConfig/domain"
+import type { CostCenterRequest } from "@/FinanceConfig/domain"
 import {
   Body,
   Controller,
@@ -25,7 +24,7 @@ export class CostCenterController {
   @Use([PermissionMiddleware, Can("financial_configuration", "cost_centers")])
   async FindCostCenterByChurchIdController(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const costCenter = await new SearchCostCenterByChurchId(
@@ -42,7 +41,7 @@ export class CostCenterController {
   @Use([PermissionMiddleware, Can("financial_configuration", "cost_centers")])
   async CreateCostCenterController(
     @Body() costCenter: CostCenterRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new CreateCostCenter(
@@ -63,7 +62,7 @@ export class CostCenterController {
   @Use([PermissionMiddleware, Can("financial_configuration", "cost_centers")])
   async UpdateCostCenterController(
     @Body() costCenter: CostCenterRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new UpdateCostCenter(

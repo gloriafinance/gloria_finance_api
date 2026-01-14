@@ -1,2 +1,2 @@
 export { RecordPurchaseRequest } from "./RecordPurchase.reques"
-export { FilterPurchasesRequest } from "./FilterPurchases.request"
+export type { FilterPurchasesRequest } from "./FilterPurchases.request"

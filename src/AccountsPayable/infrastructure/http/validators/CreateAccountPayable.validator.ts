@@ -1,10 +1,16 @@
-import { NextFunction, Request, Response } from "express"
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
+import { NextFunction } from "@abejarano/ts-express-server"
 
-export default async (req: Request, res: Response, next: NextFunction) => {
-  const payload = { ...req.body }
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
+export default async (
+  req: Request,
+  res: ServerResponse,
+  next: NextFunction
+) => {
+  const payload = { ...req.body } as any
   const logger = Logger("CreateAccountPayableValidator")
 
   logger.info(`Validating`, payload)
@@ -110,8 +116,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     })
   }
 
-  req.body.taxes = payload.taxes
-  req.body.taxMetadata = payload.taxMetadata
+  req.body["taxes"] = payload.taxes
+  req.body["taxMetadata"] = payload.taxMetadata
 
   next()
 }

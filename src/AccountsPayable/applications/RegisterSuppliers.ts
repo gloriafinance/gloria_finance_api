@@ -4,7 +4,7 @@ import {
   Supplier,
   SupplierFound,
 } from "@/AccountsPayable/domain"
-import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
+import type { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 
 export class RegisterSuppliers {
   private logger = Logger(RegisterSuppliers.name)

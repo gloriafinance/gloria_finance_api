@@ -4,7 +4,7 @@ import {
   AccountPayableNotFound,
   IAccountPayableRepository,
   InstallmentNotFound,
-  PayAccountPayableRequest,
+  type PayAccountPayableRequest,
 } from "@/AccountsPayable/domain"
 import {
   IAvailabilityAccountRepository,

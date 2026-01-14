@@ -2,7 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
 import {
-  CreateScheduleEventRequest,
+  type CreateScheduleEventRequest,
   IScheduleItemRepository,
   ScheduleEvent,
 } from "@/Schedule/domain"

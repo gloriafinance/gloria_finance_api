@@ -1,6 +1,5 @@
 import { Logger } from "@/Shared/adapter"
 import { HttpStatus } from "@/Shared/domain"
-import { NextFunction, Request, Response } from "express"
 import { Validator } from "node-input-validator"
 
 const logger = Logger("ScheduleItemsQueryValidator")
@@ -10,7 +9,7 @@ const visibilityValues = "PUBLIC,INTERNAL_LEADERS"
 
 export default async (
   req: Request,
-  res: Response,
+  res: ServerResponse,
   next: NextFunction
 ): Promise<void> => {
   const payload = req.query

@@ -1,4 +1,3 @@
-import { Request, Response } from "express"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { UpdateFinancialMonth } from "@/ConsolidatedFinancial/applications/FinancialMonth"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
@@ -9,11 +8,21 @@ import {
   Get,
   Patch,
   Post,
+  Req,
   Use,
 } from "@abejarano/ts-express-server"
+import type {
+  ServerRequest,
+  ServerResponse,
+} from "@abejarano/ts-express-server"
+
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { ListFinancialMonth } from "@/ConsolidatedFinancial/applications"
-import { ListFinancialMonthRequest } from "@/ConsolidatedFinancial/domain"
+import type {
+  ListFinancialMonthRequest,
+  UpdateFinancialMonthRequest,
+} from "@/ConsolidatedFinancial/domain"
 import FinancialMonthValidator from "../validator/FinancialMonth.validator"
 import { GenerateFinanceRecordReport } from "@/Financial/applications"
 import { GenerateFinancialMonthsService } from "../../services/GenerateFinancialMonths.service"
@@ -22,12 +31,16 @@ import { GenerateFinancialMonthsService } from "../../services/GenerateFinancial
 export class FinancialMonthController {
   @Patch("/")
   @Use([PermissionMiddleware, Can("consolidated_financial", "generate_months")])
-  async UpdateFinancialMonthController(req: Request, res: Response) {
+  async UpdateFinancialMonthController(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: UpdateFinancialMonthRequest,
+    res: ServerResponse
+  ) {
     try {
       await new UpdateFinancialMonth(
         FinancialYearMongoRepository.getInstance()
       ).execute({
-        ...req.body,
+        ...body,
         churchId: req.auth.churchId,
         closedBy: req.auth.name,
       })
@@ -46,7 +59,7 @@ export class FinancialMonthController {
     FinancialMonthValidator,
     Can("consolidated_financial", "generate_months"),
   ])
-  async GetFinancialMonthController(req: Request, res: Response) {
+  async GetFinancialMonthController(req: Request, res: ServerResponse) {
     try {
       const list = await new ListFinancialMonth(
         FinancialYearMongoRepository.getInstance()
@@ -63,7 +76,7 @@ export class FinancialMonthController {
 
   @Post("/")
   @Use([PermissionMiddleware, Can("consolidated_financial", "generate_months")])
-  async generate(@Body() req: { year: number }, res: Response) {
+  async generate(@Body() req: { year: number }, res: ServerResponse) {
     try {
       await GenerateFinancialMonthsService(req.year)
 

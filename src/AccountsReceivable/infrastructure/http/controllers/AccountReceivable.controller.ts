@@ -6,14 +6,15 @@ import {
   Query,
   Req,
   Res,
+  type ServerResponse,
   Use,
 } from "@abejarano/ts-express-server"
 import {
-  AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import CreateAccountReceivableValidator from "@/AccountsReceivable/infrastructure/http/validators/CreateAccountReceivable.validator"
 import { FindChurchById } from "@/Church/applications"
 import {
@@ -33,15 +34,14 @@ import {
 import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import {
   AccountReceivable,
-  AccountReceivableRequest,
   AccountReceivableType,
-  FilterAccountReceivableRequest,
-  PayAccountReceivableRequest,
+  type AccountReceivableRequest,
+  type FilterAccountReceivableRequest,
+  type PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
 import { NotifyPaymentCommitment } from "@/Notifications/applications"
 import { AmountValue, HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { Request, Response } from "express"
 import { Logger } from "@/Shared/adapter"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import PayAccountReceivableValidator from "@/AccountsReceivable/infrastructure/http/validators/PayAccountReceivable.validator"
@@ -58,7 +58,7 @@ export class AccountReceivableController {
   async create(
     @Body() body: AccountReceivableRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const church = await new FindChurchById(
@@ -100,8 +100,8 @@ export class AccountReceivableController {
   @Use([PermissionMiddleware, Can("accounts_receivable", "read")])
   async list(
     @Query() query: FilterAccountReceivableRequest,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       const logger = Logger("ListAccountReceivableController")
@@ -129,8 +129,8 @@ export class AccountReceivableController {
   ])
   async pay(
     @Body() body: PayAccountReceivableRequest,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       const installmentId = body.installmentId

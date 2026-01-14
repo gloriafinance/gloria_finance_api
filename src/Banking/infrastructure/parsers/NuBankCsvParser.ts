@@ -1,4 +1,4 @@
-import { createReadStream } from "fs"
+import { createReadStream } from "node:fs"
 import { parse } from "@fast-csv/parse"
 import { createHash } from "crypto"
 import { once } from "events"

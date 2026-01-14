@@ -1,7 +1,7 @@
 import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { join } from "path"
-import { tmpdir } from "os"
 import { promises as fs } from "fs"
+const TEMP_DIR = join(process.cwd(), "tmp")
 
 const CSV_SEPARATOR = ";"
 
@@ -24,8 +24,9 @@ export class XLSExportAdapter implements IXLSExportAdapter {
 
     const timestamp = Date.now()
     const filename = `${sheetName}-${timestamp}.csv`
+    await fs.mkdir(TEMP_DIR, { recursive: true })
     const tempFilePath = join(
-      tmpdir(),
+      TEMP_DIR,
       `${timestamp}-${Math.random().toString(16).slice(2)}.csv`
     )
 

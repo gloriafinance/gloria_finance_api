@@ -2,7 +2,6 @@ import { IDefinitionQueue } from "@/Shared/domain"
 import { DeletePurchasesJob } from "@/Purchases/applications"
 import { PurchaseMongoRepository } from "@/Purchases/infrastructure/persistence/PurchaseMongoRepository"
 import { StorageGCP } from "@/Shared/infrastructure"
-
 export const PurchasesQueue = (): IDefinitionQueue[] => [
   {
     useClass: DeletePurchasesJob,

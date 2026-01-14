@@ -1,5 +1,3 @@
-import { Response } from "express"
-import { UploadedFile } from "express-fileupload"
 import {
   Body,
   Controller,
@@ -12,10 +10,13 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "@abejarano/ts-express-server"
 import {
   AssetInventoryChecker,
   AssetInventoryStatus,
   AssetStatus,
+} from "@/Patrimony"
+import type {
   CreateAssetRequest,
   DisposeAssetRequest,
   ImportInventoryRequest,
@@ -25,6 +26,7 @@ import {
   UpdateAssetRequest,
 } from "@/Patrimony"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import CreateAssetValidator from "../validators/CreateAsset.validator"
 import UpdateAssetValidator from "../validators/UpdateAsset.validator"
 import ListAssetsValidator from "../validators/ListAssets.validator"
@@ -61,7 +63,6 @@ import {
 } from "@/Shared/adapter"
 import { NoOpStorage, QueueService } from "@/Shared/infrastructure"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
-import { AuthenticatedRequest } from "@/Shared/infrastructure"
 
 type ListAssetsQuery = {
   category?: string
@@ -95,7 +96,7 @@ export class PatrimonyController {
   async createAsset(
     @Body() body: CreateAssetRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     const uploadedPaths: string[] = []
 
@@ -145,7 +146,7 @@ export class PatrimonyController {
   async listAssets(
     @Query() query: ListAssetsQuery,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const performedBy = this.resolveUserId(req)
@@ -180,7 +181,7 @@ export class PatrimonyController {
   async getAsset(
     @Param("assetId") assetId: string,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const result = await new GetAsset(
@@ -206,7 +207,7 @@ export class PatrimonyController {
     @Param("assetId") assetId: string,
     @Body() body: UpdateAssetRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     const uploadedPaths: string[] = []
     const attachmentsProvided = Array.isArray(body.attachments)
@@ -264,7 +265,7 @@ export class PatrimonyController {
     @Param("assetId") assetId: string,
     @Body() body: DisposeAssetRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const asset = await new DisposeAsset(
@@ -292,7 +293,7 @@ export class PatrimonyController {
     @Param("assetId") assetId: string,
     @Body() body: RecordAssetInventoryRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const asset = await new RecordAssetInventory(
@@ -319,10 +320,10 @@ export class PatrimonyController {
   ])
   async importInventory(
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
-      const file = req["inventoryFile"] as UploadedFile
+      const file = req["inventoryFile"]
       const performerDetails = this.resolveInventoryPerformerDetails(req.auth)
 
       QueueService.getInstance().dispatch(
@@ -350,7 +351,7 @@ export class PatrimonyController {
   async physicalInventorySheet(
     @Query() query: PhysicalInventorySheetQuery,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const performedBy = this.resolveUserId(req)
@@ -388,7 +389,8 @@ export class PatrimonyController {
       res.download(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
-        if (error && !res.headersSent) {
+        //if (error && !res.headersSent) {
+        if (error) {
           domainResponse(error, res)
         }
       })
@@ -406,7 +408,7 @@ export class PatrimonyController {
   async inventoryReport(
     @Query() query: InventoryReportQuery,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const performedBy = this.resolveUserId(req)
@@ -432,7 +434,8 @@ export class PatrimonyController {
       res.download(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
-        if (error && !res.headersSent) {
+        // if (error && !res.headersSent) {
+        if (error) {
           domainResponse(error, res)
         }
       })
