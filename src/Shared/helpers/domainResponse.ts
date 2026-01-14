@@ -1,9 +1,10 @@
 import { DomainException, HttpStatus, QueueName } from "../domain"
 import { Logger } from "../adapter"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
-import { Response } from "express"
 
-export default (e, res: Response) => {
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
+export default (e, res: ServerResponse) => {
   const logger = Logger("domainResponse")
 
   if (e instanceof DomainException) {

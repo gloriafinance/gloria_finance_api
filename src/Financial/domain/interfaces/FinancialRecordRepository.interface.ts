@@ -1,6 +1,6 @@
 import { FinanceRecord } from "../FinanceRecord"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { BaseReportRequest } from "@/Reports/domain"
+import type { BaseReportRequest } from "@/Reports/domain"
 import { StatementCategorySummary } from "@/Financial/domain"
 
 export interface IFinancialRecordRepository {

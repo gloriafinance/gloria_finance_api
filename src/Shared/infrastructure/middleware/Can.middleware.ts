@@ -1,13 +1,14 @@
-import { NextFunction, Request, Response } from "express"
 import { PermissionDescriptionResolver } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
+import type { NextFunction, ServerResponse } from "@abejarano/ts-express-server"
 
-type AuthenticatedRequest = Request & {
-  auth?: {
-    permissions?: string[]
-  }
-  requiredPermission?: string
-}
+// type AuthenticatedRequest = Request & {
+//   auth?: {
+//     permissions?: string[]
+//   }
+//   requiredPermission?: string
+// }
 
 export function Can(module: string, action: string | string[]) {
   const actions = Array.isArray(action) ? action : [action]
@@ -18,7 +19,7 @@ export function Can(module: string, action: string | string[]) {
 
   return async (
     req: AuthenticatedRequest,
-    res: Response,
+    res: ServerResponse,
     next: NextFunction
   ): Promise<void> => {
     try {

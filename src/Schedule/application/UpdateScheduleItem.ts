@@ -2,7 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
   ScheduleItemNotFoundException,
-  UpdateScheduleEventRequest,
+  type UpdateScheduleEventRequest,
 } from "@/Schedule/domain"
 
 export class UpdateScheduleItem {

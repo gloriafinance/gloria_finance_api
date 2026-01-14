@@ -1,9 +1,12 @@
 import { Logger } from "@/Shared/adapter"
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
-import { NextFunction, Request, Response } from "express"
 
-export default async (req: Request, res: Response, next: NextFunction) => {
+export default async (
+  req: Request,
+  res: ServerResponse,
+  next: NextFunction
+) => {
   const payload = req.body
   const logger = Logger("CreateAccountReceivableValidator")
 

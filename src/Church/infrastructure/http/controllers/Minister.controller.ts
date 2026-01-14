@@ -1,4 +1,4 @@
-import { MinisterRequest } from "../../../domain"
+import type { MinisterRequest } from "../../../domain"
 import { AssignChurch, RegisterOrUpdateMinister } from "../../../applications"
 import { HttpStatus } from "../../../../Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
@@ -7,14 +7,16 @@ import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { Body, Controller, Post, Res, Use } from "@abejarano/ts-express-server"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import MinisterValidator from "@/Church/infrastructure/http/validators/Mininister.validator"
-import { Response } from "express"
 import AssignChurchValidator from "@/Church/infrastructure/http/validators/AssignChurch.validator"
 
 @Controller("/api/v1/minister")
 export class MinisterController {
   @Post("/")
   @Use([PermissionMiddleware, Can("ministers", "manage"), MinisterValidator])
-  async createOrUpdate(@Body() request: MinisterRequest, @Res() res: Response) {
+  async createOrUpdate(
+    @Body() request: MinisterRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
       await new RegisterOrUpdateMinister(
         MinisterMongoRepository.getInstance()
@@ -36,7 +38,7 @@ export class MinisterController {
   ])
   async assignChurch(
     @Body() payload: { churchId: string; ministerId: string },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new AssignChurch(

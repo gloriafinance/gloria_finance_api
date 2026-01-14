@@ -1,9 +1,9 @@
 import {
-  AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   Body,
   Controller,
@@ -14,11 +14,12 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
 import CreateAccountPayableValidator from "../validators/CreateAccountPayable.validator"
 import PayAccountPayableValidator from "../validators/PayAccountPayable.validator"
 import RegisterSupplierValidator from "../validators/RegisterSupplier.validator"
-import { Response } from "express"
-import {
+import type {
   AccountPayableRequest,
   FilterAccountPayableRequest,
   PayAccountPayableRequest,
@@ -41,7 +42,7 @@ import {
   RegisterSuppliers,
 } from "@/AccountsPayable/applications"
 import { Cache } from "@/Shared/decorators"
-import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
+import type { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 import { Logger } from "@/Shared/adapter"
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 
@@ -56,7 +57,7 @@ export class AccountPayableController {
   async create(
     @Body() body: AccountPayableRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new CreateAccountPayable(
@@ -90,7 +91,7 @@ export class AccountPayableController {
       amount: number
     },
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const installmentIds = body.installmentId.includes(",")
@@ -124,7 +125,7 @@ export class AccountPayableController {
   async list(
     @Query() query: FilterAccountPayableRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const logger = Logger("ListAccountPayableController")
@@ -153,7 +154,7 @@ export class AccountPayableController {
   async registerSupplier(
     @Body() body: ISupplier,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new RegisterSuppliers(
@@ -174,7 +175,10 @@ export class AccountPayableController {
   @Cache("suppliers", 600)
   @Get("/supplier")
   @Use([PermissionMiddleware, Can("accounts_payable", "suppliers_manage")])
-  async listSuppliers(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+  async listSuppliers(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
       res
         .status(HttpStatus.OK)

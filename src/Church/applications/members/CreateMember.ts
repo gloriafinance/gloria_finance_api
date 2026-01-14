@@ -1,11 +1,8 @@
-import {
-  Church,
-  ChurchNotFound,
+import { Church, ChurchNotFound, Member, MemberExist } from "../../domain"
+import type {
   CreateMemberRequest,
   IChurchRepository,
   IMemberRepository,
-  Member,
-  MemberExist,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import { IQueueService, QueueName } from "@/Shared/domain"

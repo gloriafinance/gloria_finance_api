@@ -1,5 +1,6 @@
 import { Church, ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { BankNotFound, BankRequest, IBankRepository } from "@/Banking/domain"
+import { BankNotFound } from "@/Banking/domain"
+import type { BankRequest, IBankRepository } from "@/Banking/domain"
 import { Bank } from "@/Banking/domain/Bank"
 
 export class CreateOrUpdateBank {

@@ -2,7 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivableNotFound,
   DebtorType,
-  DeclareInstallmentPaymentRequest,
+  type DeclareInstallmentPaymentRequest,
   IAccountsReceivableRepository,
   InstallmentNotFound,
 } from "@/AccountsReceivable/domain"

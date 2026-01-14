@@ -1,8 +1,5 @@
-import {
-  ActionsFinancialMonth,
-  IFinancialYearRepository,
-  UpdateFinancialMonthRequest,
-} from "../domain"
+import { ActionsFinancialMonth, IFinancialYearRepository } from "../domain"
+import type { UpdateFinancialMonthRequest } from "../domain"
 import { FinancialMontNotFound } from "../domain/exceptions"
 import { Logger } from "@/Shared/adapter"
 

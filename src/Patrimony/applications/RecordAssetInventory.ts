@@ -1,6 +1,6 @@
 import { Logger } from "@/Shared/adapter"
-import {
-  AssetNotFoundException,
+import { AssetNotFoundException } from "../domain"
+import type {
   AssetResponse,
   IAssetRepository,
   RecordAssetInventoryRequest,

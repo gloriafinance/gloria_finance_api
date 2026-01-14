@@ -1,4 +1,3 @@
-import { Response } from "express"
 import {
   Body,
   Controller,
@@ -8,7 +7,7 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
-import { BankRequest } from "@/Banking/domain"
+import type { BankRequest } from "@/Banking/domain"
 import {
   CreateOrUpdateBank,
   FinBankByBankId,
@@ -25,7 +24,10 @@ import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validat
 export class BankController {
   @Post("/")
   @Use([PermissionMiddleware, Can("banking", "manage"), bankValidator])
-  async createOrUpdate(@Body() request: BankRequest, @Res() res: Response) {
+  async createOrUpdate(
+    @Body() request: BankRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
       await new CreateOrUpdateBank(
         BankMongoRepository.getInstance(),
@@ -46,7 +48,10 @@ export class BankController {
 
   @Get("/data/:bankId")
   @Use([PermissionMiddleware, Can("banking", "read")])
-  async findByBankId(@Param("bankId") bankId: string, @Res() res: Response) {
+  async findByBankId(
+    @Param("bankId") bankId: string,
+    @Res() res: ServerResponse
+  ) {
     try {
       const bank = await new FinBankByBankId(
         BankMongoRepository.getInstance()
@@ -62,7 +67,7 @@ export class BankController {
   @Use([PermissionMiddleware, Can("banking", "read")])
   async listByChurchId(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const bank = await new SearchBankByChurchId(

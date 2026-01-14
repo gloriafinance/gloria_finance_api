@@ -1,4 +1,3 @@
-import axios from "axios"
 import { IJob } from "../../domain"
 
 const chatId = process.env.TELEGRAM_CHAT_ID
@@ -9,15 +8,23 @@ const TelegramSendMessage = async (message: string) => {
   const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`
 
   try {
-    const response = await axios.post(url, {
-      chat_id: chatId,
-      text: message,
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+      }),
     })
-  } catch (error) {
-    console.error(
-      "Error al enviar el mensaje:",
-      error.response?.data || error.message
-    )
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(errorBody || response.statusText)
+    }
+  } catch (error: any) {
+    console.error("Error al enviar el mensaje:", error?.message || error)
   }
 }
 

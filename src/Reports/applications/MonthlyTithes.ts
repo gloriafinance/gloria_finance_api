@@ -1,7 +1,7 @@
 import { IFinancialRecordRepository } from "../../Financial/domain/interfaces"
 import { IChurchRepository } from "../../Church/domain"
 import { FindChurchById } from "../../Church/applications"
-import { BaseReportRequest } from "../domain"
+import type { BaseReportRequest } from "../domain"
 import { Logger } from "../../Shared/adapter"
 
 export class MonthlyTithes {

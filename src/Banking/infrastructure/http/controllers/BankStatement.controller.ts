@@ -1,4 +1,3 @@
-import { Response } from "express"
 import {
   Controller,
   Get,
@@ -10,6 +9,7 @@ import {
   Req,
   Res,
   Use,
+  type ServerResponse,
 } from "@abejarano/ts-express-server"
 import { GenericException, HttpStatus, IQueueService } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
@@ -19,21 +19,25 @@ import {
   ListBankStatements,
   RetryBankStatementReconciliation,
 } from "@/Banking/applications"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import {
   BankMongoRepository,
   BankStatementMongoRepository,
 } from "@/Banking/infrastructure/persistence"
 import { BankStatementReconciler } from "@/Banking/applications/BankStatementReconciler"
-import { AuthenticatedRequest, QueueService } from "@/Shared/infrastructure"
+import {
+  Can,
+  PermissionMiddleware,
+  QueueService,
+} from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
 } from "@/Financial/infrastructure/persistence"
 import {
   Bank,
-  ImportBankStatementRequest,
-  ListBankStatementsRequest,
+  type ImportBankStatementRequest,
+  type ListBankStatementsRequest,
 } from "@/Banking/domain"
 import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers/BankStatementParserFactory"
 import { ImportBankStatementValidator } from "../validators/ImportBankStatement.validator"
@@ -54,7 +58,7 @@ export class BankStatementController {
   async list(
     @Query() params: ListBankStatementsRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const repository = BankStatementMongoRepository.getInstance()
@@ -78,7 +82,7 @@ export class BankStatementController {
   async importStatement(
     @Body() body: ImportBankStatementPayload,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       const file = req.files?.file
@@ -121,7 +125,7 @@ export class BankStatementController {
     @Param("bankStatementId") bankStatementId: string,
     @Body() body: { churchId?: string },
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       if (!bankStatementId) {
@@ -165,7 +169,7 @@ export class BankStatementController {
     @Param("bankStatementId") bankStatementId: string,
     @Body() body: { financialRecordId?: string },
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ): Promise<void> {
     try {
       if (!bankStatementId) {

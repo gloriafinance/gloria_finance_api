@@ -1,4 +1,5 @@
 import pino from "pino"
+import pinoPretty from "pino-pretty"
 import { RequestContext } from "@abejarano/ts-express-server"
 
 class CustomLogger {
@@ -34,22 +35,20 @@ class CustomLogger {
       // )
       this.logger = pino(pinoOptions)
     } else {
+      const prettyStream = pinoPretty({
+        colorizeObjects: true,
+        customColors: "err:red,info:green",
+        singleLine: true,
+        translateTime: "yyyy-mm-dd HH:MM:ss",
+        ignore: "pid,hostname",
+        colorize: true,
+      })
+
       this.logger = pino(
         {
           ...pinoOptions,
-          transport: {
-            target: "pino-pretty",
-            options: {
-              colorizeObjects: true,
-              customColors: "err:red,info:green",
-              singleLine: true,
-              translateTime: "yyyy-mm-dd HH:MM:ss",
-              ignore: "pid,hostname",
-              colorize: true,
-            },
-          },
         },
-        process.stdout
+        prettyStream
       ) // Solo logs en consola
     }
   }

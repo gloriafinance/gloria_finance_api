@@ -12,7 +12,7 @@ import {
 } from "@/Schedule/domain"
 import {
   CreateScheduleEventRequest,
-  ListScheduleEventsFiltersRequest,
+  type ListScheduleEventsFiltersRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
 import { IScheduleItemRepository } from "@/Schedule/domain/interfaces/ScheduleItemRepository.interface"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"

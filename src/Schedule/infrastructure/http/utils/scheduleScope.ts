@@ -1,10 +1,8 @@
-import { Response } from "express"
 import { HttpStatus } from "@/Shared/domain"
-import { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
-
+import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
 export const ensureChurchScope = (
   req: AuthenticatedRequest,
-  res: Response,
+  res: ServerResponse,
   churchId?: string
 ): string | undefined => {
   const scopedChurchId = req.auth?.churchId

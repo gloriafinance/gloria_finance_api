@@ -13,14 +13,14 @@ import { PasswordAdapter } from "../../adapters/Password.adapter"
 import { HttpStatus } from "@/Shared/domain"
 
 import domainResponse from "../../../../Shared/helpers/domainResponse"
-import {
+import type {
   AcceptPoliciesRequest,
   CreateUserRequest,
   FilterUserRequest,
 } from "../../../domain"
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "@/Shared/adapter"
-import { Request, Response } from "express"
+
 import {
   Body,
   Controller,
@@ -32,19 +32,17 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
 import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"
-import {
-  AuthenticatedRequest,
-  PermissionMiddleware,
-  QueueService,
-} from "@/Shared/infrastructure"
+import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { FindChurchById, FindMemberById } from "@/Church/applications"
 import {
   ChurchMongoRepository,
   MemberMongoRepository,
 } from "@/Church/infrastructure"
-import { Member } from "@/Church/domain"
 
 export type userLoginPayload = {
   email: string
@@ -56,7 +54,7 @@ export class UserController {
   private logger = Logger(UserController.name)
 
   @Post("/login")
-  async login(@Body() payload: userLoginPayload, res: Response) {
+  async login(@Body() payload: userLoginPayload, res: ServerResponse) {
     try {
       const user = await new MakeLogin(
         UserMongoRepository.getInstance(),
@@ -136,7 +134,7 @@ export class UserController {
   async createOrUpdateUser(
     @Body() payload: CreateUserRequest,
     @Param("userId") userId: string,
-    res: Response
+    res: ServerResponse
   ) {
     try {
       const user = await new CreateOrUpdateUser(
@@ -164,8 +162,8 @@ export class UserController {
   @Use(PermissionMiddleware)
   async acceptPolicies(
     @Body() payload: AcceptPoliciesRequest,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       if (!req.auth?.userId) {
@@ -210,7 +208,7 @@ export class UserController {
   async fetchAllUser(
     @Param() filter: FilterUserRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     const logger = Logger("FetchAllUserController")
     try {
@@ -228,7 +226,7 @@ export class UserController {
   }
 
   @Post("/recovery-password")
-  async recoveryPassword(@Body() req: any, res: Response) {
+  async recoveryPassword(@Body() req: any, res: ServerResponse) {
     try {
       const temporalPassword = randomString(10)
 
@@ -258,7 +256,7 @@ export class UserController {
       newPassword: string
       oldPassword: string
     },
-    res: Response
+    res: ServerResponse
   ) {
     try {
       await new MakeLogin(

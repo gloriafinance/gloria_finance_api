@@ -7,18 +7,25 @@ import {
   Query,
   Req,
   Res,
+  type ServerResponse,
   Use,
 } from "@abejarano/ts-express-server"
-import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
+import {
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+  StorageGCP,
+} from "@/Shared/infrastructure"
 import DeclareInstallmentPaymentValidator from "@/AccountsReceivable/infrastructure/http/validators/DeclareInstallmentPayment.validator"
 import {
   AccountReceivable,
   ActionsPaymentCommitment,
+} from "@/AccountsReceivable/domain"
+import type {
   ConfirmOrDenyPaymentCommitmentRequest,
   DeclareInstallmentPaymentRequest,
   FilterMemberAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
-import { Request, Response } from "express"
 import {
   ConfirmOrDenyPaymentCommitment,
   DeclareInstallmentPayment,
@@ -45,7 +52,7 @@ export class AccountReceivableForMemberController {
   @Use(PermissionMiddleware)
   async confirmPaymentCommitment(
     @Body() req: ConfirmOrDenyPaymentCommitmentRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const store = StorageGCP.getInstance(process.env.BUCKET_FILES)
@@ -84,7 +91,7 @@ export class AccountReceivableForMemberController {
   ])
   async memberCommitments(
     @Query() req: FilterMemberAccountReceivableRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const member = await new FindMemberById(
@@ -110,8 +117,8 @@ export class AccountReceivableForMemberController {
   ])
   async paymentDeclaration(
     @Body() body: DeclareInstallmentPaymentRequest,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       await new DeclareInstallmentPayment(

@@ -1,8 +1,8 @@
-import {
+import type {
   FilterPurchasesRequest,
   RecordPurchaseRequest,
 } from "../../../domain/requests"
-import { Response } from "express"
+
 import {
   Body,
   Controller,
@@ -13,17 +13,15 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
-import {
-  AuthenticatedRequest,
-  Can,
-  PermissionMiddleware,
-  StorageGCP,
-} from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
@@ -46,7 +44,7 @@ export class PurchaseController {
   async record(
     @Body() body: RecordPurchasePayload,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     const request: RecordPurchaseRequest = {
       ...body,
@@ -95,7 +93,7 @@ export class PurchaseController {
   async list(
     @Query() query: FilterPurchasesRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const list = await new SearchPurchase(

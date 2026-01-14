@@ -1,6 +1,7 @@
 export { FinancialMonth } from "./FinancialMonth"
 
-export { IFinancialYearRepository } from "./interfaces/FinancialYearRepository.interface"
+export type { IFinancialYearRepository } from "./interfaces/FinancialYearRepository.interface"
 
-export * from "./requests/UpdateFinancialMonth.request"
-export * from "./requests/ListFinancialMonth.request"
+export { ActionsFinancialMonth } from "./requests/UpdateFinancialMonth.request"
+export type { UpdateFinancialMonthRequest } from "./requests/UpdateFinancialMonth.request"
+export type * from "./requests/ListFinancialMonth.request"

@@ -1,4 +1,4 @@
-import {
+import type {
   CreateMemberRequest,
   MemberPaginateRequest,
   UpdateMemberRequest,
@@ -17,7 +17,6 @@ import {
 } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
-import { Request, Response } from "express"
 import { Cache } from "@/Shared/decorators"
 import {
   Body,
@@ -29,9 +28,14 @@ import {
   Query,
   Req,
   Res,
+  type ServerResponse,
   Use,
 } from "@abejarano/ts-express-server"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import {
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 import {
   CreateMemberValidator,
   UpdateMemberValidator,
@@ -46,7 +50,10 @@ const normalizeDate = (value?: Date | string): Date | undefined => {
 export class MemberController {
   @Get("/list")
   @Use([PermissionMiddleware, Can("members", "manage")])
-  async list(@Query() memberRequest: MemberPaginateRequest, res: Response) {
+  async list(
+    @Query() memberRequest: MemberPaginateRequest,
+    res: ServerResponse
+  ) {
     try {
       const members = await new SearchMembers(
         MemberMongoRepository.getInstance()
@@ -61,7 +68,7 @@ export class MemberController {
   @Cache("members", 600)
   @Get("/all")
   @Use([PermissionMiddleware, Can("members", "manage")])
-  async all(@Req() req: Request, @Res() res: Response) {
+  async all(@Req() req: AuthenticatedRequest, @Res() res: ServerResponse) {
     try {
       const members = await new AllMember(
         MemberMongoRepository.getInstance()
@@ -75,7 +82,7 @@ export class MemberController {
 
   @Get("/:memberId")
   @Use([PermissionMiddleware, Can("members", "manage")])
-  async findById(memberId: string, res: Response) {
+  async findById(memberId: string, res: ServerResponse) {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
@@ -92,7 +99,7 @@ export class MemberController {
   async update(
     @Param("memberId") memberId: string,
     @Body() request: UpdateMemberRequest,
-    res: Response
+    res: ServerResponse
   ) {
     try {
       await new UpdateMember(MemberMongoRepository.getInstance()).execute({
@@ -113,7 +120,10 @@ export class MemberController {
 
   @Post("/")
   @Use([PermissionMiddleware, CreateMemberValidator, Can("members", "manage")])
-  async create(@Body() request: CreateMemberRequest, @Res() res: Response) {
+  async create(
+    @Body() request: CreateMemberRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
       await new CreateMember(
         MemberMongoRepository.getInstance(),

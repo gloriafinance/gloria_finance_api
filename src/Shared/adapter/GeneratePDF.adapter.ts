@@ -2,6 +2,7 @@ import { IStorageService } from "@/Shared/domain"
 import puppeteer, { Browser, LaunchOptions } from "puppeteer"
 import { v4 } from "uuid"
 import * as path from "path"
+import { promises as fs } from "node:fs"
 import { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 
@@ -40,7 +41,9 @@ export class PuppeteerAdapter extends GeneratePDFAdapter {
     await page.setContent(this.htmlString)
 
     const pdfName = `${v4()}.pdf`
-    const pdfPath = path.join("/tmp/", pdfName)
+    const tempDir = path.join(process.cwd(), "tmp")
+    await fs.mkdir(tempDir, { recursive: true })
+    const pdfPath = path.join(tempDir, pdfName)
 
     await page.pdf({
       path: pdfPath,

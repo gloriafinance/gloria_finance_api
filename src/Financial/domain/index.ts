@@ -31,20 +31,20 @@ export { AccountType } from "../../FinanceConfig/domain/enums/AccountType.enum"
 export { CostCenterCategory } from "../../FinanceConfig/domain/enums/CostCenterCategory.enum"
 export * from "./enums/FinancialRecordType.enum"
 
-export { ContributionRequest } from "./requests/Contribution.request"
-export { FilterContributionsRequest } from "./requests/FilterContributions.request"
-export { CostCenterRequest } from "../../FinanceConfig/domain/requests/CostCenter.request"
+export type { ContributionRequest } from "./requests/Contribution.request"
+export type { FilterContributionsRequest } from "./requests/FilterContributions.request"
+export type { CostCenterRequest } from "../../FinanceConfig/domain/requests/CostCenter.request"
 export * from "./requests/FinancialRecord.request"
-export { FilterFinanceRecordRequest } from "./requests/FilterFinanceRecord.request"
-export {
+export type { FilterFinanceRecordRequest } from "./requests/FilterFinanceRecord.request"
+export type {
   FinanceRecordReportRequest,
   FinanceRecordReportFormat,
 } from "./requests/FinanceRecordReport.request"
-export { AvailabilityAccountRequest } from "../../FinanceConfig/domain/requests/AvailabilityAccount.request"
-export { UpdateAvailabilityAccountBalanceRequest } from "./requests/UpdateAvailabilityAccountBalance.request"
-export { FinancialConceptRequest } from "../../FinanceConfig/domain/requests/FinancialConcept.request"
+export type { AvailabilityAccountRequest } from "../../FinanceConfig/domain/requests/AvailabilityAccount.request"
+export type { UpdateAvailabilityAccountBalanceRequest } from "./requests/UpdateAvailabilityAccountBalance.request"
+export type { FinancialConceptRequest } from "../../FinanceConfig/domain/requests/FinancialConcept.request"
 
-export { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
+export type { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
 
-export * from "./types/CreateFinanceRecord.type"
-export { StatementCategorySummary } from "./types/StatementCategorySummary.type"
+export type * from "./types/CreateFinanceRecord.type"
+export type { StatementCategorySummary } from "./types/StatementCategorySummary.type"

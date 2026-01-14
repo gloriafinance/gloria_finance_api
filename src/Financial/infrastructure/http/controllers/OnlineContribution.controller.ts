@@ -1,8 +1,5 @@
-import {
-  FilterContributionsRequest,
-  OnlineContributions,
-  OnlineContributionsStatus,
-} from "../../../domain"
+import { OnlineContributions, OnlineContributionsStatus } from "../../../domain"
+import type { FilterContributionsRequest } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   ListContributions,
@@ -10,11 +7,11 @@ import {
 } from "../../../applications"
 import { HttpStatus } from "@/Shared/domain"
 import {
-  AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import MemberContributionsDTO from "../dto/MemberContributions.dto"
 import {
   AvailabilityAccountMongoRepository,
@@ -23,7 +20,6 @@ import {
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { Logger } from "@/Shared/adapter"
-import { Response } from "express"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 import {
   Controller,
@@ -36,6 +32,8 @@ import {
   Use,
 } from "@abejarano/ts-express-server"
 
+import type { ServerResponse } from "@abejarano/ts-express-server"
+
 @Controller("/api/v1/finance/contributions")
 export class ContributionController {
   @Get("/")
@@ -46,7 +44,7 @@ export class ContributionController {
   async listOnlineContributionsController(
     @Query() filter: FilterContributionsRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     const logger = Logger("listOnlineContributionsController")
     logger.info(`Filtering online contributions with: `, filter)
@@ -73,7 +71,7 @@ export class ContributionController {
     @Param()
     params: { contributionId: string; status: OnlineContributionsStatus },
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new UpdateContributionStatus(

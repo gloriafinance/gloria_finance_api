@@ -1,13 +1,27 @@
-import { Body, Controller, Post, Req, Res } from "@abejarano/ts-express-server"
-import { Request, Response } from "express"
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  Use,
+} from "@abejarano/ts-express-server"
+import type {
+  ServerResponse,
+  ServerRequest,
+} from "@abejarano/ts-express-server"
+
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { FindMemberById } from "@/Church/applications"
 import { MemberMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
+import { PermissionMiddleware } from "../middleware/Permission.middleware"
 
 @Controller("/api/v1/Notifications")
 export class NotificationController {
   @Post("/push-tokens")
+  @Use(PermissionMiddleware)
   async token(
     @Body()
     body: {
@@ -15,8 +29,8 @@ export class NotificationController {
       platform: "android" | "ios" | "web"
       deviceId: string
     },
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       const member = await new FindMemberById(
