@@ -5,7 +5,7 @@ import {
   FileUploadModule,
   RateLimitModule,
   RequestContextModule,
-  ServerRuntime,
+  SecurityModule,
 } from "@abejarano/ts-express-server"
 
 import { controllersModule } from "./bootstrap"
@@ -22,6 +22,7 @@ server.addModules([
   new CorsModule({
     allowedHeaders: ["content-type", "authorization"],
   }),
+  new SecurityModule(),
   new RequestContextModule(),
   new RateLimitModule(),
   new FileUploadModule({
