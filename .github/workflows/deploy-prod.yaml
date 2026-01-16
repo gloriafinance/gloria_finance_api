@@ -43,12 +43,14 @@ jobs:
           git fetch origin
           git reset --hard origin/main
           git pull
-          rm -rf dist node_modules
 
+          rm -rf node_modules
+          rm -rf dist
+          bun install --frozen-lockfile
           bun build.ts
 
-          sudo systemctl enable church_finance_api.service
-          sudo systemctl restart church_finance_api.service
+          sudo systemctl enable church_api.service
+          sudo systemctl restart church_api.service
 
           "
 

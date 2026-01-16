@@ -8,5 +8,5 @@ await Bun.build({
   },
   minify: true,
   sourcemap: "linked",
-  //external: ["mock-aws-s3", "aws-sdk", "nock"],
+  external: ["@bull-board/api", "@bull-board/bun", "@bull-board/ui"],
 })
