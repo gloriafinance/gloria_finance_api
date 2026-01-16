@@ -3,6 +3,8 @@ import {
   BootstrapServer,
   CorsModule,
   FileUploadModule,
+  RateLimitModule,
+  RequestContextModule,
   ServerRuntime,
 } from "@abejarano/ts-express-server"
 
@@ -20,7 +22,8 @@ server.addModules([
   new CorsModule({
     allowedHeaders: ["content-type", "authorization"],
   }),
-  controllersModule(),
+  new RequestContextModule(),
+  new RateLimitModule(),
   new FileUploadModule({
     maxFiles: 1,
     allowedMimeTypes: [
@@ -31,6 +34,7 @@ server.addModules([
       "application/vnd.ms-excel",
     ],
   }),
+  controllersModule(),
 ])
 
 server.addServices([new FactoryService()])

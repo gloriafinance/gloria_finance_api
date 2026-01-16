@@ -46,10 +46,8 @@ jobs:
 
           rm -rf node_modules
           rm -rf dist
-          bun install --frozen-lockfile
-          bun build.ts
 
-          sudo systemctl enable church_api.service
+          ~/.bun/bin/bun install --frozen-lockfile
           sudo systemctl restart church_api.service
 
           "
