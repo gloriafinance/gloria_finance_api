@@ -7,11 +7,7 @@ import { IDefinitionQueue } from "@/Shared/domain"
 
 type BunRoutes = ReturnType<BunAdapter["getRoutes"]>
 
-const findRouteHandler = (
-  routes: BunRoutes,
-  method: string,
-  path: string
-) => {
+const findRouteHandler = (routes: BunRoutes, method: string, path: string) => {
   const handlers = routes[path]
   if (handlers && handlers[method]) {
     return handlers[method]
