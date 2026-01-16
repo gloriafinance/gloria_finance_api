@@ -1,4 +1,3 @@
-import { Response } from "express"
 import {
   Body,
   Controller,
@@ -12,6 +11,7 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
@@ -26,16 +26,13 @@ import {
 import { ScheduleItemMongoRepository } from "@/Schedule/infrastructure"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
-  CreateScheduleEventRequest,
-  ListScheduleEventsFiltersRequest,
-  UpdateScheduleEventRequest,
+  type CreateScheduleEventRequest,
+  type ListScheduleEventsFiltersRequest,
+  type UpdateScheduleEventRequest,
   WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
-import {
-  AuthenticatedRequest,
-  Can,
-  PermissionMiddleware,
-} from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import CreateScheduleItemValidator from "../validators/CreateScheduleItem.validator"
 import UpdateScheduleItemValidator from "../validators/UpdateScheduleItem.validator"
 import ScheduleItemsQueryValidator from "../validators/ScheduleItemsQuery.validator"
@@ -60,7 +57,7 @@ export class ScheduleController {
   ])
   async createScheduleItem(
     @Body() body: CreateScheduleEventRequest,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -90,7 +87,7 @@ export class ScheduleController {
   ])
   async listScheduleItems(
     @Query() query: ListScheduleEventsFiltersRequest,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -118,7 +115,7 @@ export class ScheduleController {
   ])
   async weeklySchedule(
     @Query() query: WeeklyScheduleQuery,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -151,7 +148,7 @@ export class ScheduleController {
   @Use([PermissionMiddleware, Can("schedule", ["configure", "read"])])
   async getScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -180,7 +177,7 @@ export class ScheduleController {
   async updateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
     @Body() body: UpdateScheduleEventRequest,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -213,7 +210,7 @@ export class ScheduleController {
   @Use([PermissionMiddleware, Can("schedule", ["configure"])])
   async deactivateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)
@@ -240,7 +237,7 @@ export class ScheduleController {
   @Use([PermissionMiddleware, Can("schedule", ["configure"])])
   async activateScheduleItem(
     @Param("scheduleItemId") scheduleItemId: string,
-    @Res() res: Response,
+    @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
   ) {
     const churchId = ensureChurchScope(req, res)

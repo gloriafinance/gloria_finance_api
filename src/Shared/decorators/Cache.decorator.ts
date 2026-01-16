@@ -1,4 +1,3 @@
-import { Request, Response } from "express"
 import { Logger } from "@/Shared/adapter"
 import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
 

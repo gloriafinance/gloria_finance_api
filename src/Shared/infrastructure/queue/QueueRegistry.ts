@@ -1,4 +1,4 @@
-import * as Queue from "bull"
+import Queue from "bull"
 import { IDefinitionQueue } from "../../domain"
 import { Logger } from "../../adapter"
 

@@ -1,11 +1,11 @@
-import * as dayjs from "dayjs"
+import dayjs from "dayjs"
 import { DateBR } from "@/Shared/helpers"
-import * as cron from "node-cron"
+import cron from "node-cron"
 import { CloseFinancialMonthService } from "../services/CloseFinancialMonth.service"
 import { GenerateFinancialMonthsService } from "@/ConsolidatedFinancial/infrastructure/services"
 
 const isLastDayMonth = (): boolean => {
-  const now = dayjs.tz("America/Sao_Paulo")
+  const now = dayjs.tz(new Date(), "America/Sao_Paulo")
   return now.add(1, "day").month() !== now.month()
 }
 

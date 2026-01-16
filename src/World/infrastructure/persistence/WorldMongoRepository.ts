@@ -1,4 +1,5 @@
-import { IWorldRepository, States } from "../../domain"
+import { States } from "../../domain"
+import type { IWorldRepository } from "../../domain"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 

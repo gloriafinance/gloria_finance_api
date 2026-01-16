@@ -1,15 +1,17 @@
 import { GenericException, HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
+import type {
+  FilterFinanceRecordRequest,
+  FinanceRecordReportFormat,
+  FinanceRecordReportRequest,
+  FinancialRecordCreateQueue,
+  FinancialRecordRequest,
+} from "../../../domain"
 import {
   AccountType,
   ConceptType,
   CostCenter,
-  FilterFinanceRecordRequest,
-  FinanceRecordReportFormat,
-  FinanceRecordReportRequest,
   FinancialConcept,
-  FinancialRecordCreateQueue,
-  FinancialRecordRequest,
   FinancialRecordSource,
   FinancialRecordStatus,
 } from "../../../domain"
@@ -18,6 +20,7 @@ import {
   FetchingFinanceRecord,
   GenerateFinanceRecordReport,
 } from "@/Financial/applications"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   Can,
   NoOpStorage,
@@ -30,7 +33,6 @@ import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
 } from "../../persistence"
-import { Request, Response } from "express"
 import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { toFinancialRecordType } from "@/Financial/domain/mappers"
 import {
@@ -42,6 +44,7 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
+import type { ServerResponse } from "@abejarano/ts-express-server"
 import {
   Body,
   Controller,
@@ -96,10 +99,14 @@ export class FinancialRecordController {
   ])
   async financialRecordController(
     @Body() body: FinancialRecordRequest & { createdBy: string },
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
-    const request = { ...body, churchId: req.auth.churchId }
+    const request = {
+      ...body,
+      churchId: req.auth.churchId,
+      file: req?.files?.file,
+    }
     try {
       const financialConcept =
         await new FindFinancialConceptByChurchIdAndFinancialConceptId(
@@ -168,8 +175,8 @@ export class FinancialRecordController {
   @Use([PermissionMiddleware, Can("financial_records", "cancel")])
   async CancelFinancialRecordController(
     @Param("financialRecordId") financialRecordId: string,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     try {
       await new CancelFinancialRecord(
@@ -195,8 +202,8 @@ export class FinancialRecordController {
   @Use([PermissionMiddleware, Can("financial_records", "reports")])
   async export(
     @Query() params: FinanceRecordReportRequest,
-    @Res() res: Response,
-    @Req() req: Request
+    @Res() res: ServerResponse,
+    @Req() req: AuthenticatedRequest
   ) {
     try {
       const normalizedRequest: FinanceRecordReportRequest = {
@@ -227,7 +234,9 @@ export class FinancialRecordController {
       res.download(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
-        if (error && !res.headersSent) {
+        //if (error && !res.headersSent) {
+        if (error) {
+          console.log(error)
           domainResponse(error, res)
         }
       })
@@ -244,8 +253,8 @@ export class FinancialRecordController {
   async fetching(
     @Param() params: FilterFinanceRecordRequest,
     @Query() q: FilterFinanceRecordRequest,
-    @Res() res: Response,
-    @Req() req: Request
+    @Res() res: ServerResponse,
+    @Req() req: AuthenticatedRequest
   ) {
     try {
       const filter = { ...q, churchId: req.auth.churchId }

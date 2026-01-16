@@ -1,4 +1,5 @@
-import { FilterContributionsRequest, OnlineContributions } from "../../domain"
+import { OnlineContributions } from "../../domain"
+import type { FilterContributionsRequest } from "../../domain"
 import {
   Criteria,
   Filters,

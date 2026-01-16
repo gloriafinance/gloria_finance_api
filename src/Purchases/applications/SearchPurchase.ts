@@ -1,5 +1,5 @@
 import { IPurchaseRepository } from "../domain/interfaces"
-import { FilterPurchasesRequest } from "../domain/requests"
+import type { FilterPurchasesRequest } from "../domain/requests"
 import {
   Criteria,
   Filters,

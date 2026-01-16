@@ -4,8 +4,8 @@ import {
   AccountPayableNotFound,
   AccountPayableStatus,
   IAccountPayableRepository,
-  PayAccountPayableRequest,
-  SupplierType,
+  type PayAccountPayableRequest,
+  type SupplierType,
 } from "@/AccountsPayable/domain"
 import {
   AccountType,

@@ -1,5 +1,5 @@
-import { BaseServerService } from "@abejarano/ts-express-server"
-import { Server as HttpServer } from "http"
+import { BaseServerService, ServerInstance } from "@abejarano/ts-express-server"
+
 import {
   BankStatementParserFactory,
   NuBankCsvParser,
@@ -9,7 +9,7 @@ export class FactoryService extends BaseServerService {
   name = "FactoryService"
   priority = -90
 
-  start(http: HttpServer): Promise<void> | void {
+  start(http: ServerInstance): Promise<void> | void {
     BankStatementParserFactory.initialize([new NuBankCsvParser()])
   }
 }

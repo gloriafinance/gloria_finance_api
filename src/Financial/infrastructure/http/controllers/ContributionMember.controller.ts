@@ -8,8 +8,13 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type {
+  ServerResponse,
+  ServerRequest,
+} from "@abejarano/ts-express-server"
+
 import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
-import { Request, Response } from "express"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import ContributionValidator from "../validators/Contribution.validator"
 import { Logger } from "@/Shared/adapter"
 import { FindMemberById } from "@/Church/applications"
@@ -21,11 +26,13 @@ import {
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import {
   AvailabilityAccountNotFound,
-  ContributionRequest,
-  FilterContributionsRequest,
   FinancialConcept,
   MemberContributionType,
   OnlineContributions,
+} from "@/Financial/domain"
+import type {
+  ContributionRequest,
+  FilterContributionsRequest,
 } from "@/Financial/domain"
 import { OnlineContributionsMongoRepository } from "@/Financial/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
@@ -47,8 +54,8 @@ export class ContributionMemberController {
   ])
   async createContribution(
     @Body() payload: ContributionRequest,
-    @Req() req: Request,
-    @Res() res: Response
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
   ) {
     const file = req.files?.file ?? null
 
@@ -140,7 +147,7 @@ export class ContributionMemberController {
   async list(
     @Query() query: FilterContributionsRequest,
     @Req() req: Request,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     let filter = {
       ...query,

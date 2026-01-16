@@ -1,6 +1,7 @@
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
-import { Church, ChurchPaginateRequest, ChurchRequest } from "../../../domain"
+import { Church } from "../../../domain"
+import type { ChurchPaginateRequest, ChurchRequest } from "../../../domain"
 import {
   CreateOrUpdateChurch,
   FindChurchById,
@@ -21,11 +22,10 @@ import {
   Post,
   Query,
   Res,
+  type ServerResponse,
   Use,
 } from "@abejarano/ts-express-server"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
-import { Response } from "express"
-
 type AuthContext = {
   userId: string
   churchId: string
@@ -37,7 +37,7 @@ type AuthContext = {
 export class ChurchController {
   @Post("/")
   @Use([PermissionMiddleware, Can("church", "upsert")])
-  async createOrUpdate(@Body() req: ChurchRequest, @Res() res: Response) {
+  async createOrUpdate(@Body() req: ChurchRequest, @Res() res: ServerResponse) {
     try {
       const church = await new CreateOrUpdateChurch(
         ChurchMongoRepository.getInstance()
@@ -58,7 +58,7 @@ export class ChurchController {
 
   @Get("/")
   @Use(PermissionMiddleware)
-  async list(@Param() req: ChurchPaginateRequest, @Res() res: Response) {
+  async list(@Param() req: ChurchPaginateRequest, @Res() res: ServerResponse) {
     try {
       const churches = await new SearchChurches(
         ChurchMongoRepository.getInstance()
@@ -82,7 +82,7 @@ export class ChurchController {
   @Use([PermissionMiddleware, Can("church", "search")])
   async listByDistrictId(
     @Query() params: { districtId: string },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const churches = await new SearchChurchesByDistrictId(
@@ -101,7 +101,7 @@ export class ChurchController {
   @Use([PermissionMiddleware, Can("church", "search")])
   async findByChurchId(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const church: Church = await new FindChurchById(
@@ -118,7 +118,7 @@ export class ChurchController {
   @Use([PermissionMiddleware, Can("ministers", "manage")])
   async removeMinister(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       await new RemoveMinister(
@@ -136,7 +136,7 @@ export class ChurchController {
   @Use([PermissionMiddleware, Can("church", "search")])
   async listWithoutAssignedMinister(
     @Query() params: ChurchPaginateRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const churches = await new WithoutAssignedMinister(

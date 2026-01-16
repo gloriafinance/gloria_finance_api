@@ -39,8 +39,8 @@ Follow the conventions below when extending or modifying the codebase.
 - **Shared utilities**: Cross-cutting concerns live under `src/Shared/` and are consumed via the `@/Shared/...` alias
   configured in `tsconfig.json`.
 - **Entry points**:
-    - `src/app.ts` bootstraps the HTTP server and registers Express routers through `RoutesModule`
-    - `src/queues.ts` provides queue definitions consumed by `StartQueueService`
+  - `src/app.ts` bootstraps the HTTP server and registers Express routers through `RoutesModule`
+  - `src/queues.ts` provides queue definitions consumed by `StartQueueService`
 - **No framework magic**: Everything is explicit—manual route registration, manual dependency instantiation, and
   straightforward TypeScript classes.
 
@@ -144,8 +144,7 @@ export interface IMinisterRepository {
 
 ```typescript
 export class SearchPurchase {
-  constructor(private readonly purchaseRepository: IPurchaseRepository) {
-  }
+  constructor(private readonly purchaseRepository: IPurchaseRepository) {}
 
   async execute(request: FilterPurchasesRequest): Promise<Paginate<Purchase>> {
     return await this.purchaseRepository.fetch(this.prepareCriteria(request))
@@ -223,7 +222,8 @@ import { IAvailabilityAccountRepository } from "../../domain/interfaces"
 
 export class AvailabilityAccountMongoRepository
   extends MongoRepository<AvailabilityAccount>
-  implements IAvailabilityAccountRepository {
+  implements IAvailabilityAccountRepository
+{
   private static instance: AvailabilityAccountMongoRepository
 
   static getInstance(): AvailabilityAccountMongoRepository {
@@ -267,20 +267,28 @@ export class AvailabilityAccountMongoRepository
 Application services build `Criteria` objects to query repositories:
 
 ```typescript
-import { Criteria, Filters, Operator, Order, OrderTypes } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  Order,
+  OrderTypes,
+} from "@abejarano/ts-mongodb-criteria"
 
 const filters = []
-filters.push(new Map([
-  ["field", "churchId"],
-  ["operator", Operator.EQUAL],
-  ["value", churchId],
-]))
+filters.push(
+  new Map([
+    ["field", "churchId"],
+    ["operator", Operator.EQUAL],
+    ["value", churchId],
+  ])
+)
 
 const criteria = new Criteria(
   Filters.fromValues(filters),
   Order.fromValues("createdAt", OrderTypes.DESC),
-  20,  // perPage
-  1    // page
+  20, // perPage
+  1 // page
 )
 
 const results = await repository.list(criteria)
@@ -344,11 +352,13 @@ const results = await repository.list(criteria)
 Since this project **does not use NestJS or any DI framework**, dependencies are managed manually:
 
 1. **Repositories**: Use singleton pattern via `getInstance()`
+
    ```typescript
    const repository = ChurchMongoRepository.getInstance()
    ```
 
 2. **Use Cases**: Instantiate with required dependencies
+
    ```typescript
    const useCase = new CreateChurch(ChurchMongoRepository.getInstance())
    ```
@@ -356,7 +366,7 @@ Since this project **does not use NestJS or any DI framework**, dependencies are
 3. **Controllers**: Instantiate use cases in controller methods
    ```typescript
    export class ChurchController {
-     async create(req: Request, res: Response) {
+     async create(req: Request, res: ServerResponse) {
        const useCase = new CreateChurch(ChurchMongoRepository.getInstance())
        const result = await useCase.execute(req.body)
        return domainResponse(result, res)
@@ -470,21 +480,21 @@ This is a **pure TypeScript DDD application** without framework abstractions:
 
 - Directorio: `src/Financial`
 - Submódulos:
-    - availabilityAccount
-    - costCenter
-    - financialConcept
-    - contributions (OnlineContributions)
+  - availabilityAccount
+  - costCenter
+  - financialConcept
+  - contributions (OnlineContributions)
 - Depende de: `Church`, `Shared`
 
 ### TreasuryContext
 
 - Directorios:
-    - `src/AccountsPayable`
-    - `src/AccountsReceivable`
-    - `src/Financial/applications/financeRecord`
-    - `src/Financial/applications/dispatchers`
-    - `src/Financial/applications/jobs`
-    - `src/ConsolidatedFinancial`
+  - `src/AccountsPayable`
+  - `src/AccountsReceivable`
+  - `src/Financial/applications/financeRecord`
+  - `src/Financial/applications/dispatchers`
+  - `src/Financial/applications/jobs`
+  - `src/ConsolidatedFinancial`
 - Depende de: `FinanceConfigContext`, `Church`, `Shared`
 
 ### BankingContext
@@ -517,3 +527,4 @@ Church, Security, World
    Banking (Bank, BankStatements, Movements)
         ↓
    Reports, Patrimony, Purchases
+```

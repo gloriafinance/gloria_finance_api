@@ -1,7 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import {
   IScheduleItemRepository,
-  ListScheduleEventsFiltersRequest,
+  type ListScheduleEventsFiltersRequest,
   ScheduleEvent,
 } from "@/Schedule/domain"
 import {

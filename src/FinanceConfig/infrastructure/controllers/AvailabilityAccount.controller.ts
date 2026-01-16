@@ -1,9 +1,9 @@
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { Response } from "express"
 import { FinBankByBankId } from "@/Banking/applications"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
-import { AccountType, AvailabilityAccountRequest } from "@/FinanceConfig/domain"
+import { AccountType } from "@/FinanceConfig/domain"
+import type { AvailabilityAccountRequest } from "@/FinanceConfig/domain"
 import {
   CreateOrUpdateAvailabilityAccount,
   SearchAvailabilityAccountByChurchId,
@@ -19,11 +19,8 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
-import {
-  AuthenticatedRequest,
-  Can,
-  PermissionMiddleware,
-} from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import AvailabilityAccountValidator from "@/Financial/infrastructure/http/validators/AvailabilityAccount.validator"
 
 @Controller("/api/v1/finance/configuration/availability-account")
@@ -37,7 +34,7 @@ export class AvailabilityAccountController {
   async createOrUpdateAvailabilityAccount(
     @Body() request: AvailabilityAccountRequest,
     @Req() req: AuthenticatedRequest,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       if (
@@ -93,7 +90,7 @@ export class AvailabilityAccountController {
   ])
   async listAvailabilityAccountByChurchId(
     @Param("churchId") churchId: string,
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const availabilityAccount = await new SearchAvailabilityAccountByChurchId(

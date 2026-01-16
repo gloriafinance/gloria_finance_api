@@ -1,4 +1,4 @@
-import jwt = require("jsonwebtoken")
+import jwt from "jsonwebtoken"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 import {
   PermissionMongoRepository,
@@ -7,7 +7,7 @@ import {
 } from "@/SecuritySystem/infrastructure"
 import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
 import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
-import { Request } from "express"
+import type { Request } from "express"
 
 const authorizationService = AuthorizationService.getInstance(
   UserAssignmentMongoRepository.getInstance(),
@@ -53,7 +53,7 @@ export const PermissionMiddleware = async (req: Request, res, next) => {
 
     req.auth = authContext
 
-    res.locals.auth = authContext
+    //res.locals.auth = authContext
 
     next()
   } catch (error) {

@@ -1,6 +1,6 @@
 import {
   AccountReceivable,
-  AccountReceivableRequest,
+  type AccountReceivableRequest,
   AccountReceivableType,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"

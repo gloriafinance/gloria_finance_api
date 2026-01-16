@@ -1,8 +1,9 @@
-import jwt = require("jsonwebtoken")
+import jwt from "jsonwebtoken"
 import { IAuthToken } from "../../domain"
 
 export type AuthTokenPayload = {
   userId: string
+  memberId?: string
   churchId: string
   email: string
   name: string

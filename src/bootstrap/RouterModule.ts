@@ -1,4 +1,5 @@
-import { ControllersModule, RoutesModule } from "@abejarano/ts-express-server"
+import { ControllersModule } from "@abejarano/ts-express-server"
+
 import { financialControllers } from "@/Financial/infrastructure/http/controllers"
 import { consolidatedFinancialControllers } from "@/ConsolidatedFinancial/infrastructure/http/controllers"
 import { UserController } from "@/SecuritySystem/infrastructure/http/controllers/User.controller"
@@ -15,8 +16,6 @@ import { PurchaseController } from "@/Purchases/infrastructure/http/controllers/
 import { PatrimonyController } from "@/Patrimony/infrastructure/http/controllers/Patrimony.controller"
 import { churchControllers } from "@/Church/infrastructure/http/controllers"
 import { WorldController } from "@/World/infrastructure/http/controllers/World.controller"
-
-export const routerModule = () => new RoutesModule([])
 
 export const controllersModule = () =>
   new ControllersModule([

@@ -1,31 +1,40 @@
 import "reflect-metadata"
-import "dotenv/config"
 import {
-  BootstrapStandardServer,
+  BootstrapServer,
   CorsModule,
+  FileUploadModule,
+  ServerRuntime,
 } from "@abejarano/ts-express-server"
-import { Queues } from "@/queues"
-import { controllersModule, routerModule } from "@/bootstrap"
-import { FactoryService } from "@/bootstrap/FactoryService"
-import { ServerSocketService } from "@/bootstrap/ServerSocketService"
-import { FinancialSchedules } from "@/Financial/infrastructure/schedules"
+
+import { controllersModule } from "./bootstrap"
+import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
-import { Express } from "express"
+import { Queues } from "./queues"
+import { FinancialSchedules } from "./Financial/infrastructure/schedules"
 
 export const APP_DIR = __dirname
 
-const server = BootstrapStandardServer(
-  Number(process.env.APP_PORT || 8080),
-  routerModule(),
-  controllersModule()
-)
-server.addModule(
+const server = new BootstrapServer(Number(Number(process.env.APP_PORT || 8080)))
+
+server.addModules([
   new CorsModule({
-    origin: "*",
-  })
-)
-StartQueueService(server.getApp() as unknown as Express, Queues())
+    allowedHeaders: ["content-type", "authorization"],
+  }),
+  controllersModule(),
+  new FileUploadModule({
+    maxFiles: 1,
+    allowedMimeTypes: [
+      "image/*",
+      "application/pdf",
+      "text/csv",
+      "application/csv",
+      "application/vnd.ms-excel",
+    ],
+  }),
+])
 
-server.addServices([new FactoryService(), new ServerSocketService()])
+server.addServices([new FactoryService()])
 
+server.getApp().set?.("trustProxy", ["127.0.0.1/8"])
+StartQueueService(server.getApp(), Queues())
 server.start().then(() => FinancialSchedules())

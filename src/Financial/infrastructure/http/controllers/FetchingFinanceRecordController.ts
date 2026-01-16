@@ -1,4 +1,3 @@
-import { Response } from "express"
 import { FilterFinanceRecordRequest } from "../../../domain"
 import { FetchingFinanceRecord } from "../../../applications"
 import { FinanceRecordMongoRepository } from "../../persistence"
@@ -9,7 +8,7 @@ import { Logger } from "@/Shared/adapter"
 
 export const FetchingFinanceRecordController = async (
   filter: FilterFinanceRecordRequest,
-  res: Response
+  res: ServerResponse
 ) => {
   const logger = Logger("FinanceRecordListController")
 

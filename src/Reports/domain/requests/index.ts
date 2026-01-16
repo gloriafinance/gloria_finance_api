@@ -1,1 +1,1 @@
-export { BaseReportRequest } from "./BaseReport.request"
+export type { BaseReportRequest } from "./BaseReport.request"

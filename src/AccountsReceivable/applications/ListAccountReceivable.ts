@@ -1,7 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
-  FilterAccountReceivableRequest,
+  type FilterAccountReceivableRequest,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import {

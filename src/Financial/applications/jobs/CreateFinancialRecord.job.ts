@@ -49,7 +49,10 @@ export class CreateFinancialRecordJob implements IJob {
         ? AvailabilityAccount.fromPrimitives(args.availabilityAccount)
         : args.availabilityAccount
 
-    const voucher = await this.uploadFile(args.file)
+    let voucher = args.voucher
+    if (args.file && !args.voucher) {
+      voucher = await this.uploadFile(args.file)
+    }
 
     try {
       this.postCommitAvailabilityAccountBalance(args)

@@ -1,6 +1,7 @@
 import { Storage } from "@google-cloud/storage"
 import * as fs from "fs"
 import { v4 } from "uuid"
+import { Readable } from "node:stream"
 import { GenericException, IStorageService } from "../domain"
 import { Logger } from "../adapter"
 import { CacheService } from "./services/Cache.service"
@@ -84,46 +85,77 @@ export class StorageGCP implements IStorageService {
    * @param file File to upload
    */
   async uploadFile(file: any): Promise<string> {
-    this.logger.info(`Uploading file to GCP Storage...`, file)
+    this.logger.info("Uploading file to GCP Storage...", file)
 
-    const key: string = this.generateNameFile(file) // Generate a unique file name
+    const key: string = this.generateNameFile(file)
 
     try {
       const bucket = this.storage.bucket(this.bucketName)
       const gcsFile = bucket.file(key)
 
-      // Create a writable stream to upload the file
+      const tempFilePath = file?.tempFilePath || file?.path || file?.filePath
+
       await new Promise<void>((resolve, reject) => {
-        fs.createReadStream(file.tempFilePath)
-          .pipe(
-            gcsFile.createWriteStream({
-              metadata: {
-                contentType: file.mimetype,
-              },
+        const uploadStream = gcsFile.createWriteStream({
+          metadata: {
+            contentType: file?.mimetype || file?.type,
+          },
+        })
+
+        const handleError = (err: unknown) => {
+          this.logger.error("Error uploading file to GCP Storage:", err)
+          reject(new GenericException("Error uploading file to GCP Storage."))
+        }
+
+        uploadStream.on("error", handleError).on("finish", () => {
+          this.logger.info("File uploaded successfully to GCP Storage.")
+          resolve()
+        })
+
+        if (tempFilePath) {
+          fs.createReadStream(tempFilePath)
+            .on("error", handleError)
+            .pipe(uploadStream)
+          return
+        }
+
+        if (file?.data && Buffer.isBuffer(file.data)) {
+          Readable.from(file.data).pipe(uploadStream)
+          return
+        }
+
+        // Bun File / Blob
+        if (file?.arrayBuffer && typeof file.arrayBuffer === "function") {
+          file
+            .arrayBuffer()
+            .then((ab: ArrayBuffer) => {
+              Readable.from(Buffer.from(ab)).pipe(uploadStream)
             })
+            .catch(handleError)
+          return
+        }
+
+        handleError(
+          new GenericException(
+            "File must include a tempFilePath, path, data buffer, or arrayBuffer()."
           )
-          .on("error", (err) => {
-            this.logger.error("Error uploading file to GCP Storage:", err)
-            reject(new GenericException("Error uploading file to GCP Storage."))
-          })
-          .on("finish", () => {
-            this.logger.info("File uploaded successfully to GCP Storage.")
-            resolve()
-          })
+        )
       })
 
-      // Delete the temporary file after upload
-      fs.unlink(file.tempFilePath, (unlinkErr) => {
-        if (unlinkErr) {
-          this.logger.error("Error deleting temporary file:", unlinkErr)
-        } else {
-          this.logger.info("Temporary file deleted successfully.")
-        }
-      })
+      if (tempFilePath) {
+        fs.unlink(tempFilePath, (unlinkErr) => {
+          if (unlinkErr) {
+            this.logger.error("Error deleting temporary file:", unlinkErr)
+          } else {
+            this.logger.info("Temporary file deleted successfully.")
+          }
+        })
+      }
 
       this.logger.info("File uploaded successfully to GCP Storage.")
-      return key // Return the file name in GCP Storage
+      return key
     } catch (error) {
+      console.error(error)
       this.logger.error("Error uploading file to GCP Storage:", error)
       throw new Error("Error uploading file to GCP Storage.")
     }
@@ -155,8 +187,11 @@ export class StorageGCP implements IStorageService {
     const year: number = currentDate.getFullYear()
     const month: number = currentDate.getMonth() + 1
 
-    const extension = file.name.split(".").pop()
-    const newFileName = `${v4()}.${extension}`
+    const originalName = file?.name || file?.originalname || "file"
+    const extension = originalName.includes(".")
+      ? originalName.split(".").pop()
+      : undefined
+    const newFileName = extension ? `${v4()}.${extension}` : v4()
 
     return `${year}/${month}/${newFileName}`
   }

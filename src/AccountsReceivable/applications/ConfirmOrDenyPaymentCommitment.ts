@@ -3,7 +3,7 @@ import {
   AccountReceivableNotFound,
   AccountsReceivableStatus,
   ActionsPaymentCommitment,
-  ConfirmOrDenyPaymentCommitmentRequest,
+  type ConfirmOrDenyPaymentCommitmentRequest,
   IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import { GeneratePDFAdapter, Logger } from "@/Shared/adapter"

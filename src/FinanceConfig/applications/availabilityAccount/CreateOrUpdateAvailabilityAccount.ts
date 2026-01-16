@@ -1,8 +1,6 @@
 import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
-import {
-  AvailabilityAccount,
-  AvailabilityAccountRequest,
-} from "../../../Financial/domain"
+import { AvailabilityAccount } from "../../../Financial/domain"
+import type { AvailabilityAccountRequest } from "../../../Financial/domain"
 import { Logger } from "@/Shared/adapter"
 
 export class CreateOrUpdateAvailabilityAccount {

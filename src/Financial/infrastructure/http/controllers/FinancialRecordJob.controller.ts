@@ -1,4 +1,3 @@
-import { Request, Response } from "express"
 import {
   Can,
   PermissionMiddleware,
@@ -7,6 +6,11 @@ import {
 import { HttpStatus, QueueName } from "@/Shared/domain"
 import RebuildMasterDataValidator from "@/Financial/infrastructure/http/validators/RebuildMasterData.validator"
 import { Controller, Post, Use } from "@abejarano/ts-express-server"
+
+import type {
+  ServerRequest,
+  ServerResponse,
+} from "@abejarano/ts-express-server"
 
 @Controller("/api/v1/finance/tools")
 export class FinancialRecordJobController {
@@ -21,13 +25,23 @@ export class FinancialRecordJobController {
     RebuildMasterDataValidator,
     Can("tools", ["admin"]),
   ])
-  async rebuildAvailabilityAccount(req: Request, res: Response) {
+  async rebuildAvailabilityAccount(req: ServerRequest, res: ServerResponse) {
+    const body = req.body as {
+      churchId: string
+      year: number
+      month: number
+    }
+
     QueueService.getInstance().dispatch(
       QueueName.RebuildAvailabilityMasterAccountJob,
       {
-        ...req.body,
-        month: Number(req.body.month),
-        year: Number(req.body.year),
+        ...(req.body as {
+          churchId: string
+          year: number
+          month: number
+        }),
+        month: Number(body.month),
+        year: Number(body.year),
       }
     )
 
@@ -45,7 +59,7 @@ export class FinancialRecordJobController {
     RebuildMasterDataValidator,
     Can("tools", ["admin"]),
   ])
-  async rebuildCostCentral(req: Request, res: Response) {
+  async rebuildCostCentral(req: Request, res: ServerResponse) {
     QueueService.getInstance().dispatch(QueueName.RebuildCostCenterMasterJob, {
       ...req.body,
       month: Number(req.body.month),
@@ -58,7 +72,7 @@ export class FinancialRecordJobController {
 // financialJobRoute.post(
 //   "/rebuild/availabilityAccount",
 //   [PermissionMiddleware, RebuildMasterDataValidator, Can("tools", ["admin"])],
-//   async (req: Request, res: Response) => {
+//   async (req: Request, res: ServerResponse) => {
 //     QueueService.getInstance().dispatch(
 //       QueueName.RebuildAvailabilityMasterAccountJob,
 //       {

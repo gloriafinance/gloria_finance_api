@@ -1,5 +1,6 @@
-import { Customer, ICreateCustomer, OnboardingStatus } from "@/Customers/domain"
-import { Response } from "express"
+import { Customer, OnboardingStatus } from "@/Customers/domain"
+import type { ICreateCustomer } from "@/Customers/domain"
+
 import { QueueService } from "@/Shared/infrastructure"
 import { HttpStatus, QueueName } from "@/Shared/domain"
 import { CustomerMongoRepository } from "../../persistence/CustomerMongoRepository"
@@ -14,6 +15,11 @@ import {
   Res,
   Use,
 } from "@abejarano/ts-express-server"
+import type {
+  ServerResponse,
+  ServerRequest,
+} from "@abejarano/ts-express-server"
+
 import CustomerValidator from "../validators/Customer.validator"
 import {
   Criteria,
@@ -27,7 +33,7 @@ import { OnboardingCustomerRequest } from "../../jobs/OnboardingCustomer.job"
 export class OnboardingController {
   @Post("/")
   @Use([CustomerValidator])
-  async create(@Body() payload: ICreateCustomer, @Res() res: Response) {
+  async create(@Body() payload: ICreateCustomer, @Res() res: ServerResponse) {
     try {
       const customer = Customer.create(payload)
       await CustomerMongoRepository.getInstance().upsert(customer)
@@ -48,7 +54,7 @@ export class OnboardingController {
       page: number
       perPage: number
     },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       const criteria = new Criteria(
@@ -77,7 +83,7 @@ export class OnboardingController {
         symbol: string
       }
     },
-    @Res() res: Response
+    @Res() res: ServerResponse
   ) {
     try {
       if (req.status === OnboardingStatus.COMPLETED) {

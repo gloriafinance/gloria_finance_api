@@ -1,4 +1,5 @@
-import { IMinisterRepository, Minister, MinisterRequest } from "../../domain"
+import { Minister } from "../../domain"
+import type { IMinisterRepository, MinisterRequest } from "../../domain"
 
 export class RegisterOrUpdateMinister {
   constructor(private readonly ministerRepository: IMinisterRepository) {}

@@ -1,8 +1,8 @@
-export { BaseReportRequest } from "./requests/BaseReport.request"
+export type { BaseReportRequest } from "./requests/BaseReport.request"
 
 export * from "./types/DREStructure.type"
 
-export * from "./interfaces/DRERepository.interface"
+export type * from "./interfaces/DRERepository.interface"
 
 export * from "./DREMaster"
 

@@ -2,7 +2,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   BankStatement,
   IBankStatementRepository,
-  ListBankStatementsRequest,
+  type ListBankStatementsRequest,
 } from "@/Banking/domain"
 import {
   Criteria,
