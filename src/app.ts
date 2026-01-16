@@ -3,6 +3,7 @@ import {
   BootstrapServer,
   CorsModule,
   FileUploadModule,
+  Methods,
   RateLimitModule,
   RequestContextModule,
   SecurityModule,
