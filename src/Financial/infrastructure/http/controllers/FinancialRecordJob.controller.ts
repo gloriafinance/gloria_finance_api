@@ -1,21 +1,25 @@
 import {
+  type AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
 import { HttpStatus, QueueName } from "@/Shared/domain"
 import RebuildMasterDataValidator from "@/Financial/infrastructure/http/validators/RebuildMasterData.validator"
-import { Controller, Post, Use } from "@abejarano/ts-express-server"
-
-import type {
-  ServerRequest,
-  ServerResponse,
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  type ServerResponse,
+  Use,
 } from "@abejarano/ts-express-server"
 
 @Controller("/api/v1/finance/tools")
 export class FinancialRecordJobController {
   /**
    * Reconstruye el maestro de cuentas de disponibilidad
+   * @param body
    * @param req
    * @param res
    */
@@ -25,31 +29,31 @@ export class FinancialRecordJobController {
     RebuildMasterDataValidator,
     Can("tools", ["admin"]),
   ])
-  async rebuildAvailabilityAccount(req: ServerRequest, res: ServerResponse) {
-    const body = req.body as {
+  async rebuildAvailabilityAccount(
+    @Body()
+    body: {
+      year: number
+      month: number
+    },
+    @Req() req: AuthenticatedRequest,
+    res: ServerResponse
+  ) {
+    QueueService.getInstance().dispatch<{
       churchId: string
       year: number
       month: number
-    }
-
-    QueueService.getInstance().dispatch(
-      QueueName.RebuildAvailabilityMasterAccountJob,
-      {
-        ...(req.body as {
-          churchId: string
-          year: number
-          month: number
-        }),
-        month: Number(body.month),
-        year: Number(body.year),
-      }
-    )
+    }>(QueueName.RebuildAvailabilityMasterAccountJob, {
+      month: Number(body.month),
+      year: Number(body.year),
+      churchId: req.auth.churchId,
+    })
 
     res.status(HttpStatus.OK).send({ message: "process" })
   }
 
   /**
    * Reconstruye el maestro de los centros de costo
+   * @param body
    * @param req
    * @param res
    */
@@ -59,11 +63,19 @@ export class FinancialRecordJobController {
     RebuildMasterDataValidator,
     Can("tools", ["admin"]),
   ])
-  async rebuildCostCentral(req: Request, res: ServerResponse) {
-    QueueService.getInstance().dispatch(QueueName.RebuildCostCenterMasterJob, {
-      ...req.body,
-      month: Number(req.body.month),
-      year: Number(req.body.year),
+  async rebuildCostCentral(
+    @Body() body: { month: number; year: number },
+    @Req() req: AuthenticatedRequest,
+    res: ServerResponse
+  ) {
+    QueueService.getInstance().dispatch<{
+      churchId: string
+      year: number
+      month: number
+    }>(QueueName.RebuildCostCenterMasterJob, {
+      churchId: req.auth.churchId,
+      month: Number(body.month),
+      year: Number(body.year),
     })
     res.status(HttpStatus.OK).send({ message: "process" })
   }

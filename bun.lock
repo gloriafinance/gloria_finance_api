@@ -5,7 +5,7 @@
     "": {
       "name": "church_financial_api",
       "dependencies": {
-        "@abejarano/ts-express-server": "^1.7.7",
+        "@abejarano/ts-express-server": "^2.0.2",
         "@abejarano/ts-mongodb-criteria": "^1.6.2",
         "@bull-board/api": "^6.16.2",
         "@bull-board/bun": "^6.16.2",
@@ -39,7 +39,7 @@
     },
   },
   "packages": {
-    "@abejarano/ts-express-server": ["@abejarano/ts-express-server@1.7.7", "", { "dependencies": { "cors": "^2.8.5", "helmet": "^8.1.0", "reflect-metadata": "^0.2.2", "uuid": "^13.0.0" } }, "sha512-2ZMY2/fNSxUpZHea+2JfTQsLA3tpWOkJLVVe6l+pn7HYJjcq3yvnSRU9uGFVJF/Dthu6oHY+e/s/h+dSfNHNBA=="],
+    "@abejarano/ts-express-server": ["@abejarano/ts-express-server@2.0.2", "", { "dependencies": { "cors": "^2.8.5", "helmet": "^8.1.0", "reflect-metadata": "^0.2.2", "uuid": "^13.0.0" } }, "sha512-EkuuWS+2zAtk8i/cFtO5/My7fn3grn+wpfBx4oZ/XTDu4O0jeR73DQrM6L8qGdPqQrGxIbIEIOxeLzAeTKPOWw=="],
 
     "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.6.2", "", { "peerDependencies": { "mongodb": ">=6" } }, "sha512-u07O88w4b5bQWDlaObaXtIGIJBc4eYjngTru+IkdDU+J/bz+njFss4uHsmlBZNeqf0/yWalcyOrHe6aPod9kng=="],
 
