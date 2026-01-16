@@ -12,27 +12,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check code using Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: 'https://npm.pkg.github.com'
-
-      - name: Configure npm for GitHub Packages
-        run: |
-          echo "@abejarano:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN }}" >> .npmrc
+      - name: Check code using Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Check code formatting
-        run: npm run format:check
+        run: bun run format:check
 
       - name: Build code
-        run: npm run build
+        run: bun build.ts
 
   build-and-deploy:
     needs: verify-code
@@ -52,36 +44,11 @@ jobs:
           git reset --hard origin/main
           git pull
           rm -rf dist node_modules
-          
-           # Configurar .npmrc para GitHub Packages
-          # echo '@abejarano:registry=https://npm.pkg.github.com' > .npmrc
-          # echo '//npm.pkg.github.com/:_authToken=$GH_TOKEN' >> .npmrc
 
-          NODE_AUTH_TOKEN=$GH_TOKEN npm ci
-          npm run build
+          bun build.ts
 
-          # Instalar PM2 globalmente si no está instalado
-          if ! command -v pm2 &> /dev/null; then
-            npm install -g pm2
-          fi
-
-          # Crear un script de inicio que use tsconfig-paths
-          cat > start.js << 'EOL'
-            // Este script simplemente carga tsconfig-paths y luego el app principal
-            require('tsconfig-paths/register');
-            require('./dist/app.js');
-          EOL
-
-          # Configurar PM2 para ejecutar la aplicación
-          pm2 stop church_financial_api || true
-          pm2 delete church_financial_api || true
-
-          # Iniciar la aplicación con PM2
-          pm2 start start.js --name church_financial_api --env production
-
-          # Configurar PM2 para reiniciar la aplicación automáticamente en caso de reinicio del servidor
-          pm2 save
-          pm2 startup | bash
+          sudo systemctl enable church_finance_api.service
+          sudo systemctl restart church_finance_api.service
 
           "
 
