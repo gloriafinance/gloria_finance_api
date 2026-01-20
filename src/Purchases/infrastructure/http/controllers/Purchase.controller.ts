@@ -26,6 +26,7 @@ import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import { mergePdfFiles } from "@/Shared/helpers/mergePdfFiles"
 import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
@@ -37,6 +38,9 @@ type RecordPurchasePayload = Omit<
   "churchId" | "createdBy" | "invoice" | "file"
 >
 
+const normalizeFiles = (files: any): any[] =>
+  Array.isArray(files) ? files : files ? [files] : []
+
 @Controller("/api/v1/purchase")
 export class PurchaseController {
   @Post("/")
@@ -46,15 +50,19 @@ export class PurchaseController {
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const request: RecordPurchaseRequest = {
-      ...body,
-      churchId: req.auth.churchId,
-      file: req.files?.invoice,
-      createdBy: req.auth.name,
-      invoice: "",
-    }
+    let request: RecordPurchaseRequest | undefined
 
     try {
+      const invoiceFiles = normalizeFiles(req.files?.file)
+      const invoiceFile = await mergePdfFiles(invoiceFiles)
+
+      request = {
+        ...body,
+        churchId: req.auth.churchId,
+        file: invoiceFile,
+        createdBy: req.auth.name,
+        invoice: "",
+      }
       const date = new Date(request.purchaseDate)
 
       await new FinancialMonthValidator(
@@ -67,7 +75,7 @@ export class PurchaseController {
 
       request.invoice = await StorageGCP.getInstance(
         process.env.BUCKET_FILES
-      ).uploadFile(request.file)
+      ).uploadFile(invoiceFile)
 
       await new RecordPurchase(
         PurchaseMongoRepository.getInstance(),
@@ -79,7 +87,7 @@ export class PurchaseController {
 
       res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })
     } catch (e) {
-      if (request.invoice) {
+      if (request?.invoice) {
         await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
           request.invoice
         )
