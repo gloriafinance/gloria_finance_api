@@ -85,6 +85,12 @@ export class ImportBankStatement {
       await fs.copyFile(request.file.tempFilePath, tempPath)
     } else if (request.file.data) {
       await fs.writeFile(tempPath, request.file.data)
+    } else if (
+      request.file.arrayBuffer &&
+      typeof request.file.arrayBuffer === "function"
+    ) {
+      const buffer = Buffer.from(await request.file.arrayBuffer())
+      await fs.writeFile(tempPath, buffer)
     } else {
       throw new Error("Uploaded file does not contain data to persist")
     }
