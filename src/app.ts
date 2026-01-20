@@ -27,7 +27,9 @@ server.addModules([
   new RequestContextModule(),
   new RateLimitModule(),
   new FileUploadModule({
-    maxFiles: 1,
+    maxBodyBytes: Number(process.env.UPLOAD_MAX_BODY_BYTES ?? 25 * 1024 * 1024),
+    maxFileBytes: Number(process.env.UPLOAD_MAX_FILE_BYTES ?? 25 * 1024 * 1024),
+    maxFiles: 10,
     allowedMimeTypes: [
       "image/*",
       "application/pdf",
