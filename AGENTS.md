@@ -1,8 +1,9 @@
 # Engineering Guidelines
 
 This repository implements a **pure Domain-Driven Design (DDD)** service-oriented architecture for the Church Financial
-API using **TypeScript without any framework** (no NestJS, no other frameworks). The application uses **Express.js**
-directly for HTTP routing and **MongoDB** with the custom `@abejarano/ts-mongodb-criteria` library for data persistence.
+API using **TypeScript with Bun Platform Kit** (no NestJS or other heavy frameworks). The application uses
+**Bun Platform Kit** for HTTP routing and **MongoDB** with the custom `@abejarano/ts-mongodb-criteria` library for data
+persistence.
 
 Follow the conventions below when extending or modifying the codebase.
 
@@ -12,22 +13,22 @@ Follow the conventions below when extending or modifying the codebase.
 
 ### Core Dependencies
 
-- **Runtime**: Node.js with TypeScript
-- **Web Framework**: Express.js (vanilla, no framework wrapper)
+- **Runtime**: Bun with TypeScript
+- **Web Framework**: `bun-platform-kit`
 - **Database**: MongoDB (native driver v6.13.0)
 - **Query Builder**: `@abejarano/ts-mongodb-criteria` (v1.2.0) - Custom library for MongoDB queries with DDD patterns
-- **Server Utils**: `@abejarano/ts-express-server` (v1.3.0) - Lightweight Express utilities
+- **Server Utils**: `bun-platform-kit` modules (CORS, security headers, rate limit, uploads, request context)
 - **Queue System**: Bull (v4.16.5) with Redis
 - **Authentication**: JWT (jsonwebtoken v9.0.2)
 - **Logging**: Pino (v10.0.0)
-- **Request Validation**: `node-input-validator` (used heavily via Express middlewares under `src/**/infrastructure/http/validators`)
+- **Request Validation**: `node-input-validator` (used heavily via HTTP middlewares under `src/**/infrastructure/http/validators`)
 
 ### Important Notes
 
 - **No framework-based dependency injection**: Dependencies are injected manually through constructors
-- **No decorators for controllers**: Express routes are registered explicitly
+- **HTTP controllers use decorators**: Bun Platform Kit route decorators define endpoints
 - **Manual singleton management**: Repositories use the singleton pattern via `getInstance()`
-- **Pure TypeScript**: No framework-specific annotations or decorators (except `reflect-metadata` for basic metadata)
+- **Pure TypeScript**: Avoid non-essential framework magic outside the HTTP layer; use `reflect-metadata` as required
 
 ---
 
@@ -39,9 +40,9 @@ Follow the conventions below when extending or modifying the codebase.
 - **Shared utilities**: Cross-cutting concerns live under `src/Shared/` and are consumed via the `@/Shared/...` alias
   configured in `tsconfig.json`.
 - **Entry points**:
-  - `src/app.ts` bootstraps the HTTP server and registers Express routers through `RoutesModule`
+  - `src/app.ts` bootstraps the Bun Platform Kit server and registers controllers/modules
   - `src/queues.ts` provides queue definitions consumed by `StartQueueService`
-- **No framework magic**: Everything is explicit—manual route registration, manual dependency instantiation, and
+- **No framework magic**: Everything is explicit—controller/module registration, manual dependency instantiation, and
   straightforward TypeScript classes.
 
 ---
@@ -189,14 +190,14 @@ export class SearchPurchase {
 
 ### Controllers and Routes
 
-- Express controllers (`*.controller.ts`) orchestrate application services and normalize responses via
+- Bun Platform Kit controllers (`*.controller.ts`) orchestrate application services and normalize responses via
   `domainResponse` (`src/Shared/helpers/domainResponse.ts`)
-- Route definitions (`*.routes.ts` or `*.routers.ts`) register controllers and attach middlewares such as
-  `PermissionMiddleware`
+- Controllers are registered through Bun Platform Kit modules (e.g., `ControllersModule`) and attach middlewares via
+  decorators such as `@Use`
 - Request validation is typically done at the HTTP boundary using `node-input-validator` middlewares (see
   `src/**/infrastructure/http/validators/*.validator.ts`); invalid payloads usually return
   `HttpStatus.UNPROCESSABLE_ENTITY` with `v.errors`
-- **No decorators**: Routes are registered manually with Express Router
+- **Route decorators**: Use Bun Platform Kit decorators to define routes and middleware
 
 ### Persistence Adapters (Using @abejarano/ts-mongodb-criteria)
 
@@ -443,23 +444,22 @@ All list queries return a `Paginate<T>` object:
 ## References
 
 - **@abejarano/ts-mongodb-criteria**: [GitHub Repository](https://github.com/abejarano/ts-mongo-criteria)
-- **@abejarano/ts-express-server**: Custom Express utilities
 - **MongoDB Native Driver**: [Documentation](https://mongodb.github.io/node-mongodb-native/)
-- **Express.js**: [Documentation](https://expressjs.com/)
+- **bun-platform-kit**: [Documentation](https://github.com/abejarano/bun-platform-kit)
 
 ---
 
 ## Summary
 
-This is a **pure TypeScript DDD application** without framework abstractions:
+This is a **pure TypeScript DDD application** with a thin HTTP framework layer:
 
-- ✅ Uses vanilla Express.js for HTTP routing
+- ✅ Uses Bun Platform Kit for HTTP routing
 - ✅ Uses MongoDB native driver with `@abejarano/ts-mongodb-criteria` for queries
 - ✅ Manual dependency injection via constructors and singletons
 - ✅ Clean separation between domain, application, and infrastructure layers
 - ❌ No NestJS
 - ❌ No framework-based dependency injection
-- ❌ No decorators for routes or controllers
+- ✅ Uses decorators for HTTP routes and controllers
 
 ## Bounded Contexts
 

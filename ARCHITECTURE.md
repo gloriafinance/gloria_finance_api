@@ -1,22 +1,22 @@
 # Architecture Documentation
 
-This document provides a comprehensive overview of the application's architecture, emphasizing the **pure DDD approach without frameworks**.
+This document provides a comprehensive overview of the application's architecture, emphasizing the **pure DDD approach with Bun Platform Kit for HTTP**.
 
 ---
 
 ## Architecture Principles
 
-### 1. Framework-Free DDD
+### 1. DDD With Bun Platform Kit
 
-This project implements Domain-Driven Design **without relying on frameworks** like NestJS, Nest.js, Inversify, or TypeDI. All architectural patterns are implemented using pure TypeScript and Express.js.
+This project implements Domain-Driven Design **without relying on heavy frameworks** like NestJS, Nest.js, Inversify, or TypeDI. The HTTP layer uses Bun Platform Kit with pure TypeScript, while the rest of the architecture stays framework-agnostic.
 
 **Key Characteristics:**
 
-- ✅ **Vanilla Express.js**: Direct HTTP routing without framework wrappers
+- ✅ **Bun Platform Kit**: Typed HTTP routing and standard modules for Bun
 - ✅ **Manual Dependency Injection**: Constructor injection without DI containers
 - ✅ **Explicit Module System**: TypeScript modules with path aliases
 - ✅ **Singleton Pattern**: Repository instances managed manually
-- ❌ **No Decorators**: No `@Controller`, `@Injectable`, etc.
+- ✅ **Decorated Controllers**: Route decorators for HTTP endpoints only
 - ❌ **No Framework Magic**: Everything is explicit and traceable
 
 ### 2. Layered Architecture
@@ -267,7 +267,7 @@ export class SearchPurchase {
 **Rules:**
 
 - ✅ Implements domain interfaces
-- ✅ Handles framework-specific code (Express, MongoDB)
+- ✅ Handles framework-specific code (Bun Platform Kit, MongoDB)
 - ✅ Singleton pattern for repositories
 - ❌ Should not contain business logic
 
@@ -315,45 +315,50 @@ export class AvailabilityAccountMongoRepository
 
 ```typescript
 // src/Church/infrastructure/http/Church.controller.ts
-import { Request, Response } from "express"
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  ServerResponse,
+  Use,
+} from "bun-platform-kit"
 import { CreateChurch } from "../../applications/church/CreateChurch"
+import { ListChurches } from "../../applications/church/ListChurches"
 import { ChurchMongoRepository } from "../persistence/ChurchMongoRepository"
+import { PermissionMiddleware } from "@/Shared/infrastructure/middleware"
 import { domainResponse } from "@/Shared/helpers/domainResponse"
 
+@Controller("/churches")
 export class ChurchController {
-  async create(req: Request, res: ServerResponse) {
+  @Post("/")
+  @Use(PermissionMiddleware)
+  async create(@Body() body: any, @Res() res: ServerResponse) {
     const useCase = new CreateChurch(ChurchMongoRepository.getInstance())
-    const result = await useCase.execute(req.body)
+    const result = await useCase.execute(body)
     return domainResponse(result, res)
   }
 
-  async list(req: Request, res: ServerResponse) {
+  @Get("/")
+  @Use(PermissionMiddleware)
+  async list(@Query() query: any, @Res() res: ServerResponse) {
     const useCase = new ListChurches(ChurchMongoRepository.getInstance())
-    const result = await useCase.execute(req.query)
+    const result = await useCase.execute(query)
     return res.json(result)
   }
 }
 ```
 
-**Routes:**
+**Controller Registration:**
 
 ```typescript
-// src/Church/infrastructure/http/Church.routes.ts
-import { Router } from "express"
+// src/Church/infrastructure/http/Church.module.ts
+import { ControllersModule } from "bun-platform-kit"
 import { ChurchController } from "./Church.controller"
-import { PermissionMiddleware } from "@/Shared/infrastructure/middleware"
 
-const router = Router()
-const controller = new ChurchController()
-
-router.post(
-  "/churches",
-  PermissionMiddleware,
-  controller.create.bind(controller)
-)
-router.get("/churches", PermissionMiddleware, controller.list.bind(controller))
-
-export default router
+export const ChurchHttpModule = new ControllersModule([ChurchController])
 ```
 
 ---
