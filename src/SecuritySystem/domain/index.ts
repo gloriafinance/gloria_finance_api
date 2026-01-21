@@ -24,6 +24,7 @@ export type { IPasswordAdapter } from "./interfaces/PasswordAdapter.interface"
 export type { CreateUserRequest } from "./requests/CreateUser.request"
 export type { FilterUserRequest } from "./requests/FilterUser.request"
 export type { AcceptPoliciesRequest } from "./requests/AcceptPolicies.request"
+export type { RefreshTokenRequest } from "./requests/RefreshToken.request"
 
 export { UserNotFound } from "./exceptions/UserNotFound"
 export { UserDisabled } from "./exceptions/UserDisabled"
