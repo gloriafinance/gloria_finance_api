@@ -17,7 +17,9 @@ import type {
   AcceptPoliciesRequest,
   CreateUserRequest,
   FilterUserRequest,
+  RefreshTokenRequest,
 } from "../../../domain"
+import { User } from "../../../domain"
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "@/Shared/adapter"
 
@@ -43,15 +45,96 @@ import {
   ChurchMongoRepository,
   MemberMongoRepository,
 } from "@/Church/infrastructure"
+import type { AuthTokenPayload } from "../../adapters/AuthToken.adapter"
 
 export type userLoginPayload = {
   email: string
   password: string
 }
 
+type ChurchContext = {
+  churchId?: string
+  name?: string
+  lang?: string
+  country?: string
+  symbolFormatMoney?: string
+}
+
 @Controller("/api/v1/user")
 export class UserController {
   private logger = Logger(UserController.name)
+
+  private async resolveChurchContext(user: User): Promise<ChurchContext> {
+    const churchEntity = await new FindChurchById(
+      ChurchMongoRepository.getInstance()
+    ).execute(user.getChurchId())
+
+    let church: ChurchContext = {
+      churchId: churchEntity.getChurchId(),
+      name: churchEntity.getName(),
+      lang: churchEntity.getLang(),
+      country: churchEntity.getCountry(),
+      symbolFormatMoney: churchEntity.getSymbolFormatMoney(),
+    }
+
+    if (!user.isSuperUser) {
+      const member = await new FindMemberById(
+        MemberMongoRepository.getInstance()
+      ).execute(user.getMemberId())
+
+      church = {
+        ...church,
+        churchId: member?.getChurch()?.churchId,
+        name: member?.getChurch()?.name,
+        lang: member?.getSettings()?.lang,
+      }
+    }
+
+    return church
+  }
+
+  private buildTokenPayload(
+    user: User,
+    church: ChurchContext
+  ): AuthTokenPayload {
+    return {
+      churchId: user.getChurchId(),
+      userId: user.getUserId(),
+      email: user.getEmail(),
+      name: user.getName(),
+      memberId: user.getMemberId(),
+      lang: church.lang,
+      symbolFormatMoney: church.symbolFormatMoney,
+      isSuperUser: user.isSuperUser,
+    }
+  }
+
+  private async buildAuthResponse(user: User) {
+    const church = await this.resolveChurchContext(user)
+
+    const roles =
+      await UserAssignmentMongoRepository.getInstance().findByUser(
+        user.getChurchId(),
+        user.getUserId()
+      )
+
+    const tokenPayload = this.buildTokenPayload(user, church)
+    const tokenAdapter = new AuthTokenAdapter()
+    const token = tokenAdapter.createAccessToken(tokenPayload)
+    const refreshToken = tokenAdapter.createRefreshToken(tokenPayload)
+
+    const responseUser = user.toPrimitives()
+    delete responseUser.password
+    delete responseUser.churchId
+
+    return {
+      ...responseUser,
+      church,
+      roles: roles.getRoles(),
+      token,
+      refreshToken,
+    }
+  }
 
   @Post("/login")
   async login(@Body() payload: userLoginPayload, res: ServerResponse) {
@@ -61,69 +144,64 @@ export class UserController {
         new PasswordAdapter()
       ).execute(payload.email, payload.password)
 
-      let church: {
-        churchId: string
-        name: string
-        lang: string
-        country: string
-        symbolFormatMoney: string
-      }
-
-      const c = await new FindChurchById(
-        ChurchMongoRepository.getInstance()
-      ).execute(user.getChurchId())
-
-      church = {
-        churchId: c.getChurchId(),
-        name: c.getName(),
-        lang: c.getLang(),
-        country: c.getCountry(),
-        symbolFormatMoney: c.getSymbolFormatMoney(),
-      }
-
-      if (!user.isSuperUser) {
-        const member = await new FindMemberById(
-          MemberMongoRepository.getInstance()
-        ).execute(user.getMemberId())
-
-        church = {
-          ...church,
-          churchId: member?.getChurch()?.churchId,
-          name: member?.getChurch()?.name,
-          lang: member?.getSettings()?.lang,
-        }
-      }
-
-      const roles =
-        await UserAssignmentMongoRepository.getInstance().findByUser(
-          user.getChurchId(),
-          user.getUserId()
-        )
-
-      const token = new AuthTokenAdapter().createToken({
-        churchId: user.getChurchId(),
-        userId: user.getUserId(),
-        email: user.getEmail(),
-        name: user.getName(),
-        memberId: user.getMemberId(),
-        lang: church.lang,
-        symbolFormatMoney: church.symbolFormatMoney,
-        isSuperUser: user.isSuperUser,
-      })
-
-      const responseUser = user.toPrimitives()
-
-      delete responseUser.password
-      delete responseUser.churchId
-
-      res.status(HttpStatus.OK).send({
-        ...responseUser,
-        church,
-        roles: roles.getRoles(),
-        token,
-      })
+      const response = await this.buildAuthResponse(user)
+      res.status(HttpStatus.OK).send(response)
     } catch (e) {
       this.logger.error(`login error`, e)
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/refresh-token")
+  async refreshToken(
+    @Body() payload: RefreshTokenRequest,
+    res: ServerResponse
+  ) {
+    try {
+      if (!payload?.refreshToken) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .send({ message: "refreshToken is required." })
+      }
+
+      let tokenPayload: AuthTokenPayload
+
+      try {
+        tokenPayload = new AuthTokenAdapter().verifyRefreshToken(
+          payload.refreshToken
+        )
+      } catch (error) {
+        return res.status(HttpStatus.UNAUTHORIZED).send({
+          message: "Unauthorized.",
+        })
+      }
+
+      if (!tokenPayload?.userId || !tokenPayload?.churchId) {
+        return res.status(HttpStatus.UNAUTHORIZED).send({
+          message: "Unauthorized.",
+        })
+      }
+
+      const user = await UserMongoRepository.getInstance().findByUserId(
+        tokenPayload.userId
+      )
+
+      if (!user || !user.isActive) {
+        return res.status(HttpStatus.UNAUTHORIZED).send({
+          message: "Unauthorized.",
+        })
+      }
+
+      if (user.getChurchId() !== tokenPayload.churchId) {
+        return res.status(HttpStatus.UNAUTHORIZED).send({
+          message: "Unauthorized.",
+        })
+      }
+
+      const response = await this.buildAuthResponse(user)
+      res.status(HttpStatus.OK).send(response)
+    } catch (e) {
+      this.logger.error(`refresh token error`, e)
       domainResponse(e, res)
     }
   }
