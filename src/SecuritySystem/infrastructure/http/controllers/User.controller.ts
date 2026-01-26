@@ -112,11 +112,10 @@ export class UserController {
   private async buildAuthResponse(user: User) {
     const church = await this.resolveChurchContext(user)
 
-    const roles =
-      await UserAssignmentMongoRepository.getInstance().findByUser(
-        user.getChurchId(),
-        user.getUserId()
-      )
+    const roles = await UserAssignmentMongoRepository.getInstance().findByUser(
+      user.getChurchId(),
+      user.getUserId()
+    )
 
     const tokenPayload = this.buildTokenPayload(user, church)
     const tokenAdapter = new AuthTokenAdapter()

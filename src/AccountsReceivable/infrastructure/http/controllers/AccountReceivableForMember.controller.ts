@@ -90,18 +90,23 @@ export class AccountReceivableForMemberController {
     Can("accounts_receivable", ["member_commitments"]),
   ])
   async memberCommitments(
-    @Query() req: FilterMemberAccountReceivableRequest,
+    @Query() query: FilterMemberAccountReceivableRequest,
+    @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(req.memberId)
+      ).execute(query.memberId)
 
       const list: Paginate<AccountReceivable> =
         await new ListMemberAccountReceivable(
           AccountsReceivableMongoRepository.getInstance()
-        ).execute({ ...req, debtorDNI: member.getDni() })
+        ).execute({
+          ...query,
+          debtorDNI: member.getDni(),
+          churchId: req.auth.churchId,
+        })
 
       res.status(HttpStatus.OK).json(list)
     } catch (e) {
