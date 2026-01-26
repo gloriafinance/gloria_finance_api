@@ -8,6 +8,7 @@ import {
   Criteria,
   Filters,
   Operator,
+  OrCondition,
   Order,
   OrderTypes,
   Paginate,
@@ -30,6 +31,29 @@ export class ListAccountReceivable {
 
   private prepareCriteria(request: FilterAccountReceivableRequest) {
     const filters = []
+
+    if (request.debtor) {
+      const orConditions: OrCondition[] = [
+        {
+          field: "debtor.name",
+          operator: Operator.CONTAINS,
+          value: request.debtor,
+        },
+        {
+          field: "debtor.email",
+          operator: Operator.CONTAINS,
+          value: request.debtor,
+        },
+      ]
+
+      filters.push(
+        new Map<string, any>([
+          ["field", "search"],
+          ["operator", Operator.OR],
+          ["value", orConditions],
+        ])
+      )
+    }
 
     if (request.churchId) {
       filters.push(
