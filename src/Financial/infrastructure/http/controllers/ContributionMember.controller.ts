@@ -146,7 +146,7 @@ export class ContributionMemberController {
   ])
   async list(
     @Query() query: FilterContributionsRequest,
-    @Req() req: Request,
+    @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
     let filter = {
