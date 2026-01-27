@@ -1,4 +1,5 @@
 import { Installments, InstallmentsStatus } from "@/Shared/domain"
+import { DateBR } from "@/Shared/helpers"
 
 export const PayInstallment = (
   installment: Installments,
@@ -6,6 +7,7 @@ export const PayInstallment = (
   logger: any
 ): number => {
   if (installment.status === InstallmentsStatus.PAID) {
+    installment.paymentDate = installment.paymentDate ?? DateBR()
     logger.debug(`Installment ${installment.installmentId} already paid`)
     return
   }
@@ -23,6 +25,8 @@ export const PayInstallment = (
     amountTransferred >= amountToCompare
       ? InstallmentsStatus.PAID
       : InstallmentsStatus.PARTIAL
+
+  installment.paymentDate = DateBR()
 
   const amountPending = installment.amountPending ?? installment.amount
 

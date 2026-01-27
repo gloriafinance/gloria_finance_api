@@ -1,6 +1,7 @@
 export { RegisterContributionsOnline } from "./contribution/RegisterContributionsOnline"
 export { ListContributions } from "./contribution/ListContributions"
 export { UpdateContributionStatus } from "./contribution/UpdateContributionStatus"
+export { GetMemberGenerositySummary } from "./member/GetMemberGenerositySummary"
 
 export * from "./financeRecord/FetchingFinanceRecord"
 export { GenerateFinanceRecordReport } from "./financeRecord/GenerateFinanceRecordReport"

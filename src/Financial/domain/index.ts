@@ -47,3 +47,4 @@ export type { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
 
 export type * from "./types/CreateFinanceRecord.type"
 export type { StatementCategorySummary } from "./types/StatementCategorySummary.type"
+export type { MemberGenerositySummary } from "./types/MemberGenerositySummary.type"

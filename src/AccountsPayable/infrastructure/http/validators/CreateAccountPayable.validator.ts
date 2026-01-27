@@ -1,8 +1,11 @@
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
-import type { ServerResponse } from "bun-platform-kit"
-import { NextFunction, ServerRequest } from "bun-platform-kit"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
 
 export default async (
   req: ServerRequest,
@@ -115,7 +118,10 @@ export default async (
     })
   }
 
+  // @ts-ignore
   req.body["taxes"] = payload.taxes
+
+  // @ts-ignore
   req.body["taxMetadata"] = payload.taxMetadata
 
   next()

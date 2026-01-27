@@ -76,6 +76,7 @@ export class AccountReceivable extends AggregateRoot {
       return {
         ...i,
         dueDate: new Date(i.dueDate),
+        paymentDate: i.paymentDate ? new Date(i.paymentDate) : undefined,
         installmentId: i.installmentId || IdentifyEntity.get(`installment`),
         status: InstallmentsStatus.PENDING,
       }
@@ -112,7 +113,17 @@ export class AccountReceivable extends AggregateRoot {
   static override fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.id = params.id
-    accountReceivable.installments = params.installments
+    accountReceivable.installments = (params.installments ?? []).map(
+      (installment) => ({
+        ...installment,
+        dueDate: installment?.dueDate
+          ? new Date(installment.dueDate)
+          : undefined,
+        paymentDate: installment?.paymentDate
+          ? new Date(installment.paymentDate)
+          : undefined,
+      })
+    )
     accountReceivable.accountReceivableId = params.accountReceivableId
     accountReceivable.churchId = params.churchId
     accountReceivable.description = params.description
