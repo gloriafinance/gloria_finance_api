@@ -2,7 +2,7 @@ import { QueueRegistry } from "./QueueRegistry"
 import { Logger } from "../../adapter"
 import { QueueName } from "../../domain"
 import { QueueDispatcher } from "@/Shared/infrastructure/queue/QueueDispatcher"
-import { RequestContext } from "@abejarano/ts-express-server"
+import { RequestContext } from "bun-platform-kit"
 export class QueueProcessor {
   private static instance: QueueProcessor
   private logger = Logger("QueueProcessor")

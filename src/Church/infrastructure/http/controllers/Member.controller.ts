@@ -30,7 +30,7 @@ import {
   Res,
   type ServerResponse,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import {
   type AuthenticatedRequest,
   Can,
@@ -52,7 +52,7 @@ export class MemberController {
   @Use([PermissionMiddleware, Can("members", "manage")])
   async list(
     @Query() memberRequest: MemberPaginateRequest,
-    res: ServerResponse
+    @Res() res: ServerResponse
   ) {
     try {
       const members = await new SearchMembers(
@@ -99,7 +99,7 @@ export class MemberController {
   async update(
     @Param("memberId") memberId: string,
     @Body() request: UpdateMemberRequest,
-    res: ServerResponse
+    @Res() res: ServerResponse
   ) {
     try {
       await new UpdateMember(MemberMongoRepository.getInstance()).execute({

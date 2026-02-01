@@ -10,7 +10,7 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"

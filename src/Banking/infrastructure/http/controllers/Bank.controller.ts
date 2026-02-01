@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Res,
-  Use,
-} from "@abejarano/ts-express-server"
+import { Body, Controller, Get, Param, Post, Res, Use } from "bun-platform-kit"
 import type { BankRequest } from "@/Banking/domain"
 import {
   CreateOrUpdateBank,

@@ -2,7 +2,7 @@
 // import { Server } from "http"
 // import { Logger } from "@/Shared/adapter"
 // import { IRealTimeEventService, RealTimeEvent } from "@/Shared/domain"
-// import { BaseServerService } from "@abejarano/ts-express-server"// export class SocketIOService implements IRealTimeEventService {
+// import { BaseServerService } from "bun-platform-kit"// export class SocketIOService implements IRealTimeEventService {
 //   private static instance: SocketIOService
 //   private io: SocketIOServer
 //   private logger = Logger(SocketIOService.name)

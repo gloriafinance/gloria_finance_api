@@ -18,7 +18,7 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import AvailabilityAccountValidator from "@/Financial/infrastructure/http/validators/AvailabilityAccount.validator"

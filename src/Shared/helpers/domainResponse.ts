@@ -2,7 +2,7 @@ import { DomainException, HttpStatus, QueueName } from "../domain"
 import { Logger } from "../adapter"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 
-import type { ServerResponse } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "bun-platform-kit"
 
 export default (e, res: ServerResponse) => {
   const logger = Logger("domainResponse")

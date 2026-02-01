@@ -13,8 +13,8 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
-import type { ServerResponse } from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
+import type { ServerResponse } from "bun-platform-kit"
 
 import CreateAccountPayableValidator from "../validators/CreateAccountPayable.validator"
 import PayAccountPayableValidator from "../validators/PayAccountPayable.validator"

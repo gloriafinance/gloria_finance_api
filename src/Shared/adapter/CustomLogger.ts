@@ -1,6 +1,6 @@
 import pino from "pino"
 import pinoPretty from "pino-pretty"
-import { RequestContext } from "@abejarano/ts-express-server"
+import { RequestContext } from "bun-platform-kit"
 
 class CustomLogger {
   private logger: pino.Logger

@@ -1,7 +1,7 @@
 import { PermissionDescriptionResolver } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
-import type { NextFunction, ServerResponse } from "@abejarano/ts-express-server"
+import type { NextFunction, ServerResponse } from "bun-platform-kit"
 
 // type AuthenticatedRequest = Request & {
 //   auth?: {

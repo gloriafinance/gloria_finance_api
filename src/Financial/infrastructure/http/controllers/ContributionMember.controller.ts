@@ -7,11 +7,8 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
-import type {
-  ServerResponse,
-  ServerRequest,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
+import type { ServerResponse, ServerRequest } from "bun-platform-kit"
 
 import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"

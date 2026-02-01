@@ -1,13 +1,14 @@
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
+import { NextFunction, ServerRequest, ServerResponse } from "bun-platform-kit"
 
 export default async (
-  req: Request,
+  req: ServerRequest,
   res: ServerResponse,
   next: NextFunction
 ) => {
-  const payload = req.body
+  const payload = req.body as any
   const logger = Logger("PayAccountPayableValidator")
 
   logger.info(`Validating  ${JSON.stringify(payload)}`)

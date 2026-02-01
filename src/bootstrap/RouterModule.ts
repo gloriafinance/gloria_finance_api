@@ -1,4 +1,4 @@
-import { ControllersModule } from "@abejarano/ts-express-server"
+import { ControllersModule } from "bun-platform-kit"
 
 import { financialControllers } from "@/Financial/infrastructure/http/controllers"
 import { consolidatedFinancialControllers } from "@/ConsolidatedFinancial/infrastructure/http/controllers"

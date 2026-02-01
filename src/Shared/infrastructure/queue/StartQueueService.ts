@@ -1,7 +1,7 @@
 import { createBullBoard } from "@bull-board/api"
 import { BullAdapter } from "@bull-board/api/bullAdapter"
 import { BunAdapter } from "@bull-board/bun"
-import type { ServerApp } from "@abejarano/ts-express-server"
+import type { ServerApp } from "bun-platform-kit"
 import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
 import { IDefinitionQueue } from "@/Shared/domain"
 

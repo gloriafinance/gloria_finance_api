@@ -8,23 +8,21 @@ import {
   Get,
   Patch,
   Post,
+  Query,
   Req,
-  Use,
-} from "@abejarano/ts-express-server"
-import type {
-  ServerRequest,
+  Res,
   ServerResponse,
-} from "@abejarano/ts-express-server"
+  Use,
+} from "bun-platform-kit"
 
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import { ListFinancialMonth } from "@/ConsolidatedFinancial/applications"
 import type {
   ListFinancialMonthRequest,
   UpdateFinancialMonthRequest,
 } from "@/ConsolidatedFinancial/domain"
 import FinancialMonthValidator from "../validator/FinancialMonth.validator"
-import { GenerateFinanceRecordReport } from "@/Financial/applications"
 import { GenerateFinancialMonthsService } from "../../services/GenerateFinancialMonths.service"
 
 @Controller("/api/v1/finance/consolidate")
@@ -34,7 +32,7 @@ export class FinancialMonthController {
   async UpdateFinancialMonthController(
     @Req() req: AuthenticatedRequest,
     @Body() body: UpdateFinancialMonthRequest,
-    res: ServerResponse
+    @Res() res: ServerResponse
   ) {
     try {
       await new UpdateFinancialMonth(
@@ -59,7 +57,11 @@ export class FinancialMonthController {
     FinancialMonthValidator,
     Can("consolidated_financial", "generate_months"),
   ])
-  async GetFinancialMonthController(req: Request, res: ServerResponse) {
+  async GetFinancialMonthController(
+    @Req() req: AuthenticatedRequest,
+    @Query() params: { year: number },
+    @Res() res: ServerResponse
+  ) {
     try {
       const list = await new ListFinancialMonth(
         FinancialYearMongoRepository.getInstance()

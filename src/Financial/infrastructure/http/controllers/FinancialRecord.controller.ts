@@ -44,7 +44,7 @@ import {
   FinancialConceptMongoRepository,
   FinancialConfigurationMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
-import type { ServerResponse } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -56,7 +56,7 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import FinancialRecordValidator from "@/Financial/infrastructure/http/validators/FinancialRecord.validator"
 import FinanceRecordPaginateDTO from "@/Financial/infrastructure/http/dto/FinanceRecordPaginate.dto"
 import { ChurchMongoRepository } from "@/Church/infrastructure"

@@ -13,7 +13,7 @@ import {
   Req,
   type ServerResponse,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 
 @Controller("/api/v1/finance/tools")
 export class FinancialRecordJobController {

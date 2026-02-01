@@ -1,4 +1,4 @@
-import type { ServerRequest } from "@abejarano/ts-express-server"
+import type { ServerRequest } from "bun-platform-kit"
 
 export type AuthenticatedRequest = ServerRequest & {
   auth?: {

@@ -2,7 +2,7 @@ import { IQueueService, QueueName } from "../../domain"
 import { QueueRegistry } from "./QueueRegistry"
 import { Logger } from "../../adapter"
 import { v4 as uuidv4 } from "uuid"
-import { RequestContext } from "@abejarano/ts-express-server"
+import { RequestContext } from "bun-platform-kit"
 export class QueueDispatcher implements IQueueService {
   private static instance: QueueDispatcher
   private logger = Logger("QueueDispatcher")

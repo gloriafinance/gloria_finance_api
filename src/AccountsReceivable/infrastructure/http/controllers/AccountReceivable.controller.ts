@@ -8,7 +8,7 @@ import {
   Res,
   type ServerResponse,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import {
   Can,
   PermissionMiddleware,

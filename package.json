@@ -18,7 +18,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@abejarano/ts-express-server": "^2.0.2",
+    "bun-platform-kit": "^1.0.0",
     "@abejarano/ts-mongodb-criteria": "^1.6.2",
     "@bull-board/api": "^6.16.2",
     "@bull-board/bun": "^6.16.2",

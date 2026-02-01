@@ -1,16 +1,15 @@
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
-import { NextFunction } from "@abejarano/ts-express-server"
-
-import type { ServerResponse } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "bun-platform-kit"
+import { NextFunction, ServerRequest } from "bun-platform-kit"
 
 export default async (
-  req: Request,
+  req: ServerRequest,
   res: ServerResponse,
   next: NextFunction
 ) => {
-  const payload = { ...req.body } as any
+  const payload = req.body as any
   const logger = Logger("CreateAccountPayableValidator")
 
   logger.info(`Validating`, payload)

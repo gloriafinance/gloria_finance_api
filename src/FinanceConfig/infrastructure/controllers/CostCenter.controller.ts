@@ -15,7 +15,7 @@ import {
   Put,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/finance/configuration/cost-center")

@@ -1,13 +1,12 @@
 import "reflect-metadata"
 import {
-  BootstrapServer,
+  BunKitServer,
   CorsModule,
   FileUploadModule,
-  Methods,
   RateLimitModule,
   RequestContextModule,
   SecurityModule,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 
 import { controllersModule } from "./bootstrap"
 import { FactoryService } from "./bootstrap/FactoryService"
@@ -17,7 +16,7 @@ import { FinancialSchedules } from "./Financial/infrastructure/schedules"
 
 export const APP_DIR = __dirname
 
-const server = new BootstrapServer(Number(Number(process.env.APP_PORT || 8080)))
+const server = new BunKitServer(Number(Number(process.env.APP_PORT || 8080)))
 
 server.addModules([
   new CorsModule({

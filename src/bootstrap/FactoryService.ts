@@ -1,4 +1,4 @@
-import { BaseServerService, ServerInstance } from "@abejarano/ts-express-server"
+import { BaseServerService, ServerInstance } from "bun-platform-kit"
 
 import {
   BankStatementParserFactory,

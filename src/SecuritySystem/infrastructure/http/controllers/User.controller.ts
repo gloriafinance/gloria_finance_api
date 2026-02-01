@@ -33,8 +33,8 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
-import type { ServerResponse } from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
+import type { ServerResponse } from "bun-platform-kit"
 
 import randomString from "@/Shared/helpers/randomString"
 import { SendMailChangePassword } from "@/SendMail/applications"

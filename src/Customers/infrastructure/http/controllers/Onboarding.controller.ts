@@ -14,11 +14,8 @@ import {
   Query,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
-import type {
-  ServerResponse,
-  ServerRequest,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
+import type { ServerResponse, ServerRequest } from "bun-platform-kit"
 
 import CustomerValidator from "../validators/Customer.validator"
 import {

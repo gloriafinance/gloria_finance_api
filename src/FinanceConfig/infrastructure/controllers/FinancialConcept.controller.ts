@@ -15,7 +15,7 @@ import {
   Res,
   type ServerResponse,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 

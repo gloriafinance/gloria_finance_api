@@ -1,6 +1,6 @@
 import * as fs from "fs"
-import { Controller, Get, Query, Res, Use } from "@abejarano/ts-express-server"
-import type { ServerResponse } from "@abejarano/ts-express-server"
+import { Controller, Get, Query, Res, Use } from "bun-platform-kit"
+import type { ServerResponse } from "bun-platform-kit"
 import { DREResponse, TrendResponse } from "@/Reports/domain"
 import type { BaseReportRequest } from "@/Reports/domain"
 import { DRE, IncomeStatement, MonthlyTithes } from "@/Reports/applications"

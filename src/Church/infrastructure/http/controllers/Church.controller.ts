@@ -24,7 +24,7 @@ import {
   Res,
   type ServerResponse,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 type AuthContext = {
   userId: string

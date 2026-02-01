@@ -10,7 +10,7 @@ import {
   Res,
   Use,
   type ServerResponse,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 import { GenericException, HttpStatus, IQueueService } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {

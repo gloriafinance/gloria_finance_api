@@ -30,9 +30,9 @@ import {
   Req,
   Res,
   Use,
-} from "@abejarano/ts-express-server"
+} from "bun-platform-kit"
 
-import type { ServerResponse } from "@abejarano/ts-express-server"
+import type { ServerResponse } from "bun-platform-kit"
 
 @Controller("/api/v1/finance/contributions")
 export class ContributionController {
