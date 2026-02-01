@@ -12,6 +12,18 @@
     "isSystem": true
   },
   {
+    "name": "Compra de materiáis para Infraestrutura e Melhorias do Espaço",
+    "description": "Aquisição, instalação ou melhoria de estruturas físicas e adequações permanentes no espaço da igreja, incluindo reformas, adaptações técnicas, isolamento, tratamento acústico e melhorias funcionais do ambiente.",
+    "type": "PURCHASE",
+    "active": true,
+    "statementCategory": "CAPEX"
+    "affectsBalance": true,
+    "affectsCashFlow": true,
+    "affectsResult": false,
+    "isOperational": false,
+    "isSystem": true
+  },
+  {
     "name": "Perda de investimento",
     "description": "Diminuição do valor de um fundo de investimento ou outro instrumento financeiro, registada como ajustamento negativo na conta correspondente.",
     "type": "OUTGO",

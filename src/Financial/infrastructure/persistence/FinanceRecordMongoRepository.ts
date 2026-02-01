@@ -44,26 +44,13 @@ export class FinanceRecordMongoRepository
     await collection.deleteOne({ financialRecordId })
   }
 
-  async titheList(filter: {
-    churchId: string
-    year: number
-    month: number
-  }): Promise<{ total: number; tithesOfTithes: number; records: any[] }> {
+  async titheList(
+    filter: object
+  ): Promise<{ total: number; tithesOfTithes: number; records: any[] }> {
     this.dbCollectionName = "financial_records"
-    const { churchId, year, month } = filter
 
-    const startDate = new Date(Date.UTC(year, month - 1, 1))
-    const endDate = new Date(Date.UTC(year, month, 1))
-
-    //TODO Dízimos????? y en los otros idiomas?
     const filters = {
-      churchId,
-      date: {
-        $gte: startDate,
-        $lt: endDate,
-      },
-      "financialConcept.name": { $regex: "Dízimos" },
-      type: ConceptType.INCOME,
+      ...filter,
       status: { $in: REALIZED_STATUSES },
     }
 

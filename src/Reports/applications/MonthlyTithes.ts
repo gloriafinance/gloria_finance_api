@@ -1,8 +1,9 @@
-import { IFinancialRecordRepository } from "../../Financial/domain/interfaces"
-import { IChurchRepository } from "../../Church/domain"
-import { FindChurchById } from "../../Church/applications"
+import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { IChurchRepository } from "@/Church/domain"
+import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
-import { Logger } from "../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+import { ConceptType } from "@/FinanceConfig/domain"
 
 export class MonthlyTithes {
   private logger = Logger("MonthlyTithes")
@@ -15,8 +16,25 @@ export class MonthlyTithes {
   async execute(params: BaseReportRequest) {
     this.logger.info(`MonthlyTithes Report`, params)
 
-    await new FindChurchById(this.churchRepository).execute(params.churchId)
+    const church = await new FindChurchById(this.churchRepository).execute(
+      params.churchId
+    )
 
-    return await this.financialRecordRepository.titheList(params)
+    const startDate = new Date(Date.UTC(params.year, params.month - 1, 1))
+    const endDate = new Date(Date.UTC(params.year, params.month, 1))
+
+    const filters = {
+      churchId: church.getChurchId(),
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+      "financialConcept.name": {
+        $regex: church.getLang() === "pt-BR" ? "Dízimos" : "Diezmos",
+      },
+      type: ConceptType.INCOME,
+    }
+
+    return await this.financialRecordRepository.titheList(filters)
   }
 }

@@ -1,6 +1,5 @@
 import { FinanceRecord } from "../FinanceRecord"
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import type { BaseReportRequest } from "@/Reports/domain"
 import { StatementCategorySummary } from "@/Financial/domain"
 
 export interface IFinancialRecordRepository {
@@ -13,7 +12,7 @@ export interface IFinancialRecordRepository {
   one(filter: object): Promise<FinanceRecord | undefined>
 
   titheList(
-    filter: BaseReportRequest
+    filter: object
   ): Promise<{ total: number; tithesOfTithes: number; records: any[] }>
 
   fetchStatementCategories(filter: {
