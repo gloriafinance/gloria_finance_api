@@ -1,9 +1,9 @@
 import {
   Criteria,
   MongoRepository,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
-import { IMemberRepository, Member } from "../../domain"
+import { type IMemberRepository, Member } from "../../domain"
 import { Collection } from "mongodb"
 
 export class MemberMongoRepository
@@ -28,8 +28,8 @@ export class MemberMongoRepository
     return "members"
   }
 
-  list(criteria: Criteria): Promise<Paginate<Member>>
-  list(filter: object): Promise<Member[]>
+  override list(criteria: Criteria): Promise<Paginate<Member>>
+  override list(filter: object): Promise<Member[]>
 
   override async list(
     arg: Criteria | object

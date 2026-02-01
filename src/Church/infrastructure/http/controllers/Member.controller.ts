@@ -72,7 +72,7 @@ export class MemberController {
     try {
       const members = await new AllMember(
         MemberMongoRepository.getInstance()
-      ).execute(req.auth.churchId)
+      ).execute(req.auth.churchId!)
 
       res.status(HttpStatus.OK).send(members)
     } catch (e) {

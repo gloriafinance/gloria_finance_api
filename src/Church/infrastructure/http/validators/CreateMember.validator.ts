@@ -1,6 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import { HttpStatus } from "@/Shared/domain"
 import { Validator } from "node-input-validator"
+import type { NextFunction, ServerResponse } from "bun-platform-kit"
 
 const logger = Logger("CreateMemberValidator")
 
@@ -9,7 +10,7 @@ export const CreateMemberValidator = async (
   res: ServerResponse,
   next: NextFunction
 ): Promise<void> => {
-  const payload = req.body
+  const payload = req.body as any
 
   logger.info("Validating create member payload", payload)
 

@@ -1,7 +1,11 @@
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
-import { NextFunction, ServerRequest, ServerResponse } from "bun-platform-kit"
+import {
+  NextFunction,
+  ServerRequest,
+  type ServerResponse,
+} from "bun-platform-kit"
 
 export default async (
   req: ServerRequest,

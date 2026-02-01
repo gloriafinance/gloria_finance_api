@@ -11,7 +11,7 @@ import {
   Query,
   Req,
   Res,
-  ServerResponse,
+  type ServerResponse,
   Use,
 } from "bun-platform-kit"
 
