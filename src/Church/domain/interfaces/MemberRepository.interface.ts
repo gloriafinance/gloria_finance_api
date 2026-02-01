@@ -1,9 +1,11 @@
-import { Criteria, IRepository, Paginate } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  type IRepository,
+  type Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import { Member } from "../Member"
 
 export interface IMemberRepository extends IRepository<Member> {
-  one(filter: object): Promise<Member | undefined>
-
   upsert(member: Member): Promise<void>
 
   list(criteria: Criteria): Promise<Paginate<Member>>

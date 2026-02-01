@@ -1,12 +1,12 @@
 import type { ServerRequest } from "bun-platform-kit"
 
 export type AuthenticatedRequest = ServerRequest & {
-  auth?: {
+  auth: {
     name: string
     memberId?: string
     userId?: string
     isSuperuser: boolean
-    churchId?: string
+    churchId: string
     permissions?: string[]
     symbolFormatMoney: string
   }
