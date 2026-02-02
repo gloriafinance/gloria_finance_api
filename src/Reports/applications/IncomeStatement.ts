@@ -6,10 +6,7 @@ import type {
 import type { IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
-import type {
-  IncomeStatementCategoryBreakdown,
-  IncomeStatementResponse,
-} from "@/Reports/domain"
+import type { IncomeStatementCategoryBreakdown, IncomeStatementResponse, } from "@/Reports/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { StatementCategory } from "@/Financial/domain"
 
