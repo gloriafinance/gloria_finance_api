@@ -1,8 +1,11 @@
 import * as fs from "fs"
-import { Controller, Get, Query, Res, Use } from "bun-platform-kit"
 import type { ServerResponse } from "bun-platform-kit"
-import { DREResponse, TrendResponse } from "@/Reports/domain"
-import type { BaseReportRequest } from "@/Reports/domain"
+import { Controller, Get, Query, Res, Use } from "bun-platform-kit"
+import type {
+  BaseReportRequest,
+  DREResponse,
+  TrendResponse,
+} from "@/Reports/domain"
 import { DRE, IncomeStatement, MonthlyTithes } from "@/Reports/applications"
 import { DREMongoRepository } from "@/Reports/infrastructure/persistence/DREMongoRepository"
 import domainResponse from "@/Shared/helpers/domainResponse"
@@ -160,7 +163,7 @@ export class FinanceReportsController {
       const month = incomeStatement.period.month ?? query.month
       const fileName = `financial-report-${year}${month ? `-${month}` : ""}.pdf`
 
-      res.download(pdfPath, fileName, (error) => {
+      res.download!(pdfPath, fileName, (error) => {
         fs.unlink(pdfPath, () => undefined)
 
         //if (error && !res.headersSent) {
@@ -282,7 +285,7 @@ export class FinanceReportsController {
       const month = query.month
       const fileName = `dre-${year}${month ? `-${month}` : ""}.pdf`
 
-      res.download(pdfPath, fileName, (error) => {
+      res.download!(pdfPath, fileName, (error) => {
         fs.unlink(pdfPath, () => undefined)
 
         //if (error && !res.headersSent) {

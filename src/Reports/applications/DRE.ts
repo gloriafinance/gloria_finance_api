@@ -1,8 +1,12 @@
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { IChurchRepository } from "@/Church/domain"
+import { type IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { type IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
-import { DREMaster, DREResponse, IDRERepository } from "@/Reports/domain"
+import {
+  DREMaster,
+  type DREResponse,
+  type IDRERepository,
+} from "@/Reports/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { StatementCategory } from "@/Financial/domain"
 
@@ -117,7 +121,7 @@ export class DRE {
 
     return DREMaster.create({
       churchId: params.churchId,
-      month: params.month,
+      month: params.month!,
       year: params.year,
       dre: {
         grossRevenue,

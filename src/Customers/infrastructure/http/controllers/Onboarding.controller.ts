@@ -24,7 +24,7 @@ import {
   Order,
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
-import { OnboardingCustomerRequest } from "../../jobs/OnboardingCustomer.job"
+import { type OnboardingCustomerRequest } from "../../jobs/OnboardingCustomer.job"
 
 @Controller("/api/v1/onboarding")
 export class OnboardingController {
@@ -84,9 +84,9 @@ export class OnboardingController {
   ) {
     try {
       if (req.status === OnboardingStatus.COMPLETED) {
-        const customer = await CustomerMongoRepository.getInstance().one({
+        const customer = (await CustomerMongoRepository.getInstance().one({
           customerId: req.customerId,
-        })
+        }))!
 
         QueueService.getInstance().dispatch<OnboardingCustomerRequest>(
           QueueName.OnboardingCustomerJob,

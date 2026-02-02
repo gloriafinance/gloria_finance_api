@@ -1,15 +1,10 @@
 import { FinanceRecord } from "../FinanceRecord"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { StatementCategorySummary } from "@/Financial/domain"
+import type { StatementCategorySummary } from "@/Financial/domain"
 
 export interface IFinancialRecordRepository {
   upsert(financialRecord: FinanceRecord): Promise<void>
 
   deleteByFinancialRecordId(financialRecordId: string): Promise<void>
-
-  list(criteria: Criteria): Promise<Paginate<FinanceRecord>>
-
-  one(filter: object): Promise<FinanceRecord | undefined>
 
   titheList(
     filter: object

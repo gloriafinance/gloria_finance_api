@@ -1,10 +1,10 @@
 import { FinanceRecord } from "@/Financial/domain"
-import { IFinancialRecordRepository } from "../../domain/interfaces"
+import type { IFinancialRecordRepository } from "../../domain/interfaces"
 import {
   ConceptType,
   FinancialRecordStatus,
   StatementCategory,
-  StatementCategorySummary,
+  type StatementCategorySummary,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
@@ -83,9 +83,9 @@ export class FinanceRecordMongoRepository
     }
 
     return {
-      total: result[0].total,
-      records: result[0].records,
-      tithesOfTithes: ((result[0].total ?? 0) * 10) / 100,
+      total: result[0]!.total,
+      records: result[0]!.records,
+      tithesOfTithes: ((result[0]!.total ?? 0) * 10) / 100,
     }
   }
 

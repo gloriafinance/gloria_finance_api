@@ -1,15 +1,15 @@
-import {
+import type {
   IAvailabilityAccountMasterRepository,
   ICostCenterMasterRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { IChurchRepository } from "@/Church/domain"
+import type { IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
-import {
+import type {
   IncomeStatementCategoryBreakdown,
   IncomeStatementResponse,
-} from "../domain/responses/IncomeStatement.response"
+} from "@/Reports/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { StatementCategory } from "@/Financial/domain"
 

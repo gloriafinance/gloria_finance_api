@@ -1,6 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { DREStructure } from "./types/DREStructure.type"
-import { DREResponse } from "@/Reports/domain/responses/DRE.response"
+import { type DREStructure } from "./types/DREStructure.type"
+import { type DREResponse } from "@/Reports/domain/responses/DRE.response"
 
 export class DREMaster extends AggregateRoot {
   private id?: string
