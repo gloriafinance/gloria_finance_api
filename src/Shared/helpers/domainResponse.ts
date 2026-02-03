@@ -1,10 +1,11 @@
-import { DomainException, HttpStatus, QueueName } from "../domain"
+import { DomainException, HttpStatus } from "../domain"
 import { Logger } from "../adapter"
-import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
 
 import type { ServerResponse } from "bun-platform-kit"
+import { QueueName } from "@/package/queue/domain"
 
-export default (e, res: ServerResponse) => {
+export default (e: any, res: ServerResponse) => {
   const logger = Logger("domainResponse")
 
   if (e instanceof DomainException) {

@@ -1,11 +1,11 @@
-import { Church, ChurchNotFound, Member, MemberExist } from "../../domain"
 import type {
   CreateMemberRequest,
   IChurchRepository,
   IMemberRepository,
 } from "../../domain"
+import { Church, ChurchNotFound, Member, MemberExist } from "../../domain"
 import { Logger } from "@/Shared/adapter"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 export class CreateMember {
   private logger = Logger(CreateMember.name)

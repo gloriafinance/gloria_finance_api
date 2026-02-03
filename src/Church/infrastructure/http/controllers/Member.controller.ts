@@ -16,7 +16,7 @@ import {
   MemberMongoRepository,
 } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
-import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
 import { Cache } from "@/Shared/decorators"
 import {
   Body,

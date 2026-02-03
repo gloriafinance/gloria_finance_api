@@ -1,5 +1,5 @@
 import { Logger } from "@/Shared/adapter"
-import { type IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import type { UpdateCostCenterMasterJobRequest } from "@/Financial/applications"
 
 export class DispatchUpdateCostCenterMaster {

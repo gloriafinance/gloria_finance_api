@@ -1,8 +1,8 @@
 export { PermissionMiddleware } from "./middleware/Permission.middleware"
 export { Can } from "./middleware/Can.middleware"
 
-export { QueueService } from "./queue/QueueService"
-export { StartQueueService } from "./queue/StartQueueService"
+export { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
+export { StartQueueService } from "@/package/queue/infrastructure/StartQueueService.ts"
 
 export { StorageGCP } from "./StorageGCP"
 export { NoOpStorage } from "./NoOpStorage"

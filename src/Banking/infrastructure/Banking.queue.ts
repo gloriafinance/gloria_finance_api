@@ -1,4 +1,3 @@
-import { IDefinitionQueue } from "@/Shared/domain"
 import {
   BankStatementReconciler,
   MovementBankRecordJob,
@@ -11,7 +10,8 @@ import {
 import { ImportBankStatementJob } from "@/Banking/infrastructure/jobs/ImportBankStatement.job"
 import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers/BankStatementParserFactory"
 import { QueueService } from "@/Shared/infrastructure"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IListQueue } from "@/package/queue/domain"
 
 type BankingQueueDeps = {
   financialRecordRepository: IFinancialRecordRepository
@@ -19,8 +19,9 @@ type BankingQueueDeps = {
 
 export const BankingQueue = ({
   financialRecordRepository,
-}: BankingQueueDeps): IDefinitionQueue[] => [
+}: BankingQueueDeps): IListQueue[] => [
   {
+    name: MovementBankRecordJob.name,
     useClass: MovementBankRecordJob,
     inject: [
       MovementBankMongoRepository.getInstance(),
@@ -28,6 +29,7 @@ export const BankingQueue = ({
     ],
   },
   {
+    name: ImportBankStatementJob.name,
     useClass: ImportBankStatementJob,
     inject: [
       BankStatementParserFactory.getInstance(),

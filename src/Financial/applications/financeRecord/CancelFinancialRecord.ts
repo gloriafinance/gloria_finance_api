@@ -16,11 +16,8 @@ import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import {
-  GenericException,
-  type IQueueService,
-  QueueName,
-} from "@/Shared/domain"
+import { GenericException, type IQueueService } from "@/Shared/domain"
+import { QueueName } from "@/package/queue/domain"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,

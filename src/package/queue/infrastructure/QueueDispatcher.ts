@@ -1,11 +1,10 @@
-import { IQueueService, QueueName } from "../../domain"
-import { QueueRegistry } from "./QueueRegistry"
-import { Logger } from "../../adapter"
-import { v4 as uuidv4 } from "uuid"
+import type { IQueueService } from "../domain"
+import { QueueName } from "../domain"
+import { QueueRegistry } from "./QueueRegistry.ts"
 import { RequestContext } from "bun-platform-kit"
+
 export class QueueDispatcher implements IQueueService {
   private static instance: QueueDispatcher
-  private logger = Logger("QueueDispatcher")
   private registry: QueueRegistry
 
   private constructor() {
@@ -22,11 +21,11 @@ export class QueueDispatcher implements IQueueService {
   /**
    * Envía un trabajo a una cola específica
    */
-  dispatch(queueName: QueueName, args: any): void {
+  dispatch<T>(queueName: QueueName, args: T): void {
     const currentRequestId = RequestContext.requestId
-    const requestId = currentRequestId || uuidv4()
+    const requestId = currentRequestId || crypto.randomUUID()
 
-    this.logger.info(
+    console.log(
       `Dispatching job to queue ${queueName} (RequestId: ${requestId})`
     )
 
@@ -34,16 +33,19 @@ export class QueueDispatcher implements IQueueService {
       const queue = this.registry.getQueue(queueName)
 
       if (!queue) {
-        this.logger.error(`Cannot dispatch job: queue ${queueName} not found`)
+        console.error(`Cannot dispatch job: queue ${queueName} not found`)
         return
       }
 
       try {
         // Incluir el ID de solicitud en los datos del trabajo
         const jobData = { ...args, requestId }
-        await queue.add(jobData)
+
+        // BullMQ requiere un nombre de job como primer parámetro
+        // Usamos el queueName como nombre del job por defecto
+        await queue.add(queueName, jobData)
       } catch (error) {
-        this.logger.error(`Error dispatching job to queue ${queueName}:`, error)
+        console.error(`Error dispatching job to queue ${queueName}:`, error)
       }
     })
   }
@@ -56,6 +58,7 @@ export class QueueDispatcher implements IQueueService {
     const queues = this.registry.getAllQueues()
 
     for (const queue of queues) {
+      // BullMQ usa getJobCounts() que retorna un objeto con conteos
       const queueStats = await queue.getJobCounts()
       stats[queue.name] = queueStats
     }
@@ -67,19 +70,20 @@ export class QueueDispatcher implements IQueueService {
    * Limpia las colas (elimina trabajos completados y fallidos)
    */
   async cleanQueues(): Promise<void> {
-    this.logger.info("Cleaning all queues")
+    console.log("Cleaning all queues")
 
     const cleanPromises = this.registry.getAllQueues().map(async (queue) => {
       try {
-        await queue.clean(86400000, "completed") // Limpiar trabajos completados más antiguos que 1 día
-        await queue.clean(604800000, "failed") // Limpiar trabajos fallidos más antiguos que 1 semana
-        this.logger.info(`Queue ${queue.name} cleaned`)
+        // BullMQ clean() tiene syntax: clean(grace, limit, type)
+        await queue.clean(86400000, 100, "completed") // Limpiar trabajos completados más antiguos que 1 día
+        await queue.clean(604800000, 100, "failed") // Limpiar trabajos fallidos más antiguos que 1 semana
+        console.log(`Queue ${queue.name} cleaned`)
       } catch (error) {
-        this.logger.error(`Error cleaning queue ${queue.name}:`, error)
+        console.error(`Error cleaning queue ${queue.name}:`, error)
       }
     })
 
     await Promise.all(cleanPromises)
-    this.logger.info("All queues cleaned")
+    console.log("All queues cleaned")
   }
 }

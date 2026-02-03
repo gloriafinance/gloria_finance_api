@@ -1,11 +1,11 @@
-import { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
-import { MovementBank } from "@/Banking/domain"
 import type {
   IBankRepository,
   IMovementBankRepository,
   MovementBankRequest,
 } from "@/Banking/domain"
+import { MovementBank } from "@/Banking/domain"
+import type { IJob } from "@/package/queue/domain"
 
 export class MovementBankRecordJob implements IJob {
   private logger = Logger("MovementBankRecord")

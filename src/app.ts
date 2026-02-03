@@ -43,5 +43,12 @@ server.addModules([
 server.addServices([new FactoryService()])
 
 server.getApp().set?.("trustProxy", ["127.0.0.1/8"])
-StartQueueService(server.getApp(), Queues())
+StartQueueService({
+  app: server.getApp(),
+  listQueues: Queues(),
+  credentials: {
+    user: process.env.BULL_USER!,
+    password: process.env.BULL_PASS!,
+  },
+})
 server.start().then(() => FinancialSchedules())

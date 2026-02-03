@@ -1,5 +1,5 @@
 import { Logger } from "@/Shared/adapter"
-import { Installments, IQueueService, QueueName } from "@/Shared/domain"
+import { Installments, IQueueService, QueueName } from "@/package/queue/domain"
 import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
 
 export class SendMailPaymentCommitment {

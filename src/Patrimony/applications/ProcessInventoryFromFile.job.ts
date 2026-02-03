@@ -6,7 +6,7 @@ import {
   IAssetRepository,
   ImportInventoryRequest,
 } from "../domain"
-import { IJob, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
 import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
 
 type InventoryCsvRow = {

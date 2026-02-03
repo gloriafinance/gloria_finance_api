@@ -1,5 +1,5 @@
 import { Member } from "@/Church/domain"
-import { IJob, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
 import { IPasswordAdapter, IUserRepository, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 

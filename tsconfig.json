@@ -43,6 +43,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/Shared/domain/enums/QueueName.enum.ts"
+    "src/package/queue/domain/enums/QueueName.enum.ts"
   ]
 }
