@@ -1,5 +1,5 @@
-import { IQueueService, QueueName } from "@/Shared/domain"
-import { FinancialRecordCreateQueue } from "../../domain"
+import { type IQueueService, QueueName } from "@/Shared/domain"
+import type { FinancialRecordCreateQueue } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 
 export class DispatchCreateFinancialRecord {

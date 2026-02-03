@@ -35,6 +35,7 @@ type SampleRecord = {
   }
   availabilityAccount?: {
     accountName: string
+    symbol?: string
   }
   costCenter?: {
     name: string
@@ -83,9 +84,9 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       FinancialRecordStatus.RECONCILED,
     ])
 
-    const categoryTotals = new Map<
-      StatementCategory,
-      { income: number; expenses: number; reversal: number }
+    const symbolCategoryTotals = new Map<
+      string,
+      Map<StatementCategory, { income: number; expenses: number; reversal: number }>
     >()
 
     for (const record of this.records) {
@@ -99,6 +100,13 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
       const category =
         record.financialConcept?.statementCategory ?? StatementCategory.OTHER
+
+      const symbol = record.availabilityAccount?.symbol ?? "UNSPECIFIED"
+      const categoryTotals =
+        symbolCategoryTotals.get(symbol) ?? new Map<
+          StatementCategory,
+          { income: number; expenses: number; reversal: number }
+        >()
       const current = categoryTotals.get(category) ?? {
         income: 0,
         expenses: 0,
@@ -117,14 +125,24 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       }
 
       categoryTotals.set(category, current)
+      symbolCategoryTotals.set(symbol, categoryTotals)
     }
 
-    return Array.from(categoryTotals.entries()).map(([category, totals]) => ({
-      category,
-      income: totals.income,
-      expenses: totals.expenses,
-      reversal: totals.reversal,
-    }))
+    const results: StatementCategorySummary[] = []
+
+    for (const [symbol, categories] of symbolCategoryTotals.entries()) {
+      for (const [category, totals] of categories.entries()) {
+        results.push({
+          category,
+          income: totals.income,
+          expenses: totals.expenses,
+          reversal: totals.reversal,
+          symbol,
+        })
+      }
+    }
+
+    return results
   }
 }
 

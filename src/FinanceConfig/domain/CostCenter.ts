@@ -1,7 +1,7 @@
 import { DateBR } from "@/Shared/helpers"
 import { Member } from "@/Church/domain"
 import { CostCenterCategory } from "./enums/CostCenterCategory.enum"
-import { CostCenterRequest } from "./requests/CostCenter.request"
+import { type CostCenterRequest } from "./requests/CostCenter.request"
 
 export class CostCenter {
   private costCenterId: string

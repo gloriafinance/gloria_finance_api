@@ -4,7 +4,7 @@ import {
   CostCenterMaster,
   FinancialRecordStatus,
 } from "../../domain"
-import { ICostCenterMasterRepository } from "../../domain/interfaces"
+import type { ICostCenterMasterRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
 import { Collection } from "mongodb"
 
@@ -228,7 +228,25 @@ export class CostCenterMasterMongoRepository
     return result.map((r) => CostCenterMaster.fromPrimitives(r))
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createSearchIndex({
+      name: "costCentersMasterIndex",
+      definition: {
+        mappings: {
+          dynamic: false,
+          fields: {
+            churchId: {
+              type: "string",
+            },
+            month: {
+              type: "number",
+            },
+            year: {
+              type: "number",
+            },
+          },
+        },
+      },
+    })
   }
 }

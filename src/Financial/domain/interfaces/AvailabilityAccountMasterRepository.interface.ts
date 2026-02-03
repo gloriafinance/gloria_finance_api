@@ -1,17 +1,12 @@
 import { AvailabilityAccountMaster } from "@/Financial/domain"
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
 
-export interface IAvailabilityAccountMasterRepository {
-  findById(
-    availabilityAccountMasterId: string
-  ): Promise<AvailabilityAccountMaster | undefined>
-
+export interface IAvailabilityAccountMasterRepository extends IRepository<AvailabilityAccountMaster> {
   search(
     churchId: string,
     month: number,
     year: number
   ): Promise<AvailabilityAccountMaster[] | undefined>
-
-  upsert(accountMaster: AvailabilityAccountMaster): Promise<void>
 
   rebuildAvailabilityAccountsMaster(filter: {
     churchId: string

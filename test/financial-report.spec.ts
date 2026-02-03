@@ -46,6 +46,7 @@ type SampleRecord = {
   }
   availabilityAccount?: {
     accountName: string
+    symbol?: string
   }
   costCenter?: {
     name: string
@@ -122,7 +123,7 @@ const parseCsvRecords = (csvText: string): SampleRecord[] => {
         statementCategory,
         affectsResult: true,
       },
-      availabilityAccount: { accountName: conta },
+      availabilityAccount: { accountName: conta, symbol: "R$" },
       costCenter:
         centroCusto && centroCusto !== "N/A"
           ? { name: centroCusto }
@@ -175,7 +176,7 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
     const totals = new Map<
       string,
-      { name: string; totalInput: number; totalOutput: number }
+      { name: string; totalInput: number; totalOutput: number; symbol?: string }
     >()
 
     for (const record of this.records) {
@@ -183,10 +184,16 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       if (!record.status || !realizedStatuses.has(record.status)) continue
 
       const key = record.availabilityAccount.accountName
+      const symbol = record.availabilityAccount?.symbol ?? ""
       const current = totals.get(key) ?? {
         name: key,
         totalInput: 0,
         totalOutput: 0,
+        symbol,
+      }
+
+      if (!current.symbol && symbol) {
+        current.symbol = symbol
       }
 
       const normalizedAmount =
@@ -219,7 +226,7 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
         availabilityAccount: {
           availabilityAccountId: item.name,
           accountName: item.name,
-          symbol: "",
+          symbol: item.symbol ?? "",
         },
         availabilityAccountMasterId: `test-${item.name}`,
         churchId: "church-001",
@@ -293,9 +300,9 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       FinancialRecordStatus.RECONCILED,
     ])
 
-    const categoryTotals = new Map<
-      StatementCategory,
-      { income: number; expenses: number; reversal: number }
+    const symbolCategoryTotals = new Map<
+      string,
+      Map<StatementCategory, { income: number; expenses: number; reversal: number }>
     >()
 
     for (const record of this.records) {
@@ -313,8 +320,14 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
       const category = specialTithe
         ? StatementCategory.MINISTRY_TRANSFERS
-        : (record.financialConcept?.statementCategory ??
-          StatementCategory.OTHER)
+        : record.financialConcept?.statementCategory ?? StatementCategory.OTHER
+
+      const symbol = record.availabilityAccount?.symbol ?? "UNSPECIFIED"
+      const categoryTotals =
+        symbolCategoryTotals.get(symbol) ?? new Map<
+          StatementCategory,
+          { income: number; expenses: number; reversal: number }
+        >()
       const current = categoryTotals.get(category) ?? {
         income: 0,
         expenses: 0,
@@ -333,14 +346,24 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       }
 
       categoryTotals.set(category, current)
+      symbolCategoryTotals.set(symbol, categoryTotals)
     }
 
-    return Array.from(categoryTotals.entries()).map(([category, totals]) => ({
-      category,
-      income: totals.income,
-      expenses: totals.expenses,
-      reversal: totals.reversal,
-    }))
+    const results: StatementCategorySummary[] = []
+
+    for (const [symbol, categories] of symbolCategoryTotals.entries()) {
+      for (const [category, totals] of categories.entries()) {
+        results.push({
+          category,
+          income: totals.income,
+          expenses: totals.expenses,
+          reversal: totals.reversal,
+          symbol,
+        })
+      }
+    }
+
+    return results
   }
 }
 
@@ -813,29 +836,34 @@ describe("Financial reporting consistency", () => {
 
     const response = await incomeStatement.execute(request)
 
+    const primarySummary = response.summary[0]?.summary
+    assert.ok(primarySummary, "Expected at least one symbol summary")
+
     assert.strictEqual(
-      response.summary.revenue,
+      primarySummary.revenue,
       incomeStatementExpected.revenue
     )
     assert.strictEqual(
-      response.summary.operatingExpenses,
+      primarySummary.operatingExpenses,
       incomeStatementExpected.operatingExpenses
     )
     assert.strictEqual(
-      response.summary.operatingIncome,
+      primarySummary.operatingIncome,
       incomeStatementExpected.revenue -
         incomeStatementExpected.operatingExpenses
     )
     assert.strictEqual(
-      response.summary.reversalAdjustments,
+      primarySummary.reversalAdjustments,
       incomeStatementExpected.reversalAdjustments
     )
     assert.strictEqual(
-      response.summary.netIncome,
+      primarySummary.netIncome,
       incomeStatementExpected.netIncome
     )
 
-    const otherCategory = response.breakdown.find(
+    const primaryBreakdown = response.breakdown[0]?.breakdown ?? []
+
+    const otherCategory = primaryBreakdown.find(
       (item) => item.category === StatementCategory.OTHER
     )
     assert.ok(otherCategory, "Other category should be present in breakdown")
@@ -964,8 +992,8 @@ describe("Financial reporting consistency", () => {
       month: 10,
     })
 
-    expect(response.summary.revenue).toBe(300)
-    const revenueRow = response.breakdown.find(
+    expect(response.summary[0]?.summary.revenue).toBe(300)
+    const revenueRow = response.breakdown[0]?.breakdown.find(
       (row) => row.category === StatementCategory.REVENUE
     )
     expect(revenueRow?.income).toBe(300)
@@ -1028,11 +1056,13 @@ describe("Financial reporting consistency", () => {
       2
     )
 
-    expect(response.summary.revenue).toBeCloseTo(3958.05, 2)
-    expect(response.summary.operatingExpenses).toBeCloseTo(2199.03, 2)
-    expect(response.summary.netIncome).toBeCloseTo(1759.02, 2)
+    const primarySummary = response.summary[0]?.summary
+    expect(primarySummary?.revenue).toBeCloseTo(3958.05, 2)
+    expect(primarySummary?.operatingExpenses).toBeCloseTo(2199.03, 2)
+    expect(primarySummary?.netIncome).toBeCloseTo(1759.02, 2)
 
-    const ministryCategory = response.breakdown.find(
+    const ministries = response.breakdown[0]?.breakdown ?? []
+    const ministryCategory = ministries.find(
       (item) => item.category === StatementCategory.MINISTRY_TRANSFERS
     )
     expect(ministryCategory?.expenses).toBeCloseTo(267.96, 2)

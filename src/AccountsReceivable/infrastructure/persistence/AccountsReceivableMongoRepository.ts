@@ -1,5 +1,8 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { AccountReceivable, IAccountsReceivableRepository } from "../../domain"
+import {
+  AccountReceivable,
+  type IAccountsReceivableRepository,
+} from "../../domain"
 import { Collection } from "mongodb"
 
 export class AccountsReceivableMongoRepository

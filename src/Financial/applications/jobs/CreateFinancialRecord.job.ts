@@ -1,14 +1,14 @@
 import { Logger } from "@/Shared/adapter"
-import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { IJob, IQueueService, IStorageService } from "@/Shared/domain"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IJob, IQueueService, IStorageService } from "@/Shared/domain"
 import {
   AvailabilityAccount,
   ConceptType,
   CostCenter,
   FinanceRecord,
   FinancialConcept,
-  FinancialRecordCreateQueue,
+  type FinancialRecordCreateQueue,
   FinancialRecordStatus,
   TypeOperationMoney,
 } from "@/Financial/domain"
@@ -123,7 +123,14 @@ export class CreateFinancialRecordJob implements IJob {
       new DispatchUpdateCostCenterMaster(this.queueService).execute({
         churchId: args.churchId,
         amount: args.amount,
-        costCenterId: args.costCenter.getCostCenterId(),
+        costCenterId: args.costCenter!.getCostCenterId(),
+        availabilityAccount: {
+          availabilityAccountId:
+            args.availabilityAccount.getAvailabilityAccountId(),
+          accountName: args.availabilityAccount.getAccountName(),
+          accountType: args.availabilityAccount.getType(),
+          symbol: args.availabilityAccount.getSymbol(),
+        },
       })
     })
   }

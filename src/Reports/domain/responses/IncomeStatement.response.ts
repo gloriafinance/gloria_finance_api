@@ -2,7 +2,7 @@ import {
   AvailabilityAccountMaster,
   CostCenterMaster,
   StatementCategory,
-} from "../../../Financial/domain"
+} from "@/Financial/domain"
 
 export type IncomeStatementCategoryBreakdown = {
   category: StatementCategory
@@ -27,16 +27,36 @@ export type IncomeStatementSummary = {
   netIncome: number
 }
 
+export type IncomeStatementSymbolSummary = {
+  symbol: string
+  summary: IncomeStatementSummary
+}
+
+export type IncomeStatementSymbolBreakdown = {
+  symbol: string
+  breakdown: IncomeStatementCategoryBreakdown[]
+}
+
+export type IncomeStatementAvailabilityAccountSymbolTotals = {
+  symbol: string
+  total: number
+  income: number
+  expenses: number
+}
+
+export type IncomeStatementCostCenterSymbolTotals = {
+  symbol: string
+  total: number
+}
+
 export type IncomeStatementCashFlowSnapshot = {
   availabilityAccounts: {
     accounts: AvailabilityAccountMaster[]
-    total: number
-    income: number
-    expenses: number
+    totals: IncomeStatementAvailabilityAccountSymbolTotals[]
   }
   costCenters: {
     costCenters: CostCenterMaster[]
-    total: number
+    totals: IncomeStatementCostCenterSymbolTotals[]
   }
 }
 
@@ -45,7 +65,7 @@ export type IncomeStatementResponse = {
     year: number
     month?: number
   }
-  breakdown: IncomeStatementCategoryBreakdown[]
-  summary: IncomeStatementSummary
+  summary: IncomeStatementSymbolSummary[]
+  breakdown: IncomeStatementSymbolBreakdown[]
   cashFlowSnapshot: IncomeStatementCashFlowSnapshot
 }

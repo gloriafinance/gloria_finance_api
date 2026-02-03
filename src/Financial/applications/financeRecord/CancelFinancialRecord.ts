@@ -1,8 +1,8 @@
-import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import {
   AvailabilityAccount,
   ConceptType,
-  CreateFinanceRecord,
+  type CreateFinanceRecord,
   FinanceRecord,
   FinancialMovementNotFound,
   FinancialRecordSource,
@@ -12,11 +12,15 @@ import {
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
-import {
+import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { GenericException, IQueueService, QueueName } from "@/Shared/domain"
+import {
+  GenericException,
+  type IQueueService,
+  QueueName,
+} from "@/Shared/domain"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,
@@ -97,7 +101,7 @@ export class CancelFinancialRecord {
         throw e
       }
 
-      this.logger.error(`Error reversing financial record:`, e)
+      this.logger.error(`Error reversing financial record:`, e as any)
       await this.unitOfWork.rollback()
       throw e
     }
@@ -117,10 +121,11 @@ export class CancelFinancialRecord {
 
     this.unitOfWork.execPostCommit(() => {
       new DispatchUpdateCostCenterMaster(this.queueService).execute({
-        costCenterId: financialRecord.getCostCenterId(),
+        costCenterId: financialRecord.getCostCenterId()!,
         amount: financialRecord.getAmount(),
         churchId: financialRecord.getChurchId(),
         operation: "subtract",
+        availabilityAccount: financialRecord.getAvailabilityAccount(),
       })
     })
 
@@ -129,7 +134,7 @@ export class CancelFinancialRecord {
     ) {
       this.unitOfWork.execPostCommit(() => {
         this.queueService.dispatch(QueueName.DeletePurchasesJob, {
-          purchaseIds: [financialRecord.getReference().entityId],
+          purchaseIds: [financialRecord.getReference()!.entityId],
         })
       })
     }
@@ -153,16 +158,19 @@ export class CancelFinancialRecord {
   }) {
     const { financialRecord, createdBy, availabilityOperation } = params
 
-    const availabilityAccount = await this.availabilityAccountRepository.one({
+    const availabilityAccount = (await this.availabilityAccountRepository.one({
       availabilityAccountId: financialRecord.getAvailabilityAccountId(),
-    })
+    }))!
+
+    const cancellationDate = DateBR()
+    cancellationDate.setUTCHours(0, 0, 0, 0)
 
     await this.financeRecordReversal({
       availabilityAccount,
       financeRecordReversal: {
         churchId: financialRecord.getChurchId(),
         amount: financialRecord.getAmount(),
-        date: new Date(DateBR().toISOString().split("T")[0]),
+        date: cancellationDate,
         availabilityAccount,
         description:
           "Reversão do movimento " + financialRecord.getFinancialRecordId(),
@@ -210,7 +218,7 @@ export class CancelFinancialRecord {
       new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
         availabilityAccount: availabilityAccount,
         amount: Math.abs(financeRecordReversal.amount),
-        concept: financeRecordReversal.description,
+        concept: financeRecordReversal.description!,
         operationType: operation,
         createdAt: financeRecordReversal.date,
       })

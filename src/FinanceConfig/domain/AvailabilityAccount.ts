@@ -38,7 +38,7 @@ export class AvailabilityAccount extends AggregateRoot {
     return account
   }
 
-  static fromPrimitives(plainData: any): AvailabilityAccount {
+  static override fromPrimitives(plainData: any): AvailabilityAccount {
     const account: AvailabilityAccount = new AvailabilityAccount()
     account.churchId = plainData.churchId
     account.availabilityAccountId = plainData.availabilityAccountId
@@ -55,8 +55,8 @@ export class AvailabilityAccount extends AggregateRoot {
     return account
   }
 
-  getId(): string {
-    return this.id
+  override getId(): string {
+    return this.id!
   }
 
   getSource() {

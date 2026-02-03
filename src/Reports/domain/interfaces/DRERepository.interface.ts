@@ -1,5 +1,4 @@
 import { DREMaster } from "@/Reports/domain/DREMaster"
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
 
-export interface IDRERepository {
-  upsert(dre: DREMaster): Promise<void>
-}
+export interface IDRERepository extends IRepository<DREMaster> {}

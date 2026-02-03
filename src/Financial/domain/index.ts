@@ -41,7 +41,6 @@ export type {
   FinanceRecordReportFormat,
 } from "./requests/FinanceRecordReport.request"
 export type { AvailabilityAccountRequest } from "../../FinanceConfig/domain/requests/AvailabilityAccount.request"
-export type { UpdateAvailabilityAccountBalanceRequest } from "./requests/UpdateAvailabilityAccountBalance.request"
 export type { FinancialConceptRequest } from "../../FinanceConfig/domain/requests/FinancialConcept.request"
 
 export type { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"

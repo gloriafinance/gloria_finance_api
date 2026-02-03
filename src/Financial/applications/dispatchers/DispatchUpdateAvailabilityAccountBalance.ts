@@ -1,10 +1,11 @@
 import { Logger } from "@/Shared/adapter"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/Shared/domain"
 import {
   AccountType,
   AvailabilityAccount,
   TypeOperationMoney,
 } from "../../domain"
+import type { UpdateAvailabilityAccountBalanceRequest } from "@/Financial/applications"
 
 enum BankingOperationType {
   DEPOSIT = "DEPOSIT",
@@ -29,11 +30,17 @@ export class DispatchUpdateAvailabilityAccountBalance {
     const { createdAt, concept, operationType, availabilityAccount, amount } =
       params
 
-    this.queueService.dispatch(QueueName.UpdateAvailabilityAccountBalanceJob, {
-      availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
-      amount: amount,
-      operationType: operationType,
-    })
+    this.queueService.dispatch<UpdateAvailabilityAccountBalanceRequest>(
+      QueueName.UpdateAvailabilityAccountBalanceJob,
+      {
+        availabilityAccount: {
+          ...availabilityAccount.toPrimitives(),
+          id: availabilityAccount.getId(),
+        },
+        amount: amount,
+        operationType: operationType,
+      }
+    )
 
     if (availabilityAccount.getType() === AccountType.BANK) {
       this.queueService.dispatch(QueueName.MovementBankRecordJob, {
@@ -44,7 +51,7 @@ export class DispatchUpdateAvailabilityAccountBalance {
             : BankingOperationType.DEPOSIT,
         concept: concept,
         bankId: availabilityAccount.getSource().bankId,
-        createdAt: new Date(createdAt),
+        createdAt: createdAt === undefined ? new Date() : new Date(createdAt),
       })
     }
 

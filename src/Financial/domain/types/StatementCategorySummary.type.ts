@@ -5,4 +5,5 @@ export type StatementCategorySummary = {
   income: number
   expenses: number
   reversal: number
+  symbol?: string
 }
