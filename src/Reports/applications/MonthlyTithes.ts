@@ -1,5 +1,5 @@
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import { IChurchRepository } from "@/Church/domain"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
 import { Logger } from "@/Shared/adapter"
@@ -20,7 +20,7 @@ export class MonthlyTithes {
       params.churchId
     )
 
-    const startDate = new Date(Date.UTC(params.year, params.month - 1, 1))
+    const startDate = new Date(Date.UTC(params.year, params.month! - 1, 1))
     const endDate = new Date(Date.UTC(params.year, params.month, 1))
 
     const filters = {
@@ -35,6 +35,30 @@ export class MonthlyTithes {
       type: ConceptType.INCOME,
     }
 
-    return await this.financialRecordRepository.titheList(filters)
+    const result = await this.financialRecordRepository.titheList(filters)
+
+    const symbolTotalsMap = new Map<string, { total: number }>()
+
+    for (const r of result.records) {
+      const symbol = r.symbol ?? "R$"
+
+      const total = symbolTotalsMap.get(symbol) ?? {
+        total: 0,
+      }
+
+      total.total += r.amount
+
+      symbolTotalsMap.set(symbol, total)
+    }
+
+    return {
+      ...result,
+      totals: Array.from(symbolTotalsMap.entries()).map(([symbol, total]) => {
+        return {
+          symbol,
+          ...total,
+        }
+      }),
+    }
   }
 }

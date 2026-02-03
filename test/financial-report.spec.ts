@@ -302,7 +302,10 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
     const symbolCategoryTotals = new Map<
       string,
-      Map<StatementCategory, { income: number; expenses: number; reversal: number }>
+      Map<
+        StatementCategory,
+        { income: number; expenses: number; reversal: number }
+      >
     >()
 
     for (const record of this.records) {
@@ -320,11 +323,13 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
       const category = specialTithe
         ? StatementCategory.MINISTRY_TRANSFERS
-        : record.financialConcept?.statementCategory ?? StatementCategory.OTHER
+        : (record.financialConcept?.statementCategory ??
+          StatementCategory.OTHER)
 
-      const symbol = record.availabilityAccount?.symbol ?? "UNSPECIFIED"
+      const symbol = record.availabilityAccount?.symbol ?? "R$"
       const categoryTotals =
-        symbolCategoryTotals.get(symbol) ?? new Map<
+        symbolCategoryTotals.get(symbol) ??
+        new Map<
           StatementCategory,
           { income: number; expenses: number; reversal: number }
         >()
@@ -839,10 +844,7 @@ describe("Financial reporting consistency", () => {
     const primarySummary = response.summary[0]?.summary
     assert.ok(primarySummary, "Expected at least one symbol summary")
 
-    assert.strictEqual(
-      primarySummary.revenue,
-      incomeStatementExpected.revenue
-    )
+    assert.strictEqual(primarySummary.revenue, incomeStatementExpected.revenue)
     assert.strictEqual(
       primarySummary.operatingExpenses,
       incomeStatementExpected.operatingExpenses

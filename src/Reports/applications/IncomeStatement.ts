@@ -43,8 +43,7 @@ export class IncomeStatement {
 
     for (const availableAccount of availableAccounts) {
       const symbol =
-        availableAccount.toPrimitives().availabilityAccount?.symbol ??
-        "UNSPECIFIED"
+        availableAccount.toPrimitives().availabilityAccount?.symbol ?? "R$"
       const current = availabilitySymbolTotals.get(symbol) ?? {
         total: 0,
         income: 0,
@@ -63,7 +62,7 @@ export class IncomeStatement {
     this.logger.info(`Calculating the total liabilities`)
     const costCenterSymbolTotals = new Map<string, number>()
     for (const costCenter of costCenters) {
-      const symbol = costCenter.toPrimitives().symbol ?? "UNSPECIFIED"
+      const symbol = costCenter.toPrimitives().symbol ?? "R$"
       const current = costCenterSymbolTotals.get(symbol) ?? 0
       costCenterSymbolTotals.set(symbol, current + costCenter.getTotal())
     }
@@ -97,7 +96,7 @@ export class IncomeStatement {
       const summaryExpenses = summary.expenses ?? 0
       const summaryReversal = summary.reversal ?? 0
 
-      const symbol = summary.symbol ?? "UNSPECIFIED"
+      const symbol = summary.symbol ?? "R$"
       const symbolBreakdown = symbolCategoryBreakdowns.get(symbol) ?? new Map()
       const symbolCategory = symbolBreakdown.get(summary.category) ?? {
         category: summary.category,

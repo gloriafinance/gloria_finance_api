@@ -86,7 +86,10 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
 
     const symbolCategoryTotals = new Map<
       string,
-      Map<StatementCategory, { income: number; expenses: number; reversal: number }>
+      Map<
+        StatementCategory,
+        { income: number; expenses: number; reversal: number }
+      >
     >()
 
     for (const record of this.records) {
@@ -101,9 +104,10 @@ class FakeFinancialRecordRepository implements IFinancialRecordRepository {
       const category =
         record.financialConcept?.statementCategory ?? StatementCategory.OTHER
 
-      const symbol = record.availabilityAccount?.symbol ?? "UNSPECIFIED"
+      const symbol = record.availabilityAccount?.symbol ?? "R$"
       const categoryTotals =
-        symbolCategoryTotals.get(symbol) ?? new Map<
+        symbolCategoryTotals.get(symbol) ??
+        new Map<
           StatementCategory,
           { income: number; expenses: number; reversal: number }
         >()

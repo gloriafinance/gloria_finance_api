@@ -25,7 +25,7 @@ module.exports = {
           amount: { $abs: "$amount" },
           date: 1,
           symbol: {
-            $ifNull: ["$availabilityAccount.symbol", "UNSPECIFIED"],
+            $ifNull: ["$availabilityAccount.symbol", "R$"],
           },
         },
       },
