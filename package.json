@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bun --watch src/app.ts",
     "test": "bunx jest --forceExit --runInBand --detectOpenHandles",
-    "start:prod": "bun dist/app.js",
+    "start:prod": "bun src/app.ts",
+    "migrate": "set -a && . ./.env && set +a && ts-mongo migrate:up",
     "format": "prettier --write \"src/**/*.{ts,hbs}\" ",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "copy-static-assets": "bun src/copyStaticAssets.ts"

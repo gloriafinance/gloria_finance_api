@@ -44,9 +44,15 @@ export class FinanceRecordMongoRepository
     await collection.deleteOne({ financialRecordId })
   }
 
-  async titheList(
-    filter: object
-  ): Promise<{ total: number; tithesOfTithes: number; records: any[] }> {
+  async titheList(filter: object): Promise<{
+    records: {
+      amount: number
+      date: Date
+      availabilityAccountName: string
+      availabilityAccountType: string
+      symbol: string
+    }[]
+  }> {
     this.dbCollectionName = "financial_records"
 
     const filters = {
@@ -63,14 +69,14 @@ export class FinanceRecordMongoRepository
         },
         {
           $group: {
-            _id: null, // No queremos agrupar por un campo específico
-            total: { $sum: "$amount" }, // Sumamos el campo "amount"
+            _id: null,
             records: {
               $push: {
                 amount: "$amount",
                 date: "$date",
                 availabilityAccountName: "$availabilityAccount.accountName",
                 availabilityAccountType: "$availabilityAccount.accountType",
+                symbol: "$availabilityAccount.symbol",
               },
             },
           },
@@ -79,13 +85,11 @@ export class FinanceRecordMongoRepository
       .toArray()
 
     if (result.length === 0) {
-      return { total: 0, tithesOfTithes: 0, records: [] }
+      return { records: [] }
     }
 
     return {
-      total: result[0]!.total,
       records: result[0]!.records,
-      tithesOfTithes: ((result[0]!.total ?? 0) * 10) / 100,
     }
   }
 
@@ -123,7 +127,6 @@ export class FinanceRecordMongoRepository
         { "financialConcept.affectsBalance": true }, // incluye CAPEX
       ],
     }
-    console.log(matchFilter)
 
     const result = await collection
       .aggregate([
