@@ -144,34 +144,38 @@
     <section>
       <h2>Painel Resumido</h2>
       <div class="summary-grid">
-        <div class="summary-card">
-          <span class="label">Receita Líquida</span>
-          <span class="value {{#if (isNegative summary.revenue)}}negative{{/if}}">
-            {{formatCurrency summary.revenue}}
-          </span>
-          <span class="caption">Entradas provenientes das atividades regulares.</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Despesas Operacionais</span>
-          <span class="value {{#if (isNegative summary.operatingExpenses)}}negative{{/if}}">
-            {{formatCurrency summary.operatingExpenses}}
-          </span>
-          <span class="caption">Custos necessários para manter a igreja ativa.</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Resultado Operacional</span>
-          <span class="value {{#if (isNegative summary.operatingIncome)}}negative{{/if}}">
-            {{formatCurrency summary.operatingIncome}}
-          </span>
-          <span class="caption">Receitas menos despesas operacionais.</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Resultado Líquido</span>
-          <span class="value {{#if (isNegative summary.netIncome)}}negative{{/if}}">
-            {{formatCurrency summary.netIncome}}
-          </span>
-          <span class="caption">Saldo final após itens extraordinários.</span>
-        </div>
+        {{#with (lookup summary 0)}}
+          {{#if summary}}
+            <div class="summary-card">
+              <span class="label">Receita Líquida ({{symbol}})</span>
+              <span class="value {{#if (isNegative summary.revenue)}}negative{{/if}}">
+                {{formatCurrency summary.revenue}}
+              </span>
+              <span class="caption">Entradas provenientes das atividades regulares.</span>
+            </div>
+            <div class="summary-card">
+              <span class="label">Despesas Operacionais ({{symbol}})</span>
+              <span class="value {{#if (isNegative summary.operatingExpenses)}}negative{{/if}}">
+                {{formatCurrency summary.operatingExpenses}}
+              </span>
+              <span class="caption">Custos necessários para manter a igreja ativa.</span>
+            </div>
+            <div class="summary-card">
+              <span class="label">Resultado Operacional ({{symbol}})</span>
+              <span class="value {{#if (isNegative summary.operatingIncome)}}negative{{/if}}">
+                {{formatCurrency summary.operatingIncome}}
+              </span>
+              <span class="caption">Receitas menos despesas operacionais.</span>
+            </div>
+            <div class="summary-card">
+              <span class="label">Resultado Líquido ({{symbol}})</span>
+              <span class="value {{#if (isNegative summary.netIncome)}}negative{{/if}}">
+                {{formatCurrency summary.netIncome}}
+              </span>
+              <span class="caption">Saldo final após itens extraordinários.</span>
+            </div>
+          {{/if}}
+        {{/with}}
       </div>
     </section>
   {{/if}}
@@ -189,20 +193,22 @@
           </tr>
         </thead>
         <tbody>
-          {{#each breakdown}}
-            <tr>
-              <td>{{translateCategory category}}</td>
-              <td class="number-cell {{#if (isNegative income)}}negative{{/if}}">
-                {{formatCurrency income}}
-              </td>
-              <td class="number-cell {{#if (isNegative expenses)}}negative{{/if}}">
-                {{formatCurrency expenses}}
-              </td>
-              <td class="number-cell {{#if (isNegative net)}}negative{{/if}}">
-                {{formatCurrency net}}
-              </td>
-            </tr>
-          {{/each}}
+          {{#with (lookup breakdown 0)}}
+            {{#each breakdown}}
+              <tr>
+                <td>{{translateCategory category}}</td>
+                <td class="number-cell {{#if (isNegative income)}}negative{{/if}}">
+                  {{formatCurrency income}}
+                </td>
+                <td class="number-cell {{#if (isNegative expenses)}}negative{{/if}}">
+                  {{formatCurrency expenses}}
+                </td>
+                <td class="number-cell {{#if (isNegative net)}}negative{{/if}}">
+                  {{formatCurrency net}}
+                </td>
+              </tr>
+            {{/each}}
+          {{/with}}
         </tbody>
       </table>
     </section>

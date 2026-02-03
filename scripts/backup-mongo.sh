@@ -6,22 +6,30 @@ set -e
 # Incluye: datos + índices (todos, incluso parciales)
 # ================================
 
-# Cargar variables desde .env
-if [ -f .env ]; then
-  set -a  # activa export automático
-  source .env
+# Cargar variables desde .env (sin depender del cwd actual)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+ENV_FILE="${SCRIPT_DIR}/../.env"
+
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
   set +a
 else
-  echo "❌ Error: Archivo .env no encontrado"
+  echo "❌ Error: Archivo .env no encontrado en ${ENV_FILE}"
   exit 1
 fi
 
-# Validar variables obligatorias
-if [ -z "$MONGO_USER" ] || [ -z "$MONGO_PASS" ] || [ -z "$MONGO_DB" ] || [ -z "$MONGO_SERVER" ]; then
-  echo "❌ Error: Variables de MongoDB no configuradas en .env"
-  echo "Requeridas: MONGO_USER, MONGO_PASS, MONGO_DB, MONGO_SERVER"
+MONGO_URI="${MONGO_URI:-$(grep -E '^MONGO_URI=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2-)}"
+MONGO_DB="${MONGO_DB:-$(grep -E '^MONGO_DB=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2-)}"
+
+if [ -z "$MONGO_URI" ] || [ -z "$MONGO_DB" ]; then
+  echo "❌ Error: MONGO_URI o MONGO_DB no están definidos en ${ENV_FILE}"
   exit 1
 fi
+
+echo "Usando URI: $MONGO_URI"
+
 
 # Directorio de backup con timestamp
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -30,10 +38,8 @@ INDEX_DIR="${BACKUP_DIR}/indexes"
 
 mkdir -p "$INDEX_DIR"
 
-# URI de conexión
-MONGO_URI="mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_SERVER}/${MONGO_DB}?retryWrites=true&w=majority"
 
-echo "🧩 Iniciando backup para la base de datos: $MONGO_DB"
+echo "🧩 Iniciando backup para la base de datos: $MONGO_DB FILE ENV: $ENV_FILE"
 echo "📁 Directorio destino: $BACKUP_DIR"
 echo "---------------------------------------------"
 

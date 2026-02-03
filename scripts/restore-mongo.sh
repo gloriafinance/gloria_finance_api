@@ -3,6 +3,28 @@
 # restore-mongo.sh
 # Restaura datos y vuelve a crear índices exportados por el script de backup.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+ENV_FILE="${SCRIPT_DIR}/../.env"
+
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+  set +a
+else
+  echo "❌ Error: Archivo .env no encontrado en ${ENV_FILE}"
+  exit 1
+fi
+
+MONGO_URI="${MONGO_URI:-$(grep -E '^MONGO_URI=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2-)}"
+MONGO_DB="${MONGO_DB:-$(grep -E '^MONGO_DB=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2-)}"
+
+# Verificar que tengamos URI/DB
+if [ -z "$MONGO_URI" ] || [ -z "$MONGO_DB" ]; then
+  echo "❌ Error: MONGO_URI o MONGO_DB no están definidos en ${ENV_FILE}"
+  exit 1
+fi
+
 # Verificar que se pasó el argumento
 if [ -z "$1" ]; then
   echo "Error: Debes proporcionar el nombre del directorio de backup"
@@ -12,9 +34,8 @@ if [ -z "$1" ]; then
 fi
 
 BACKUP_NAME="$1"
-RESTORE_MODE="${2:-local}"  # Por defecto usa local
+RESTORE_MODE="${2:-remote}"  # Por defecto usa remote
 BACKUP_DIR="./backups/${BACKUP_NAME}"
-DATA_DIR="$BACKUP_DIR/${MONGO_DB:-church_db}"
 INDEX_DIR="$BACKUP_DIR/indexes"
 
 if [ ! -d "$BACKUP_DIR" ]; then
@@ -83,24 +104,11 @@ EOF
 }
 
 if [ "$RESTORE_MODE" == "remote" ]; then
-  # Cargar variables desde .env
-  if [ -f .env ]; then
-    set -a  # activa export automático
-    source .env
-    set +a
-  else
-    echo "❌ Error: Archivo .env no encontrado"
+  if [ -z "$MONGO_DB" ] || [ -z "$MONGO_URI" ]; then
+    echo "Error: MONGO_DB y MONGO_URI deben estar definidos en ${ENV_FILE}"
     exit 1
   fi
 
-  # Verificar que las variables existan
-  if [ -z "$MONGO_USER" ] || [ -z "$MONGO_PASS" ] || [ -z "$MONGO_DB" ] || [ -z "$MONGO_SERVER" ]; then
-    echo "Error: Variables de MongoDB no configuradas en .env"
-    echo "Requeridas: MONGO_USER, MONGO_PASS, MONGO_DB, MONGO_SERVER"
-    exit 1
-  fi
-
-  # Ajustar DATA_DIR con el nombre real de la base de datos
   DATA_DIR="$BACKUP_DIR/$MONGO_DB"
 
   if [ ! -d "$DATA_DIR" ]; then
@@ -108,10 +116,7 @@ if [ "$RESTORE_MODE" == "remote" ]; then
     exit 1
   fi
 
-  # URI de conexión remota
-  MONGO_URI="mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_SERVER}/${MONGO_DB}?retryWrites=true&w=majority"
-
-  echo "Iniciando restauración remota a: ${MONGO_SERVER}"
+  echo "Iniciando restauración remota a: ${MONGO_URI}"
   echo "Base de datos: ${MONGO_DB}"
 
   # Restaurar datos
@@ -205,4 +210,3 @@ indexes.forEach(idx => {
 fi
 
 echo "Restauración completada exitosamente"
-

@@ -1,12 +1,25 @@
-import {
+import type {
   ICostCenterMasterRepository,
   IFinancialConfigurationRepository,
 } from "../../domain/interfaces"
 
 import { CostCenter, CostCenterMaster } from "../../domain"
 import MasterBalanceIdentifier from "../helpers/MasterBalanceIdentifier"
-import { IJob } from "@/Shared/domain"
+import type { IJob } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
+
+export type UpdateCostCenterMasterJobRequest = {
+  churchId: string
+  costCenterId: string
+  amount: number
+  operation?: "add" | "subtract"
+  availabilityAccount: {
+    availabilityAccountId: string
+    accountName: string
+    accountType: string
+    symbol: string
+  }
+}
 
 export class UpdateCostCenterMasterJob implements IJob {
   private logger = Logger("UpdateCostCenterMaster")
@@ -16,13 +29,9 @@ export class UpdateCostCenterMasterJob implements IJob {
     private readonly costCenterMasterRepository: ICostCenterMasterRepository
   ) {}
 
-  async handle(args: {
-    churchId: string
-    costCenterId: string
-    amount: number
-    operation?: "add" | "subtract"
-  }) {
-    const { churchId, costCenterId, amount, operation } = args
+  async handle(args: UpdateCostCenterMasterJobRequest) {
+    const { churchId, costCenterId, amount, operation, availabilityAccount } =
+      args
 
     this.logger.info(`UpdateCostCenterMaster`, {
       jobName: UpdateCostCenterMasterJob.name,
@@ -31,19 +40,22 @@ export class UpdateCostCenterMasterJob implements IJob {
       amount,
     })
 
-    const identify = MasterBalanceIdentifier(costCenterId)
+    const identify = `${MasterBalanceIdentifier(costCenterId)}-${availabilityAccount.symbol}`
 
     const costCenter: CostCenter =
-      await this.financialConfigurationRepository.findCostCenterByCostCenterId(
+      (await this.financialConfigurationRepository.findCostCenterByCostCenterId(
         costCenterId,
         churchId
-      )
+      ))!
 
     let costCenterMaster =
       await this.costCenterMasterRepository.findById(identify)
 
     if (!costCenterMaster) {
-      costCenterMaster = CostCenterMaster.create(costCenter)
+      costCenterMaster = CostCenterMaster.create(
+        costCenter,
+        availabilityAccount.symbol
+      )
     }
 
     costCenterMaster.updateMaster(amount, operation)

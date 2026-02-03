@@ -1,6 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import IdentifyAvailabilityAccountMaster from "../applications/helpers/MasterBalanceIdentifier"
-import { AvailabilityAccount } from "../../FinanceConfig/domain/AvailabilityAccount"
+import { AvailabilityAccount } from "@/FinanceConfig/domain"
 import { DateBR } from "@/Shared/helpers"
 
 export class AvailabilityAccountMaster extends AggregateRoot {
@@ -42,7 +42,7 @@ export class AvailabilityAccountMaster extends AggregateRoot {
     return availabilityAccountMaster
   }
 
-  static fromPrimitives(plainData: any) {
+  static override fromPrimitives(plainData: any) {
     const availabilityAccountMaster = new AvailabilityAccountMaster()
 
     availabilityAccountMaster.id = plainData.id
@@ -60,7 +60,7 @@ export class AvailabilityAccountMaster extends AggregateRoot {
   }
 
   getId(): string {
-    return this.id
+    return this.id!
   }
 
   getAvailabilityAccountMasterId(): string {

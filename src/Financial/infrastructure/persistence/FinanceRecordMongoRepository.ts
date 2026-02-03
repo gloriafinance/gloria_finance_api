@@ -123,6 +123,7 @@ export class FinanceRecordMongoRepository
         { "financialConcept.affectsBalance": true }, // incluye CAPEX
       ],
     }
+    console.log(matchFilter)
 
     const result = await collection
       .aggregate([
@@ -134,11 +135,15 @@ export class FinanceRecordMongoRepository
             category: "$financialConcept.statementCategory",
             type: "$type",
             amount: { $abs: "$amount" },
+            symbol: "$availabilityAccount.symbol",
           },
         },
         {
           $group: {
-            _id: "$category",
+            _id: {
+              category: "$category",
+              symbol: "$symbol",
+            },
             income: {
               $sum: {
                 $cond: [{ $eq: ["$type", ConceptType.INCOME] }, "$amount", 0],
@@ -165,7 +170,8 @@ export class FinanceRecordMongoRepository
         {
           $project: {
             _id: 0,
-            category: "$_id",
+            category: "$_id.category",
+            symbol: "$_id.symbol",
             income: 1,
             expenses: 1,
             reversal: 1,
@@ -179,6 +185,7 @@ export class FinanceRecordMongoRepository
       income: item.income ?? 0,
       expenses: item.expenses ?? 0,
       reversal: item.reversal ?? 0,
+      symbol: item.symbol ?? undefined,
     }))
   }
 

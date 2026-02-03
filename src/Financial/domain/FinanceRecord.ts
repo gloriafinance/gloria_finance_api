@@ -1,8 +1,7 @@
-import { FinancialConcept } from "../../FinanceConfig/domain/FinancialConcept"
+import { AccountType, FinancialConcept } from "@/FinanceConfig/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
-import { AccountType } from "../../FinanceConfig/domain/enums/AccountType.enum"
-import { CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
+import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 import {
   FinancialRecordSource,
   FinancialRecordStatus,
@@ -22,7 +21,7 @@ export class FinanceRecord extends AggregateRoot {
   private amount: number
   private date: Date
   private type: FinancialRecordType
-  private availabilityAccount?: {
+  private availabilityAccount: {
     availabilityAccountId: string
     accountName: string
     accountType: AccountType
@@ -65,7 +64,7 @@ export class FinanceRecord extends AggregateRoot {
       financialRecord.financialConcept =
         FinancialConcept.fromPrimitives(financialConcept)
     } else {
-      financialRecord.financialConcept = financialConcept
+      financialRecord.financialConcept = financialConcept!
     }
 
     financialRecord.churchId = churchId
@@ -78,22 +77,22 @@ export class FinanceRecord extends AggregateRoot {
     financialRecord.date = date
     financialRecord.type = type
 
-    if (availabilityAccount) {
-      financialRecord.availabilityAccount = {
-        availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
-        accountName: availabilityAccount.getAccountName(),
-        accountType: availabilityAccount.getType(),
-        symbol: availabilityAccount.getSymbol(),
-      }
-
-      financialRecord.setStatus(
-        availabilityAccount.getType() === AccountType.CASH
-          ? FinancialRecordStatus.RECONCILED
-          : status
-      )
-    } else {
-      financialRecord.setStatus(status)
+    if (!availabilityAccount) {
+      throw new Error("FinanceRecord requires an availability account")
     }
+
+    financialRecord.availabilityAccount = {
+      availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
+      accountName: availabilityAccount.getAccountName(),
+      accountType: availabilityAccount.getType(),
+      symbol: availabilityAccount.getSymbol(),
+    }
+
+    financialRecord.setStatus(
+      availabilityAccount.getType() === AccountType.CASH
+        ? FinancialRecordStatus.RECONCILED
+        : status
+    )
 
     financialRecord.voucher = voucher
     financialRecord.description = description
@@ -115,7 +114,7 @@ export class FinanceRecord extends AggregateRoot {
     return financialRecord
   }
 
-  static fromPrimitives(plainData: any): FinanceRecord {
+  static override fromPrimitives(plainData: any): FinanceRecord {
     const financialRecord: FinanceRecord = new FinanceRecord()
     financialRecord.id = plainData?.id
     financialRecord.financialRecordId = plainData.financialRecordId
@@ -126,6 +125,12 @@ export class FinanceRecord extends AggregateRoot {
     financialRecord.amount = plainData.amount
     financialRecord.date = StringToDate(plainData.date)
     financialRecord.type = plainData.type
+
+    //TODO: luego remover esta validación, es momentanea para saber si tenemos algun dato legacy sin availabilityAccount
+    if (!plainData.availabilityAccount) {
+      throw new Error("Stored FinanceRecord does not have availabilityAccount")
+    }
+
     financialRecord.availabilityAccount = plainData.availabilityAccount
     financialRecord.voucher = plainData?.voucher
     financialRecord.description = plainData.description
@@ -153,7 +158,7 @@ export class FinanceRecord extends AggregateRoot {
   }
 
   getId(): string {
-    return this.id
+    return this.id!
   }
 
   getFinancialRecordId(): string {
@@ -177,19 +182,15 @@ export class FinanceRecord extends AggregateRoot {
   }
 
   getAvailabilityAccountId(): string {
-    if (!this.availabilityAccount) {
-      throw new Error("Availability account not defined")
-    }
     return this.availabilityAccount.availabilityAccountId
   }
 
-  getAvailabilityAccount():
-    | {
-        availabilityAccountId: string
-        accountName: string
-        accountType: AccountType
-      }
-    | undefined {
+  getAvailabilityAccount(): {
+    availabilityAccountId: string
+    accountName: string
+    accountType: AccountType
+    symbol: string
+  } {
     return this.availabilityAccount
   }
 

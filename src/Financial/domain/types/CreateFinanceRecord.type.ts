@@ -16,7 +16,7 @@ export type CreateFinanceRecord = {
   createdBy: string
   status: FinancialRecordStatus
   source: FinancialRecordSource
-  availabilityAccount?: AvailabilityAccount
+  availabilityAccount: AvailabilityAccount
   description?: string
   voucher?: string
   costCenter?: CostCenter

@@ -1,11 +1,11 @@
-import { CostCenter } from "../../FinanceConfig/domain/CostCenter"
+import { CostCenter } from "@/FinanceConfig/domain"
 import { DateBR } from "@/Shared/helpers"
 import MasterBalanceIdentifier from "../applications/helpers/MasterBalanceIdentifier"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class CostCenterMaster extends AggregateRoot {
   private id?: string
-  private costCenterMasterId: string
+  private costCenterMasterId: string | undefined
   private costCenter: {
     costCenterId: string
     costCenterName: string
@@ -15,13 +15,15 @@ export class CostCenterMaster extends AggregateRoot {
   private year: number
   private total: number
   private lastMove: Date
+  private symbol: string
 
-  static create(costCenter: CostCenter): CostCenterMaster {
+  static create(costCenter: CostCenter, symbol: string): CostCenterMaster {
     const costCenterMaster = new CostCenterMaster()
 
-    costCenterMaster.costCenterMasterId = MasterBalanceIdentifier(
+    costCenterMaster.costCenterMasterId = `${MasterBalanceIdentifier(
       costCenter.getCostCenterId()
-    )
+    )}-${symbol}`
+
     costCenterMaster.month = new Date().getMonth() + 1
     costCenterMaster.year = new Date().getFullYear()
     costCenterMaster.total = 0
@@ -30,11 +32,12 @@ export class CostCenterMaster extends AggregateRoot {
       costCenterName: costCenter.getCostCenterName(),
     }
     costCenterMaster.churchId = costCenter.getChurchId()
+    costCenterMaster.symbol = symbol
 
     return costCenterMaster
   }
 
-  static fromPrimitives(plainData: any) {
+  static override fromPrimitives(plainData: any) {
     const costCenterMaster = new CostCenterMaster()
 
     costCenterMaster.id = plainData.id
@@ -44,6 +47,7 @@ export class CostCenterMaster extends AggregateRoot {
     costCenterMaster.costCenter = plainData.costCenter
     costCenterMaster.churchId = plainData.churchId
     costCenterMaster.lastMove = plainData.lastMove
+    costCenterMaster.symbol = plainData.symbol ?? "R$"
 
     return costCenterMaster
   }
@@ -59,7 +63,7 @@ export class CostCenterMaster extends AggregateRoot {
   }
 
   getId(): string {
-    return this.id
+    return this.id!
   }
 
   getTotal(): number {
@@ -75,6 +79,7 @@ export class CostCenterMaster extends AggregateRoot {
       year: this.year,
       total: this.total,
       lastMove: this.lastMove,
+      symbol: this.symbol,
     }
   }
 }

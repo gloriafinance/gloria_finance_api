@@ -1,24 +1,24 @@
 import { Logger } from "@/Shared/adapter"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/Shared/domain"
+import type { UpdateCostCenterMasterJobRequest } from "@/Financial/applications"
 
 export class DispatchUpdateCostCenterMaster {
   private logger = Logger(DispatchUpdateCostCenterMaster.name)
 
   constructor(private readonly queueService: IQueueService) {}
 
-  execute(args: {
-    churchId: string
-    costCenterId: string
-    amount: number
-    operation?: "add" | "subtract"
-  }) {
+  execute(args: UpdateCostCenterMasterJobRequest) {
     this.logger.info(`DispatchUpdateCostCenterMaster`, args)
 
-    this.queueService.dispatch(QueueName.UpdateCostCenterMasterJob, {
-      churchId: args.churchId,
-      amount: args.amount,
-      costCenterId: args.costCenterId,
-      operation: args.operation,
-    })
+    this.queueService.dispatch<UpdateCostCenterMasterJobRequest>(
+      QueueName.UpdateCostCenterMasterJob,
+      {
+        churchId: args.churchId,
+        amount: args.amount,
+        costCenterId: args.costCenterId,
+        operation: args.operation,
+        availabilityAccount: args.availabilityAccount,
+      }
+    )
   }
 }

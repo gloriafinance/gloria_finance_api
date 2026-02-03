@@ -1,4 +1,4 @@
-import { IAvailabilityAccountMasterRepository } from "../../domain/interfaces"
+import type { IAvailabilityAccountMasterRepository } from "../../domain/interfaces"
 import {
   AvailabilityAccountMaster,
   ConceptType,
@@ -47,7 +47,9 @@ export class AvailabilityAccountMasterMongoRepository
       : undefined
   }
 
-  async upsert(accountMaster: AvailabilityAccountMaster): Promise<void> {
+  override async upsert(
+    accountMaster: AvailabilityAccountMaster
+  ): Promise<void> {
     const collection = await this.collection()
 
     await collection.updateOne(
@@ -271,11 +273,29 @@ export class AvailabilityAccountMasterMongoRepository
         },
       ])
       .toArray()
-
+    console.log(result)
     return result.map((r) => AvailabilityAccountMaster.fromPrimitives(r))
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createSearchIndex({
+      name: "availabilityAccountMasterIndex",
+      definition: {
+        mappings: {
+          dynamic: false,
+          fields: {
+            churchId: {
+              type: "string",
+            },
+            month: {
+              type: "number",
+            },
+            year: {
+              type: "number",
+            },
+          },
+        },
+      },
+    })
   }
 }

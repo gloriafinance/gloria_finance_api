@@ -1,16 +1,16 @@
-import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import {
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { IJob, IQueueService } from "@/Shared/domain"
+import type { IJob, IQueueService } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import {
   ConceptType,
   FinanceRecord,
   FinancialRecordStatus,
   TypeOperationMoney,
-  UpdateStatusFinancialRecordQueue,
+  type UpdateStatusFinancialRecordQueue,
 } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
@@ -77,27 +77,21 @@ export class UpdateFinancialRecordJob implements IJob {
 
     const availabilityAccountSnapshot = financialRecord.getAvailabilityAccount()
 
-    if (availabilityAccountSnapshot) {
-      const availabilityAccount = await this.availabilityAccountRepository.one({
-        availabilityAccountId:
-          availabilityAccountSnapshot.availabilityAccountId,
-      })
+    const availabilityAccount = await this.availabilityAccountRepository.one({
+      availabilityAccountId: availabilityAccountSnapshot.availabilityAccountId,
+    })
 
-      if (availabilityAccount) {
-        new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute(
-          {
-            availabilityAccount,
-            amount: Math.abs(financialRecord.getAmount()),
-            concept: financialRecord.getFinancialConcept().getName(),
-            operationType:
-              financialRecord.getFinancialConcept().getType() ===
-              ConceptType.INCOME
-                ? TypeOperationMoney.MONEY_IN
-                : TypeOperationMoney.MONEY_OUT,
-            createdAt: financialRecord.getDate(),
-          }
-        )
-      }
+    if (availabilityAccount) {
+      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+        availabilityAccount,
+        amount: Math.abs(financialRecord.getAmount()),
+        concept: financialRecord.getFinancialConcept().getName(),
+        operationType:
+          financialRecord.getFinancialConcept().getType() === ConceptType.INCOME
+            ? TypeOperationMoney.MONEY_IN
+            : TypeOperationMoney.MONEY_OUT,
+        createdAt: financialRecord.getDate(),
+      })
     }
 
     const costCenter = financialRecord.getCostCenter()
@@ -107,6 +101,7 @@ export class UpdateFinancialRecordJob implements IJob {
         churchId: financialRecord.getChurchId(),
         amount: Math.abs(financialRecord.getAmount()),
         costCenterId: costCenter.costCenterId,
+        availabilityAccount: availabilityAccountSnapshot,
       })
     }
   }

@@ -6,7 +6,12 @@ import type {
 import type { IChurchRepository } from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 import type { BaseReportRequest } from "../domain"
-import type { IncomeStatementCategoryBreakdown, IncomeStatementResponse, } from "@/Reports/domain"
+import type {
+  IncomeStatementCategoryBreakdown,
+  IncomeStatementResponse,
+  IncomeStatementSymbolBreakdown,
+  IncomeStatementSymbolSummary,
+} from "@/Reports/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { StatementCategory } from "@/Financial/domain"
 
@@ -31,23 +36,36 @@ export class IncomeStatement {
       )
 
     this.logger.info(`Calculating the total assets`)
-    let totalAssets = 0
-    let totalAssetIncome = 0
-    let totalAssetExpenses = 0
+    const availabilitySymbolTotals = new Map<
+      string,
+      { total: number; income: number; expenses: number }
+    >()
 
     for (const availableAccount of availableAccounts) {
-      totalAssets += availableAccount.getBalance()
-      totalAssetIncome += availableAccount.getIncome()
-      totalAssetExpenses += availableAccount.getExpenses()
+      const symbol =
+        availableAccount.toPrimitives().availabilityAccount?.symbol ??
+        "UNSPECIFIED"
+      const current = availabilitySymbolTotals.get(symbol) ?? {
+        total: 0,
+        income: 0,
+        expenses: 0,
+      }
+
+      current.total += availableAccount.getBalance()
+      current.income += availableAccount.getIncome()
+      current.expenses += availableAccount.getExpenses()
+      availabilitySymbolTotals.set(symbol, current)
     }
 
     const costCenters =
       await this.costCenterMasterRepository.fetchCostCenters(params)
 
     this.logger.info(`Calculating the total liabilities`)
-    let liabilitiesAssets = 0
+    const costCenterSymbolTotals = new Map<string, number>()
     for (const costCenter of costCenters) {
-      liabilitiesAssets += costCenter.getTotal()
+      const symbol = costCenter.toPrimitives().symbol ?? "UNSPECIFIED"
+      const current = costCenterSymbolTotals.get(symbol) ?? 0
+      costCenterSymbolTotals.set(symbol, current + costCenter.getTotal())
     }
 
     const statementByCategory =
@@ -62,23 +80,26 @@ export class IncomeStatement {
       StatementCategory.OTHER,
     ]
 
-    const breakdownMap = new Map<
-      StatementCategory,
-      IncomeStatementCategoryBreakdown & { reversal: number }
+    const symbolCategoryBreakdowns = new Map<
+      string,
+      Map<
+        StatementCategory,
+        IncomeStatementCategoryBreakdown & { reversal: number }
+      >
+    >()
+    const symbolTotalsMap = new Map<
+      string,
+      { income: number; expenses: number; reversal: number }
     >()
 
-    for (const category of orderedCategories) {
-      breakdownMap.set(category, {
-        category,
-        income: 0,
-        expenses: 0,
-        net: 0,
-        reversal: 0,
-      })
-    }
-
     for (const summary of statementByCategory) {
-      const current = breakdownMap.get(summary.category) ?? {
+      const summaryIncome = (summary.income ?? 0) - (summary.reversal ?? 0)
+      const summaryExpenses = summary.expenses ?? 0
+      const summaryReversal = summary.reversal ?? 0
+
+      const symbol = summary.symbol ?? "UNSPECIFIED"
+      const symbolBreakdown = symbolCategoryBreakdowns.get(symbol) ?? new Map()
+      const symbolCategory = symbolBreakdown.get(summary.category) ?? {
         category: summary.category,
         income: 0,
         expenses: 0,
@@ -86,80 +107,110 @@ export class IncomeStatement {
         reversal: 0,
       }
 
-      current.income = (summary.income ?? 0) - (summary.reversal ?? 0)
-      current.expenses = summary.expenses ?? 0
-      current.reversal = summary.reversal ?? 0
-      current.net = current.income - current.expenses
-      breakdownMap.set(summary.category, current)
+      symbolCategory.income += summaryIncome
+      symbolCategory.expenses += summaryExpenses
+      symbolCategory.reversal += summaryReversal
+      symbolCategory.net = symbolCategory.income - symbolCategory.expenses
+      symbolBreakdown.set(summary.category, symbolCategory)
+      symbolCategoryBreakdowns.set(symbol, symbolBreakdown)
+
+      const symbolTotals = symbolTotalsMap.get(symbol) ?? {
+        income: 0,
+        expenses: 0,
+        reversal: 0,
+      }
+
+      symbolTotals.income += summaryIncome
+      symbolTotals.expenses += summaryExpenses
+      symbolTotals.reversal += summaryReversal
+      symbolTotalsMap.set(symbol, symbolTotals)
     }
 
-    const breakdown: IncomeStatementCategoryBreakdown[] = [
-      ...orderedCategories
-        .map((category) => breakdownMap.get(category)!)
-        .filter(Boolean)
-        .map(({ category, income, expenses, net }) => ({
-          category,
-          income,
-          expenses,
-          net,
-        })),
-      ...Array.from(breakdownMap.entries())
-        .filter(([category]) => !orderedCategories.includes(category))
-        .map(([, value]) => ({
-          category: value.category,
-          income: value.income,
-          expenses: value.expenses,
-          net: value.income - value.expenses,
-        })),
-    ]
+    const isDefined = <T>(value: T | undefined): value is T =>
+      value !== undefined
 
-    const totals = Array.from(breakdownMap.values()).reduce(
-      (acc, item) => {
-        acc.income += item.income
-        acc.expenses += item.expenses
-        acc.reversal += item.reversal
-        return acc
-      },
-      { income: 0, expenses: 0, reversal: 0 }
-    )
+    const breakdown: IncomeStatementSymbolBreakdown[] = Array.from(
+      symbolCategoryBreakdowns.entries()
+    ).map(([symbol, symbolMap]) => {
+      const categories: IncomeStatementCategoryBreakdown[] = [
+        ...orderedCategories
+          .map((category) => symbolMap.get(category))
+          .filter(isDefined)
+          .map(({ category, income, expenses, net }) => ({
+            category,
+            income,
+            expenses,
+            net,
+          })),
+        ...Array.from(symbolMap.entries())
+          .filter(([category]) => !orderedCategories.includes(category))
+          .map(([, value]) => ({
+            category: value.category,
+            income: value.income,
+            expenses: value.expenses,
+            net: value.net,
+          })),
+      ]
 
-    const revenueTotal = totals.income
-    const operatingExpenses = totals.expenses
-    const operatingIncome = revenueTotal - operatingExpenses
-    const reversalAdjustments = totals.reversal
-    const netIncome = operatingIncome
+      return {
+        symbol,
+        breakdown: categories,
+      }
+    })
+
+    const summary: IncomeStatementSymbolSummary[] = Array.from(
+      symbolTotalsMap.entries()
+    ).map(([symbol, totals]) => {
+      const income = totals.income
+      const expenses = totals.expenses
+      const net = income - expenses
+
+      return {
+        symbol,
+        summary: {
+          revenue: income,
+          cogs: 0,
+          grossProfit: net,
+          operatingExpenses: expenses,
+          operatingIncome: net,
+          capitalExpenditures: 0,
+          otherIncome: 0,
+          otherExpenses: 0,
+          otherNet: 0,
+          reversalAdjustments: totals.reversal,
+          totalIncome: income,
+          totalExpenses: expenses,
+          netIncome: net,
+        },
+      }
+    })
+
+    const availabilitySymbolTotalsList = Array.from(
+      availabilitySymbolTotals.entries()
+    ).map(([symbol, totals]) => ({
+      symbol,
+      total: totals.total,
+      income: totals.income,
+      expenses: totals.expenses,
+    }))
 
     return {
       period: {
         year: params.year,
         month: params.month,
       },
+      summary,
       breakdown,
-      summary: {
-        revenue: revenueTotal,
-        cogs: 0,
-        grossProfit: operatingIncome,
-        operatingExpenses,
-        operatingIncome,
-        capitalExpenditures: 0,
-        otherIncome: 0,
-        otherExpenses: 0,
-        otherNet: 0,
-        reversalAdjustments,
-        totalIncome: revenueTotal,
-        totalExpenses: operatingExpenses,
-        netIncome,
-      },
       cashFlowSnapshot: {
         availabilityAccounts: {
           accounts: availableAccounts,
-          total: totalAssets,
-          income: totalAssetIncome,
-          expenses: totalAssetExpenses,
+          totals: availabilitySymbolTotalsList,
         },
         costCenters: {
           costCenters: costCenters,
-          total: liabilitiesAssets,
+          totals: Array.from(costCenterSymbolTotals.entries()).map(
+            ([symbol, total]) => ({ symbol, total })
+          ),
         },
       },
     }

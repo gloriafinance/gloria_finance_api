@@ -6,8 +6,8 @@ export default (
   let year = new Date().getFullYear()
 
   if (period) {
-    month = period.month
-    year = period.year
+    month = period.month!
+    year = period.year!
   }
 
   return `${month}-${year}-${entityId}`
