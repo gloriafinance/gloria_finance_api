@@ -1,4 +1,3 @@
-import { IDefinitionQueue } from "./Shared/domain"
 import { CreateUserForMemberJob } from "./SecuritySystem/applications"
 import {
   PasswordAdapter,
@@ -16,8 +15,9 @@ import { PurchasesQueue } from "@/Purchases/infrastructure/Purchases.queue"
 import { NotifyFCMJob } from "@/Notifications/infrastructure/NotifyFCM.job"
 import { NotificationMongoRepository } from "@/Notifications/infrastructure/persistence"
 import { FCMNotificationService } from "@/Notifications/infrastructure/services/FCMNotification.service"
+import type { IListQueue } from "@/package/queue/domain"
 
-export const Queues = (): IDefinitionQueue[] => [
+export const Queues = (): IListQueue[] => [
   ...BankingQueue({
     financialRecordRepository: FinanceRecordMongoRepository.getInstance(),
   }),
@@ -27,20 +27,24 @@ export const Queues = (): IDefinitionQueue[] => [
   ...CustomerQueue(),
   ...PurchasesQueue(),
   {
+    name: CreateUserForMemberJob.name,
     useClass: CreateUserForMemberJob,
     inject: [UserMongoRepository.getInstance(), new PasswordAdapter()],
   },
 
   {
+    name: SendMailJob.name,
     useClass: SendMailJob,
     inject: [],
     delay: 4,
   },
   {
+    name: TelegramNotificationJob.name,
     useClass: TelegramNotificationJob,
     delay: 4,
   },
   {
+    name: NotifyFCMJob.name,
     useClass: NotifyFCMJob,
     inject: [
       NotificationMongoRepository.getInstance(),

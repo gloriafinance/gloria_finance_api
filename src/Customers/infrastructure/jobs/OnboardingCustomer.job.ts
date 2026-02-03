@@ -1,4 +1,4 @@
-import { IJob, IQueueService, QueueName } from "@/Shared/domain"
+import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
 import { CreateOrUpdateChurch } from "@/Church/applications"
 import { ChurchStatus, IChurchRepository } from "@/Church/domain"
 import { Customer } from "@/Customers/domain/Customer"

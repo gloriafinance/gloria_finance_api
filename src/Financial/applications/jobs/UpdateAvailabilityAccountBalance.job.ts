@@ -1,4 +1,4 @@
-import type { IJob } from "@/Shared/domain"
+import type { IJob } from "@/package/queue/domain"
 import type {
   IAvailabilityAccountMasterRepository,
   IAvailabilityAccountRepository,

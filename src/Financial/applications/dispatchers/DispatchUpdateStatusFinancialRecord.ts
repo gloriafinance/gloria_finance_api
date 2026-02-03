@@ -1,4 +1,4 @@
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { UpdateStatusFinancialRecordQueue } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 

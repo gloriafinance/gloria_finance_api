@@ -1,9 +1,9 @@
 import { createBullBoard } from "@bull-board/api"
-import { BullAdapter } from "@bull-board/api/bullAdapter"
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter"
 import { BunAdapter } from "@bull-board/bun"
+import type { IListQueue } from "../domain"
+import { QueueService } from "./QueueService.ts"
 import type { ServerApp } from "bun-platform-kit"
-import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
-import { IDefinitionQueue } from "@/Shared/domain"
 
 type BunRoutes = ReturnType<BunAdapter["getRoutes"]>
 
@@ -30,10 +30,14 @@ const findRouteHandler = (routes: BunRoutes, method: string, path: string) => {
 const registerBunRoutes = (
   app: ServerApp,
   basePath: string,
-  routes: BunRoutes
+  routes: BunRoutes,
+  credentials?: {
+    user: string
+    password: string
+  }
 ) => {
-  const user = process.env.BULL_USER || ""
-  const pass = process.env.BULL_PASS || ""
+  const user = credentials?.user || ""
+  const pass = credentials?.password || ""
   const hasAuth = user.length > 0 && pass.length > 0
 
   app.use(basePath, async (req: any, res: any, next: () => void) => {
@@ -75,26 +79,34 @@ const registerBunRoutes = (
   })
 }
 
-export const StartQueueService = async (
-  app: ServerApp,
-  Queues: IDefinitionQueue[]
-) => {
-  const serverAdapter = new BunAdapter()
-  serverAdapter.setBasePath("/ui/queues")
+export const StartQueueService = async (params: {
+  app?: ServerApp
+  listQueues: IListQueue[]
+  credentials?: {
+    user: string
+    password: string
+  }
+}) => {
+  const { app, listQueues, credentials } = params
 
   const queueService = QueueService.getInstance()
-  await queueService.initialize(Queues)
+  await queueService.initialize(listQueues)
 
-  const queueRegistry = queueService["registry"]
-  const queues = queueRegistry.getAllQueues()
+  if (app) {
+    const queueRegistry = queueService["registry"]
+    const queues = queueRegistry.getAllQueues()
 
-  createBullBoard({
-    queues: queues.map((q) => new BullAdapter(q)),
-    serverAdapter,
-    options: {
-      uiConfig: { boardTitle: "My BOARD" },
-    },
-  })
+    const serverAdapter = new BunAdapter()
+    serverAdapter.setBasePath("/ui/queues")
 
-  registerBunRoutes(app, "/ui/queues", serverAdapter.getRoutes())
+    createBullBoard({
+      queues: queues.map((q) => new BullMQAdapter(q)),
+      serverAdapter,
+      options: {
+        uiConfig: { boardTitle: "My BOARD" },
+      },
+    })
+
+    registerBunRoutes(app, "/ui/queues", serverAdapter.getRoutes(), credentials)
+  }
 }

@@ -1,4 +1,3 @@
-import { IDefinitionQueue } from "@/Shared/domain"
 import {
   AvailabilityAccountMongoRepository,
   CostCenterMasterMongoRepository,
@@ -18,17 +17,21 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
 import { UpdateAvailabilityAccountBalanceJob } from "@/Financial/applications/jobs/UpdateAvailabilityAccountBalance.job"
+import type { IListQueue } from "@/package/queue/domain"
 
-export const FinancialQueue = (): IDefinitionQueue[] => [
+export const FinancialQueue = (): IListQueue[] => [
   {
+    name: RebuildCostCenterMasterJob.name,
     useClass: RebuildCostCenterMasterJob,
     inject: [CostCenterMasterMongoRepository.getInstance()],
   },
   {
+    name: RebuildAvailabilityMasterAccountJob.name,
     useClass: RebuildAvailabilityMasterAccountJob,
     inject: [AvailabilityAccountMasterMongoRepository.getInstance()],
   },
   {
+    name: UpdateCostCenterMasterJob.name,
     useClass: UpdateCostCenterMasterJob,
     inject: [
       FinancialConfigurationMongoRepository.getInstance(),
@@ -37,15 +40,17 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
   },
 
   {
+    name: CreateFinancialRecordJob.name,
     useClass: CreateFinancialRecordJob,
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
-      StorageGCP.getInstance(process.env.BUCKET_FILES),
+      StorageGCP.getInstance(process.env.BUCKET_FILES!),
       QueueService.getInstance(),
     ],
   },
   {
+    name: UpdateFinancialRecordJob.name,
     useClass: UpdateFinancialRecordJob,
     inject: [
       FinancialYearMongoRepository.getInstance(),
@@ -56,6 +61,7 @@ export const FinancialQueue = (): IDefinitionQueue[] => [
     delay: 3,
   },
   {
+    name: UpdateAvailabilityAccountBalanceJob.name,
     useClass: UpdateAvailabilityAccountBalanceJob,
     inject: [
       AvailabilityAccountMongoRepository.getInstance(),

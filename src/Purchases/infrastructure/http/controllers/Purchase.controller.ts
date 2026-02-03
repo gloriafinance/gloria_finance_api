@@ -3,6 +3,7 @@ import type {
   RecordPurchaseRequest,
 } from "../../../domain/requests"
 
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -13,19 +14,18 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-import type { ServerResponse } from "bun-platform-kit"
 
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { RecordPurchase, SearchPurchase } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
-import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
-import { QueueService } from "@/Shared/infrastructure/queue/QueueService"
+import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
 import { mergePdfFiles } from "@/Shared/helpers/mergePdfFiles"
 import {
   FinancialConceptMongoRepository,

@@ -1,10 +1,9 @@
-import { Customer, OnboardingStatus } from "@/Customers/domain"
 import type { ICreateCustomer } from "@/Customers/domain"
-
-import { QueueService } from "@/Shared/infrastructure"
-import { HttpStatus, QueueName } from "@/Shared/domain"
+import { Customer, OnboardingStatus } from "@/Customers/domain"
+import { HttpStatus } from "@/Shared/domain"
 import { CustomerMongoRepository } from "../../persistence/CustomerMongoRepository"
 import domainResponse from "@/Shared/helpers/domainResponse"
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -15,7 +14,6 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-import type { ServerResponse, ServerRequest } from "bun-platform-kit"
 
 import CustomerValidator from "../validators/Customer.validator"
 import {
@@ -25,6 +23,8 @@ import {
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
 import { type OnboardingCustomerRequest } from "../../jobs/OnboardingCustomer.job"
+import { QueueName } from "@/package/queue/domain"
+import { QueueService } from "@/package/queue/infrastructure"
 
 @Controller("/api/v1/onboarding")
 export class OnboardingController {

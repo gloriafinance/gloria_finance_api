@@ -1,14 +1,19 @@
 import { promises as fs } from "fs"
 import { Logger } from "@/Shared/adapter/CustomLogger"
-import { IJob, IQueueService, QueueName } from "@/Shared/domain"
+
 import {
   Bank,
   BankStatement,
-  IBankStatementRepository,
-  IntermediateBankStatement,
+  type IBankStatementRepository,
+  type IntermediateBankStatement,
 } from "@/Banking/domain"
 import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers"
 import { BankStatementReconciler } from "@/Banking/applications"
+import {
+  type IJob,
+  type IQueueService,
+  QueueName,
+} from "@/package/queue/domain"
 
 type ImportBankStatementJobPayload = {
   churchId: string

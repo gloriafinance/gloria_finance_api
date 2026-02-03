@@ -2,9 +2,9 @@ import { promises as fs } from "fs"
 import * as path from "path"
 import * as os from "os"
 import { Logger } from "@/Shared/adapter/CustomLogger"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { Bank } from "@/Banking/domain"
-import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { AvailabilityAccountNotFound } from "@/Financial/domain"
 
 type ImportBankStatementRequest = {

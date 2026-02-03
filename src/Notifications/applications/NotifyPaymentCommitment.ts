@@ -1,5 +1,5 @@
 import { IMemberRepository } from "@/Church/domain"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { FindMemberById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
 import { NotificationRequest, NotificationsTopic } from "@/Notifications/domain"

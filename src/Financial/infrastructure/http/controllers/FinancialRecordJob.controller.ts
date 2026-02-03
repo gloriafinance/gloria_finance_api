@@ -4,7 +4,7 @@ import {
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
-import { HttpStatus, QueueName } from "@/Shared/domain"
+import { HttpStatus } from "@/Shared/domain"
 import RebuildMasterDataValidator from "@/Financial/infrastructure/http/validators/RebuildMasterData.validator"
 import {
   Body,
@@ -14,6 +14,7 @@ import {
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
+import { QueueName } from "@/package/queue/domain"
 
 @Controller("/api/v1/finance/tools")
 export class FinancialRecordJobController {

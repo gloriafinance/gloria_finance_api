@@ -1,4 +1,3 @@
-import { IDefinitionQueue } from "@/Shared/domain"
 import { BootstrapPermissionsJob } from "@/SecuritySystem/applications"
 import {
   PermissionMongoRepository,
@@ -8,9 +7,11 @@ import {
   UserMongoRepository,
 } from "@/SecuritySystem/infrastructure/persistence"
 import { PasswordAdapter } from "@/SecuritySystem/infrastructure/adapters/Password.adapter"
+import type { IListQueue } from "@/package/queue/domain"
 
-export const SecuritySystemQueue = (): IDefinitionQueue[] => [
+export const SecuritySystemQueue = (): IListQueue[] => [
   {
+    name: BootstrapPermissionsJob.name,
     useClass: BootstrapPermissionsJob,
     inject: [
       PermissionMongoRepository.getInstance(),

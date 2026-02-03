@@ -7,7 +7,7 @@ import {
   IMemberRepository,
   MemberExist,
 } from "@/Church/domain"
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 const createChurch = (): Church =>
   Church.fromPrimitives({

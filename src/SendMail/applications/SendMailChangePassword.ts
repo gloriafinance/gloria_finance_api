@@ -1,4 +1,4 @@
-import { IQueueService, QueueName } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { TemplateEmail } from "../enum/templateEmail.enum"
 import { User } from "@/SecuritySystem/domain"
 import { Logger } from "@/Shared/adapter"

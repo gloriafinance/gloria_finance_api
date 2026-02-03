@@ -8,20 +8,21 @@ import {
   OnlineContributionsStatus,
   TypeOperationMoney,
 } from "../../domain"
-import { IOnlineContributionsRepository } from "../../domain/interfaces"
+import type { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
-import { AmountValue, IQueueService } from "@/Shared/domain"
+import { AmountValue } from "@/Shared/domain"
 import {
   DispatchCreateFinancialRecord,
   DispatchUpdateAvailabilityAccountBalance,
 } from "@/Financial/applications"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
-import {
+import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
+import type { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
 import { DateBR } from "@/Shared/helpers"
+import type { IQueueService } from "@/package/queue/domain"
 
 export class UpdateContributionStatus {
   private logger = Logger(UpdateContributionStatus.name)

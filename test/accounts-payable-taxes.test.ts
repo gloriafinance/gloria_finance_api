@@ -1,21 +1,22 @@
 import { strict as assert } from "assert"
 import {
   AccountPayable,
-  AccountPayableRequest,
+  type AccountPayableRequest,
   AccountPayableStatus,
   AccountPayableTaxStatus,
-  IAccountPayableRepository,
-  ISupplierRepository,
+  type IAccountPayableRepository,
+  type ISupplierRepository,
   Supplier,
   SupplierType,
   TaxDocumentType,
 } from "@/AccountsPayable/domain"
 import { CreateAccountPayable } from "@/AccountsPayable/applications"
-import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { Paginate } from "@abejarano/ts-mongodb-criteria"
 import { InvalidInstallmentsConfiguration } from "@/AccountsPayable/domain/exceptions/InvalidInstallmentsConfiguration"
-import { AmountValue, IQueueService, QueueName } from "@/Shared/domain"
-import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import { AmountValue } from "@/Shared/domain"
+import type { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import { FinancialConcept } from "@/Financial/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 type TestCase = {
   name: string
@@ -88,7 +89,9 @@ const baseTaxDocument = {
   date: new Date(),
 }
 
-const withTaxDocument = <T extends object>(params: T): T & {
+const withTaxDocument = <T extends object>(
+  params: T
+): T & {
   taxDocument: typeof baseTaxDocument
 } => ({
   ...params,
@@ -103,20 +106,20 @@ function testAccountPayableTaxCalculation(): void {
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "12345678901",
         name: "Construtora Monte",
-      phone: "11999999999",
-    },
-    churchId: "church-001",
-    description: "Reforma do altar",
-    installments: [
-      {
-        amount: 1000,
-        dueDate: new Date("2025-01-15T00:00:00.000Z"),
+        phone: "11999999999",
       },
-    ],
-    taxes: [
-      { taxType: "ISS", percentage: 5 },
-      { taxType: "PIS", percentage: 1.65 },
-    ],
+      churchId: "church-001",
+      description: "Reforma do altar",
+      installments: [
+        {
+          amount: 1000,
+          dueDate: new Date("2025-01-15T00:00:00.000Z"),
+        },
+      ],
+      taxes: [
+        { taxType: "ISS", percentage: 5 },
+        { taxType: "PIS", percentage: 1.65 },
+      ],
     })
   )
 
@@ -229,16 +232,16 @@ function testAccountPayableSupportsExemptInvoices(): void {
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "12345678901",
         name: "Arquitetura Sagrada Ltda",
-      phone: "11988889999",
-    },
-    churchId: "church-003",
-    description: "Restauro de vitrais",
-    installments: [
-      {
-        amount: 1500,
-        dueDate: new Date("2025-02-20T00:00:00.000Z"),
+        phone: "11988889999",
       },
-    ],
+      churchId: "church-003",
+      description: "Restauro de vitrais",
+      installments: [
+        {
+          amount: 1500,
+          dueDate: new Date("2025-02-20T00:00:00.000Z"),
+        },
+      ],
       taxMetadata: {
         status: AccountPayableTaxStatus.EXEMPT,
         taxExempt: true,
@@ -281,24 +284,24 @@ function testAccountPayableSupportsCommitmentsWithoutInvoice(): void {
         supplierType: SupplierType.INDIVIDUAL,
         supplierDNI: "32165498700",
         name: "João da Silva",
-      phone: "11977776666",
-    },
-    churchId: "church-011",
-    description: "Compra de veículo seminovo",
-    installments: [
-      {
-        amount: 20000,
-        dueDate: new Date("2024-08-10T00:00:00.000Z"),
+        phone: "11977776666",
       },
-      {
-        amount: 20000,
-        dueDate: new Date("2024-09-10T00:00:00.000Z"),
-      },
-      {
-        amount: 20000,
-        dueDate: new Date("2024-10-10T00:00:00.000Z"),
-      },
-    ],
+      churchId: "church-011",
+      description: "Compra de veículo seminovo",
+      installments: [
+        {
+          amount: 20000,
+          dueDate: new Date("2024-08-10T00:00:00.000Z"),
+        },
+        {
+          amount: 20000,
+          dueDate: new Date("2024-09-10T00:00:00.000Z"),
+        },
+        {
+          amount: 20000,
+          dueDate: new Date("2024-10-10T00:00:00.000Z"),
+        },
+      ],
       taxMetadata: {
         status: AccountPayableTaxStatus.NOT_APPLICABLE,
         taxExempt: true,
@@ -347,29 +350,29 @@ function testAccountPayableStoresMixedTaxStatuses(): void {
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "22345678901",
         name: "Serviços de Climatização",
-      phone: "11922221111",
-    },
-    churchId: "church-010",
-    description: "Instalação de ar condicionado",
-    installments: [
-      {
-        amount: 2000,
-        dueDate: new Date("2025-01-20T00:00:00.000Z"),
+        phone: "11922221111",
       },
-    ],
-    taxes: [
-      {
-        taxType: "ISS",
-        percentage: 5,
-        status: AccountPayableTaxStatus.TAXED,
-      },
-      {
-        taxType: "ICMS-ST",
-        percentage: 0,
-        amount: 120,
-        status: AccountPayableTaxStatus.SUBSTITUTION,
-      },
-    ],
+      churchId: "church-010",
+      description: "Instalação de ar condicionado",
+      installments: [
+        {
+          amount: 2000,
+          dueDate: new Date("2025-01-20T00:00:00.000Z"),
+        },
+      ],
+      taxes: [
+        {
+          taxType: "ISS",
+          percentage: 5,
+          status: AccountPayableTaxStatus.TAXED,
+        },
+        {
+          taxType: "ICMS-ST",
+          percentage: 0,
+          amount: 120,
+          status: AccountPayableTaxStatus.SUBSTITUTION,
+        },
+      ],
     })
   )
 
@@ -405,19 +408,19 @@ function testAccountPayableDefaultsToSubstitutionWhenOnlySubstitutedLines(): voi
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "32345678901",
         name: "Transporte Litúrgico",
-      phone: "11911110000",
-    },
-    churchId: "church-011",
-    description: "Serviço de transporte para retiro",
-    amountTotal: 1500,
-    taxes: [
-      {
-        taxType: "ICMS-ST",
-        percentage: 0,
-        amount: 90,
-        status: AccountPayableTaxStatus.SUBSTITUTION,
+        phone: "11911110000",
       },
-    ],
+      churchId: "church-011",
+      description: "Serviço de transporte para retiro",
+      amountTotal: 1500,
+      taxes: [
+        {
+          taxType: "ICMS-ST",
+          percentage: 0,
+          amount: 90,
+          status: AccountPayableTaxStatus.SUBSTITUTION,
+        },
+      ],
     })
   )
 
@@ -479,20 +482,20 @@ function testAccountPayableDropsTaxesWhenExplicitlyExempt(): void {
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "12345678901",
         name: "Serviços de Jardinagem",
-      phone: "11966665555",
-    },
-    churchId: "church-005",
-    description: "Manutenção do jardim",
-    installments: [
-      {
-        amount: 900,
-        dueDate: new Date("2025-06-10T00:00:00.000Z"),
+        phone: "11966665555",
       },
-    ],
-    taxes: [
-      { taxType: "ISS", percentage: 5 },
-      { taxType: "INSS", percentage: 11 },
-    ],
+      churchId: "church-005",
+      description: "Manutenção do jardim",
+      installments: [
+        {
+          amount: 900,
+          dueDate: new Date("2025-06-10T00:00:00.000Z"),
+        },
+      ],
+      taxes: [
+        { taxType: "ISS", percentage: 5 },
+        { taxType: "INSS", percentage: 11 },
+      ],
       taxMetadata: {
         taxExempt: true,
         status: AccountPayableTaxStatus.EXEMPT,
@@ -580,21 +583,21 @@ function testAccountPayableRejectsMismatchedInstallments(): void {
           supplierType: SupplierType.SUPPLIER,
           supplierDNI: "12345678901",
           name: "Elétrica Luz Viva",
-        phone: "11955554444",
-      },
-      churchId: "church-006",
-      description: "Instalação elétrica",
-      installments: [
-        {
-          amount: 500,
-          dueDate: new Date("2025-07-01T00:00:00.000Z"),
+          phone: "11955554444",
         },
-        {
-          amount: 500,
-          dueDate: new Date("2025-08-01T00:00:00.000Z"),
-        },
-      ],
-      amountTotal: 1200,
+        churchId: "church-006",
+        description: "Instalação elétrica",
+        installments: [
+          {
+            amount: 500,
+            dueDate: new Date("2025-07-01T00:00:00.000Z"),
+          },
+          {
+            amount: 500,
+            dueDate: new Date("2025-08-01T00:00:00.000Z"),
+          },
+        ],
+        amountTotal: 1200,
       })
     )
   }, InvalidInstallmentsConfiguration)
@@ -608,20 +611,20 @@ function testAccountPayableStatusTransitionsWithPayments(): void {
         supplierType: SupplierType.SUPPLIER,
         supplierDNI: "12345678901",
         name: "Construções Gerais",
-      phone: "11944443333",
-    },
-    churchId: "church-007",
-    description: "Pintura externa",
-    installments: [
-      {
-        amount: 1000,
-        dueDate: new Date("2025-09-10T00:00:00.000Z"),
+        phone: "11944443333",
       },
-      {
-        amount: 1000,
-        dueDate: new Date("2025-10-10T00:00:00.000Z"),
-      },
-    ],
+      churchId: "church-007",
+      description: "Pintura externa",
+      installments: [
+        {
+          amount: 1000,
+          dueDate: new Date("2025-09-10T00:00:00.000Z"),
+        },
+        {
+          amount: 1000,
+          dueDate: new Date("2025-10-10T00:00:00.000Z"),
+        },
+      ],
     })
   )
 
