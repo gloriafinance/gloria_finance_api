@@ -1,66 +1,123 @@
-# Que es Church Finance
+# Gloria Finance API
 
-Church Finance API es una solución moderna y flexible para la gestión financiera de iglesias. Permite administrar
-miembros, donaciones, conceptos financieros y notificaciones de manera eficiente y segura.
+**Gloria Finance API** es el backend de **Gloria Finance**, una plataforma moderna para la **gestión administrativa y financiera de iglesias**.  
+Está diseñada para operar en un entorno **multi-tenant**, con foco en **seguridad**, **trazabilidad** y **automatización** de procesos.
 
-¡Optimiza la administración de tu iglesia con tecnología de vanguardia!
+Con esta API puedes:
 
-# Stack
+- Gestionar **miembros** y sus datos clave
+- Registrar **contribuciones** (diezmos, ofrendas, votos, campañas, etc.)
+- Mantener un catálogo de **conceptos financieros** (categorías contables y administrativas)
+- Automatizar **notificaciones** (por ejemplo Telegram) y procesos asíncronos (colas)
+- Integrarte con servicios externos (almacenamiento de archivos, mensajería, etc.)
 
-- [`node v22`](https://nodejs.org/)
-- [`express`](https://expressjs.com/)
-- [`typescript`](https://www.typescriptlang.org/)
-- [`docker`](https://www.docker.com/) [`docker-compose`](https://docs.docker.com/compose/)
-- [`redis`](https://redis.io/)
-- [`bull`](https://github.com/OptimalBits/bull)
+---
 
-# Ejecutar el proyecto en local
+## Principios del proyecto
 
-Debe tener instalado docker y nodejs en la version 22
+- **Seguridad primero:** secretos por variables de entorno (nunca hardcodeados).
+- **Escalable:** jobs asíncronos con colas (**BullMQ + Redis**).
+- **Mantenible:** TypeScript + estructura modular.
+- **Listo para producción:** Docker, servicios externos y configuración por entorno.
 
-- Crear .env en la raiz del proyecto
+---
 
-```
+## Stack
+
+- **Runtime:** [Bun](https://bun.com/)
+- **Toolkit:** [bun-platform-kit](https://github.com/abejarano/bun-platform-kit)
+- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
+- **Infra local:** [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)
+- **Cache/colas:** [Redis](https://redis.io/) + [BullMQ](https://bullmq.io/)
+- **Archivos:** [GCP Storage](https://cloud.google.com/storage)
+
+---
+
+## Requisitos
+
+- **Docker** y **Docker Compose**
+- **Bun** instalado (recomendado)
+- *(Opcional)* Node.js 22 si tu flujo local lo requiere, pero el runtime principal es **Bun**
+
+---
+
+## Ejecutar en local
+
+### 1) Variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto (**no lo subas al repo**).
+
+Ejemplo mínimo:
+
+```env
 NODE_ENV=local
 APP_PORT=5200
 
-MONGO_PASS=
-MONGO_USER=
-MONGO_DB=
-MONGO_SERVER=
+# Base de datos
+MONGO_URI=
 
+# JWT
 JWT_SECRET=
 JWT_REFRESH_SECRET=
 JWT_ACCESS_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=30d
 
+# Notificaciones (Telegram)
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 
+# Archivos (GCP)
 BUCKET_FILES=
+GOOGLE_APPLICATION_CREDENTIALS=
 
+# Redis / BullMQ
 REDIS_HOST=
 REDIS_PORT=
-
 BULL_USER=
 BULL_PASS=
+
+# Email (si aplica)
+SEND_MAIL_CLIENT_ID=
+SEND_MAIL_PRIVATE_KEY=
 ```
 
-- ejecutar el proyecto
+## 2) Levantar servicios (si aplica)
 
+Si usas Docker para Redis/Mongo local, levántalo con:
+
+```bash
+docker compose up -d
 ```
-npm i
-npm run dev
+
+## 3) Instalar dependencias y correr la API
+
+```bash
+bun install
+bun dev
 ```
 
-## Conventional Commits
+La API debería quedar disponible en:
 
-We use Conventional Commits to automatically generate releases:
+- `http://localhost:5200` (o el puerto que definas en `APP_PORT`)
 
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation
-- `style:` - Format, spaces, etc.
-- `refactor:` - Code refactoring
-- `test:` - Add tests
-- `chore:` - Maintenance tasks
+---
+
+## Convenciones de commits (Conventional Commits)
+
+Usamos **Conventional Commits** para mantener un historial consistente y facilitar automatizaciones (releases, changelog, etc.).
+
+- `feat:` Nueva funcionalidad
+- `fix:` Corrección de bug
+- `docs:` Documentación
+- `style:` Formato (espacios, lint, etc.)
+- `refactor:` Refactor sin cambiar comportamiento
+- `test:` Pruebas
+- `chore:` Tareas de mantenimiento (deps, scripts, tooling)
+
+**Ejemplos:**
+
+- `feat: agregar endpoint para registrar contribuciones`
+- `fix: corregir validación de monto en contribución`
+- `chore: actualizar dependencias`
+
+---
