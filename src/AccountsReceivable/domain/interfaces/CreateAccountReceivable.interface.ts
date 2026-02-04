@@ -1,5 +1,5 @@
 import { DebtorType } from "../enums/DebtorType.enum"
-import { Installments } from "@/Shared/domain"
+import type { Installments } from "@/Shared/domain"
 import { AccountReceivableType } from "@/AccountsReceivable/domain"
 import { FinancialConcept } from "@/Financial/domain"
 

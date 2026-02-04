@@ -28,7 +28,7 @@ class QueueServiceMock implements IQueueService {
 }
 
 class FinancialConceptRepositoryMock implements IFinancialConceptRepository {
-  listByCriteria(filter: object): Promise<FinancialConcept[]> {
+  search(filter: object): Promise<FinancialConcept[]> {
     return Promise.resolve([])
   }
 

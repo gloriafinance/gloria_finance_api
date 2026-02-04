@@ -19,6 +19,6 @@ export class FindFinancialConceptsByChurchIdAndTypeConcept {
       filter["type"] = typeConcept
     }
 
-    return await this.financialConceptRepository.listByCriteria(filter)
+    return await this.financialConceptRepository.search(filter)
   }
 }

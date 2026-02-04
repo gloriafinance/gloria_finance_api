@@ -1,16 +1,29 @@
 import { Logger } from "@/Shared/adapter"
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
 
 export default async (
-  req: Request,
+  req: ServerRequest,
   res: ServerResponse,
   next: NextFunction
 ) => {
-  const payload = req.body
+  const payload = req.body as any
   const logger = Logger("CreateAccountReceivableValidator")
 
   logger.info(`Validating  ${JSON.stringify(payload)}`)
+
+  if (typeof payload.installments === "string") {
+    payload.installments = JSON.parse(payload.installments)
+  }
+
+  if (typeof payload.debtor === "string") {
+    payload.debtor = JSON.parse(payload.debtor)
+  }
 
   const rule: Record<string, string> = {
     debtor: "required|object",
@@ -39,6 +52,8 @@ export default async (
   if (!matched) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }
+
+  req.body = payload
 
   next()
 }

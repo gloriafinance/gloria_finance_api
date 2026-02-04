@@ -1,7 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
   FinancialConcept,
-  IFinancialConceptRepository,
+  type IFinancialConceptRepository,
 } from "@/FinanceConfig/domain"
 import { Collection } from "mongodb"
 
@@ -27,7 +27,7 @@ export class FinancialConceptMongoRepository
     return "financial_concepts"
   }
 
-  async listByCriteria(filter: object): Promise<FinancialConcept[]> {
+  async search(filter: object): Promise<FinancialConcept[]> {
     const collection = await this.collection()
     const result = await collection.find(filter).sort({ name: 1 }).toArray()
 

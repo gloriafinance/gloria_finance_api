@@ -36,7 +36,7 @@ export type UpdateStatusFinancialRecordQueue = {
 export type FinancialRecordRequest = {
   file?: any
   bankingOperation?: BankingOperationType
-  financialConceptId?: string
+  financialConceptId: string
   churchId: string
   amount: number
   date: Date

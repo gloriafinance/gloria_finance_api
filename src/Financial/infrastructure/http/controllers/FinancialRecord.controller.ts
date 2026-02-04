@@ -118,7 +118,7 @@ export class FinancialRecordController {
         financialConcept
       )
 
-      let costCenter: CostCenter = undefined
+      let costCenter: CostCenter | undefined
 
       if (
         financialConcept.getType() === ConceptType.OUTGO &&
@@ -145,7 +145,7 @@ export class FinancialRecordController {
       await new CreateFinancialRecordJob(
         FinancialYearMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        StorageGCP.getInstance(process.env.BUCKET_FILES),
+        StorageGCP.getInstance(process.env.BUCKET_FILES!),
         QueueService.getInstance()
       ).handle({
         ...request,
@@ -162,7 +162,7 @@ export class FinancialRecordController {
       })
     } catch (e) {
       if (request.voucher) {
-        await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
+        await StorageGCP.getInstance(process.env.BUCKET_FILES!).deleteFile(
           request.voucher
         )
       }
@@ -231,7 +231,7 @@ export class FinancialRecordController {
 
       const { path, filename } = file
 
-      res.download(path, filename, (error) => {
+      res.download!(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
         //if (error && !res.headersSent) {
@@ -242,7 +242,7 @@ export class FinancialRecordController {
       })
 
       this.logger.info("Relatório financeiro gerado com sucesso")
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Erro ao gerar relatório financeiro", error)
       domainResponse(error, res)
     }

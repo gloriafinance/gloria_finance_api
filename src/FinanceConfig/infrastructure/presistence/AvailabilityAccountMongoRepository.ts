@@ -1,11 +1,11 @@
 import {
   Criteria,
   MongoRepository,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import {
   AvailabilityAccount,
-  IAvailabilityAccountRepository,
+  type IAvailabilityAccountRepository,
 } from "@/FinanceConfig/domain"
 import { Collection } from "mongodb"
 
@@ -30,8 +30,8 @@ export class AvailabilityAccountMongoRepository
     return "availability_accounts"
   }
 
-  list(filter: object): Promise<AvailabilityAccount[]>
-  list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
+  override list(filter: object): Promise<AvailabilityAccount[]>
+  override list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
 
   override async list(
     filter: object | Criteria

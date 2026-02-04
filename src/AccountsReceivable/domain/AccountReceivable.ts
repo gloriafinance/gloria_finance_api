@@ -3,9 +3,13 @@ import { AccountsReceivableStatus } from "./enums/AccountsReceivableStatus.enum"
 
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
+import type { ICreateAccountReceivable } from "./interfaces/CreateAccountReceivable.interface"
 
-import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
+import {
+  AmountValue,
+  type Installments,
+  InstallmentsStatus,
+} from "@/Shared/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
 import { FinancialConcept } from "@/Financial/domain"
@@ -56,17 +60,17 @@ export class AccountReceivable extends AggregateRoot {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.accountReceivableId =
       IdentifyEntity.get(`accountReceivable`)
-    accountReceivable.churchId = churchId
-    accountReceivable.description = description
-    accountReceivable.type = type
-    accountReceivable.symbol = symbol
+    accountReceivable.churchId = churchId!
+    accountReceivable.description = description || ""
+    accountReceivable.type = type!
+    accountReceivable.symbol = symbol!
 
-    accountReceivable.amountPaid = amountPaid
-    accountReceivable.amountPending = amountPending
+    accountReceivable.amountPaid = amountPaid!
+    accountReceivable.amountPending = amountPending!
     accountReceivable.status = AccountsReceivableStatus.PENDING_ACCEPTANCE
 
     let amountTotal: number = 0
-    accountReceivable.installments = installments.map((i) => {
+    accountReceivable.installments = installments!.map((i) => {
       amountTotal += Number(i.amount)
 
       return {
@@ -99,13 +103,13 @@ export class AccountReceivable extends AggregateRoot {
       JSON.stringify(accountReceivable.toPrimitives())
     ).toString("base64")
 
-    accountReceivable.financialConcept = financialConcept
-    accountReceivable.createdBy = createdBy
+    accountReceivable.financialConcept = financialConcept!
+    accountReceivable.createdBy = createdBy!
 
     return accountReceivable
   }
 
-  static fromPrimitives(params: any): AccountReceivable {
+  static override fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.id = params.id
     accountReceivable.installments = params.installments
@@ -131,7 +135,7 @@ export class AccountReceivable extends AggregateRoot {
   }
 
   getId(): string {
-    return this.id
+    return this.id!
   }
 
   getAccountReceivableId(): string {
@@ -153,7 +157,7 @@ export class AccountReceivable extends AggregateRoot {
     return this.churchId
   }
 
-  getInstallment(installmentId: string): Installments {
+  getInstallment(installmentId: string): Installments | undefined {
     return this.installments.find((i) => i.installmentId === installmentId)
   }
 
@@ -202,7 +206,7 @@ export class AccountReceivable extends AggregateRoot {
   }
 
   getDueDate(): Date {
-    return this.installments[this.installments.length - 1].dueDate
+    return this.installments[this.installments.length - 1]!.dueDate
   }
 
   accountAccepted(isAccepted: boolean) {
@@ -216,7 +220,7 @@ export class AccountReceivable extends AggregateRoot {
     this.contract = contract
   }
 
-  getContract(): string {
+  getContract(): string | undefined {
     return this.contract
   }
 

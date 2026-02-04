@@ -17,14 +17,14 @@ import {
   StorageGCP,
 } from "@/Shared/infrastructure"
 import DeclareInstallmentPaymentValidator from "@/AccountsReceivable/infrastructure/http/validators/DeclareInstallmentPayment.validator"
-import {
-  AccountReceivable,
-  ActionsPaymentCommitment,
-} from "@/AccountsReceivable/domain"
 import type {
   ConfirmOrDenyPaymentCommitmentRequest,
   DeclareInstallmentPaymentRequest,
   FilterMemberAccountReceivableRequest,
+} from "@/AccountsReceivable/domain"
+import {
+  AccountReceivable,
+  ActionsPaymentCommitment,
 } from "@/AccountsReceivable/domain"
 import {
   ConfirmOrDenyPaymentCommitment,
@@ -43,7 +43,7 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { FindMemberById } from "@/Church/applications"
-import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import { type Paginate } from "@abejarano/ts-mongodb-criteria"
 import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 
 @Controller("/api/v1/account-receivable")
@@ -55,7 +55,7 @@ export class AccountReceivableForMemberController {
     @Res() res: ServerResponse
   ) {
     try {
-      const store = StorageGCP.getInstance(process.env.BUCKET_FILES)
+      const store = StorageGCP.getInstance(process.env.BUCKET_FILES!)
       const account = await new ConfirmOrDenyPaymentCommitment(
         AccountsReceivableMongoRepository.getInstance(),
         new PuppeteerAdapter(new HandlebarsHTMLAdapter(), store),
@@ -132,12 +132,12 @@ export class AccountReceivableForMemberController {
         AvailabilityAccountMongoRepository.getInstance(),
         new RegisterContributionsOnline(
           OnlineContributionsMongoRepository.getInstance(),
-          StorageGCP.getInstance(process.env.BUCKET_FILES),
+          StorageGCP.getInstance(process.env.BUCKET_FILES!),
           FinancialYearMongoRepository.getInstance()
         )
       ).execute({
         ...body,
-        memberId: req.auth.memberId,
+        memberId: req.auth.memberId!,
         amount: Number(body.amount),
         file: req?.files?.file,
       })

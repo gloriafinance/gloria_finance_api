@@ -1,8 +1,11 @@
-import { IMemberRepository } from "@/Church/domain"
+import type { IMemberRepository } from "@/Church/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { FindMemberById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
-import { NotificationRequest, NotificationsTopic } from "@/Notifications/domain"
+import {
+  type NotificationRequest,
+  NotificationsTopic,
+} from "@/Notifications/domain"
 import { AccountReceivable } from "@/AccountsReceivable/domain"
 
 export class NotifyPaymentCommitment {
@@ -53,7 +56,7 @@ export class NotifyPaymentCommitment {
         account.getDebtor()
       )
       return
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error(
         `Error finding member with ID ${account.getDebtor().debtorDNI}: `,
         e

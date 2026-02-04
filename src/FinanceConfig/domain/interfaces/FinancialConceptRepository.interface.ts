@@ -1,9 +1,6 @@
 import { FinancialConcept } from "@/Financial/domain"
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
 
-export interface IFinancialConceptRepository {
-  one(filter: object): Promise<FinancialConcept | undefined>
-
-  listByCriteria(filter: object): Promise<FinancialConcept[]>
-
-  upsert(financialConcept: FinancialConcept): Promise<void>
+export interface IFinancialConceptRepository extends IRepository<FinancialConcept> {
+  search(filter: object): Promise<FinancialConcept[]>
 }
