@@ -674,6 +674,7 @@ const sampleRecords: SampleRecord[] = [
     },
     availabilityAccount: {
       accountName: "Conta Principal",
+      symbol: "R$",
     },
     status: FinancialRecordStatus.CLEARED,
   },
@@ -688,6 +689,10 @@ const sampleRecords: SampleRecord[] = [
       name: "Energia",
       statementCategory: StatementCategory.OPEX,
       affectsResult: true,
+    },
+    availabilityAccount: {
+      accountName: "Conta Principal",
+      symbol: "R$",
     },
     costCenter: {
       name: "Infraestrutura",
@@ -706,6 +711,10 @@ const sampleRecords: SampleRecord[] = [
       statementCategory: StatementCategory.CAPEX,
       affectsResult: true,
     },
+    availabilityAccount: {
+      accountName: "Conta Principal",
+      symbol: "R$",
+    },
     status: FinancialRecordStatus.CLEARED,
   },
   {
@@ -719,6 +728,10 @@ const sampleRecords: SampleRecord[] = [
       name: "Estorno",
       statementCategory: StatementCategory.OTHER,
       affectsResult: true,
+    },
+    availabilityAccount: {
+      accountName: "Conta Principal",
+      symbol: "R$",
     },
     status: FinancialRecordStatus.CLEARED,
   },
@@ -734,6 +747,10 @@ const sampleRecords: SampleRecord[] = [
       statementCategory: StatementCategory.OTHER,
       affectsResult: true,
     },
+    availabilityAccount: {
+      accountName: "Conta Principal",
+      symbol: "R$",
+    },
     status: FinancialRecordStatus.CLEARED,
   },
   {
@@ -747,6 +764,10 @@ const sampleRecords: SampleRecord[] = [
       name: "Limpeza",
       statementCategory: StatementCategory.OTHER,
       affectsResult: true,
+    },
+    availabilityAccount: {
+      accountName: "Conta Principal",
+      symbol: "R$",
     },
     status: FinancialRecordStatus.CLEARED,
   },
@@ -803,7 +824,13 @@ describe("Financial reporting consistency", () => {
     assert.ok(fakePdf.payload, "PDF payload should be captured")
     assert.strictEqual(fakePdf.templateUsed, "financial/finance-record-report")
 
-    const summary = fakePdf.payload.summary
+    assert.ok(
+      Array.isArray(fakePdf.payload.summaryBySymbol),
+      "Summary by symbol should be present"
+    )
+    assert.strictEqual(fakePdf.payload.summaryBySymbol.length, 1)
+
+    const summary = fakePdf.payload.summaryBySymbol[0]
     assert.strictEqual(summary.totalIncome, movementExpected.income)
     assert.strictEqual(summary.totalExpenses, movementExpected.expenses)
     assert.strictEqual(summary.totalReversal, movementExpected.reversal)
@@ -913,7 +940,7 @@ describe("Financial reporting consistency", () => {
     })
 
     assert.strictEqual(
-      fakePdf.payload.summary.netResult,
+      fakePdf.payload.summaryBySymbol[0].netResult,
       incomeStatement.summary.netIncome,
       "Net results between movement report and income statement should match"
     )

@@ -1,20 +1,18 @@
-import {
-  ConceptType,
-  ConceptTypeLabels,
-  FinanceRecordReportRequest,
-} from "../../domain"
-import { IFinancialRecordRepository } from "../../domain/interfaces"
+import { ConceptType, ConceptTypeLabels, type FinanceRecordReportRequest, } from "../../domain"
+import type { IFinancialRecordRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
-import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
+import type { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { PrepareFinanceRecordCriteria } from "./ListFilters"
-import { IChurchRepository } from "@/Church/domain"
+import type { IChurchRepository } from "@/Church/domain"
 
-type FinanceRecordSummary = {
+type FinanceRecordSummaryBySymbol = {
+  symbol?: string
   totalsByType: Array<{
     type: ConceptType
     typeCode: string
-    typeLabel: string
+    typeLabelKey: string
+    movementLabelKey: string
     count: number
     total: number
     totalFormatted: string
@@ -22,8 +20,10 @@ type FinanceRecordSummary = {
     signedTotalFormatted: string
     isExpense: boolean
     isReversal: boolean
+    shouldShow: boolean
   }>
   totalRecords: number
+  totalRecordsLabelKey: string
   netResult: number
   netResultFormatted: string
   totalIncome: number
@@ -34,10 +34,20 @@ type FinanceRecordSummary = {
   totalReversalFormatted: string
 }
 
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
+const numberFormatter = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 })
+
+const roundAmount = (amount: number): number => {
+  const rounded = Math.round(amount * 100) / 100
+  return Object.is(rounded, -0) ? 0 : rounded
+}
+
+const formatAmount = (amount: number, symbol?: string): string => {
+  const formatted = numberFormatter.format(roundAmount(amount))
+  return symbol ? `${symbol} ${formatted}` : formatted
+}
 
 const conceptTypeCodes: Record<ConceptType, string> = {
   [ConceptType.INCOME]: "INCOME",
@@ -67,6 +77,19 @@ const normalizeConceptType = (value: unknown): ConceptType | undefined => {
   }
 }
 
+const conceptTypeLabelKey = (type: ConceptType): string =>
+  `finance_record_report.type.${conceptTypeCodes[type]}`
+
+const movementLabelKey = (count: number): string =>
+  count === 1
+    ? "finance_record_report.movement_singular"
+    : "finance_record_report.movement_plural"
+
+const getRecordSymbol = (record: any): string | undefined =>
+  record?.availabilityAccount?.symbol ??
+  record?.availabilityAccount?.availabilityAccount?.symbol ??
+  record?.symbol
+
 export class GenerateFinanceRecordReport {
   private logger = Logger(GenerateFinanceRecordReport.name)
 
@@ -91,8 +114,8 @@ export class GenerateFinanceRecordReport {
     const records = await this.fetchAllRecords(request)
 
     if (format === "pdf") {
-      const summary = this.buildSummary(records)
-      return await this.buildPdfFile(records, summary, request)
+      const summaryBySymbol = this.buildSummaryBySymbol(records)
+      return await this.buildPdfFile(records, summaryBySymbol, request)
     }
 
     return await this.buildCsvFile(records)
@@ -132,7 +155,10 @@ export class GenerateFinanceRecordReport {
     return allRecords
   }
 
-  private buildSummary(records: any[]): FinanceRecordSummary {
+  private buildSummary(
+    records: any[],
+    symbol?: string
+  ): FinanceRecordSummaryBySymbol {
     const expenseTypes = new Set<ConceptType>([
       ConceptType.OUTGO,
       ConceptType.PURCHASE,
@@ -177,6 +203,9 @@ export class GenerateFinanceRecordReport {
         const isExpense = expenseTypes.has(type)
         const isReversal = type === ConceptType.REVERSAL
         const signedTotal = isExpense || isReversal ? -data.amount : data.amount
+        const roundedAmount = roundAmount(data.amount)
+        const shouldShow =
+          !(data.count === 0 && Math.abs(roundedAmount) === 0)
 
         if (type === ConceptType.INCOME) {
           totalsByNature.income += data.amount
@@ -189,14 +218,16 @@ export class GenerateFinanceRecordReport {
         return {
           type,
           typeCode: conceptTypeCodes[type],
-          typeLabel: ConceptTypeLabels[type],
+          typeLabelKey: conceptTypeLabelKey(type),
+          movementLabelKey: movementLabelKey(data.count),
           count: data.count,
           total: data.amount,
-          totalFormatted: currencyFormatter.format(data.amount),
+          totalFormatted: formatAmount(data.amount, symbol),
           signedTotal,
-          signedTotalFormatted: currencyFormatter.format(signedTotal),
+          signedTotalFormatted: formatAmount(signedTotal, symbol),
           isExpense: isExpense || isReversal,
           isReversal,
+          shouldShow,
         }
       }
     )
@@ -205,19 +236,49 @@ export class GenerateFinanceRecordReport {
       totalsByNature.income - totalsByNature.expenses - totalsByNature.reversal
 
     return {
-      totalsByType,
+      symbol,
+      totalsByType: totalsByType.filter((row) => row.shouldShow),
       totalRecords: records.length,
+      totalRecordsLabelKey: movementLabelKey(records.length),
       netResult,
-      netResultFormatted: currencyFormatter.format(netResult),
+      netResultFormatted: formatAmount(netResult, symbol),
       totalIncome: totalsByNature.income,
-      totalIncomeFormatted: currencyFormatter.format(totalsByNature.income),
+      totalIncomeFormatted: formatAmount(totalsByNature.income, symbol),
       totalExpenses: totalsByNature.expenses,
-      totalExpensesFormatted: currencyFormatter.format(totalsByNature.expenses),
+      totalExpensesFormatted: formatAmount(
+        totalsByNature.expenses,
+        symbol
+      ),
       totalReversal: totalsByNature.reversal,
-      totalReversalFormatted: currencyFormatter.format(
-        -Math.abs(totalsByNature.reversal)
+      totalReversalFormatted: formatAmount(
+        -Math.abs(totalsByNature.reversal),
+        symbol
       ),
     }
+  }
+
+  private buildSummaryBySymbol(
+    records: any[]
+  ): FinanceRecordSummaryBySymbol[] {
+    const groups = new Map<
+      string,
+      {
+        symbol?: string
+        records: any[]
+      }
+    >()
+
+    for (const record of records) {
+      const symbol = getRecordSymbol(record)
+      const key = symbol ?? "__NO_SYMBOL__"
+      const group = groups.get(key) ?? { symbol, records: [] }
+      group.records.push(record)
+      groups.set(key, group)
+    }
+
+    return Array.from(groups.values()).map((group) =>
+      this.buildSummary(group.records, group.symbol)
+    )
   }
 
   private async buildCsvFile(records: any[]): Promise<ReportFile> {
@@ -270,15 +331,14 @@ export class GenerateFinanceRecordReport {
 
   private async buildPdfFile(
     records: any[],
-    summary: FinanceRecordSummary,
+    summaryBySymbol: FinanceRecordSummaryBySymbol[],
     request: FinanceRecordReportRequest
   ): Promise<ReportFile> {
     const church = await this.churchRepository.findById(request.churchId)
-    const churchName = church?.getName() ?? "Congregação não informada"
+    const churchName = church?.getName()
 
     const templateData = {
       generatedAt: new Date().toISOString(),
-      title: "Relatório de Movimentos Financeiros",
       church: churchName,
       filters: {
         startDate: request.startDate
@@ -289,27 +349,26 @@ export class GenerateFinanceRecordReport {
           : undefined,
         conceptType: request.conceptType,
       },
-      summary,
+      summaryBySymbol,
       records: records.map((record, index) => {
         const type = normalizeConceptType(record.type)
-        const typeLabel = type
-          ? ConceptTypeLabels[type]
-          : String(record.type ?? "")
         const typeCode = type
           ? conceptTypeCodes[type]
           : String(record.type ?? "")
+        const typeLabelKey = type ? conceptTypeLabelKey(type) : undefined
         const amountValue = Number(record.amount ?? 0)
         const displayAmount =
           type === ConceptType.REVERSAL ? -Math.abs(amountValue) : amountValue
+        const symbol = getRecordSymbol(record)
 
         return {
           index: index + 1,
           date: new Date(record.date).toISOString(),
           amount: displayAmount,
-          amountFormatted: currencyFormatter.format(displayAmount),
+          amountFormatted: formatAmount(displayAmount, symbol),
           description: record.description ?? "",
           type: typeCode,
-          typeLabel,
+          typeLabelKey,
           conceptName:
             record.financialConcept?.name ??
             record.financialConcept?.financialConcept?.name ??
@@ -332,7 +391,11 @@ export class GenerateFinanceRecordReport {
 
     return {
       path: await this.pdfGenerator
-        .htmlTemplate("financial/finance-record-report", templateData)
+        .htmlTemplate(
+          "financial/finance-record-report",
+          templateData,
+          request.lang
+        )
         .toPDF(false),
       filename,
     }

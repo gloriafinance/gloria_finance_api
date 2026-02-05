@@ -1,0 +1,219 @@
+{
+  "financial_report": {
+    "title": "Relatório Financeiro Mensal",
+    "period_label": "Período analisado:",
+    "summary_note": "O relatório consolida entradas, saídas e saldos para informar a congregação.",
+    "summary": {
+      "title": "Painel Resumido",
+      "net_revenue": "Receita Líquida",
+      "operating_expenses": "Despesas Operacionais",
+      "operating_income": "Resultado Operacional",
+      "net_income": "Resultado Líquido",
+      "caption": {
+        "net_revenue": "Entradas provenientes das atividades regulares.",
+        "operating_expenses": "Custos necessários para manter a igreja ativa.",
+        "operating_income": "Receitas menos despesas operacionais.",
+        "net_income": "Saldo final após itens extraordinários."
+      }
+    },
+    "breakdown": {
+      "title": "Receitas e Despesas por Categoria",
+      "headers": {
+        "category": "Categoria",
+        "income": "Entradas",
+        "expenses": "Saídas",
+        "net": "Saldo"
+      }
+    },
+    "cash_flow": {
+      "title": "Fluxo de Caixa por Conta de Disponibilidade",
+      "totals": {
+        "income": "Entradas totais:",
+        "expenses": "Saídas totais:",
+        "total": "Saldo consolidado:"
+      },
+      "headers": {
+        "account": "Conta",
+        "income": "Entradas",
+        "expenses": "Saídas",
+        "period_balance": "Saldo do Período"
+      }
+    },
+    "cost_centers": {
+      "title": "Uso dos Centros de Custo",
+      "total_label": "Total aplicado:",
+      "headers": {
+        "cost_center": "Centro de Custo",
+        "total_applied": "Total Aplicado",
+        "last_move": "Último Movimento"
+      }
+    },
+    "footnote": "Este relatório foi preparado para prestar contas aos membros da igreja sobre o movimento financeiro do período informado."
+  },
+  "categories": {
+    "REVENUE": {
+      "label": "Entradas operacionais e doações recorrentes",
+      "description": "Dinheiro que entrou por ofertas, dízimos e outras fontes regulares."
+    },
+    "COGS": {
+      "label": "Custos diretos para entregar serviços ou projetos",
+      "description": "Gastos ligados diretamente ao serviço ou projeto realizado."
+    },
+    "OPEX": {
+      "label": "Despesas operacionais do dia a dia",
+      "description": "Despesas do funcionamento diário (contas, manutenção, equipe)."
+    },
+    "MINISTRY_TRANSFERS": {
+      "label": "Repasses e contribuições ministeriais",
+      "description": "Valores repassados a ministérios, missões ou parcerias."
+    },
+    "CAPEX": {
+      "label": "Investimentos e gastos de capital de longo prazo",
+      "description": "Investimentos em bens duráveis, reformas ou equipamentos."
+    },
+    "OTHER": {
+      "label": "Receitas ou despesas extraordinárias",
+      "description": "Movimentos fora do padrão, pontuais ou não recorrentes."
+    }
+  },
+  "dre_report": {
+    "title": "Demonstração do Resultado do Exercício (DRE)",
+    "subtitle": "Relatório de Resultado Contábil",
+    "period_label": "Período:",
+    "year_label": "Ano:",
+    "sections": {
+      "revenues": "Receitas",
+      "direct_costs": "Custos Diretos",
+      "operational_expenses": "Despesas Operacionais",
+      "non_operational": "Resultados Não Operacionais",
+      "capex": "Investimentos (CAPEX)"
+    },
+    "labels": {
+      "gross_revenue": "Receita Bruta",
+      "net_revenue": "Receita Líquida",
+      "direct_costs": "Custos dos Serviços Prestados",
+      "gross_profit": "Resultado Bruto",
+      "operational_expenses": "Despesas Administrativas e Operacionais",
+      "ministry_transfers": "Repasses e Contribuições Ministeriais",
+      "operational_result": "Resultado Operacional",
+      "extraordinary_results": "Receitas e Despesas Extraordinárias",
+      "capex_detail": "Aquisições de mobiliário, equipamentos e outros bens permanentes",
+      "net_result": "Resultado Líquido do Período"
+    },
+    "notes": {
+      "title": "Notas Explicativas",
+      "labels": {
+        "gross_revenue": "Receita Bruta:",
+        "direct_costs": "Custos Diretos:",
+        "operational_expenses": "Despesas Operacionais:",
+        "ministry_transfers": "Repasses e Contribuições Ministeriais:",
+        "capex": "Investimentos (CAPEX):",
+        "extraordinary_results": "Resultados Extraordinários:",
+        "note": "Nota:"
+      },
+      "texts": {
+        "gross_revenue": "Total de entradas operacionais (dízimos, ofertas, doações e contribuições recorrentes).",
+        "direct_costs": "Custos diretamente relacionados à realização de projetos, eventos e atividades específicas.",
+        "operational_expenses": "Gastos necessários para manter as atividades diárias da igreja (aluguel, energia, água, materiais, transporte, etc.).",
+        "ministry_transfers": "Valores enviados para a diretoria ou missões.",
+        "capex": "Aquisição de bens permanentes usados na estrutura da igreja (cadeiras, mesas, equipamentos, mobiliário, etc.). Estes valores impactam o patrimônio da igreja, mas não o resultado operacional do período.",
+        "extraordinary_results": "Receitas e despesas não recorrentes ou que não fazem parte da operação normal da igreja.",
+        "note": "Este relatório considera apenas lançamentos já confirmados que impactam diretamente o resultado ou o patrimônio da igreja no período analisado."
+      }
+    },
+    "metadata": {
+      "title": "Demonstração do Resultado do Exercício (DRE)",
+      "generated": "Relatório gerado automaticamente pelo sistema de gestão financeira",
+      "competence": "Competência:"
+    }
+  },
+  "payment_commitment_contract": {
+    "title": "Contrato de Compromisso de Pagamento",
+    "parties_title": "PARTES CONTRATANTES",
+    "creditor": "CREDOR:",
+    "represented_by": "Representada legalmente por:",
+    "debtor": "DEVEDOR:",
+    "identity_document": "Documento de Identidade:",
+    "address": "Endereço:",
+    "phone": "Telefone:",
+    "email": "E-mail:",
+    "clauses_title": "CLÁUSULAS CONTRATUAIS",
+    "first_clause_title": "PRIMEIRA - OBJETO DO CONTRATO",
+    "first_clause_text_intro": "Por meio do presente instrumento particular, o DEVEDOR reconhece expressamente assumir o compromisso de pagamento referente a:",
+    "first_clause_text_amount": "pela quantia de",
+    "first_clause_text_end": "valor que deverá ser quitado em sua totalidade conforme estabelecido no presente contrato.",
+    "second_clause_title": "SEGUNDA - MODALIDADE DE PAGAMENTO",
+    "second_clause_text_intro": "O DEVEDOR compromete-se a pagar a totalidade do compromisso descrito na primeira cláusula em",
+    "second_clause_single": "parcela única",
+    "second_clause_multiple": "parcelas",
+    "second_clause_text_end": "de acordo com o seguinte detalhamento:",
+    "table_installment_number": "N° Parcela",
+    "table_value": "Valor",
+    "table_due_date": "Data de Vencimento",
+    "table_status": "Status",
+    "third_clause_title": "TERCEIRA - LOCAL E FORMA DE PAGAMENTO",
+    "third_clause_text_start": "O pagamento deverá ser realizado em dinheiro nas instalações da",
+    "third_clause_text_mid": "localizadas em",
+    "third_clause_text_end": "ou mediante depósito/transferência.",
+    "fourth_clause_title": "QUARTA - DECLARAÇÃO DE CONSENTIMENTO",
+    "fourth_clause_text": "O DEVEDOR declara que assume esta obrigação de maneira livre, voluntária e sem qualquer coação, encontrando-se em pleno uso de suas faculdades mentais e com pleno conhecimento das implicações legais que este compromisso acarreta.",
+    "signing_text_start": "Em sinal de conformidade, as partes assinam o presente documento em duas vias, aos",
+    "signing_text_mid": "dias do mês",
+    "signing_text_end": "do ano de",
+    "cpf_label": "CPF:"
+  },
+  "finance_record_report": {
+    "title": "Relatório de Movimentos Financeiros",
+    "church_label": "Igreja:",
+    "church_not_informed": "Congregação não informada",
+    "generated_at": "Gerado em:",
+    "period_label": "Período:",
+    "filtered_type": "Tipo filtrado:",
+    "symbol_label": "Moeda:",
+    "symbol_not_informed": "Moeda não informada",
+    "movement_singular": "movimento",
+    "movement_plural": "movimentos",
+    "net_result": "Resultado líquido",
+    "reversal_tooltip_title": "O que é um estorno?",
+    "reversal_tooltip_text": "Movimentos que anulam ou corrigem lançamentos anteriores.",
+    "type": {
+      "INCOME": "Entradas",
+      "OUT": "Saídas",
+      "PURCHASE": "Compras",
+      "REVERSAL": "Estornos / Reversões"
+    },
+    "table": {
+      "index": "#",
+      "date": "Data",
+      "description": "Descrição",
+      "type": "Tipo",
+      "concept": "Conceito",
+      "availability_account": "Conta de Disponibilidade",
+      "cost_center": "Centro de Custo",
+      "voucher": "Comprovante",
+      "amount": "Valor"
+    },
+    "empty": "Nenhum movimento financeiro encontrado para os filtros informados."
+  },
+  "inventory_report": {
+    "title": "Inventário Patrimonial",
+    "generated_at": "Gerado em:",
+    "congregation": "Congregação:",
+    "category": "Categoria:",
+    "status": "Status:",
+    "summary_total_assets": "Total de bens",
+    "summary_estimated_value": "Valor estimado",
+    "table": {
+      "index": "#",
+      "code": "Código",
+      "name": "Nome",
+      "category": "Categoria",
+      "status": "Status",
+      "value": "Valor",
+      "responsible": "Responsável",
+      "location": "Localização",
+      "acquisition": "Aquisição"
+    },
+    "empty": "Nenhum bem cadastrado para os filtros informados."
+  }
+}
