@@ -1,13 +1,13 @@
-import { IMemberRepository, Member } from "@/Church/domain"
+import { type IMemberRepository, Member } from "@/Church/domain"
 import { Logger } from "@/Shared/adapter"
 import {
-  INotificationRepository,
+  type INotificationRepository,
   NotificationInbox,
-  NotificationRequest,
+  type NotificationRequest,
   NotificationsTopic,
-} from "@/Notifications/domain"
-import { IJob } from "@/Shared/domain"
+} from "@/PushNotifications/domain"
 import { FCMNotificationService } from "./services/FCMNotification.service"
+import type { IJob } from "@/package/queue/domain"
 
 export class NotifyFCMJob implements IJob {
   private logger = Logger(NotifyFCMJob.name)

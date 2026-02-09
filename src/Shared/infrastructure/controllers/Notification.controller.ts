@@ -1,5 +1,5 @@
+import type { ServerResponse } from "bun-platform-kit"
 import { Body, Controller, Post, Req, Res, Use } from "bun-platform-kit"
-import type { ServerResponse, ServerRequest } from "bun-platform-kit"
 
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { FindMemberById } from "@/Church/applications"
@@ -8,7 +8,7 @@ import { HttpStatus } from "@/Shared/domain"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
 import { PermissionMiddleware } from "../middleware/Permission.middleware"
 
-@Controller("/api/v1/Notifications")
+@Controller("/api/v1/PushNotifications")
 export class NotificationController {
   @Post("/push-tokens")
   @Use(PermissionMiddleware)

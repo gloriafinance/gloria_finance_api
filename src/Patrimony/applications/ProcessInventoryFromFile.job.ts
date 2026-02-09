@@ -1,13 +1,18 @@
-import { createReadStream, promises as fs } from "fs"
-import { parse } from "@fast-csv/parse"
+import { promises as fs } from "fs"
+import { type HeaderArray, parse } from "@fast-csv/parse"
 import { Logger } from "@/Shared/adapter"
 import {
   AssetInventoryStatus,
-  IAssetRepository,
-  ImportInventoryRequest,
+  type IAssetRepository,
+  type ImportInventoryRequest,
 } from "../domain"
-import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
+import {
+  type IJob,
+  type IQueueService,
+  QueueName,
+} from "@/package/queue/domain"
 import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
+import { Readable } from "node:stream"
 
 type InventoryCsvRow = {
   assetId: string
@@ -121,14 +126,12 @@ export class ProcessInventoryFromFileJob implements IJob {
       userName: args.performedByDetails.name,
       context: emailContext,
     })
-
-    await fs.unlink(args.filePath).catch(() => undefined)
   }
 
   private async execute(
     request: ImportInventoryRequest
   ): Promise<ImportInventorySummary> {
-    const rows = await this.readRows(request.filePath)
+    const rows = await this.readRows(request.fileContent)
     const summary: ImportInventorySummary = {
       processed: rows.length,
       updated: 0,
@@ -197,16 +200,16 @@ export class ProcessInventoryFromFileJob implements IJob {
     return summary
   }
 
-  private async readRows(filePath: string): Promise<InventoryCsvRow[]> {
+  private async readRows(fileContent: string): Promise<InventoryCsvRow[]> {
     const rows: InventoryCsvRow[] = []
-    const delimiter = await detectDelimiter(filePath)
+    const delimiter = await detectDelimiter(fileContent)
 
     await new Promise<void>((resolve, reject) => {
-      const stream = createReadStream(filePath).pipe(
+      const stream = Readable.from([fileContent]).pipe(
         parse({
-          headers: (headers: string[]) =>
+          headers: (headers: HeaderArray): HeaderArray =>
             headers.map((header) => {
-              const normalized = normalizeHeader(header)
+              const normalized = normalizeHeader(String(header ?? ""))
               return HEADER_KEYS[normalized] ?? normalized
             }),
           delimiter,

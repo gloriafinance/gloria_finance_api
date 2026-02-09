@@ -1,5 +1,3 @@
-import { v4 } from "uuid"
-
 export class Urn {
   static create(params: {
     entity: string
@@ -8,7 +6,8 @@ export class Urn {
   }): string {
     const { entity, entityId, churchId } = params
 
-    const resolvedEntityId = entityId && entityId.length > 0 ? entityId : v4()
+    const resolvedEntityId =
+      entityId && entityId.length > 0 ? entityId : crypto.randomUUID()
     const baseUrn = `urn:${entity}:${resolvedEntityId}`
 
     if (churchId && churchId.length > 0) {

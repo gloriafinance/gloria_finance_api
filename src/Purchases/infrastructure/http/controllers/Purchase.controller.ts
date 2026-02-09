@@ -74,7 +74,7 @@ export class PurchaseController {
       })
 
       request.invoice = await StorageGCP.getInstance(
-        process.env.BUCKET_FILES
+        process.env.BUCKET_FILES!
       ).uploadFile(invoiceFile)
 
       await new RecordPurchase(
@@ -88,7 +88,7 @@ export class PurchaseController {
       res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })
     } catch (e) {
       if (request?.invoice) {
-        await StorageGCP.getInstance(process.env.BUCKET_FILES).deleteFile(
+        await StorageGCP.getInstance(process.env.BUCKET_FILES!).deleteFile(
           request.invoice
         )
       }

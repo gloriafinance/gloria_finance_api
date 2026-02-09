@@ -40,7 +40,7 @@ import {
   type FilterAccountReceivableRequest,
   type PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
-import { NotifyPaymentCommitment } from "@/Notifications/applications"
+import { NotifyPaymentCommitment } from "@/PushNotifications/applications"
 import { AmountValue, HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { Logger } from "@/Shared/adapter"

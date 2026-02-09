@@ -1,4 +1,4 @@
-import type { ServerResponse } from "bun-platform-kit"
+import type { BunMultipartFile, ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -21,7 +21,7 @@ import type {
   UpdateAssetRequest,
 } from "@/Patrimony"
 import {
-  AssetInventoryChecker,
+  type AssetInventoryChecker,
   AssetInventoryStatus,
   AssetStatus,
   CreateAsset,
@@ -67,6 +67,7 @@ import {
   PuppeteerAdapter,
   XLSExportAdapter,
 } from "@/Shared/adapter"
+import { HttpStatus } from "@/Shared/domain"
 
 type ListAssetsQuery = {
   category?: string
@@ -327,13 +328,25 @@ export class PatrimonyController {
     @Res() res: ServerResponse
   ) {
     try {
-      const file = req["inventoryFile"]
+      const file = req.files?.inventoryFile as BunMultipartFile
+      if (!file) {
+        res.status(HttpStatus.BAD_REQUEST).send({
+          file: {
+            message: "Arquivo do extrato é obrigatório",
+            rule: "required",
+          },
+        })
+        return
+      }
       const performerDetails = this.resolveInventoryPerformerDetails(req.auth)
 
+      const fileContent = file?.text ? await file.text() : ""
+
+      // @ts-ignore
       QueueService.getInstance().dispatch(
         QueueName.ProcessInventoryFromFileJob,
         {
-          filePath: file.tempFilePath,
+          fileContent,
           performedByDetails: performerDetails,
         } as ImportInventoryRequest
       )
@@ -376,7 +389,7 @@ export class PatrimonyController {
         return
       }
 
-      res.setHeader("Cache-Control", "no-store")
+      res.setHeader!("Cache-Control", "no-store")
 
       const file = await new GeneratePhysicalInventorySheet(
         AssetMongoRepository.getInstance()
@@ -390,7 +403,7 @@ export class PatrimonyController {
 
       const { path, filename } = file
 
-      res.download(path, filename, (error) => {
+      res.download!(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
         //if (error && !res.headersSent) {
@@ -435,7 +448,7 @@ export class PatrimonyController {
 
       const { path, filename } = file
 
-      res.download(path, filename, (error) => {
+      res.download!(path, filename, (error) => {
         fs.unlink(path).catch(() => undefined)
 
         // if (error && !res.headersSent) {

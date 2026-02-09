@@ -1,17 +1,17 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Patch,
-  Body,
   Param,
+  Patch,
+  Post,
   Query,
   Req,
   Res,
-  Use,
   type ServerResponse,
+  Use,
 } from "bun-platform-kit"
-import { GenericException, HttpStatus, IQueueService } from "@/Shared/domain"
+import { GenericException, HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   ImportBankStatement,
@@ -24,12 +24,12 @@ import {
   BankStatementMongoRepository,
 } from "@/Banking/infrastructure/persistence"
 import { BankStatementReconciler } from "@/Banking/applications/BankStatementReconciler"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinanceRecordMongoRepository,
@@ -42,6 +42,7 @@ import {
 import { BankStatementParserFactory } from "@/Banking/infrastructure/parsers/BankStatementParserFactory"
 import { ImportBankStatementValidator } from "../validators/ImportBankStatement.validator"
 import { LinkBankStatementValidator } from "../validators/LinkBankStatement.validator"
+import type { IQueueService } from "@/package/queue/domain"
 
 type ImportBankStatementPayload = Omit<
   ImportBankStatementRequest,
@@ -167,7 +168,7 @@ export class BankStatementController {
   ])
   async linkFinancialRecord(
     @Param("bankStatementId") bankStatementId: string,
-    @Body() body: { financialRecordId?: string },
+    @Body() body: { financialRecordId: string },
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ): Promise<void> {
@@ -217,7 +218,7 @@ export class BankStatementController {
 
   private async resolveBankForParsing(bankId: string): Promise<Bank> {
     const parserFactory = BankStatementParserFactory.getInstance()
-    const bank = await BankMongoRepository.getInstance().findById(bankId)
+    const bank = (await BankMongoRepository.getInstance().findById(bankId))!
 
     const canResolve = (bankName: string): boolean => {
       try {

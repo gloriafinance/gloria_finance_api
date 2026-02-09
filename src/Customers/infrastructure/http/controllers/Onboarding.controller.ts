@@ -35,6 +35,11 @@ export class OnboardingController {
       const customer = Customer.create(payload)
       await CustomerMongoRepository.getInstance().upsert(customer)
 
+      QueueService.getInstance().dispatch(
+        QueueName.TelegramNotificationJob,
+        payload
+      )
+
       res.status(HttpStatus.CREATED).send({
         message: "Customer created successfully",
         customerId: customer.getCustomerId(),

@@ -1,4 +1,4 @@
-import { NotificationsTopic } from "@/Notifications/domain"
+import { NotificationsTopic } from "@/PushNotifications/domain"
 
 export type NotificationRequest = {
   churchId: string
