@@ -1,5 +1,5 @@
 import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
-import { NotificationInbox } from "@/Notifications/domain"
+import { NotificationInbox } from "@/PushNotifications/domain"
 
 export interface INotificationRepository {
   upsert(notification: NotificationInbox): Promise<void>

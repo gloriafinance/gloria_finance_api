@@ -1,8 +1,8 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
-  INotificationRepository,
+  type INotificationRepository,
   NotificationInbox,
-} from "@/Notifications/domain"
+} from "@/PushNotifications/domain"
 import { Collection } from "mongodb"
 
 export class NotificationMongoRepository

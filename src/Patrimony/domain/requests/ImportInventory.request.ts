@@ -1,6 +1,6 @@
-import { AssetInventoryChecker } from "@/Patrimony"
+import type { AssetInventoryChecker } from "@/Patrimony"
 
 export type ImportInventoryRequest = {
-  filePath: string
+  fileContent: string
   performedByDetails: AssetInventoryChecker
 }

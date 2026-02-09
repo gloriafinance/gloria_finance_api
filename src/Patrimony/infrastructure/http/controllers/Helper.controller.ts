@@ -1,7 +1,7 @@
-import { CreateAssetAttachmentRequest } from "@/Patrimony"
+import type { CreateAssetAttachmentRequest } from "@/Patrimony"
 import { StorageGCP } from "@/Shared/infrastructure"
 
-const storage = StorageGCP.getInstance(process.env.BUCKET_FILES)
+const storage = StorageGCP.getInstance(process.env.BUCKET_FILES!)
 type PersistableAttachment = Omit<CreateAssetAttachmentRequest, "file"> & {
   url: string
   mimetype: string

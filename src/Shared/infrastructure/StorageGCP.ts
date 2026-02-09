@@ -1,8 +1,7 @@
 import { Storage } from "@google-cloud/storage"
 import * as fs from "fs"
-import { v4 } from "uuid"
 import { Readable } from "node:stream"
-import { GenericException, IStorageService } from "../domain"
+import { GenericException, type IStorageService } from "../domain"
 import { Logger } from "../adapter"
 import { CacheService } from "./services/Cache.service"
 
@@ -74,7 +73,7 @@ export class StorageGCP implements IStorageService {
 
       await this.cacheService.set(cacheKey, url, this.downloadCacheTtlSeconds)
       return url
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Error generating signed URL:", error)
       throw new GenericException("Error generating signed URL.")
     }
@@ -102,7 +101,7 @@ export class StorageGCP implements IStorageService {
           },
         })
 
-        const handleError = (err: unknown) => {
+        const handleError = (err: any) => {
           this.logger.error("Error uploading file to GCP Storage:", err)
           reject(new GenericException("Error uploading file to GCP Storage."))
         }
@@ -154,8 +153,7 @@ export class StorageGCP implements IStorageService {
 
       this.logger.info("File uploaded successfully to GCP Storage.")
       return key
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
       this.logger.error("Error uploading file to GCP Storage:", error)
       throw new Error("Error uploading file to GCP Storage.")
     }
@@ -172,7 +170,7 @@ export class StorageGCP implements IStorageService {
 
       await file.delete()
       this.logger.info(`File ${path} deleted successfully from GCP Storage.`)
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Error deleting file from GCP Storage:", error)
       throw new Error("Error deleting file from GCP Storage.")
     }
@@ -191,7 +189,9 @@ export class StorageGCP implements IStorageService {
     const extension = originalName.includes(".")
       ? originalName.split(".").pop()
       : undefined
-    const newFileName = extension ? `${v4()}.${extension}` : v4()
+    const newFileName = extension
+      ? `${crypto.randomUUID()}.${extension}`
+      : crypto.randomUUID()
 
     return `${year}/${month}/${newFileName}`
   }

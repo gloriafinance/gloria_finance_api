@@ -12,10 +12,10 @@ import { BankingQueue } from "@/Banking/infrastructure/Banking.queue"
 import { SecuritySystemQueue } from "@/SecuritySystem/infrastructure/SecuritySystem.queue"
 import { CustomerQueue } from "@/Customers/infrastructure/Customer.queue"
 import { PurchasesQueue } from "@/Purchases/infrastructure/Purchases.queue"
-import { NotifyFCMJob } from "@/Notifications/infrastructure/NotifyFCM.job"
-import { NotificationMongoRepository } from "@/Notifications/infrastructure/persistence"
-import { FCMNotificationService } from "@/Notifications/infrastructure/services/FCMNotification.service"
-import type { IJob, IListQueue } from "@/package/queue/domain"
+import { NotifyFCMJob } from "@/PushNotifications/infrastructure/NotifyFCM.job"
+import { NotificationMongoRepository } from "@/PushNotifications/infrastructure/persistence"
+import { FCMNotificationService } from "@/PushNotifications/infrastructure/services/FCMNotification.service"
+import type { IListQueue } from "@/package/queue/domain"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({

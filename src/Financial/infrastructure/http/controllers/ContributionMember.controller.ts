@@ -1,3 +1,4 @@
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -8,10 +9,9 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-import type { ServerResponse, ServerRequest } from "bun-platform-kit"
 
-import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
 import ContributionValidator from "../validators/Contribution.validator"
 import { Logger } from "@/Shared/adapter"
 import { FindMemberById } from "@/Church/applications"
@@ -21,21 +21,21 @@ import {
   RegisterContributionsOnline,
 } from "@/Financial/applications"
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
+import type {
+  ContributionRequest,
+  FilterContributionsRequest,
+} from "@/Financial/domain"
 import {
   AvailabilityAccountNotFound,
   FinancialConcept,
   MemberContributionType,
   OnlineContributions,
 } from "@/Financial/domain"
-import type {
-  ContributionRequest,
-  FilterContributionsRequest,
-} from "@/Financial/domain"
 import { OnlineContributionsMongoRepository } from "@/Financial/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { Paginate } from "@abejarano/ts-mongodb-criteria"
 import MemberContributionsDTO from "@/Financial/infrastructure/http/dto/MemberContributions.dto"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
@@ -84,10 +84,10 @@ export class ContributionMemberController {
         }
 
         financialConcept =
-          await FinancialConceptMongoRepository.getInstance().one({
+          (await FinancialConceptMongoRepository.getInstance().one({
             churchId: member.getChurch().churchId,
             name,
-          })
+          }))!
       }
 
       if (payload.contributionType === MemberContributionType.OFFERING) {
@@ -98,9 +98,9 @@ export class ContributionMemberController {
         }
 
         financialConcept =
-          await FinancialConceptMongoRepository.getInstance().one({
+          (await FinancialConceptMongoRepository.getInstance().one({
             financialConceptId: payload.financialConceptId,
-          })
+          }))!
       }
 
       const availabilityAccount =
@@ -114,7 +114,7 @@ export class ContributionMemberController {
 
       await new RegisterContributionsOnline(
         OnlineContributionsMongoRepository.getInstance(),
-        StorageGCP.getInstance(process.env.BUCKET_FILES),
+        StorageGCP.getInstance(process.env.BUCKET_FILES!),
         FinancialYearMongoRepository.getInstance()
       ).execute(
         {

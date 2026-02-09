@@ -5,7 +5,7 @@ import { Logger } from "@/Shared/adapter"
 import {
   type NotificationRequest,
   NotificationsTopic,
-} from "@/Notifications/domain"
+} from "@/PushNotifications/domain"
 import { AccountReceivable } from "@/AccountsReceivable/domain"
 
 export class NotifyPaymentCommitment {

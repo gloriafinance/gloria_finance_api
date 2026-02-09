@@ -1,6 +1,7 @@
-import { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
+import type { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { join } from "path"
 import { promises as fs } from "fs"
+
 const TEMP_DIR = join(process.cwd(), "tmp")
 
 const CSV_SEPARATOR = ";"
@@ -17,7 +18,9 @@ export class XLSExportAdapter implements IXLSExportAdapter {
     const csv = [header, ...rows]
       .map((row) =>
         row
-          .map((value) => `"${(value ?? "").toString().replace(/"/g, '""')}"`)
+          .map(
+            (value: any) => `"${(value ?? "").toString().replace(/"/g, '""')}"`
+          )
           .join(CSV_SEPARATOR)
       )
       .join("\n")
