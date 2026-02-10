@@ -1,7 +1,7 @@
 import {
-  CreateUserRequest,
-  IPasswordAdapter,
-  IUserRepository,
+  type CreateUserRequest,
+  type IPasswordAdapter,
+  type IUserRepository,
   User,
   UserNotFound,
 } from "../domain"
@@ -34,7 +34,7 @@ export class CreateOrUpdateUser {
   }
 
   private async updateUser(userRequest: CreateUserRequest): Promise<User> {
-    const user: User = await this.userRepository.findByUserId(
+    const user: User | undefined = await this.userRepository.findByUserId(
       userRequest.userId
     )
 

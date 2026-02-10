@@ -1,7 +1,7 @@
 import { Urn } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { UserPolicies } from "./types/user-policies.type"
+import type { UserPolicies } from "./types/user-policies.type"
 
 export class User extends AggregateRoot {
   isActive: boolean
@@ -29,7 +29,7 @@ export class User extends AggregateRoot {
     isSuperUser: boolean = false
   ): User {
     const u = new User()
-    u.email = email
+    u.email = email.toLowerCase()
     u.password = password
 
     u.userId = Urn.create({ entity: "user", churchId: Urn.id(churchId) })
@@ -44,7 +44,7 @@ export class User extends AggregateRoot {
     return u
   }
 
-  static fromPrimitives(data: any): User {
+  static override fromPrimitives(data: any): User {
     const u: User = new User()
     u.email = data.email
     u.createdAt = data.createdAt

@@ -44,7 +44,7 @@ export class MicrosoftIdTokenAdapter implements ISocialTokenAdapter {
       ""
 
     return {
-      email,
+      email: email.toLowerCase(),
       name: data.name,
     }
   }
