@@ -1,5 +1,6 @@
 export { CreateUserForMemberJob } from "./CreateUserForMember.job"
 export { MakeLogin } from "./MakeLogin"
+export { MakeSocialLogin } from "./MakeSocialLogin"
 export { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 export { ChangePassword } from "./ChangePassword"
 export { AcceptPolicies } from "./AcceptPolicies"

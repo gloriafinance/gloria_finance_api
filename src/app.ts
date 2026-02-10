@@ -12,10 +12,13 @@ import { controllersModule } from "./bootstrap"
 import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
+import { BunHostAdapter } from "@/Shared/adapter/BunHostAdapter"
 
 export const APP_DIR = __dirname
 
-const server = new BunKitServer(Number(Number(process.env.APP_PORT || 8080)))
+const server = new BunKitServer(Number(process.env.APP_PORT || 8080), {
+  adapter: new BunHostAdapter(),
+})
 
 server.addModules([
   new CorsModule({

@@ -8,3 +8,5 @@ export {
 
 export { PasswordAdapter } from "./adapters/Password.adapter"
 export { AuthTokenAdapter } from "./adapters/AuthToken.adapter"
+export { MicrosoftIdTokenAdapter } from "./adapters/MicrosoftIdToken.adapter"
+export { GoogleIdTokenAdapter } from "./adapters/GoogleIdToken.adapter"
