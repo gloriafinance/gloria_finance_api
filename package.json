@@ -33,6 +33,7 @@
     "firebase-admin": "^13.6.0",
     "ioredis": "^5.9.1",
     "jsonwebtoken": "^9.0.3",
+    "jose": "^5.9.3",
     "migrate-mongo": "^14.0.7",
     "node-input-validator": "^4.6.0",
     "nodemailer": "^7.0.12",

@@ -3,9 +3,12 @@ import {
   ChangePassword,
   CreateOrUpdateUser,
   MakeLogin,
+  MakeSocialLogin,
 } from "../../../applications"
 import {
   AuthTokenAdapter,
+  GoogleIdTokenAdapter,
+  MicrosoftIdTokenAdapter,
   UserAssignmentMongoRepository,
   UserMongoRepository,
 } from "@/SecuritySystem/infrastructure"
@@ -52,6 +55,11 @@ export type userLoginPayload = {
   password: string
 }
 
+type SocialLoginPayload = {
+  provider: "microsoft" | "google"
+  idToken: string
+}
+
 type ChurchContext = {
   churchId: string
   name: string
@@ -76,6 +84,41 @@ export class UserController {
       res.status(HttpStatus.OK).send(response)
     } catch (e: any) {
       this.logger.error(`login error`, e)
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/social-login")
+  async socialLogin(@Body() payload: SocialLoginPayload, res: ServerResponse) {
+    try {
+      if (!payload?.provider || !payload?.idToken) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          message: "provider and idToken are required.",
+        })
+      }
+
+      const adapter =
+        payload.provider === "microsoft"
+          ? new MicrosoftIdTokenAdapter()
+          : payload.provider === "google"
+            ? new GoogleIdTokenAdapter()
+            : null
+
+      if (!adapter) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          message: "Unsupported social login provider.",
+        })
+      }
+
+      const user = await new MakeSocialLogin(
+        UserMongoRepository.getInstance(),
+        adapter
+      ).execute(payload.idToken)
+
+      const response = await this.buildAuthResponse(user)
+      res.status(HttpStatus.OK).send(response)
+    } catch (e: any) {
+      this.logger.error(`social login error`, e)
       domainResponse(e, res)
     }
   }
@@ -349,7 +392,7 @@ export class UserController {
     return {
       ...responseUser,
       church,
-      roles: roles.getRoles(),
+      roles: roles!.getRoles(),
       token,
       refreshToken,
     }

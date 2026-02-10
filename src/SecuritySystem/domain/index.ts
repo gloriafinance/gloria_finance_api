@@ -11,6 +11,10 @@ export { ProfileType } from "./enums/profileType.enum"
 export type { IUserRepository } from "./interfaces/UserRepository.interface"
 export type { IAuthToken } from "./interfaces/auth-token.interface"
 export type {
+  ISocialTokenAdapter,
+  SocialTokenPayload,
+} from "./interfaces/SocialTokenAdapter.interface"
+export type {
   IPermissionRepository,
   IRolePermissionRepository,
   IRoleRepository,
@@ -29,6 +33,7 @@ export type { RefreshTokenRequest } from "./requests/RefreshToken.request"
 export { UserNotFound } from "./exceptions/UserNotFound"
 export { UserDisabled } from "./exceptions/UserDisabled"
 export { InvalidPassword } from "./exceptions/InvalidPassword"
+export { InvalidSocialToken } from "./exceptions/InvalidSocialToken"
 export { ActionNotAllowed } from "./exceptions/ActionNotAllowed"
 export { SystemRoleModificationNotAllowed } from "./exceptions/SystemRoleModificationNotAllowed"
 export { UserGroupNotFound } from "./exceptions/UserGroupNotFound"
