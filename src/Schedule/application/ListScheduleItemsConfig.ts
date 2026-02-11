@@ -1,6 +1,6 @@
 import { Logger } from "@/Shared/adapter"
 import {
-  IScheduleItemRepository,
+  type IScheduleItemRepository,
   type ListScheduleEventsFiltersRequest,
   ScheduleEvent,
 } from "@/Schedule/domain"
@@ -10,7 +10,7 @@ import {
   Operator,
   Order,
   OrderTypes,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 
 export class ListScheduleItemsConfig {

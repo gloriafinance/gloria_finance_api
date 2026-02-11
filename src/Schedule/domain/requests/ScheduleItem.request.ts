@@ -1,10 +1,10 @@
 import {
-  LocationDTO,
-  RecurrencePatternDTO,
+  type LocationDTO,
+  type RecurrencePatternDTO,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
-import { ListParams } from "@/Shared/domain"
+import type { ListParams } from "@/Shared/domain"
 
 export type CreateScheduleEventRequest = {
   churchId: string
