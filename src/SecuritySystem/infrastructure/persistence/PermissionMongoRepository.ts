@@ -1,9 +1,9 @@
 import {
   Criteria,
   MongoRepository,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
-import { IPermissionRepository, Permission } from "@/SecuritySystem/domain"
+import { type IPermissionRepository, Permission } from "@/SecuritySystem/domain"
 import { Collection } from "mongodb"
 
 export class PermissionMongoRepository
@@ -63,9 +63,9 @@ export class PermissionMongoRepository
     })
   }
 
-  list(): Promise<Permission[]>
+  override list(): Promise<Permission[]>
 
-  list(criteria: Criteria): Promise<Paginate<Permission>>
+  override list(criteria: Criteria): Promise<Paginate<Permission>>
   override async list(): Promise<Permission[] | Paginate<Permission>> {
     const collection = await this.collection()
     const documents = await collection.find({}).toArray()
@@ -78,7 +78,12 @@ export class PermissionMongoRepository
     )
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      {
+        permissionId: 1,
+      },
+      { unique: true }
+    )
   }
 }
