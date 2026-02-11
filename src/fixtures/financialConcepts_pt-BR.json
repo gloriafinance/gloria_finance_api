@@ -16,7 +16,7 @@
     "description": "Aquisição, instalação ou melhoria de estruturas físicas e adequações permanentes no espaço da igreja, incluindo reformas, adaptações técnicas, isolamento, tratamento acústico e melhorias funcionais do ambiente.",
     "type": "PURCHASE",
     "active": true,
-    "statementCategory": "CAPEX"
+    "statementCategory": "CAPEX",
     "affectsBalance": true,
     "affectsCashFlow": true,
     "affectsResult": false,
