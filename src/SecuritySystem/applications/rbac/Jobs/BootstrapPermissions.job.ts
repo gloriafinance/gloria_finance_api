@@ -1,18 +1,18 @@
 import {
   BASE_PERMISSIONS,
   BASE_ROLES,
-  IPasswordAdapter,
-  IPermissionRepository,
-  IRolePermissionRepository,
-  IRoleRepository,
-  IUserAssignmentRepository,
-  IUserRepository,
+  type IPasswordAdapter,
+  type IPermissionRepository,
+  type IRolePermissionRepository,
+  type IRoleRepository,
+  type IUserAssignmentRepository,
+  type IUserRepository,
   Permission,
   Role,
 } from "@/SecuritySystem/domain"
 import { Logger } from "@/Shared/adapter"
-import { IJob } from "@/Shared/domain"
 import { CreateOrUpdateUser } from "@/SecuritySystem/applications"
+import type { IJob } from "@/package/queue/domain"
 
 export type BootstrapPermissionsRequest = {
   churchId: string
@@ -49,7 +49,7 @@ export class BootstrapPermissionsJob implements IJob {
 
     await this.assignRoleToCreator(
       request.churchId,
-      request.userId,
+      request.userId!,
       request.roles
     )
 
@@ -66,12 +66,12 @@ export class BootstrapPermissionsJob implements IJob {
         this.userRepository,
         this.passwordAdapter
       ).execute({
-        name: user.name,
-        email: user.email,
+        name: user!.name,
+        email: user!.email,
         password: "ChangeMe123!",
         isActive: true,
         churchId: churchId,
-        isSuperUser: user.isSuperUser,
+        isSuperUser: user!.isSuperUser,
       })
     ).getUserId()
   }
@@ -94,7 +94,13 @@ export class BootstrapPermissionsJob implements IJob {
           isSystem: Boolean(permissionDefinition.isSystem),
         })
 
-        await this.permissionRepository.upsert(permission)
+        try {
+          await this.permissionRepository.upsert(permission)
+        } catch (error) {
+          if (!this.isDuplicateKeyError(error)) {
+            throw error
+          }
+        }
       }
     }
 
@@ -145,5 +151,12 @@ export class BootstrapPermissionsJob implements IJob {
     this.logger.info(
       `Assigned ADMIN role to user ${assignment.getUserId()} for church ${churchId}`
     )
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    if (!error || typeof error !== "object") {
+      return false
+    }
+    return "code" in error && (error as { code?: number }).code === 11000
   }
 }

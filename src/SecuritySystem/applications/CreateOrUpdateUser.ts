@@ -35,7 +35,7 @@ export class CreateOrUpdateUser {
 
   private async updateUser(userRequest: CreateUserRequest): Promise<User> {
     const user: User | undefined = await this.userRepository.findByUserId(
-      userRequest.userId
+      userRequest.userId!
     )
 
     if (!user) {
