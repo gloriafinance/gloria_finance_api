@@ -42,7 +42,8 @@
       "rbac:manage_roles",
       "rbac:assign_roles",
       "rbac:read",
-      "tools:admin"
+      "tools:admin",
+      "schedule:configure"
     ],
     "isSystem": true
   },
