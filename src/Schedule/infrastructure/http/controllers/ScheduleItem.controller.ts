@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   Res,
+  type ServerResponse,
   Use,
 } from "bun-platform-kit"
 
@@ -25,14 +26,14 @@ import {
 } from "@/Schedule/application"
 import { ScheduleItemMongoRepository } from "@/Schedule/infrastructure"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
-import {
-  type CreateScheduleEventRequest,
-  type ListScheduleEventsFiltersRequest,
-  type UpdateScheduleEventRequest,
+import type {
+  CreateScheduleEventRequest,
+  ListScheduleEventsFiltersRequest,
+  UpdateScheduleEventRequest,
   WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import CreateScheduleItemValidator from "../validators/CreateScheduleItem.validator"
 import UpdateScheduleItemValidator from "../validators/UpdateScheduleItem.validator"
 import ScheduleItemsQueryValidator from "../validators/ScheduleItemsQuery.validator"
@@ -70,7 +71,7 @@ export class ScheduleController {
       ).execute({
         ...body,
         churchId,
-        currentUserId: req.auth?.userId,
+        currentUserId: req.auth?.userId!,
       })
 
       res.status(HttpStatus.CREATED).send(mapToConfigDTO(scheduleItem))
@@ -97,8 +98,8 @@ export class ScheduleController {
       const scheduleItems = await new ListScheduleItemsConfig(
         ScheduleItemMongoRepository.getInstance()
       ).execute({
-        churchId,
         ...query,
+        churchId,
       })
 
       res.status(HttpStatus.OK).send(scheduleItems)
@@ -190,7 +191,7 @@ export class ScheduleController {
         ...body,
         churchId,
         scheduleItemId,
-        currentUserId: req.auth?.userId,
+        currentUserId: req.auth?.userId!,
       })
 
       const scheduleItem = await new GetScheduleItem(
@@ -222,7 +223,7 @@ export class ScheduleController {
       ).execute({
         churchId,
         scheduleItemId,
-        currentUserId: req.auth?.userId,
+        currentUserId: req.auth?.userId!,
       })
 
       res
@@ -249,7 +250,7 @@ export class ScheduleController {
       ).execute({
         churchId,
         scheduleItemId,
-        currentUserId: req.auth?.userId,
+        currentUserId: req.auth?.userId!,
       })
 
       res

@@ -73,7 +73,7 @@ export class AccountReceivableForMemberController {
         return
       }
 
-      const link = await store.downloadFile(account.getContract())
+      const link = await store.downloadFile(account.getContract()!)
 
       res.status(HttpStatus.OK).json({
         message: "Payment commitment accepted successfully.",
@@ -97,7 +97,7 @@ export class AccountReceivableForMemberController {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(query.memberId)
+      ).execute(req.auth.memberId)
 
       const list: Paginate<AccountReceivable> =
         await new ListMemberAccountReceivable(
