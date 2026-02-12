@@ -1,8 +1,21 @@
-import { ICacheService } from "@/Shared/domain"
+import { type ICacheService } from "@/Shared/domain"
 
 export class CacheService implements ICacheService {
   private static instance: CacheService
-  private cache: Map<string, { data: any; expiry: number }> = new Map()
+  private static readonly STORE_KEY = "__gloria_finance_cache_store__"
+  private cache: Map<string, { data: any; expiry: number }>
+
+  private constructor() {
+    const globalState = globalThis as typeof globalThis & {
+      [CacheService.STORE_KEY]?: Map<string, { data: any; expiry: number }>
+    }
+
+    if (!globalState[CacheService.STORE_KEY]) {
+      globalState[CacheService.STORE_KEY] = new Map()
+    }
+
+    this.cache = globalState[CacheService.STORE_KEY]!
+  }
 
   public static getInstance(): CacheService {
     if (!CacheService.instance) {
@@ -24,7 +37,7 @@ export class CacheService implements ICacheService {
       return null
     }
 
-    if (cached.expiry < Date.now()) {
+    if (cached.expiry <= Date.now()) {
       this.cache.delete(key)
       return null
     }

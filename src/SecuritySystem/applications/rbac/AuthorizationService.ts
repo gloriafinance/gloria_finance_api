@@ -1,6 +1,6 @@
 import { Logger } from "@/Shared/adapter"
-import { ICacheService } from "@/Shared/domain"
-import {
+import type { ICacheService } from "@/Shared/domain"
+import type {
   IPermissionRepository,
   IRolePermissionRepository,
   IUserAssignmentRepository,
@@ -51,6 +51,7 @@ export class AuthorizationService {
     userId: string
   ): Promise<AuthorizationContext> {
     const cacheKey = this.buildCacheKey(churchId, userId)
+
     const cached = await this.cache.get<AuthorizationContext>(cacheKey)
 
     if (cached) {
@@ -64,6 +65,7 @@ export class AuthorizationService {
       churchId,
       userId
     )
+
     const roles = assignment ? assignment.getRoles() : []
 
     if (!roles.length) {

@@ -1,10 +1,14 @@
 import { Member } from "@/Church/domain"
-import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
-import { IPasswordAdapter, IUserRepository, User } from "../domain"
+import {
+  type IJob,
+  type IQueueService,
+  QueueName,
+} from "@/package/queue/domain"
+import { type IPasswordAdapter, type IUserRepository, User } from "../domain"
 import { CreateOrUpdateUser } from "./CreateOrUpdateUser"
 
 import { Logger } from "@/Shared/adapter"
-import { BootstrapPermissionsRequest } from "./rbac/Jobs/BootstrapPermissions.job"
+import type { BootstrapPermissionsRequest } from "./rbac/Jobs/BootstrapPermissions.job"
 
 export class CreateUserForMemberJob implements IJob {
   private logger = Logger(CreateUserForMemberJob.name)
@@ -21,7 +25,7 @@ export class CreateUserForMemberJob implements IJob {
     )
     const member = Member.fromPrimitives(args)
 
-    const userExist: User = await this.userRepository.findByEmail(
+    const userExist: User | undefined = await this.userRepository.findByEmail(
       member.getEmail()
     )
 
