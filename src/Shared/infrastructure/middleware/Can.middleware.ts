@@ -1,5 +1,5 @@
-import { PermissionDescriptionResolver } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import { PermissionDescriptionResolver } from "@/Shared/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import type { NextFunction, ServerResponse } from "bun-platform-kit"
 
@@ -29,7 +29,7 @@ export function Can(module: string, action: string | string[]) {
         res.status(HttpStatus.UNAUTHORIZED).send({ message: "Unauthorized." })
         return
       }
-
+      //console.log(auth)
       if (auth.isSuperuser) {
         req.requiredPermission = moduleWildcard
         next()

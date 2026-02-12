@@ -1,17 +1,17 @@
-import { OnlineContributions, OnlineContributionsStatus } from "../../../domain"
 import type { FilterContributionsRequest } from "../../../domain"
+import { OnlineContributions, OnlineContributionsStatus } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   ListContributions,
   UpdateContributionStatus,
 } from "../../../applications"
 import { HttpStatus } from "@/Shared/domain"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import MemberContributionsDTO from "../dto/MemberContributions.dto"
 import {
   AvailabilityAccountMongoRepository,
@@ -20,7 +20,8 @@ import {
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { Logger } from "@/Shared/adapter"
-import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import { type Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Controller,
   Get,
@@ -31,8 +32,6 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-
-import type { ServerResponse } from "bun-platform-kit"
 
 @Controller("/api/v1/finance/contributions")
 export class ContributionController {
@@ -67,6 +66,7 @@ export class ContributionController {
   }
 
   @Patch("/:contributionId/status/:status")
+  @Use([PermissionMiddleware, Can("financial_records", "adm_contributions")])
   async updateContributionStatusController(
     @Param()
     params: { contributionId: string; status: OnlineContributionsStatus },

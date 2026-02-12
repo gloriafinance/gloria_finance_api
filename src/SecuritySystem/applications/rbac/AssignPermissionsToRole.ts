@@ -1,7 +1,7 @@
 import {
-  IPermissionRepository,
-  IRolePermissionRepository,
-  IRoleRepository,
+  type IPermissionRepository,
+  type IRolePermissionRepository,
+  type IRoleRepository,
   Role,
 } from "@/SecuritySystem/domain"
 import { ActionNotAllowed } from "@/SecuritySystem/domain/exceptions/ActionNotAllowed"
