@@ -1,5 +1,4 @@
 import pino from "pino"
-import pinoPretty from "pino-pretty"
 import { RequestContext } from "bun-platform-kit"
 
 class CustomLogger {
@@ -12,7 +11,7 @@ class CustomLogger {
         level(label: string) {
           return { level: label.toUpperCase() }
         },
-        bindings(bindings) {
+        bindings(bindings: any) {
           return {
             pid: bindings.pid,
             hostname: bindings.hostname,
@@ -26,30 +25,30 @@ class CustomLogger {
     }
 
     if (process.env.NODE_ENV === "production") {
-      // this.logger = pino(
-      //   {
-      //     ...pinoOptions,
-      //     timestamp: pino.stdTimeFunctions.isoTime,
-      //   },
-      //   pino.destination("/var/log/gloria-finance/app.log")
-      // )
-      this.logger = pino(pinoOptions)
-    } else {
-      const prettyStream = pinoPretty({
-        colorizeObjects: true,
-        customColors: "err:red,info:green",
-        singleLine: true,
-        translateTime: "yyyy-mm-dd HH:MM:ss",
-        ignore: "pid,hostname",
-        colorize: true,
-      })
+      const axiomToken = process.env.AXIOM_TOKEN
+      const axiomDataset = process.env.AXIOM_DATASET || "gloria_finance_api"
 
-      this.logger = pino(
-        {
-          ...pinoOptions,
-        },
-        prettyStream
-      ) // Solo logs en consola
+      if (axiomToken) {
+        const axiomTransport = pino.transport({
+          target: "@axiomhq/pino",
+          options: {
+            dataset: axiomDataset,
+            token: axiomToken,
+          },
+        })
+
+        this.logger = pino(
+          pinoOptions,
+          pino.multistream([
+            { stream: axiomTransport },
+            { stream: process.stdout },
+          ])
+        )
+      } else {
+        this.logger = pino(pinoOptions)
+      }
+    } else {
+      this.logger = pino(pinoOptions)
     }
   }
 
