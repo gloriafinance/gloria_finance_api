@@ -1,10 +1,10 @@
-import type { Mail } from "./types/mail.type"
 import { SendMailService } from "./service/SendMail.service"
 import { Logger } from "@/Shared/adapter"
 import type { IJob } from "@/package/queue/domain"
+import type { Mail } from "@/package/email/domain/types/mail.type"
 
 export class SendMailJob implements IJob {
-  private logger = Logger("SendMail")
+  private logger = Logger(SendMailJob.name)
 
   async handle(args: any): Promise<void> {
     const payload = args as Mail

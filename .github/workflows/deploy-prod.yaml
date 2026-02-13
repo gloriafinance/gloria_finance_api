@@ -38,7 +38,7 @@ jobs:
         run: |
           echo "$SSH_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP_SERVER_TWO "          
-          cd church_finance_api          
+          cd gloria_finance_api          
 
           git fetch origin
           git reset --hard origin/main

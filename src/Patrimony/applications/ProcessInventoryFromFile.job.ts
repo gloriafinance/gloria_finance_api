@@ -11,8 +11,8 @@ import {
   type IQueueService,
   QueueName,
 } from "@/package/queue/domain"
-import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
 import { Readable } from "node:stream"
+import { TemplateEmail } from "@/package/email/domain/enum/templateEmail.enum"
 
 type InventoryCsvRow = {
   assetId: string

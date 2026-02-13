@@ -1,7 +1,7 @@
 import nodemailer = require("nodemailer")
 
 import configEngineHTML from "./ConfigEngineHTML.service"
-import { Mail } from "../types/mail.type"
+import type { Mail } from "../domain/types/mail.type"
 import { Logger } from "@/Shared/adapter"
 
 const configTransportMail = async () => {
@@ -39,9 +39,14 @@ export const SendMailService = async (payload: Mail) => {
   logger.info(`Configuraciones del email`)
 
   const webapp = process.env.WEBAPP_URL
+  const attachments = payload.attachments?.map((attachment) => ({
+    filename: attachment.filename,
+    content: Buffer.from(attachment.contentBase64, "base64"),
+    contentType: attachment.contentType,
+  }))
 
   const HelperOptions = {
-    from: '"Gloria Finance" <gloriafinance@jaspesoft.com>',
+    from: '"Gloria Finance" <support@gloriafinance.com.br>',
     to: payload.to,
     subject: payload.subject,
     template: `${payload.template}`,
@@ -51,12 +56,15 @@ export const SendMailService = async (payload: Mail) => {
       client: payload.clientName,
       year: new Date().getFullYear(),
     },
+    attachments,
   }
 
   logger.info(
     `Enviando email a ${payload.to}, subject ${
       payload.subject
-    } template ${payload.template}, context
+    } template ${payload.template}, attachments ${
+      attachments?.length || 0
+    }, context
       ${JSON.stringify(HelperOptions.context)}`
   )
 

@@ -32,7 +32,6 @@ import {
   AvailabilityAccountMongoRepository,
   FinancialConceptMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
-import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import {
   AccountReceivable,
   type AccountReceivableRequest,
@@ -55,6 +54,7 @@ import {
   FinancialRecordStatus,
 } from "@/Financial/domain"
 import { DateBR } from "@/Shared/helpers"
+import { SendMailPaymentCommitment } from "@/package/email/applications"
 
 @Controller("/api/v1/account-receivable")
 export class AccountReceivableController {

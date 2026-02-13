@@ -1,6 +1,6 @@
 import { StorageGCP } from "@/Shared/infrastructure"
 import { ConceptType } from "../../../domain"
-import { Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export default async (list: Paginate<any>) => {
   const storage: StorageGCP = StorageGCP.getInstance(process.env.BUCKET_FILES!)

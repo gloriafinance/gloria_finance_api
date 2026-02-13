@@ -40,7 +40,6 @@ import {
 } from "bun-platform-kit"
 
 import randomString from "@/Shared/helpers/randomString"
-import { SendMailChangePassword } from "@/SendMail/applications"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { PermissionMiddleware, QueueService } from "@/Shared/infrastructure"
 import { FindChurchById, FindMemberById } from "@/Church/applications"
@@ -49,6 +48,7 @@ import {
   MemberMongoRepository,
 } from "@/Church/infrastructure"
 import type { AuthTokenPayload } from "../../adapters/AuthToken.adapter"
+import { SendMailChangePassword } from "@/package/email/applications"
 
 export type userLoginPayload = {
   email: string
