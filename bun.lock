@@ -15,7 +15,7 @@
         "@google-cloud/storage": "^7.18.0",
         "bcryptjs": "^3.0.3",
         "bullmq": "^5.67.2",
-        "bun-platform-kit": "^1.0.0",
+        "bun-platform-kit": "^1.1.0",
         "dayjs": "^1.11.19",
         "firebase-admin": "^13.6.0",
         "ioredis": "^5.9.1",
@@ -473,7 +473,7 @@
 
     "bullmq": ["bullmq@5.67.2", "", { "dependencies": { "cron-parser": "4.9.0", "ioredis": "5.9.2", "msgpackr": "1.11.5", "node-abort-controller": "3.1.1", "semver": "7.7.3", "tslib": "2.8.1", "uuid": "11.1.0" } }, "sha512-3KYqNqQptKcgksACO1li4YW9/jxEh6XWa1lUg4OFrHa80Pf0C7H9zeb6ssbQQDfQab/K3QCXopbZ40vrvcyrLw=="],
 
-    "bun-platform-kit": ["bun-platform-kit@1.0.0", "", { "dependencies": { "cors": "^2.8.5", "helmet": "^8.1.0", "reflect-metadata": "^0.2.2" } }, "sha512-qusX4WXWzDaeSHvFL7dsGOaO4aVpyLT7xNpwj7o31hl8LXdfn7O8fb+8ubLv1UMETa9LmZCPHmlBP9aCkMdD0Q=="],
+    "bun-platform-kit": ["bun-platform-kit@1.1.0", "", { "dependencies": { "cors": "^2.8.5", "helmet": "^8.1.0", "reflect-metadata": "^0.2.2" } }, "sha512-Bk12Es1R+/keMd9BUjqZsb0iiWBJsAQFxoohT8ut3ITWiTr4/Bl6sc1NNPTQ7EI0PVMWqV3WpRM6I/IAjFOAkA=="],
 
     "bun-types": ["bun-types@1.3.8", "", { "dependencies": { "@types/node": "*" } }, "sha512-fL99nxdOWvV4LqjmC+8Q9kW3M4QTtTR1eePs94v5ctGqU8OeceWrSUaRw3JYb7tU3FkMIAjkueehrHPPPGKi5Q=="],
 

@@ -1,16 +1,20 @@
 import { Storage } from "@google-cloud/storage"
 import * as fs from "fs"
 import { Readable } from "node:stream"
-import { GenericException, type IStorageService } from "../domain"
+import {
+  GenericException,
+  type ICacheService,
+  type IStorageService,
+} from "../domain"
 import { Logger } from "../adapter"
-import { CacheService } from "./services/Cache.service"
+import { CacheProviderService } from "./services/CacheProvider.service"
 
 export class StorageGCP implements IStorageService {
   private static _instance: StorageGCP
   private logger = Logger("StorageGCP")
   private storage: Storage
   private bucketName: string
-  private cacheService = CacheService.getInstance()
+  private cacheService: ICacheService = CacheProviderService.getInstance()
   private readonly downloadCacheTtlSeconds = 50 * 60
 
   constructor(bucketName?: string) {

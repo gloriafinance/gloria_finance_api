@@ -29,7 +29,7 @@
     "@axiomhq/pino": "^1.4.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.67.2",
-    "bun-platform-kit": "^1.0.0",
+    "bun-platform-kit": "^1.1.0",
     "dayjs": "^1.11.19",
     "firebase-admin": "^13.6.0",
     "ioredis": "^5.9.1",

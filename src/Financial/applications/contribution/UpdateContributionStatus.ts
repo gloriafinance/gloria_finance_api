@@ -21,7 +21,6 @@ import type {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import type { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
-import { DateBR } from "@/Shared/helpers"
 import type { IQueueService } from "@/package/queue/domain"
 
 export class UpdateContributionStatus {
@@ -47,8 +46,8 @@ export class UpdateContributionStatus {
       `UpdateContributionStatus contributionId: ${contributionId}, status: ${status}`
     )
 
-    const contribution: OnlineContributions =
-      await this.contributionRepository.findById(contributionId)
+    const contribution: OnlineContributions | null =
+      await this.contributionRepository.one({ contributionId })
 
     if (!contribution) {
       this.logger.info(`Contribution with id ${contributionId} not found`)
@@ -87,9 +86,9 @@ export class UpdateContributionStatus {
         this.accountReceivableRepository,
         this.queueService
       ).execute({
-        accountReceivableId: contribution.getAccountReceivableId(),
-        installmentId: contribution.getInstallmentId(),
-        installmentIds: [contribution.getInstallmentId()],
+        accountReceivableId: contribution.getAccountReceivableId()!,
+        installmentId: contribution.getInstallmentId()!,
+        installmentIds: [contribution.getInstallmentId()!],
         financialTransactionId: contribution.getBankTransferReceipt(),
         availabilityAccountId: contribution
           .getAvailabilityAccount()
@@ -109,7 +108,7 @@ export class UpdateContributionStatus {
       financialConcept: concept,
       amount: contribution.getAmount(),
       churchId: contribution.getMember().getChurch().churchId,
-      date: DateBR(),
+      date: contribution.getPaidAt(),
       createdBy,
       financialRecordType: FinancialRecordType.INCOME,
       source: FinancialRecordSource.AUTO,

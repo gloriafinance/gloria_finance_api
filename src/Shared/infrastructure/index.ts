@@ -9,6 +9,8 @@ export { NoOpStorage } from "./NoOpStorage"
 export { TelegramNotificationJob } from "./telegram"
 
 export * from "./services/Cache.service"
+export * from "./services/RedisCache.service"
+export * from "./services/CacheProvider.service"
 export * from "./services/PermissionDescriptionResolver.service"
 
 export type * from "./types/AuthenticatedRequest.type"

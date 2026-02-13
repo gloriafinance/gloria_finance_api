@@ -33,7 +33,7 @@ import {
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
 import {
   Can,
-  CacheService,
+  CacheProviderService,
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
@@ -44,7 +44,7 @@ export class RbacController {
     UserAssignmentMongoRepository.getInstance(),
     RolePermissionMongoRepository.getInstance(),
     PermissionMongoRepository.getInstance(),
-    CacheService.getInstance()
+    CacheProviderService.getInstance()
   )
 
   @Post("/permissions/bootstrap")

@@ -3,7 +3,7 @@ import { ConceptType } from "../../../domain"
 import { Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export default async (list: Paginate<any>) => {
-  const storage: StorageGCP = StorageGCP.getInstance(process.env.BUCKET_FILES)
+  const storage: StorageGCP = StorageGCP.getInstance(process.env.BUCKET_FILES!)
   let results = []
 
   for (const item of list.results) {
@@ -11,7 +11,7 @@ export default async (list: Paginate<any>) => {
       item.voucher = await storage.downloadFile(item.voucher)
     }
 
-    const object = {
+    const object: any = {
       financialConcept: item.financialConcept,
       financialRecordId: item.financialRecordId,
       churchId: item.churchId,
