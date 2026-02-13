@@ -3,11 +3,11 @@ import {
   FinancialConcept,
   OnlineContributions,
 } from "../../domain"
-import { AmountValue, IStorageService } from "@/Shared/domain"
+import { AmountValue, type IStorageService } from "@/Shared/domain"
 import { Member } from "@/Church/domain"
-import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
-import { IOnlineContributionsRepository } from "../../domain/interfaces"
+import type { IOnlineContributionsRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
 import { DateBR, StringToDate } from "@/Shared/helpers"
 

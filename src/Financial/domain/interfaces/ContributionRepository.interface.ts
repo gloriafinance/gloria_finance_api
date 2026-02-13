@@ -1,10 +1,8 @@
 import { OnlineContributions } from "@/Financial/domain"
 import { OnlineContributionsStatus } from "@/Financial/domain/enums/OnlineContributionsStatus.enum"
-import { IRepository } from "@abejarano/ts-mongodb-criteria"
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
 
 export interface IOnlineContributionsRepository extends IRepository<OnlineContributions> {
-  findById(contributionId: string): Promise<OnlineContributions | undefined>
-
   sumByMemberAndPaidAtRanges(params: {
     memberId: string
     churchId: string

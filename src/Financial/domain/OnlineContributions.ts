@@ -60,14 +60,14 @@ export class OnlineContributions extends AggregateRoot {
     return contributions
   }
 
-  static fromPrimitives(plainData: any): OnlineContributions {
+  static override fromPrimitives(plainData: any): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.id = plainData.id
     contributions.member = Member.fromPrimitives(plainData.member)
     contributions.contributionId = plainData.contributionId
     contributions.status = plainData.status
     contributions.amount = plainData.amount
-    contributions.createdAt = plainData.createdAt
+    contributions.createdAt = new Date(plainData.createdAt)
     contributions.bankTransferReceipt = plainData.bankTransferReceipt
     contributions.churchId = plainData.churchId
     contributions.financialConcept = FinancialConcept.fromPrimitives(
@@ -79,7 +79,7 @@ export class OnlineContributions extends AggregateRoot {
     )
     contributions.accountReceivableId = plainData.accountReceivableId
     contributions.installmentId = plainData.installmentId
-    contributions.paidAt = plainData.paidAt
+    contributions.paidAt = new Date(plainData.paidAt)
 
     return contributions
   }
