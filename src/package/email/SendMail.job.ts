@@ -6,8 +6,8 @@ import type { Mail } from "@/package/email/domain/types/mail.type"
 export class SendMailJob implements IJob {
   private logger = Logger(SendMailJob.name)
 
-  async handle(args: any): Promise<void> {
-    const payload = args as Mail
+  async handle(args: Mail): Promise<void> {
+    const payload = args
 
     this.logger.info(
       `Sending email to ${payload.to}, subject ${payload.subject}`

@@ -29,7 +29,7 @@ export function Can(module: string, action: string | string[]) {
         res.status(HttpStatus.UNAUTHORIZED).send({ message: "Unauthorized." })
         return
       }
-      //console.log(auth)
+
       if (auth.isSuperuser) {
         req.requiredPermission = moduleWildcard
         next()
