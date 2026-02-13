@@ -10,6 +10,7 @@ export type AuthenticatedRequest = ServerRequest & {
     permissions?: string[]
     symbolFormatMoney: string
     lang: string
+    email: string
   }
   requiredPermission?: string
 }

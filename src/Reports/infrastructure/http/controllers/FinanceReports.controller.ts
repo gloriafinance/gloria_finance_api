@@ -21,6 +21,7 @@ import {
   Can,
   NoOpStorage,
   PermissionMiddleware,
+  QueueService,
 } from "@/Shared/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
@@ -29,6 +30,8 @@ import { CostCenterMasterMongoRepository } from "@/Financial/infrastructure/pers
 import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
 import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 import { Cache } from "@/Shared/decorators"
+import { QueueName } from "@/package/queue/domain"
+import type { IncomeStatementJobRequest } from "../jobs/incomeStatement.job"
 
 @Controller("/api/v1/reports/finance")
 export class FinanceReportsController {
@@ -165,28 +168,20 @@ export class FinanceReportsController {
         ChurchMongoRepository.getInstance()
       ).execute(query)
 
-      const pdfPath = await new PuppeteerAdapter(
-        new HandlebarsHTMLAdapter(),
-        NoOpStorage.getInstance()
-      )
-        .htmlTemplate("financial_report", incomeStatement, req.auth.lang)
-        .toPDF(false)
-
-      const year = incomeStatement.period.year ?? query.year
-      const month = incomeStatement.period.month ?? query.month
-      const fileName = `financial-report-${year}${month ? `-${month}` : ""}.pdf`
-
-      res.download!(pdfPath, fileName, (error) => {
-        fs.unlink(pdfPath, () => undefined)
-
-        //if (error && !res.headersSent) {
-        if (error) {
-          console.log(error)
-          domainResponse(error, res)
+      QueueService.getInstance().dispatch<IncomeStatementJobRequest>(
+        QueueName.IncomeStatementJob,
+        {
+          incomeStatement: incomeStatement,
+          lang: req.auth.lang,
+          email: req.auth.email,
+          client: req.auth.name,
         }
+      )
+
+      res.status(HttpStatus.OK).send({
+        message: "income statement is arriving in your email",
       })
     } catch (error) {
-      console.log(error)
       domainResponse(error, res)
     }
   }

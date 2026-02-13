@@ -43,50 +43,50 @@ framework-agnostic.
 ## Bounded Contexts
 
 - **ChurchContext**
-    - Directory: `src/Church`
-    - Entities: Church, Member, Minister
-    - Depends on: `Shared`
-    - Logical events: `MemberRegistered`, `ChurchCreated`
+  - Directory: `src/Church`
+  - Entities: Church, Member, Minister
+  - Depends on: `Shared`
+  - Logical events: `MemberRegistered`, `ChurchCreated`
 
 - **SecurityContext**
-    - Directory: `src/SecuritySystem`
-    - Entities: User, Role, Permission
-    - Depends on: `Shared`, `Church` (when linking `memberId`)
+  - Directory: `src/SecuritySystem`
+  - Entities: User, Role, Permission
+  - Depends on: `Shared`, `Church` (when linking `memberId`)
 
 - **FinanceConfigContext**
-    - Directory: `src/Financial`
-    - Key submodules: `availabilityAccount`, `financialConcept`, `costCenter`, `contribution` (OnlineContributions)
-    - Depends on: `Church`, `Shared`
+  - Directory: `src/Financial`
+  - Key submodules: `availabilityAccount`, `financialConcept`, `costCenter`, `contribution` (OnlineContributions)
+  - Depends on: `Church`, `Shared`
 
 - **TreasuryContext**
-    - Directories: `src/AccountsPayable`, `src/AccountsReceivable`, `src/Financial/applications/financeRecord`,
-      `src/Financial/applications/dispatchers`, `src/Financial/applications/jobs`, `src/ConsolidatedFinancial`
-    - Depends on: `FinanceConfigContext`, `Church`, `Shared`
+  - Directories: `src/AccountsPayable`, `src/AccountsReceivable`, `src/Financial/applications/financeRecord`,
+    `src/Financial/applications/dispatchers`, `src/Financial/applications/jobs`, `src/ConsolidatedFinancial`
+  - Depends on: `FinanceConfigContext`, `Church`, `Shared`
 
 - **BankingContext**
-    - Directory: `src/Banking`
-    - Entities: Bank, BankStatement, MovementBank, etc.
-    - Depends on: `FinanceConfigContext`, `TreasuryContext` (via interfaces when possible), `Shared`
+  - Directory: `src/Banking`
+  - Entities: Bank, BankStatement, MovementBank, etc.
+  - Depends on: `FinanceConfigContext`, `TreasuryContext` (via interfaces when possible), `Shared`
 
 - **PatrimonyContext**
-    - Directory: `src/Patrimony`
-    - Depends on: `Church`, `Shared`
+  - Directory: `src/Patrimony`
+  - Depends on: `Church`, `Shared`
 
 - **PurchasesContext**
-    - Directory: `src/Purchases`
-    - Depends on: `FinanceConfigContext`, `TreasuryContext`, `Shared`
+  - Directory: `src/Purchases`
+  - Depends on: `FinanceConfigContext`, `TreasuryContext`, `Shared`
 
 - **ReportsContext**
-    - Directory: `src/Reports`
-    - Depends on: `TreasuryContext`, `FinanceConfigContext`, `BankingContext`, `Shared`
+  - Directory: `src/Reports`
+  - Depends on: `TreasuryContext`, `FinanceConfigContext`, `BankingContext`, `Shared`
 
 - **CommunicationContext**
-    - Directory: `src/SendMail`
-    - Depends on: `Shared`
+  - Directory: `src/SendMail`
+  - Depends on: `Shared`
 
 - **WorldContext**
-    - Directory: `src/World`
-    - Depends on: `Shared`
+  - Directory: `src/World`
+  - Depends on: `Shared`
 
 ---
 
@@ -153,6 +153,7 @@ src/
 - ❌ No imports from `infrastructure` or `applications`
 - ❌ No framework dependencies
 - ❌ No database or HTTP concerns
+- ❌ Do not implement fallback chains.
 - ✅ Only imports from `domain`, `Shared/domain`, and standard libraries
 
 **Example:**
@@ -435,8 +436,7 @@ export class ComplexUseCase {
     private readonly churchRepo: IChurchRepository,
     private readonly ministerRepo: IMinisterRepository,
     private readonly queueService: QueueService
-  ) {
-  }
+  ) {}
 
   async execute(data: any) {
     // Orchestrate multiple services

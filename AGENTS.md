@@ -41,8 +41,8 @@ Follow the conventions below when extending or modifying the codebase.
 - **Shared utilities**: Cross-cutting concerns live under `src/Shared/` and are consumed via the `@/Shared/...` alias
   configured in `tsconfig.json`.
 - **Entry points**:
-    - `src/app.ts` bootstraps the Bun Platform Kit server and registers controllers/modules
-    - `src/queues.ts` provides queue definitions consumed by `StartQueueService`
+  - `src/app.ts` bootstraps the Bun Platform Kit server and registers controllers/modules
+  - `src/queues.ts` provides queue definitions consumed by `StartQueueService`
 - **No framework magic**: Everything is explicit—controller/module registration, manual dependency instantiation, and
   straightforward TypeScript classes.
 
@@ -481,21 +481,21 @@ This is a **pure TypeScript DDD application** with a thin HTTP framework layer:
 
 - Directorio: `src/Financial`
 - Submódulos:
-    - availabilityAccount
-    - costCenter
-    - financialConcept
-    - contributions (OnlineContributions)
+  - availabilityAccount
+  - costCenter
+  - financialConcept
+  - contributions (OnlineContributions)
 - Depende de: `Church`, `Shared`
 
 ### TreasuryContext
 
 - Directorios:
-    - `src/AccountsPayable`
-    - `src/AccountsReceivable`
-    - `src/Financial/applications/financeRecord`
-    - `src/Financial/applications/dispatchers`
-    - `src/Financial/applications/jobs`
-    - `src/ConsolidatedFinancial`
+  - `src/AccountsPayable`
+  - `src/AccountsReceivable`
+  - `src/Financial/applications/financeRecord`
+  - `src/Financial/applications/dispatchers`
+  - `src/Financial/applications/jobs`
+  - `src/ConsolidatedFinancial`
 - Depende de: `FinanceConfigContext`, `Church`, `Shared`
 
 ### BankingContext

@@ -696,7 +696,6 @@ async function runTests() {
   for (const test of tests) {
     try {
       await test.run()
-      console.log(`✓ ${test.name}`)
     } catch (error) {
       failures.push(test.name)
       console.error(`✗ ${test.name}`)

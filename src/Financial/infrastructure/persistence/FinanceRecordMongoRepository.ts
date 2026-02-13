@@ -98,10 +98,6 @@ export class FinanceRecordMongoRepository
     year: number
     month?: number
   }): Promise<StatementCategorySummary[]> {
-    this.logger.info(
-      `Fetch statement categories params: ${JSON.stringify(filter)}`
-    )
-
     this.dbCollectionName = "financial_records"
 
     const { churchId, year, month } = filter

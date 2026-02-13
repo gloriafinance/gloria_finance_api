@@ -127,6 +127,12 @@
       "competence": "Competencia:"
     }
   },
+  "income_statement_email": {
+    "greeting": "Hola, {{client}}.",
+    "body_1": "Adjuntamos el reporte financiero correspondiente al período {{reportPeriod}}.",
+    "body_2": "Este informe resume los ingresos y egresos registrados y sirve como apoyo para el seguimiento administrativo y financiero.",
+    "footer": "Si tienes dudas, responde este correo."
+  },
   "payment_commitment_contract": {
     "title": "Contrato de Compromiso de Pago",
     "parties_title": "PARTES CONTRATANTES",
