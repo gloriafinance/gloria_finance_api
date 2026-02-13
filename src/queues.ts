@@ -5,7 +5,6 @@ import {
 } from "./SecuritySystem/infrastructure"
 import { FinancialQueue } from "./Financial/infrastructure/Financal.queue"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
-import { SendMailJob } from "./SendMail/SendMail.job"
 import { TelegramNotificationJob } from "./Shared/infrastructure"
 import { PatrimonyQueue } from "@/Patrimony/infrastructure/Patrimony.queue"
 import { BankingQueue } from "@/Banking/infrastructure/Banking.queue"
@@ -16,6 +15,7 @@ import { NotifyFCMJob } from "@/PushNotifications/infrastructure/NotifyFCM.job"
 import { NotificationMongoRepository } from "@/PushNotifications/infrastructure/persistence"
 import { FCMNotificationService } from "@/PushNotifications/infrastructure/services/FCMNotification.service"
 import type { IListQueue } from "@/package/queue/domain"
+import { SendMailJob } from "./package/email/SendMail.job"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({

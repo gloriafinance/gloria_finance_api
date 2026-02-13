@@ -13,11 +13,11 @@ export default async (transport: any) => {
   const handlebarOptions = {
     viewEngine: {
       extName: ".hbs",
-      partialsDir: `${APP_DIR}/SendMail/templates`,
-      layoutsDir: `${APP_DIR}/SendMail/templates`,
+      partialsDir: `${APP_DIR}/package/email/SendMail/templates`,
+      layoutsDir: `${APP_DIR}/package/email/SendMail/templates`,
       defaultLayout: "base",
     },
-    viewPath: `${APP_DIR}/SendMail/templates`,
+    viewPath: `${APP_DIR}/package/email/SendMail/templates`,
     extName: ".hbs",
   }
 

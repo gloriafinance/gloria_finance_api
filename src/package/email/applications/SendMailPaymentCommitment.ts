@@ -1,6 +1,8 @@
 import { Logger } from "@/Shared/adapter"
-import { Installments, IQueueService, QueueName } from "@/package/queue/domain"
-import { TemplateEmail } from "@/SendMail/enum/templateEmail.enum"
+
+import { QueueName, type IQueueService } from "@/package/queue/domain"
+import type { Installments } from "@/Shared/domain"
+import { TemplateEmail } from "../domain/enum/templateEmail.enum"
 
 export class SendMailPaymentCommitment {
   private logger = Logger(SendMailPaymentCommitment.name)

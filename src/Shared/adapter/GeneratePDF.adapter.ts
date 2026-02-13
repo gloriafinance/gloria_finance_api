@@ -1,6 +1,5 @@
 import { type IStorageService } from "@/Shared/domain"
 import puppeteer, { Browser, type LaunchOptions } from "puppeteer"
-import { v4 } from "uuid"
 import * as path from "path"
 import { promises as fs } from "node:fs"
 import type { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.interface"
@@ -44,7 +43,7 @@ export class PuppeteerAdapter extends GeneratePDFAdapter {
 
     await page.setContent(this.htmlString)
 
-    const pdfName = `${v4()}.pdf`
+    const pdfName = `${crypto.randomUUID()}.pdf`
     const tempDir = path.join(process.cwd(), "tmp")
     await fs.mkdir(tempDir, { recursive: true })
     const pdfPath = path.join(tempDir, pdfName)

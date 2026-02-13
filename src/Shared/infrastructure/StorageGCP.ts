@@ -60,9 +60,6 @@ export class StorageGCP implements IStorageService {
       const cachedUrl = await this.cacheService.get<string>(cacheKey)
 
       if (cachedUrl) {
-        this.logger.info(
-          `Returning cached signed URL for file: ${pathInFileStorage}`
-        )
         return cachedUrl
       }
 
