@@ -1,9 +1,9 @@
 import { Logger } from "@/Shared/adapter"
-import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 export function Cache(prefix: string, ttlSeconds: number = 300) {
   const logger = Logger(Cache.name)
-  const cacheService = CacheService.getInstance()
+  const cacheService = CacheProviderService.getInstance()
   const isResponse = (arg: any): arg is Response =>
     arg !== null && typeof arg === "object" && "status" in arg && "send" in arg
   const isRequest = (arg: any): arg is Request =>

@@ -1,5 +1,6 @@
 import { PermissionMongoRepository } from "@/SecuritySystem/infrastructure"
-import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
+import { type ICacheService } from "@/Shared/domain"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 type CachedDescription = {
   description: string | null
@@ -11,7 +12,7 @@ export class PermissionDescriptionResolver {
 
   private constructor(
     private readonly permissionRepository: PermissionMongoRepository,
-    private readonly cacheService: CacheService
+    private readonly cacheService: ICacheService
   ) {}
 
   static getInstance(): PermissionDescriptionResolver {
@@ -19,7 +20,7 @@ export class PermissionDescriptionResolver {
       PermissionDescriptionResolver.instance =
         new PermissionDescriptionResolver(
           PermissionMongoRepository.getInstance(),
-          CacheService.getInstance()
+          CacheProviderService.getInstance()
         )
     }
 

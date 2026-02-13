@@ -6,14 +6,14 @@ import {
   UserAssignmentMongoRepository,
 } from "@/SecuritySystem/infrastructure"
 import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
-import { CacheService } from "@/Shared/infrastructure/services/Cache.service"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 import type { Request } from "express"
 
 const authorizationService = AuthorizationService.getInstance(
   UserAssignmentMongoRepository.getInstance(),
   RolePermissionMongoRepository.getInstance(),
   PermissionMongoRepository.getInstance(),
-  CacheService.getInstance()
+  CacheProviderService.getInstance()
 )
 
 export const PermissionMiddleware = async (req: Request, res, next) => {
