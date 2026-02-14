@@ -32,6 +32,7 @@ import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 import { Cache } from "@/Shared/decorators"
 import { QueueName } from "@/package/queue/domain"
 import type { IncomeStatementJobRequest } from "../jobs/incomeStatement.job"
+import type { DREJobRequest } from "../jobs/DRE.job"
 
 @Controller("/api/v1/reports/finance")
 export class FinanceReportsController {
@@ -287,24 +288,18 @@ export class FinanceReportsController {
         ChurchMongoRepository.getInstance()
       ).execute(query)
 
-      const pdfPath = await new PuppeteerAdapter(
-        new HandlebarsHTMLAdapter(),
-        NoOpStorage.getInstance()
-      )
-        .htmlTemplate("dre_report", dreReport, req.auth.lang)
-        .toPDF(false)
-
-      const year = query.year
-      const month = query.month
-      const fileName = `dre-${year}${month ? `-${month}` : ""}.pdf`
-
-      res.download!(pdfPath, fileName, (error) => {
-        fs.unlink(pdfPath, () => undefined)
-
-        //if (error && !res.headersSent) {
-        if (error) {
-          domainResponse(error, res)
+      QueueService.getInstance().dispatch<DREJobRequest>(
+        QueueName.IncomeStatementJob,
+        {
+          dreReport,
+          lang: req.auth.lang,
+          email: req.auth.email,
+          client: req.auth.name,
         }
+      )
+
+      res.status(HttpStatus.OK).send({
+        message: "income statement is arriving in your email",
       })
     } catch (error) {
       domainResponse(error, res)

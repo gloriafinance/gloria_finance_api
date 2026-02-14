@@ -133,6 +133,12 @@
     "body_2": "Este informe resume los ingresos y egresos registrados y sirve como apoyo para el seguimiento administrativo y financiero.",
     "footer": "Si tienes dudas, responde este correo."
   },
+  "dre_email": {
+    "greeting": "Hola, {{client}}.",
+    "body_1": "Adjuntamos el reporte DRE correspondiente al período {{reportPeriod}}.",
+    "body_2": "El archivo adjunto contiene el Estado de Resultados del Ejercicio con los principales indicadores del período.",
+    "footer": "Si tienes dudas, responde este correo."
+  },
   "payment_commitment_contract": {
     "title": "Contrato de Compromiso de Pago",
     "parties_title": "PARTES CONTRATANTES",

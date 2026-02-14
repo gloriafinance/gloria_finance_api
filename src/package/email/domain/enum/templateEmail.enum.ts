@@ -3,4 +3,5 @@ export enum TemplateEmail {
   PaymentCommitment = "payment_commitment",
   SummaryInventory = "summary_inventory",
   IncomeStatement = "income_statement",
+  DRE = "dre",
 }
