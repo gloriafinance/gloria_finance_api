@@ -1,4 +1,4 @@
-import { APP_DIR } from "@/app"
+import { APP_DIR } from "@/app.ts"
 import { Logger } from "@/Shared/adapter"
 import nodemailerExpressHbs from "nodemailer-express-handlebars"
 import * as fs from "fs"
