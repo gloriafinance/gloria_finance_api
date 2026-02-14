@@ -1,4 +1,4 @@
-import { SendMailService } from "./service/SendMail.service"
+import { SendMailService } from "@/package/email/infrastructure/service/SendMail.service"
 import { Logger } from "@/Shared/adapter"
 import type { IJob } from "@/package/queue/domain"
 import type { Mail } from "@/package/email/domain/types/mail.type"
