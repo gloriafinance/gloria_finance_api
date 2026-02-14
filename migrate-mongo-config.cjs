@@ -3,10 +3,10 @@
 const config = {
   mongodb: {
     // TODO Change (or review) the url to your MongoDB:
-    url: process.env.MONGO_URI || "mongodb://localhost:27017",
+    url: process.env.MONGO_URI,
 
     // TODO Change this to your database name:
-    databaseName: process.env.MONGO_DB || "dbtest",
+    databaseName: process.env.MONGO_DB,
 
     options: {
       // useNewUrlParser: true, // (not needed anymore in mongodb driver 4.x+)

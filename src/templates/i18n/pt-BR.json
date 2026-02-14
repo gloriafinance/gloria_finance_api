@@ -133,6 +133,12 @@
     "body_2": "Este relatório resume as entradas e saídas registradas e serve como apoio para o acompanhamento administrativo e financeiro.",
     "footer": "Se tiver dúvidas, responda este e-mail."
   },
+  "dre_email": {
+    "greeting": "Olá, {{client}}.",
+    "body_1": "Anexamos o relatório DRE referente ao período {{reportPeriod}}.",
+    "body_2": "O arquivo em anexo contém a Demonstração do Resultado do Exercício com os principais indicadores do período.",
+    "footer": "Se tiver dúvidas, responda este e-mail."
+  },
   "payment_commitment_contract": {
     "title": "Contrato de Compromisso de Pagamento",
     "parties_title": "PARTES CONTRATANTES",
