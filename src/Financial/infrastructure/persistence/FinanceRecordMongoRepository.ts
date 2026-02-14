@@ -6,7 +6,6 @@ import {
   StatementCategory,
   type StatementCategorySummary,
 } from "../../domain"
-import { Logger } from "@/Shared/adapter"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 
@@ -14,13 +13,13 @@ const REALIZED_STATUSES = [
   FinancialRecordStatus.CLEARED,
   FinancialRecordStatus.RECONCILED,
 ]
+const INCOME_STATEMENT_INDEX = "idx_financial_records_income_statement"
 
 export class FinanceRecordMongoRepository
   extends MongoRepository<FinanceRecord>
   implements IFinancialRecordRepository
 {
   private static instance: FinanceRecordMongoRepository
-  private logger = Logger("FinanceRecordMongoRepository")
   private dbCollectionName = "financial_records"
 
   private constructor() {
@@ -125,58 +124,68 @@ export class FinanceRecordMongoRepository
     }
 
     const result = await collection
-      .aggregate([
-        {
-          $match: matchFilter,
-        },
-        {
-          $project: {
-            category: "$financialConcept.statementCategory",
-            type: "$type",
-            amount: { $abs: "$amount" },
-            symbol: "$availabilityAccount.symbol",
+      .aggregate(
+        [
+          {
+            $match: matchFilter,
           },
-        },
-        {
-          $group: {
-            _id: {
-              category: "$category",
-              symbol: "$symbol",
-            },
-            income: {
-              $sum: {
-                $cond: [{ $eq: ["$type", ConceptType.INCOME] }, "$amount", 0],
-              },
-            },
-            expenses: {
-              $sum: {
-                $cond: [
-                  {
-                    $in: ["$type", [ConceptType.OUTGO, ConceptType.PURCHASE]],
-                  },
-                  "$amount",
-                  0,
-                ],
-              },
-            },
-            reversal: {
-              $sum: {
-                $cond: [{ $eq: ["$type", ConceptType.REVERSAL] }, "$amount", 0],
-              },
+          {
+            $project: {
+              category: "$financialConcept.statementCategory",
+              type: "$type",
+              amount: { $abs: "$amount" },
+              symbol: "$availabilityAccount.symbol",
             },
           },
-        },
-        {
-          $project: {
-            _id: 0,
-            category: "$_id.category",
-            symbol: "$_id.symbol",
-            income: 1,
-            expenses: 1,
-            reversal: 1,
+          {
+            $group: {
+              _id: {
+                category: "$category",
+                symbol: "$symbol",
+              },
+              income: {
+                $sum: {
+                  $cond: [{ $eq: ["$type", ConceptType.INCOME] }, "$amount", 0],
+                },
+              },
+              expenses: {
+                $sum: {
+                  $cond: [
+                    {
+                      $in: ["$type", [ConceptType.OUTGO, ConceptType.PURCHASE]],
+                    },
+                    "$amount",
+                    0,
+                  ],
+                },
+              },
+              reversal: {
+                $sum: {
+                  $cond: [
+                    { $eq: ["$type", ConceptType.REVERSAL] },
+                    "$amount",
+                    0,
+                  ],
+                },
+              },
+            },
           },
-        },
-      ])
+          {
+            $project: {
+              _id: 0,
+              category: "$_id.category",
+              symbol: "$_id.symbol",
+              income: 1,
+              expenses: 1,
+              reversal: 1,
+            },
+          },
+        ],
+        {
+          hint: INCOME_STATEMENT_INDEX,
+          allowDiskUse: true,
+        }
+      )
       .toArray()
 
     return result.map((item) => ({
@@ -229,15 +238,21 @@ export class FinanceRecordMongoRepository
     await collection.createIndex(
       {
         churchId: 1,
-        date: 1,
         status: 1,
+        date: 1,
+        type: 1,
         "financialConcept.statementCategory": 1,
+        "availabilityAccount.symbol": 1,
       },
       {
-        name: "idx_dre_core",
+        name: INCOME_STATEMENT_INDEX,
         background: true,
         partialFilterExpression: {
           status: { $in: REALIZED_STATUSES },
+          $or: [
+            { "financialConcept.affectsResult": true },
+            { "financialConcept.affectsBalance": true },
+          ],
         },
       }
     )
