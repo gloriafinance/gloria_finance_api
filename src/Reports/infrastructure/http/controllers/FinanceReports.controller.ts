@@ -1,4 +1,3 @@
-import * as fs from "fs"
 import {
   Controller,
   Get,
@@ -19,7 +18,6 @@ import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   type AuthenticatedRequest,
   Can,
-  NoOpStorage,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
@@ -28,11 +26,10 @@ import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { CostCenterMasterMongoRepository } from "@/Financial/infrastructure/persistence"
 import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
-import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
 import { Cache } from "@/Shared/decorators"
 import { QueueName } from "@/package/queue/domain"
 import type { IncomeStatementJobRequest } from "../jobs/incomeStatement.job"
-import type { DREJobRequest } from "../jobs/DRE.job"
+import { type DREJobRequest } from "../jobs/DRE.job"
 
 @Controller("/api/v1/reports/finance")
 export class FinanceReportsController {
@@ -288,15 +285,12 @@ export class FinanceReportsController {
         ChurchMongoRepository.getInstance()
       ).execute(query)
 
-      QueueService.getInstance().dispatch<DREJobRequest>(
-        QueueName.IncomeStatementJob,
-        {
-          dreReport,
-          lang: req.auth.lang,
-          email: req.auth.email,
-          client: req.auth.name,
-        }
-      )
+      QueueService.getInstance().dispatch<DREJobRequest>(QueueName.DREJob, {
+        dreReport,
+        lang: req.auth.lang,
+        email: req.auth.email,
+        client: req.auth.name,
+      })
 
       res.status(HttpStatus.OK).send({
         message: "income statement is arriving in your email",

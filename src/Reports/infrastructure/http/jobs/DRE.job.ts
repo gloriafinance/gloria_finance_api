@@ -1,8 +1,12 @@
 import { TemplateEmail } from "@/package/email/domain/enum/templateEmail.enum"
 import type { Mail } from "@/package/email/domain/types/mail.type"
-import { QueueName, type IJob } from "@/package/queue/domain"
+import { type IJob, QueueName } from "@/package/queue/domain"
 import type { DREResponse } from "@/Reports/domain"
-import { HandlebarsHTMLAdapter, PuppeteerAdapter } from "@/Shared/adapter"
+import {
+  HandlebarsHTMLAdapter,
+  Logger,
+  PuppeteerAdapter,
+} from "@/Shared/adapter"
 import { NoOpStorage, QueueService } from "@/Shared/infrastructure"
 import * as fs from "fs"
 
@@ -14,7 +18,10 @@ export type DREJobRequest = {
 }
 
 export class DREJob implements IJob {
+  private logger = Logger(DREJob.name)
+
   async handle(args: DREJobRequest): Promise<any | void> {
+    this.logger.info(`Starting to generate PDF for DRE...`, args)
     const { dreReport, lang, email, client } = args
 
     const pdfPath = await new PuppeteerAdapter(
@@ -35,7 +42,7 @@ export class DREJob implements IJob {
 
     QueueService.getInstance().dispatch<Mail>(QueueName.SendMailJob, {
       to: email,
-      subject: "Financial Report",
+      subject: "DRE Report",
       template: TemplateEmail.DRE,
       clientName: client,
       context: {

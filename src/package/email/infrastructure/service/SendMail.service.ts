@@ -1,7 +1,7 @@
 import nodemailer = require("nodemailer")
 
-import configEngineHTML from "./ConfigEngineHTML.service"
-import type { Mail } from "../domain/types/mail.type"
+import configEngineHTML from "./ConfigEngineHTML.service.ts"
+import type { Mail } from "../../domain/types/mail.type.ts"
 import { Logger } from "@/Shared/adapter"
 
 const configTransportMail = async () => {

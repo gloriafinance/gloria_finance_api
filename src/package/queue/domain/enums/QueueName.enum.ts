@@ -16,4 +16,5 @@ export enum QueueName {
   DeletePurchasesJob = "DeletePurchasesJob",
   NotifyFCMJob = "NotifyFCMJob",
   IncomeStatementJob = "IncomeStatementJob",
+  DREJob = "DREJob",
 }

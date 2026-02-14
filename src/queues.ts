@@ -16,7 +16,7 @@ import { NotificationMongoRepository } from "@/PushNotifications/infrastructure/
 import { FCMNotificationService } from "@/PushNotifications/infrastructure/services/FCMNotification.service"
 import type { IListQueue } from "@/package/queue/domain"
 import { SendMailJob } from "./package/email/SendMail.job"
-import { IncomeStatementJob } from "./Reports/infrastructure/http/jobs/incomeStatement.job"
+import { ReportQueue } from "@/Reports/infrastructure/http/jobs"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({
@@ -27,6 +27,7 @@ export const Queues = (): IListQueue[] => [
   ...SecuritySystemQueue(),
   ...CustomerQueue(),
   ...PurchasesQueue(),
+  ...ReportQueue(),
   {
     name: CreateUserForMemberJob.name,
     useClass: CreateUserForMemberJob,
@@ -52,9 +53,5 @@ export const Queues = (): IListQueue[] => [
       FCMNotificationService.getInstance(),
     ],
     delay: 4,
-  },
-  {
-    name: IncomeStatementJob.name,
-    useClass: IncomeStatementJob,
   },
 ]
