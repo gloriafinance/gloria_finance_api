@@ -5,9 +5,14 @@ import {
   RolePermissionMongoRepository,
   UserAssignmentMongoRepository,
 } from "@/SecuritySystem/infrastructure"
-import { AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
+import { type AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
-import type { Request } from "express"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import { Logger } from "@/Shared/adapter"
 
 const authorizationService = AuthorizationService.getInstance(
   UserAssignmentMongoRepository.getInstance(),
@@ -16,8 +21,13 @@ const authorizationService = AuthorizationService.getInstance(
   CacheProviderService.getInstance()
 )
 
-export const PermissionMiddleware = async (req: Request, res, next) => {
-  const authHeader = req.headers["authorization"]
+export const PermissionMiddleware = async (
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) => {
+  const authHeader = req.headers["authorization"] as string
+  const logger = Logger("PermissionMiddleware")
 
   const token = authHeader && authHeader.split(" ")[1]
 
@@ -30,10 +40,11 @@ export const PermissionMiddleware = async (req: Request, res, next) => {
   try {
     const payload = jwt.verify(
       token,
-      process.env.JWT_SECRET
-    ) as AuthTokenPayload
+      process.env.JWT_SECRET!
+    ) as unknown as AuthTokenPayload
 
     if (!payload?.userId || !payload?.churchId) {
+      logger.error(`Token payload missing scope information. ${payload}`)
       return res.status(403).send({
         message: "Token payload missing scope information.",
       })
@@ -45,18 +56,18 @@ export const PermissionMiddleware = async (req: Request, res, next) => {
         payload.userId
       )
 
-    const authContext = {
+    // @ts-ignore
+    req["auth"] = {
       ...payload,
       roles,
       permissions,
     }
 
-    req.auth = authContext
-
     //res.locals.auth = authContext
 
     next()
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(JSON.stringify(error))
     return res.status(401).send({ message: "Unauthorized." })
   }
 }
