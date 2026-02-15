@@ -44,7 +44,7 @@ export const PermissionMiddleware = async (
     ) as unknown as AuthTokenPayload
 
     if (!payload?.userId || !payload?.churchId) {
-      logger.error(`Token payload missing scope information. ${payload}`)
+      logger.error(`Token payload missing scope information.`, payload)
       return res.status(403).send({
         message: "Token payload missing scope information.",
       })
