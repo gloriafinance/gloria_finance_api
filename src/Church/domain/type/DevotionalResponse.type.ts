@@ -12,4 +12,3 @@ export type DevotionalResponse = {
     push_body: string
   }
 }
-

@@ -100,7 +100,6 @@ export const readAIProviderConfig = (): AIProviderConfigEntry[] => {
   return providers
 }
 
-
 export const findAIProviderByService = (
   serviceName: string
 ): AIProviderConfigEntry | undefined => {
