@@ -4,9 +4,9 @@ import {
   type IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import { Logger } from "@/Shared/adapter"
-import { SendMailPaymentCommitment } from "@/SendMail/applications"
 import { GenericException } from "@/Shared/domain"
 import type { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import { type IQueueService } from "@/package/queue/domain"
 
 export class CreateAccountReceivable {
   private logger = Logger(CreateAccountReceivable.name)
@@ -14,7 +14,7 @@ export class CreateAccountReceivable {
   constructor(
     private readonly accountReceivableRepository: IAccountsReceivableRepository,
     private readonly financialConceptRepository: IFinancialConceptRepository,
-    private readonly sendMailPaymentCommitment: SendMailPaymentCommitment
+    private readonly queueService: IQueueService
   ) {}
 
   async execute(
@@ -47,8 +47,14 @@ export class CreateAccountReceivable {
     //     break
     //   default:
     //     //TODO refactor symbol
-    //     this.sendMailPaymentCommitment.execute({
-    //       symbol: "R$",
+    //
+    //     this.queueService.dispatch(QueueName.SendMailJob, {
+    //       to: account.getDebtor().email,
+    //       subject: "Compromisso de Pagamento",
+    //       template: TemplateEmail.PaymentCommitment,
+    //       clientName: account.getDebtor().name,
+    //
+    //       symbol: requestAccountReceivable.symbol,
     //       amount: account.getAmountPending(),
     //       installments: account.getInstallments(),
     //       concept: account.getDescription(),

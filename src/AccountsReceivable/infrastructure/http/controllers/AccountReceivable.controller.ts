@@ -54,7 +54,6 @@ import {
   FinancialRecordStatus,
 } from "@/Financial/domain"
 import { DateBR } from "@/Shared/helpers"
-import { SendMailPaymentCommitment } from "@/package/email/applications"
 
 @Controller("/api/v1/account-receivable")
 export class AccountReceivableController {
@@ -77,7 +76,7 @@ export class AccountReceivableController {
       const account = await new CreateAccountReceivable(
         AccountsReceivableMongoRepository.getInstance(),
         FinancialConceptMongoRepository.getInstance(),
-        new SendMailPaymentCommitment(QueueService.getInstance())
+        QueueService.getInstance()
       ).execute({
         ...body,
         createdBy: req.auth.name,

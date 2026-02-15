@@ -48,7 +48,9 @@ import {
   MemberMongoRepository,
 } from "@/Church/infrastructure"
 import type { AuthTokenPayload } from "../../adapters/AuthToken.adapter"
-import { SendMailChangePassword } from "@/package/email/applications"
+import { QueueName } from "@/package/queue/domain"
+import { TemplateEmail } from "@/package/email/domain/enum/templateEmail.enum.ts"
+import type { Mail } from "@/package/email/domain/types/mail.type.ts"
 
 export type userLoginPayload = {
   email: string
@@ -284,10 +286,15 @@ export class UserController {
         new PasswordAdapter()
       ).execute(req.email ?? "", temporalPassword)
 
-      new SendMailChangePassword(QueueService.getInstance()).execute(
-        user,
-        temporalPassword
-      )
+      QueueService.getInstance().dispatch<Mail>(QueueName.SendMailJob, {
+        to: user.getEmail(),
+        subject: "Nova senha",
+        template: TemplateEmail.RecoveryPassword,
+        clientName: user.getName(),
+        context: {
+          temporal_password: temporalPassword,
+        },
+      })
 
       res.status(HttpStatus.OK).send({
         message: "Temporal password generated",
