@@ -1,10 +1,24 @@
-import { Body, Controller, Post, Req, Res, type ServerResponse, Use, } from "bun-platform-kit"
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  type ServerResponse,
+  Use,
+} from "bun-platform-kit"
 import { DevotionalGeneratorJob } from "@/Church/infrastructure/http/jobs/DevotionalGenerator.job.ts"
 import { HttpStatus } from "@/Shared/domain"
-import { AIProviderError, AIProviderErrorCode, } from "@/package/ai/errors/AIProviderError"
+import {
+  AIProviderError,
+  AIProviderErrorCode,
+} from "@/package/ai/errors/AIProviderError"
 import { FindChurchById } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
-import { type AuthenticatedRequest, PermissionMiddleware, } from "@/Shared/infrastructure"
+import {
+  type AuthenticatedRequest,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 
 @Controller("/api/v1/church/devotional")
 export class DevotionalController {

@@ -107,8 +107,8 @@ export class DevotionalGeneratorJob {
       
       LÍMITES (OBLIGATORIOS)
       - title: máximo 60 caracteres.
-      - push.push_title: máximo 40 caracteres.
-      - push.push_body: máximo 120 caracteres.
+      - push.push_title: máximo 40 caracteres (obligatorio).
+      - push.push_body: máximo 120 caracteres (obligatorio).
       - devotional: Escribe un devocional de ~160–200 palabras (en el idioma solicitado).
       
       ESQUEMA DE SALIDA (EXACTO)
