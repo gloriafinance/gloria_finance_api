@@ -68,10 +68,6 @@ export class User extends AggregateRoot {
   }
 
   getChurchId(): string {
-    if (Urn.isValid(this.userId)) {
-      return Urn.urnForKey(this.userId, "church")
-    }
-
     return this.churchId
   }
 
