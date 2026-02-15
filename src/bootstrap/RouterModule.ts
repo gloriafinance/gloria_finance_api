@@ -16,6 +16,7 @@ import { PurchaseController } from "@/Purchases/infrastructure/http/controllers/
 import { PatrimonyController } from "@/Patrimony/infrastructure/http/controllers/Patrimony.controller"
 import { churchControllers } from "@/Church/infrastructure/http/controllers"
 import { WorldController } from "@/World/infrastructure/http/controllers/World.controller"
+import { DevotionalController } from "@/Church/infrastructure/http/controllers/Devotional.controller.ts"
 
 export const controllersModule = () =>
   new ControllersModule([
@@ -36,4 +37,5 @@ export const controllersModule = () =>
     PurchaseController,
     PatrimonyController,
     WorldController,
+    DevotionalController,
   ])

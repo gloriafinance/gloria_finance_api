@@ -24,3 +24,4 @@ export { ChurchStatus } from "./enums/ChurchStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"
 
 export type * from "./type/MemberSettings.type"
+export type * from "./type/DevotionalResponse.type.ts"
