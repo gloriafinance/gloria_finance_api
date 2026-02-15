@@ -1,20 +1,15 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Res,
-  type ServerResponse,
-} from "bun-platform-kit"
+import { Body, Controller, Post, Req, Res, type ServerResponse, Use, } from "bun-platform-kit"
 import { DevotionalGeneratorJob } from "@/Church/infrastructure/http/jobs/DevotionalGenerator.job.ts"
 import { HttpStatus } from "@/Shared/domain"
-import {
-  AIProviderError,
-  AIProviderErrorCode,
-} from "@/package/ai/errors/AIProviderError"
+import { AIProviderError, AIProviderErrorCode, } from "@/package/ai/errors/AIProviderError"
+import { FindChurchById } from "@/Church/applications"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { type AuthenticatedRequest, PermissionMiddleware, } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/church/devotional")
 export class DevotionalController {
   @Post("/generate")
+  @Use(PermissionMiddleware)
   async generate(
     @Body()
     body: {
@@ -25,31 +20,17 @@ export class DevotionalController {
       tone: string // pastoral / exhortativo suave / celebrativo / contemplativo
       audience: string
     },
+    @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const church_doctrinal_profile_text =
-      "La base doctrinal que la IPUB (Igreja Pentecostal Unida do Brasil) publica en sus canales oficiales/distritales se resume así:\n" +
-      "\n" +
-      "La Biblia como autoridad máxima e infalible para doctrina y práctica cristiana.\n" +
-      "\n" +
-      "Un solo Dios (Unicidad): Dios es uno e indivisible, y se manifestó como Padre (creación), Hijo (encarnación) y Espíritu Santo (después de la ascensión).\n" +
-      "\n" +
-      "Jesucristo y el “Nombre”: enfatizan la salvación y la predicación en el Nombre de Jesús, con textos como Hechos 4:12.\n" +
-      "\n" +
-      "Arrepentimiento: perdón/remisión de pecados mediante arrepentimiento genuino y fe en Cristo.\n" +
-      "\n" +
-      "Bautismo en agua: presentado como parte del “evangelio completo”, junto al arrepentimiento y el Espíritu Santo.\n" +
-      "\n" +
-      "Bautismo con el Espíritu Santo con evidencia inicial de hablar en otras lenguas (Hechos 2:4; 10:45–46; 19:6).\n" +
-      "\n" +
-      "En su descripción institucional, también declaran que predican que hay “apenas um Deus… Jesus Cristo” y que es necesario arrepentimiento + bautismo en el Nombre de Jesús + bautismo con el Espíritu Santo.\n" +
-      "\n" +
-      "Y como contexto histórico, sus páginas conectan a la IPUB con la UPCI (United Pentecostal Church International)."
-
     try {
+      const church = await new FindChurchById(
+        ChurchMongoRepository.getInstance()
+      ).execute(req.auth.churchId)
+
       const response = await new DevotionalGeneratorJob().handler({
         ...body,
-        church_doctrinal_profile_text,
+        church_doctrinal_profile_text: church.getDoctrinalBase().join(". "),
       })
 
       res.status(HttpStatus.OK).send(response)

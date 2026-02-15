@@ -1,5 +1,5 @@
 import { Church, ChurchNotFound, type IChurchRepository } from "../../domain"
-import { Logger } from "../../../Shared/adapter"
+import { Logger } from "@/Shared/adapter"
 
 export class FindChurchById {
   private logger = Logger("FindChurchById")
