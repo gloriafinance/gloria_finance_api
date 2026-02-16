@@ -10,6 +10,7 @@ export { ChurchNotFound } from "./exceptions/ChurchNotFound.exception"
 export { MemberNotFound } from "./exceptions/MemberNotFound.exception"
 export { MemberExist } from "./exceptions/MemberExist.exception"
 export { MinisterNotFound } from "./exceptions/MinisterNotFound.exception"
+export { WhatsappCredentialAlreadyAssigned } from "./exceptions/WhatsappCredentialAlreadyAssigned.exception"
 
 export type { ChurchDTO } from "./type/Church.dto.type"
 
