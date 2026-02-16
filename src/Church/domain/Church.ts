@@ -24,6 +24,9 @@ export class Church extends AggregateRoot {
   //private region: Region;
   private status: ChurchStatus
   private createdAt: Date
+  private wabaId?: string
+  private phoneNumberId?: string
+  private accessToken?: string
 
   static create(params: {
     name: string
@@ -39,6 +42,9 @@ export class Church extends AggregateRoot {
     country: string
     registerNumber?: string
     symbolFormatMoney?: string
+    wabaId?: string
+    phoneNumberId?: string
+    accessToken?: string
   }): Church {
     const {
       name,
@@ -53,6 +59,9 @@ export class Church extends AggregateRoot {
       lang,
       country,
       symbolFormatMoney,
+      wabaId,
+      phoneNumberId,
+      accessToken,
       //region,
     } = params
     const c: Church = new Church()
@@ -73,6 +82,9 @@ export class Church extends AggregateRoot {
     c.createdAt = DateBR()
     c.churchId = IdentifyEntity.get(`church`)
     c.status = ChurchStatus.ACTIVE
+    c.wabaId = wabaId
+    c.phoneNumberId = phoneNumberId
+    c.accessToken = accessToken
 
     return c
   }
@@ -99,6 +111,9 @@ export class Church extends AggregateRoot {
 
     c.country = plainData.country ?? "BR"
     c.createdAt = plainData.createdAt
+    c.wabaId = plainData.wabaId
+    c.phoneNumberId = plainData.phoneNumberId
+    c.accessToken = plainData.accessToken
 
     return c
   }
@@ -161,6 +176,24 @@ export class Church extends AggregateRoot {
     return this.symbolFormatMoney
   }
 
+  setWhatsappCredentials(
+    wabaId: string,
+    phoneNumberId: string,
+    accessToken: string
+  ) {
+    this.wabaId = wabaId
+    this.phoneNumberId = phoneNumberId
+    this.accessToken = accessToken
+  }
+
+  getWhatsappCredentials() {
+    return {
+      wabaId: this.wabaId,
+      phoneNumberId: this.phoneNumberId,
+      accessToken: this.accessToken,
+    }
+  }
+
   getName(): string {
     return this.name
   }
@@ -200,6 +233,9 @@ export class Church extends AggregateRoot {
       lang: this.lang,
       country: this.country,
       symbolFormatMoney: this.symbolFormatMoney,
+      wabaId: this.wabaId,
+      phoneNumberId: this.phoneNumberId,
+      accessToken: this.accessToken,
     }
   }
 }

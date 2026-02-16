@@ -25,7 +25,7 @@ class CustomLogger {
     }
 
     if (process.env.NODE_ENV === "production") {
-      const axiomToken = process.env.AXIOM_TOKEN
+      const axiomToken = process.env.AXIOM_API_TOKEN
       const axiomDataset = process.env.AXIOM_DATASET || "gloria_finance_api"
 
       if (axiomToken) {
