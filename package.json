@@ -25,6 +25,7 @@
     "@bull-board/bun": "^6.16.2",
     "@bull-board/ui": "^6.16.2",
     "@fast-csv/parse": "^5.0.5",
+    "@google-cloud/logging": "^11.2.1",
     "@google-cloud/secret-manager": "^6.1.1",
     "@google-cloud/storage": "^7.18.0",
     "bcryptjs": "^3.0.3",

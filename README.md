@@ -127,6 +127,13 @@ BULL_PASS=
 SEND_MAIL_SERVICE_CLIENT_EMAIL=
 SEND_MAIL_USER=
 SEND_MAIL_PRIVATE_KEY=
+
+# Logs (producción)
+# options: stdout | axiom | gcp
+LOGGER_TRANSPORT=stdout
+GCP_LOG_NAME=gloria_finance_api
+# opcional: si se omite, el SDK lo autodetecta
+GCP_PROJECT_ID=
 ```
 
 ### 2) Instalar dependencias y correr la API

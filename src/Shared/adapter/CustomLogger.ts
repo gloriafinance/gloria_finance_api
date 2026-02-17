@@ -1,6 +1,6 @@
 import pino from "pino"
 import { RequestContext } from "bun-platform-kit"
-
+import { LoggerProviderService } from "@/Shared/infrastructure/services/LoggerProvider.service"
 class CustomLogger {
   private logger: pino.Logger
 
@@ -25,31 +25,17 @@ class CustomLogger {
     }
 
     if (process.env.NODE_ENV === "production") {
-      const axiomToken = process.env.AXIOM_API_TOKEN
-      const axiomDataset = process.env.AXIOM_DATASET || "gloria_finance_api"
-
-      if (axiomToken) {
-        const axiomTransport = pino.transport({
-          target: "@axiomhq/pino",
-          options: {
-            dataset: axiomDataset,
-            token: axiomToken,
-          },
-        })
-
+      const transport = LoggerProviderService.getInstance()
+      if (transport) {
         this.logger = pino(
           pinoOptions,
-          pino.multistream([
-            { stream: axiomTransport },
-            { stream: process.stdout },
-          ])
+          pino.multistream([{ stream: transport }, { stream: process.stdout }])
         )
-      } else {
-        this.logger = pino(pinoOptions)
+        return
       }
-    } else {
-      this.logger = pino(pinoOptions)
     }
+
+    this.logger = pino(pinoOptions)
   }
 
   info(message: string, context?: object): void {
