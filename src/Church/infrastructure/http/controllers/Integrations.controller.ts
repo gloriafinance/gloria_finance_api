@@ -87,6 +87,7 @@ export class IntegrationsController {
         message: "WhatsApp connected and credentials saved successfully",
         wabaId,
         phoneNumberId,
+        isWhatsappConnected: true,
       })
     } catch (e: any) {
       this.logger.error("WhatsApp setup flow failed", e)
@@ -107,6 +108,7 @@ export class IntegrationsController {
 
       res.status(HttpStatus.OK).send({
         message: "WhatsApp disconnected successfully",
+        isWhatsappConnected: false,
       })
     } catch (e: any) {
       this.logger.error("WhatsApp disconnect flow failed", e)

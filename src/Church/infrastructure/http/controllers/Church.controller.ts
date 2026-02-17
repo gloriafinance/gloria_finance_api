@@ -108,7 +108,7 @@ export class ChurchController {
         ChurchMongoRepository.getInstance()
       ).execute(churchId)
 
-      res.status(HttpStatus.OK).send(church)
+      res.status(HttpStatus.OK).send(this.churchResponse(church))
     } catch (e) {
       domainResponse(e, res)
     }
@@ -148,6 +148,17 @@ export class ChurchController {
       })
     } catch (e) {
       domainResponse(e, res)
+    }
+  }
+
+  private churchResponse(church: Church) {
+    const payload = church.toPrimitives()
+    delete payload.accessTokenSecretId
+
+    return {
+      id: church.getId(),
+      ...payload,
+      isWhatsappConnected: church.isWhatsappConnected(),
     }
   }
 }

@@ -194,6 +194,14 @@ export class Church extends AggregateRoot {
     }
   }
 
+  isWhatsappConnected(): boolean {
+    return Boolean(
+      this.wabaId?.trim() &&
+      this.phoneNumberId?.trim() &&
+      this.accessTokenSecretId?.trim()
+    )
+  }
+
   clearWhatsappCredentials() {
     this.wabaId = undefined
     this.phoneNumberId = undefined
