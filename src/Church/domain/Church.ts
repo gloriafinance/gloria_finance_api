@@ -27,6 +27,7 @@ export class Church extends AggregateRoot {
   private wabaId?: string
   private phoneNumberId?: string
   private accessTokenSecretId?: string
+  private logoUrl?: string
 
   static create(params: {
     name: string
@@ -45,6 +46,7 @@ export class Church extends AggregateRoot {
     wabaId?: string
     phoneNumberId?: string
     accessTokenSecretId?: string
+    logoUrl?: string
   }): Church {
     const {
       name,
@@ -62,6 +64,7 @@ export class Church extends AggregateRoot {
       wabaId,
       phoneNumberId,
       accessTokenSecretId,
+      logoUrl,
       //region,
     } = params
     const c: Church = new Church()
@@ -85,6 +88,7 @@ export class Church extends AggregateRoot {
     c.wabaId = wabaId
     c.phoneNumberId = phoneNumberId
     c.accessTokenSecretId = accessTokenSecretId
+    c.logoUrl = logoUrl
 
     return c
   }
@@ -114,8 +118,13 @@ export class Church extends AggregateRoot {
     c.wabaId = plainData.wabaId
     c.phoneNumberId = plainData.phoneNumberId
     c.accessTokenSecretId = plainData.accessTokenSecretId
+    c.logoUrl = plainData.logoUrl
 
     return c
+  }
+
+  setName(name: string) {
+    this.name = name
   }
 
   setStatus(status: ChurchStatus) {
@@ -208,6 +217,14 @@ export class Church extends AggregateRoot {
     this.accessTokenSecretId = undefined
   }
 
+  setLogoUrl(logoUrl: string) {
+    this.logoUrl = logoUrl
+  }
+
+  getLogoUrl(): string | undefined {
+    return this.logoUrl
+  }
+
   getName(): string {
     return this.name
   }
@@ -250,6 +267,7 @@ export class Church extends AggregateRoot {
       wabaId: this.wabaId,
       phoneNumberId: this.phoneNumberId,
       accessTokenSecretId: this.accessTokenSecretId,
+      logoUrl: this.logoUrl,
     }
   }
 }

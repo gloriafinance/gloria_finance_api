@@ -7,6 +7,7 @@ export { SetWhatsappCredentials } from "./church/SetWhatsappCredentials"
 export { DisconnectWhatsappIntegration } from "./church/DisconnectWhatsappIntegration"
 export { SendWhatsappTextMessage } from "./church/SendWhatsappTextMessage"
 export { RotateWhatsappAccessTokensJob } from "./church/RotateWhatsappAccessTokens.job"
+export { UploadChurchLogo } from "./church/UploadChurchLogo"
 
 export { CreateMember } from "./members/CreateMember"
 export { UpdateMember } from "./members/UpdateMember"

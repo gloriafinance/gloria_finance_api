@@ -1,10 +1,11 @@
 import {
   Church,
   ChurchNotFound,
-  ChurchRequest,
-  IChurchRepository,
+  type ChurchRequest,
+  type IChurchRepository,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
+import { GenericException } from "@/Shared/domain"
 
 // import {
 //   IRegionRepository,
@@ -21,7 +22,7 @@ export class CreateOrUpdateChurch {
   ) {}
 
   async execute(churchRequest: ChurchRequest): Promise<Church> {
-    let church: Church
+    let church: Church | null = null
 
     if (!churchRequest.churchId) {
       church = await this.create(churchRequest)
@@ -31,25 +32,48 @@ export class CreateOrUpdateChurch {
       return church
     }
 
-    church = await this.churchRepository.findById(churchRequest.churchId)
+    church = await this.churchRepository.one({
+      churchId: churchRequest.churchId,
+    })
     if (!church) {
       throw new ChurchNotFound()
     }
 
-    //const region: Region = await this.getRegion(churchRequest.regionId);
+    if (churchRequest.name?.trim()) {
+      church.setName(churchRequest.name.trim())
+    }
 
-    //church.setRegion(region);
-    church.setAddress(
-      churchRequest.city,
-      churchRequest.address,
-      churchRequest.street,
-      churchRequest.number,
+    if (
+      churchRequest.city &&
+      churchRequest.address &&
+      churchRequest.street &&
+      churchRequest.number &&
       churchRequest.postalCode
-    )
-    church.setEmail(churchRequest.email)
-    church.setOpeningDate(churchRequest.openingDate)
-    church.setRegisterNumber(churchRequest.registerNumber)
-    church.setStatus(churchRequest.status)
+    ) {
+      church.setAddress(
+        churchRequest.city,
+        churchRequest.address,
+        churchRequest.street,
+        churchRequest.number,
+        churchRequest.postalCode
+      )
+    }
+
+    if (churchRequest.email) {
+      church.setEmail(churchRequest.email)
+    }
+
+    if (churchRequest.openingDate) {
+      church.setOpeningDate(this.normalizeDate(churchRequest.openingDate))
+    }
+
+    if (churchRequest.registerNumber !== undefined) {
+      church.setRegisterNumber(churchRequest.registerNumber)
+    }
+
+    if (churchRequest.status) {
+      church.setStatus(churchRequest.status)
+    }
 
     await this.churchRepository.upsert(church)
 
@@ -78,12 +102,24 @@ export class CreateOrUpdateChurch {
       number: churchRequest.number,
       postalCode: churchRequest.postalCode,
       email: churchRequest.email,
-      openingDate: churchRequest.openingDate,
-      lang: churchRequest.lang,
+      openingDate: this.normalizeDate(churchRequest.openingDate),
+      lang: churchRequest.lang ?? "pt-BR",
       symbolFormatMoney: churchRequest.symbolFormatMoney,
-      country: churchRequest.country,
+      country: churchRequest.country ?? "BR",
       //region,
       registerNumber: churchRequest.registerNumber,
     })
+  }
+
+  private normalizeDate(value: Date | string): Date {
+    if (value instanceof Date) {
+      return value
+    }
+
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) {
+      throw new GenericException("Invalid openingDate")
+    }
+    return parsed
   }
 }
