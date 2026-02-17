@@ -104,11 +104,8 @@ export class SetWhatsappCredentials {
   }
 
   private whatsappTokenSecretId(churchId: string): string {
-    const prefix = (
-      process.env.WHATSAPP_SECRET_PREFIX ?? "whatsapp_access_token"
-    )
-      .trim()
-      .replace(/[^A-Za-z0-9_-]/g, "_")
+    const prefix = "whatsapp_access_token"
+
     const normalizedChurchId = churchId.replace(/[^A-Za-z0-9_-]/g, "_")
     return `${prefix}_${normalizedChurchId}`.slice(0, 255)
   }
