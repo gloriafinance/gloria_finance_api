@@ -49,3 +49,7 @@ export type MetaMessagesResponse = {
     id?: string
   }>
 }
+
+export type MetaSuccessResponse = {
+  success?: boolean
+}

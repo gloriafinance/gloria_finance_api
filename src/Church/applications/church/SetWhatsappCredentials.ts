@@ -69,7 +69,36 @@ export class SetWhatsappCredentials {
 
     church.setWhatsappCredentials(wabaId, phoneNumberId, secretId)
 
-    await this.churchRepository.upsert(church)
+    try {
+      await this.churchRepository.upsert(church)
+    } catch (error: any) {
+      if (this.isMongoDuplicateKeyError(error)) {
+        const conflictingByWaba = await this.churchRepository.one({ wabaId })
+        if (
+          conflictingByWaba &&
+          conflictingByWaba.getChurchId() !== church.getChurchId()
+        ) {
+          throw new WhatsappCredentialAlreadyAssigned(
+            "wabaId",
+            conflictingByWaba.getChurchId()
+          )
+        }
+
+        const conflictingByPhone = await this.churchRepository.one({
+          phoneNumberId,
+        })
+        if (
+          conflictingByPhone &&
+          conflictingByPhone.getChurchId() !== church.getChurchId()
+        ) {
+          throw new WhatsappCredentialAlreadyAssigned(
+            "phoneNumberId",
+            conflictingByPhone.getChurchId()
+          )
+        }
+      }
+      throw error
+    }
 
     this.logger.info(`WhatsApp credentials updated for church ${churchId}`)
   }
@@ -82,5 +111,9 @@ export class SetWhatsappCredentials {
       .replace(/[^A-Za-z0-9_-]/g, "_")
     const normalizedChurchId = churchId.replace(/[^A-Za-z0-9_-]/g, "_")
     return `${prefix}_${normalizedChurchId}`.slice(0, 255)
+  }
+
+  private isMongoDuplicateKeyError(error: any): boolean {
+    return error?.code === 11000
   }
 }

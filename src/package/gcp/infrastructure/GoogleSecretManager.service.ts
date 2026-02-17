@@ -71,6 +71,28 @@ export class GoogleSecretManagerService implements ISecretManagerService {
     }
   }
 
+  async deleteSecret(secretId: string): Promise<void> {
+    const projectId = await this.projectIdPromise
+    const normalizedId = this.normalizeSecretId(secretId)
+    const secretPath = `projects/${projectId}/secrets/${normalizedId}`
+
+    try {
+      await this.client.deleteSecret({ name: secretPath })
+    } catch (error: any) {
+      if (this.isNotFound(error)) {
+        return
+      }
+
+      this.logger.error("Failed to delete secret in Google Secret Manager", {
+        secretId: normalizedId,
+        message: error?.message ?? "Unknown error",
+      })
+      throw new GenericException(
+        "Unable to delete secret from Google Secret Manager"
+      )
+    }
+  }
+
   private async secretExists(secretPath: string): Promise<boolean> {
     try {
       await this.client.getSecret({ name: secretPath })

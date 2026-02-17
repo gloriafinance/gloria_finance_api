@@ -7,6 +7,7 @@ import type {
   MetaMessagesResponse,
   MetaPhoneListResponse,
   MetaPhoneNumber,
+  MetaSuccessResponse,
   MetaTokenResponse,
   MetaWabaAccount,
   MetaWabaListResponse,
@@ -162,6 +163,58 @@ export class MetaWhatsappGraphService {
 
     return {
       messageId: response.messages?.[0]?.id,
+    }
+  }
+
+  async unsubscribeAppFromWaba(
+    accessToken: string,
+    wabaId: string
+  ): Promise<void> {
+    const url = this.buildMetaUrl(`/${wabaId}/subscribed_apps`, {
+      access_token: accessToken,
+      appsecret_proof: this.createAppSecretProof(accessToken),
+    })
+
+    const response = await this.fetchMetaJson<MetaSuccessResponse>(
+      url,
+      "unsubscribe_app_from_waba",
+      {
+        method: "DELETE",
+      }
+    )
+
+    if (response.success === false) {
+      throw new GenericException(
+        "Meta unsubscribe_app_from_waba error: unsuccessful operation"
+      )
+    }
+  }
+
+  async deregisterPhoneNumber(
+    accessToken: string,
+    phoneNumberId: string
+  ): Promise<void> {
+    const url = this.buildMetaUrl(`/${phoneNumberId}/deregister`, {})
+
+    const response = await this.fetchMetaJson<MetaSuccessResponse>(
+      url,
+      "deregister_phone_number",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+        }),
+      }
+    )
+
+    if (response.success === false) {
+      throw new GenericException(
+        "Meta deregister_phone_number error: unsuccessful operation"
+      )
     }
   }
 

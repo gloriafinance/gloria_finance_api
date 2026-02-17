@@ -194,6 +194,12 @@ export class Church extends AggregateRoot {
     }
   }
 
+  clearWhatsappCredentials() {
+    this.wabaId = undefined
+    this.phoneNumberId = undefined
+    this.accessTokenSecretId = undefined
+  }
+
   getName(): string {
     return this.name
   }

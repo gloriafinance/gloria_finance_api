@@ -78,7 +78,25 @@ export class ChurchMongoRepository
     )
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      { wabaId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          wabaId: { $type: "string" },
+        },
+      }
+    )
+
+    await collection.createIndex(
+      { phoneNumberId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          phoneNumberId: { $type: "string" },
+        },
+      }
+    )
   }
 }

@@ -1,11 +1,15 @@
 import { HttpStatus } from "@/Shared/domain"
 import { GenericException } from "@/Shared/domain/exceptions/generic-exception"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { SetWhatsappCredentials } from "@/Church/applications"
+import {
+  DisconnectWhatsappIntegration,
+  SetWhatsappCredentials,
+} from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
   Body,
   Controller,
+  Delete,
   Post,
   Req,
   Res,
@@ -83,6 +87,26 @@ export class IntegrationsController {
       })
     } catch (e: any) {
       this.logger.error("WhatsApp setup flow failed", e)
+      domainResponse(e, res)
+    }
+  }
+
+  @Delete("/whatsapp")
+  @Use([PermissionMiddleware])
+  async disconnectWhatsappIntegration(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new DisconnectWhatsappIntegration(
+        ChurchMongoRepository.getInstance()
+      ).execute(req.auth.churchId)
+
+      res.status(HttpStatus.OK).send({
+        message: "WhatsApp disconnected successfully",
+      })
+    } catch (e: any) {
+      this.logger.error("WhatsApp disconnect flow failed", e)
       domainResponse(e, res)
     }
   }
