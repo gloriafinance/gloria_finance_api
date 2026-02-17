@@ -17,12 +17,14 @@ import { FCMNotificationService } from "@/PushNotifications/infrastructure/servi
 import type { IListQueue } from "@/package/queue/domain"
 import { SendMailJob } from "./package/email/SendMail.job"
 import { ReportQueue } from "@/Reports/infrastructure/http/jobs"
+import { ChurchQueue } from "@/Church/infrastructure/Church.queue"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({
     financialRecordRepository: FinanceRecordMongoRepository.getInstance(),
   }),
   ...FinancialQueue(),
+  ...ChurchQueue(),
   ...PatrimonyQueue(),
   ...SecuritySystemQueue(),
   ...CustomerQueue(),

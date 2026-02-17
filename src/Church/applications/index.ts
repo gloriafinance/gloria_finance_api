@@ -4,6 +4,7 @@ export { SearchChurches } from "./church/SearchChurches"
 export { WithoutAssignedMinister } from "./church/WithoutAssignedMinister"
 export { SearchChurchesByDistrictId } from "./church/SearchChurchesByDistrictId"
 export { SetWhatsappCredentials } from "./church/SetWhatsappCredentials"
+export { RotateWhatsappAccessTokensJob } from "./church/RotateWhatsappAccessTokens.job"
 
 export { CreateMember } from "./members/CreateMember"
 export { UpdateMember } from "./members/UpdateMember"
