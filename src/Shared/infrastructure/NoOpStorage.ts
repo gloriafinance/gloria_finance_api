@@ -1,4 +1,4 @@
-import { IStorageService } from "@/Shared/domain"
+import type { IStorageService } from "@/Shared/domain"
 
 /**
  * NoOpStorage

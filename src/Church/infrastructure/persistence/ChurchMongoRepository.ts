@@ -1,5 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { Church, IChurchRepository } from "../../domain"
+import { Church, type IChurchRepository } from "../../domain"
 import { Collection } from "mongodb"
 
 export class ChurchMongoRepository

@@ -21,7 +21,11 @@ import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoReposito
 import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import { HttpStatus } from "@/Shared/domain"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
-import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
+import {
+  Can,
+  PermissionMiddleware,
+  StorageProviderService,
+} from "@/Shared/infrastructure"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
@@ -73,9 +77,8 @@ export class PurchaseController {
         year: date.getFullYear(),
       })
 
-      request.invoice = await StorageGCP.getInstance(
-        process.env.BUCKET_FILES!
-      ).uploadFile(invoiceFile)
+      request.invoice =
+        await StorageProviderService.getInstance().uploadFile(invoiceFile)
 
       await new RecordPurchase(
         PurchaseMongoRepository.getInstance(),
@@ -88,9 +91,7 @@ export class PurchaseController {
       res.status(HttpStatus.CREATED).send({ message: "Purchase recorded" })
     } catch (e) {
       if (request?.invoice) {
-        await StorageGCP.getInstance(process.env.BUCKET_FILES!).deleteFile(
-          request.invoice
-        )
+        await StorageProviderService.getInstance().deleteFile(request.invoice)
       }
       domainResponse(e, res)
     }

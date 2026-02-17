@@ -14,7 +14,7 @@ import {
   type AuthenticatedRequest,
   Can,
   PermissionMiddleware,
-  StorageGCP,
+  StorageProviderService,
 } from "@/Shared/infrastructure"
 import DeclareInstallmentPaymentValidator from "@/AccountsReceivable/infrastructure/http/validators/DeclareInstallmentPayment.validator"
 import type {
@@ -55,7 +55,7 @@ export class AccountReceivableForMemberController {
     @Res() res: ServerResponse
   ) {
     try {
-      const store = StorageGCP.getInstance(process.env.BUCKET_FILES!)
+      const store = StorageProviderService.getInstance()
       const account = await new ConfirmOrDenyPaymentCommitment(
         AccountsReceivableMongoRepository.getInstance(),
         new PuppeteerAdapter(new HandlebarsHTMLAdapter(), store),
@@ -132,7 +132,7 @@ export class AccountReceivableForMemberController {
         AvailabilityAccountMongoRepository.getInstance(),
         new RegisterContributionsOnline(
           OnlineContributionsMongoRepository.getInstance(),
-          StorageGCP.getInstance(process.env.BUCKET_FILES!),
+          StorageProviderService.getInstance(),
           FinancialYearMongoRepository.getInstance()
         )
       ).execute({

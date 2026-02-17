@@ -1,10 +1,8 @@
-import { IRepository } from "@abejarano/ts-mongodb-criteria"
+import { type IRepository } from "@abejarano/ts-mongodb-criteria"
 import { Church } from "@/Church/domain"
 
 export interface IChurchRepository extends IRepository<Church> {
   all(): Promise<Church[]>
-
-  findById(churchId: string): Promise<Church | undefined>
 
   listByDistrictId(districtId: string): Promise<Church[]>
 

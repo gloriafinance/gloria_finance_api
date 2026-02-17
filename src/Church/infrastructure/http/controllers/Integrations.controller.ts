@@ -1,6 +1,6 @@
 import { HttpStatus } from "@/Shared/domain"
 import { GenericException } from "@/Shared/domain/exceptions/generic-exception"
-import domainResponse from "../../../Shared/helpers/domainResponse"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import { SetWhatsappCredentials } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
@@ -16,12 +16,13 @@ import {
   type AuthenticatedRequest,
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
-import { Logger, MetaWhatsappGraphAdapter } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+import { MetaWhatsappGraphService } from "@/package/whatsapp"
 
 @Controller("/api/v1/integrations")
 export class IntegrationsController {
   private logger = Logger(IntegrationsController.name)
-  private metaWhatsapp = new MetaWhatsappGraphAdapter()
+  private metaWhatsapp = new MetaWhatsappGraphService()
 
   @Post("/whatsapp")
   //@Use([PermissionMiddleware, Can("church", "upsert")])

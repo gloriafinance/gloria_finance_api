@@ -52,8 +52,9 @@ export class CreateMember {
   }
 
   private async getChurch(churchId: string): Promise<Church> {
-    const church: Church | undefined =
-      await this.churchRepository.findById(churchId)
+    const church: Church | null = await this.churchRepository.one({
+      churchId,
+    })
 
     if (!church) {
       throw new ChurchNotFound()

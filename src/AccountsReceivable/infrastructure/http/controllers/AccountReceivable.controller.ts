@@ -14,7 +14,7 @@ import {
   Can,
   PermissionMiddleware,
   QueueService,
-  StorageGCP,
+  StorageProviderService,
 } from "@/Shared/infrastructure"
 import CreateAccountReceivableValidator from "@/AccountsReceivable/infrastructure/http/validators/CreateAccountReceivable.validator"
 import { FindChurchById } from "@/Church/applications"
@@ -115,7 +115,7 @@ export class AccountReceivableController {
         await new CreateFinancialRecordJob(
           FinancialYearMongoRepository.getInstance(),
           FinanceRecordMongoRepository.getInstance(),
-          StorageGCP.getInstance(process.env.BUCKET_FILES!),
+          StorageProviderService.getInstance(),
           QueueService.getInstance()
         ).handle({
           createdBy: req.auth.userId!,
