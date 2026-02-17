@@ -1,10 +1,10 @@
 import { AssetModel } from "@/Patrimony/domain"
-import { StorageGCP } from "@/Shared/infrastructure"
+import { StorageProviderService } from "@/Shared/infrastructure"
 
 export const mapAssetToResponse = async (
   assets: AssetModel[]
 ): Promise<AssetModel[]> => {
-  const storage: StorageGCP = StorageGCP.getInstance(process.env.BUCKET_FILES)
+  const storage = StorageProviderService.getInstance()
 
   let results = []
 

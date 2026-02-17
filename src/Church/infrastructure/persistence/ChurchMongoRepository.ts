@@ -1,5 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { Church, IChurchRepository } from "../../domain"
+import { Church, type IChurchRepository } from "../../domain"
 import { Collection } from "mongodb"
 
 export class ChurchMongoRepository
@@ -78,7 +78,25 @@ export class ChurchMongoRepository
     )
   }
 
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      { wabaId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          wabaId: { $type: "string" },
+        },
+      }
+    )
+
+    await collection.createIndex(
+      { phoneNumberId: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          phoneNumberId: { $type: "string" },
+        },
+      }
+    )
   }
 }

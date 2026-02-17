@@ -5,9 +5,9 @@ import {
   GenericException,
   type ICacheService,
   type IStorageService,
-} from "../domain"
-import { Logger } from "../adapter"
-import { CacheProviderService } from "./services/CacheProvider.service"
+} from "@/Shared/domain"
+import { Logger } from "@/Shared/adapter"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 export class StorageGCP implements IStorageService {
   private static _instance: StorageGCP

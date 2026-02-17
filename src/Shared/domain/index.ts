@@ -16,6 +16,7 @@ export type { IMessageBus } from "./interfaces/MessageBus.interface"
 export type { IStorageService } from "./interfaces/StorageService.interface"
 export type { IXLSExportAdapter } from "./interfaces/ExcelExport.interface"
 export type { ICacheService } from "./interfaces/CacheService.interface"
+export type { ISecretManagerService } from "./interfaces/SecretManagerService.interface"
 export * from "./interfaces/RealTimeEventService.interface"
 
 export type * from "./types/ReportFile.type"

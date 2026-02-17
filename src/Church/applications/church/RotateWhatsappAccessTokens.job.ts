@@ -1,15 +1,24 @@
 import { type IChurchRepository } from "@/Church/domain"
-import { Logger, MetaWhatsappGraphAdapter } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+import type { ISecretManagerService } from "@/Shared/domain"
+import { SecretManagerProviderService } from "@/Shared/infrastructure"
+import {
+  MetaWhatsappGraphService,
+  type WhatsappAccessTokenSecret,
+} from "@/package/whatsapp"
 import type { IJob } from "@/package/queue/domain"
 
 export class RotateWhatsappAccessTokensJob implements IJob {
   private readonly logger = Logger(RotateWhatsappAccessTokensJob.name)
-  private readonly metaWhatsapp = new MetaWhatsappGraphAdapter()
+  private readonly metaWhatsapp = new MetaWhatsappGraphService()
   private readonly rotateWindowDays = Number(
     process.env.META_ROTATE_WINDOW_DAYS ?? "10"
   )
 
-  constructor(private readonly churchRepository: IChurchRepository) {}
+  constructor(
+    private readonly churchRepository: IChurchRepository,
+    private readonly secretManager: ISecretManagerService = SecretManagerProviderService.getInstance()
+  ) {}
 
   async handle(): Promise<void> {
     const appId = process.env.META_APP_ID
@@ -29,15 +38,25 @@ export class RotateWhatsappAccessTokensJob implements IJob {
     for (const church of churches) {
       const credentials = church.getWhatsappCredentials()
       if (
-        !credentials.accessToken ||
         !credentials.wabaId ||
-        !credentials.phoneNumberId
+        !credentials.phoneNumberId ||
+        !credentials.accessTokenSecretId
       ) {
         continue
       }
 
+      let accessToken: string
+      try {
+        accessToken = await this.resolveAccessToken(
+          church.getChurchId(),
+          credentials.accessTokenSecretId
+        )
+      } catch {
+        continue
+      }
+
       processed++
-      const inspect = await this.inspectToken(credentials.accessToken)
+      const inspect = await this.inspectToken(accessToken)
 
       if (!inspect.isValid) {
         this.logger.debug(
@@ -58,7 +77,7 @@ export class RotateWhatsappAccessTokensJob implements IJob {
         continue
       }
 
-      const refreshedToken = await this.refreshToken(credentials.accessToken)
+      const refreshedToken = await this.refreshToken(accessToken)
 
       if (!refreshedToken) {
         this.logger.debug(
@@ -67,10 +86,25 @@ export class RotateWhatsappAccessTokensJob implements IJob {
         continue
       }
 
+      const secretId = credentials.accessTokenSecretId
+
+      try {
+        const secretPayload: WhatsappAccessTokenSecret = {
+          accessToken: refreshedToken,
+        }
+        await this.secretManager.upsertSecret(secretId, secretPayload)
+      } catch (error: any) {
+        this.logger.error("Unable to store rotated WhatsApp token", {
+          churchId: church.getChurchId(),
+          message: error?.message ?? "Unknown error",
+        })
+        continue
+      }
+
       church.setWhatsappCredentials(
         credentials.wabaId,
         credentials.phoneNumberId,
-        refreshedToken
+        secretId
       )
       await this.churchRepository.upsert(church)
       rotated++
@@ -93,7 +127,7 @@ export class RotateWhatsappAccessTokensJob implements IJob {
         expiresAt: data.expires_at,
       }
     } catch (error: any) {
-      this.logger.warn("Failed to inspect WhatsApp token", {
+      this.logger.error("Failed to inspect WhatsApp token", {
         message: error?.message ?? "Unknown error",
       })
       return { isValid: false }
@@ -104,10 +138,34 @@ export class RotateWhatsappAccessTokensJob implements IJob {
     try {
       return await this.metaWhatsapp.rotateAccessToken(accessToken)
     } catch (error: any) {
-      this.logger.warn("Failed to rotate WhatsApp token", {
+      this.logger.error("Failed to rotate WhatsApp token", {
         message: error?.message ?? "Unknown error",
       })
       return undefined
+    }
+  }
+
+  private async resolveAccessToken(
+    churchId: string,
+    secretId: string
+  ): Promise<string> {
+    try {
+      const secret =
+        await this.secretManager.accessSecret<WhatsappAccessTokenSecret>(
+          secretId
+        )
+      const accessToken = secret?.accessToken?.trim()
+      if (!accessToken) {
+        throw new Error("missing_access_token")
+      }
+      return accessToken
+    } catch (error: any) {
+      this.logger.error("Unable to read WhatsApp token from secret manager", {
+        churchId,
+        secretId,
+        message: error?.message ?? "Unknown error",
+      })
+      throw error
     }
   }
 }

@@ -1,9 +1,11 @@
 import { HttpStatus } from "@/Shared/domain"
+import { GenericException } from "@/Shared/domain/exceptions/generic-exception"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import { Church } from "../../../domain"
 import type { ChurchPaginateRequest, ChurchRequest } from "../../../domain"
 import {
   CreateOrUpdateChurch,
+  UploadChurchLogo,
   FindChurchById,
   RemoveMinister,
   SearchChurches,
@@ -21,20 +23,23 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
-type AuthContext = {
-  userId: string
-  churchId: string
-  roles: string[]
-  permissions: string[]
-}
+import {
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+  StorageProviderService,
+} from "@/Shared/infrastructure"
+import { Logger } from "@/Shared/adapter"
 
 @Controller("/api/v1/church")
 export class ChurchController {
+  private readonly logger = Logger(ChurchController.name)
+
   @Post("/")
   @Use([PermissionMiddleware, Can("church", "upsert")])
   async createOrUpdate(@Body() req: ChurchRequest, @Res() res: ServerResponse) {
@@ -51,6 +56,33 @@ export class ChurchController {
       }
 
       res.status(HttpStatus.CREATED).send({ message: "Igreja cadastrada" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/logo")
+  @Use([PermissionMiddleware, Can("church", "upsert")])
+  async uploadLogo(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const files = req.files?.file
+      const file = Array.isArray(files) ? files[0] : files
+
+      if (!file) {
+        throw new GenericException("Field `file` is required")
+      }
+
+      const { url } = await new UploadChurchLogo(
+        ChurchMongoRepository.getInstance()
+      ).execute(req.auth.churchId, file)
+
+      res.status(HttpStatus.OK).send({
+        message: "Church logo updated successfully",
+        url,
+      })
     } catch (e) {
       domainResponse(e, res)
     }
@@ -108,7 +140,7 @@ export class ChurchController {
         ChurchMongoRepository.getInstance()
       ).execute(churchId)
 
-      res.status(HttpStatus.OK).send(church)
+      res.status(HttpStatus.OK).send(await this.churchResponse(church))
     } catch (e) {
       domainResponse(e, res)
     }
@@ -148,6 +180,32 @@ export class ChurchController {
       })
     } catch (e) {
       domainResponse(e, res)
+    }
+  }
+
+  private async churchResponse(church: Church) {
+    const payload = church.toPrimitives()
+    delete payload.accessTokenSecretId
+
+    let logoUrl = payload.logoUrl
+    if (typeof logoUrl === "string" && logoUrl.trim()) {
+      try {
+        logoUrl =
+          await StorageProviderService.getInstance().downloadFile(logoUrl)
+      } catch (error: any) {
+        this.logger.error("Unable to resolve signed URL for church logo", {
+          churchId: church.getChurchId(),
+          logoPath: payload.logoUrl,
+          message: error?.message ?? "Unknown error",
+        })
+      }
+    }
+
+    return {
+      id: church.getId(),
+      ...payload,
+      logoUrl,
+      isWhatsappConnected: church.isWhatsappConnected(),
     }
   }
 }

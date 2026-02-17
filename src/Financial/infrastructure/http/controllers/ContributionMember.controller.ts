@@ -11,7 +11,11 @@ import {
 } from "bun-platform-kit"
 
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
-import { Can, PermissionMiddleware, StorageGCP } from "@/Shared/infrastructure"
+import {
+  Can,
+  PermissionMiddleware,
+  StorageProviderService,
+} from "@/Shared/infrastructure"
 import ContributionValidator from "../validators/Contribution.validator"
 import { Logger } from "@/Shared/adapter"
 import { FindMemberById } from "@/Church/applications"
@@ -114,7 +118,7 @@ export class ContributionMemberController {
 
       await new RegisterContributionsOnline(
         OnlineContributionsMongoRepository.getInstance(),
-        StorageGCP.getInstance(process.env.BUCKET_FILES!),
+        StorageProviderService.getInstance(),
         FinancialYearMongoRepository.getInstance()
       ).execute(
         {

@@ -12,7 +12,7 @@ import {
   RebuildCostCenterMasterJob,
   UpdateCostCenterMasterJob,
 } from "@/Financial/applications"
-import { QueueService, StorageGCP } from "@/Shared/infrastructure"
+import { QueueService, StorageProviderService } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastructure/persistence/AvailabilityAccountMasterMongoRepository"
@@ -46,7 +46,7 @@ export const FinancialQueue = (): IListQueue[] => [
     inject: [
       FinancialYearMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
-      StorageGCP.getInstance(process.env.BUCKET_FILES!),
+      StorageProviderService.getInstance(),
       QueueService.getInstance(),
     ],
   },

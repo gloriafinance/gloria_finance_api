@@ -1,6 +1,6 @@
 import { DeletePurchasesJob } from "@/Purchases/applications"
 import { PurchaseMongoRepository } from "@/Purchases/infrastructure/persistence/PurchaseMongoRepository"
-import { StorageGCP } from "@/Shared/infrastructure"
+import { StorageProviderService } from "@/Shared/infrastructure"
 import type { IListQueue } from "@/package/queue/domain"
 
 export const PurchasesQueue = (): IListQueue[] => [
@@ -9,7 +9,7 @@ export const PurchasesQueue = (): IListQueue[] => [
     useClass: DeletePurchasesJob,
     inject: [
       PurchaseMongoRepository.getInstance(),
-      StorageGCP.getInstance(process.env.BUCKET_FILES!),
+      StorageProviderService.getInstance(),
     ],
     delay: 4,
   },

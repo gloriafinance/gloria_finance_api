@@ -12,7 +12,7 @@ export class RemoveMinister {
   ) {}
 
   async execute(churchId: string) {
-    const church = await this.churchRepository.findById(churchId)
+    const church = await this.churchRepository.one({ churchId })
 
     if (!church.getMinisterId()) {
       throw new GenericException(

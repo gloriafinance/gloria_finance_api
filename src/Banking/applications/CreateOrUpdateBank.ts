@@ -45,7 +45,7 @@ export class CreateOrUpdateBank {
   }
 
   private async getChurch(churchId: string): Promise<Church> {
-    const church = await this.churchRepository.findById(churchId)
+    const church = await this.churchRepository.one({ churchId })
     if (!church) throw new ChurchNotFound()
 
     return church

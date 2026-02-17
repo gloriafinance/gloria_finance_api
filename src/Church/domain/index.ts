@@ -11,6 +11,7 @@ export { MemberNotFound } from "./exceptions/MemberNotFound.exception"
 export { MemberExist } from "./exceptions/MemberExist.exception"
 export { MinisterNotFound } from "./exceptions/MinisterNotFound.exception"
 export { WhatsappCredentialAlreadyAssigned } from "./exceptions/WhatsappCredentialAlreadyAssigned.exception"
+export { WhatsappCredentialsNotConfigured } from "./exceptions/WhatsappCredentialsNotConfigured.exception"
 
 export type { ChurchDTO } from "./type/Church.dto.type"
 
@@ -20,6 +21,7 @@ export type { ChurchPaginateRequest } from "./requests/ChurchPaginate.request"
 export type { CreateMemberRequest } from "./requests/CreateMember.request"
 export type { UpdateMemberRequest } from "./requests/UpdateMember.request"
 export type { MemberPaginateRequest } from "./requests/MemberPaginate.request"
+export type { SendWhatsappTextMessageRequest } from "./requests/SendWhatsappTextMessage.request"
 
 export { ChurchStatus } from "./enums/ChurchStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"

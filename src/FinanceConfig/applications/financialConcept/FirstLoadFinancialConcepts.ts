@@ -29,7 +29,7 @@ export class FirstLoadFinancialConcepts {
 
   async execute(params: { churchId: string; lang?: string }): Promise<void> {
     const { churchId, lang } = params
-    const church = await this.churchRepository.findById(churchId)
+    const church = await this.churchRepository.one({ churchId })
     if (!church) {
       throw new ChurchNotFound()
     }

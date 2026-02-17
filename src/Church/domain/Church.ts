@@ -26,7 +26,8 @@ export class Church extends AggregateRoot {
   private createdAt: Date
   private wabaId?: string
   private phoneNumberId?: string
-  private accessToken?: string
+  private accessTokenSecretId?: string
+  private logoUrl?: string
 
   static create(params: {
     name: string
@@ -44,7 +45,8 @@ export class Church extends AggregateRoot {
     symbolFormatMoney?: string
     wabaId?: string
     phoneNumberId?: string
-    accessToken?: string
+    accessTokenSecretId?: string
+    logoUrl?: string
   }): Church {
     const {
       name,
@@ -61,7 +63,8 @@ export class Church extends AggregateRoot {
       symbolFormatMoney,
       wabaId,
       phoneNumberId,
-      accessToken,
+      accessTokenSecretId,
+      logoUrl,
       //region,
     } = params
     const c: Church = new Church()
@@ -84,7 +87,8 @@ export class Church extends AggregateRoot {
     c.status = ChurchStatus.ACTIVE
     c.wabaId = wabaId
     c.phoneNumberId = phoneNumberId
-    c.accessToken = accessToken
+    c.accessTokenSecretId = accessTokenSecretId
+    c.logoUrl = logoUrl
 
     return c
   }
@@ -113,9 +117,14 @@ export class Church extends AggregateRoot {
     c.createdAt = plainData.createdAt
     c.wabaId = plainData.wabaId
     c.phoneNumberId = plainData.phoneNumberId
-    c.accessToken = plainData.accessToken
+    c.accessTokenSecretId = plainData.accessTokenSecretId
+    c.logoUrl = plainData.logoUrl
 
     return c
+  }
+
+  setName(name: string) {
+    this.name = name
   }
 
   setStatus(status: ChurchStatus) {
@@ -179,19 +188,41 @@ export class Church extends AggregateRoot {
   setWhatsappCredentials(
     wabaId: string,
     phoneNumberId: string,
-    accessToken: string
+    accessTokenSecretId?: string
   ) {
     this.wabaId = wabaId
     this.phoneNumberId = phoneNumberId
-    this.accessToken = accessToken
+    this.accessTokenSecretId = accessTokenSecretId
   }
 
   getWhatsappCredentials() {
     return {
       wabaId: this.wabaId,
       phoneNumberId: this.phoneNumberId,
-      accessToken: this.accessToken,
+      accessTokenSecretId: this.accessTokenSecretId,
     }
+  }
+
+  isWhatsappConnected(): boolean {
+    return Boolean(
+      this.wabaId?.trim() &&
+      this.phoneNumberId?.trim() &&
+      this.accessTokenSecretId?.trim()
+    )
+  }
+
+  clearWhatsappCredentials() {
+    this.wabaId = undefined
+    this.phoneNumberId = undefined
+    this.accessTokenSecretId = undefined
+  }
+
+  setLogoUrl(logoUrl: string) {
+    this.logoUrl = logoUrl
+  }
+
+  getLogoUrl(): string | undefined {
+    return this.logoUrl
   }
 
   getName(): string {
@@ -235,7 +266,8 @@ export class Church extends AggregateRoot {
       symbolFormatMoney: this.symbolFormatMoney,
       wabaId: this.wabaId,
       phoneNumberId: this.phoneNumberId,
-      accessToken: this.accessToken,
+      accessTokenSecretId: this.accessTokenSecretId,
+      logoUrl: this.logoUrl,
     }
   }
 }

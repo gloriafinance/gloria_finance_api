@@ -26,7 +26,7 @@ import {
   NoOpStorage,
   PermissionMiddleware,
   QueueService,
-  StorageGCP,
+  StorageProviderService,
 } from "@/Shared/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
@@ -145,7 +145,7 @@ export class FinancialRecordController {
       await new CreateFinancialRecordJob(
         FinancialYearMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        StorageGCP.getInstance(process.env.BUCKET_FILES!),
+        StorageProviderService.getInstance(),
         QueueService.getInstance()
       ).handle({
         ...request,
@@ -162,9 +162,7 @@ export class FinancialRecordController {
       })
     } catch (e) {
       if (request.voucher) {
-        await StorageGCP.getInstance(process.env.BUCKET_FILES!).deleteFile(
-          request.voucher
-        )
+        await StorageProviderService.getInstance().deleteFile(request.voucher)
       }
 
       return domainResponse(e, res)

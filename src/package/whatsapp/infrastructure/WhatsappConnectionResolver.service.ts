@@ -1,104 +1,23 @@
-import { HttpStatus } from "@/Shared/domain"
-import { GenericException } from "@/Shared/domain/exceptions/generic-exception"
-import domainResponse from "../../../Shared/helpers/domainResponse"
-import { SetWhatsappCredentials } from "@/Church/applications"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
-import {
-  Body,
-  Controller,
-  Post,
-  Req,
-  Res,
-  type ServerResponse,
-  Use,
-} from "bun-platform-kit"
-import {
-  type AuthenticatedRequest,
-  PermissionMiddleware,
-} from "@/Shared/infrastructure"
-import { Logger, MetaWhatsappGraphAdapter } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter"
+import { GenericException } from "@/Shared/domain"
+import { MetaWhatsappGraphService } from "./MetaWhatsappGraph.service"
 
-@Controller("/api/v1/integrations")
-export class IntegrationsController {
-  private logger = Logger(IntegrationsController.name)
-  private metaWhatsapp = new MetaWhatsappGraphAdapter()
+export class WhatsappConnectionResolverService {
+  private readonly logger = Logger(WhatsappConnectionResolverService.name)
 
-  @Post("/whatsapp")
-  //@Use([PermissionMiddleware, Can("church", "upsert")])
-  @Use([PermissionMiddleware])
-  async setWhatsappCredentials(
-    @Body()
-    body: {
-      code?: string
-      redirectUri?: string
-    },
-    @Req() req: AuthenticatedRequest,
-    @Res() res: ServerResponse
-  ) {
-    const code = typeof body?.code === "string" ? body.code.trim() : ""
-    const redirectUri =
-      typeof body?.redirectUri === "string" ? body.redirectUri.trim() : ""
+  constructor(
+    private readonly metaWhatsapp: MetaWhatsappGraphService = new MetaWhatsappGraphService()
+  ) {}
 
-    this.logger.info("Received request to exchange WhatsApp code", {
-      code: code ? "***" : "MISSING",
-      redirectUri: redirectUri || "MISSING",
-    })
-
-    try {
-      if (!code || !redirectUri) {
-        throw new GenericException(
-          "Fields `code` and `redirectUri` are required"
-        )
-      }
-
-      const accessToken = await this.exchangeCodeForAccessToken({
-        code,
-        redirectUri,
-      })
-      this.logger.info("Step 1 Success: Token obtained")
-
-      const wabaIds = await this.resolveWabaIds(accessToken)
-      const { wabaId, phoneNumberId } = await this.resolvePhoneNumber({
-        accessToken,
-        wabaIds,
-      })
-
-      // 4. Save to Database
-      this.logger.info(
-        `Step 4: Saving credentials to DB for church ${req.auth.churchId}...`
-      )
-      await new SetWhatsappCredentials(
-        ChurchMongoRepository.getInstance()
-      ).execute(req.auth.churchId, wabaId, phoneNumberId, accessToken)
-
-      this.logger.info(
-        "Step 4 Success: WhatsApp credentials saved successfully"
-      )
-
-      res.status(HttpStatus.OK).send({
-        message: "WhatsApp connected and credentials saved successfully",
-        wabaId,
-        phoneNumberId,
-      })
-    } catch (e: any) {
-      this.logger.error("WhatsApp setup flow failed", e)
-      domainResponse(e, res)
-    }
+  async resolve(accessToken: string): Promise<{
+    wabaId: string
+    phoneNumberId: string
+  }> {
+    const wabaIds = await this.resolveWabaIds(accessToken)
+    return this.resolvePhoneNumber({ accessToken, wabaIds })
   }
 
-  private async exchangeCodeForAccessToken(params: {
-    code: string
-    redirectUri: string
-  }): Promise<string> {
-    this.logger.info("Step 1: Exchanging code for Access Token...")
-    const data = await this.metaWhatsapp.exchangeCodeForAccessToken({
-      code: params.code,
-      redirectUri: params.redirectUri,
-    })
-    return data.accessToken
-  }
-
-  private async resolveWabaIds(accessToken: string): Promise<string[]> {
+  async resolveWabaIds(accessToken: string): Promise<string[]> {
     this.logger.info("Step 2: Discovering WhatsApp Business Account ID...")
     const candidates = new Set<string>()
 
@@ -143,8 +62,8 @@ export class IntegrationsController {
           candidates.add(account.id)
         }
       }
-    } catch (error: any) {
-      wabaListError = error?.message || "Unknown Meta error"
+    } catch (error: unknown) {
+      wabaListError = this.metaErrorMessage(error)
       this.logger.debug("Step 2B failed while listing WABAs", {
         message: wabaListError,
       })
@@ -161,7 +80,7 @@ export class IntegrationsController {
     return [...candidates]
   }
 
-  private async resolvePhoneNumber(params: {
+  async resolvePhoneNumber(params: {
     accessToken: string
     wabaIds: string[]
   }): Promise<{ wabaId: string; phoneNumberId: string }> {
@@ -195,8 +114,8 @@ export class IntegrationsController {
         }
 
         this.logger.info(`No phone numbers found for WABA ${wabaId}`)
-      } catch (error: any) {
-        const message = error?.message || "Unknown Meta error"
+      } catch (error: unknown) {
+        const message = this.metaErrorMessage(error)
         readErrors.push(message)
         this.logger.debug("Failed reading phone numbers for WABA candidate", {
           wabaId,
@@ -214,5 +133,15 @@ export class IntegrationsController {
     throw new GenericException(
       "No phone numbers found for this WhatsApp Business Account. Add and verify a phone number in Meta Business Manager."
     )
+  }
+
+  private metaErrorMessage(error: unknown): string {
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message
+      if (typeof message === "string" && message.trim()) {
+        return message
+      }
+    }
+    return "Unknown Meta error"
   }
 }

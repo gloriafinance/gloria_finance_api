@@ -10,10 +10,10 @@ export type ChurchRequest = {
   postalCode: string
   registerNumber?: string
   email: string
-  openingDate: Date
-  regionId: string
-  status: ChurchStatus
+  openingDate: Date | string
+  regionId?: string
+  status?: ChurchStatus
   lang?: string
   symbolFormatMoney?: string
-  country: string
+  country?: string
 }
