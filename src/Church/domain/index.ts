@@ -14,6 +14,7 @@ export { WhatsappCredentialAlreadyAssigned } from "./exceptions/WhatsappCredenti
 export { WhatsappCredentialsNotConfigured } from "./exceptions/WhatsappCredentialsNotConfigured.exception"
 
 export type { ChurchDTO } from "./type/Church.dto.type"
+export type { ChurchDoctrinalBase } from "./type/ChurchDoctrinalBase.type"
 
 export type { MinisterRequest } from "./requests/MinisterRequest"
 export type { ChurchRequest } from "./requests/Church.request"

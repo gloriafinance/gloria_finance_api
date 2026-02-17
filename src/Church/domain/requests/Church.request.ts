@@ -1,4 +1,5 @@
 import { ChurchStatus } from "../index"
+import type { ChurchDoctrinalBase } from "../type/ChurchDoctrinalBase.type"
 
 export type ChurchRequest = {
   churchId?: string
@@ -16,4 +17,5 @@ export type ChurchRequest = {
   lang?: string
   symbolFormatMoney?: string
   country?: string
+  doctrinalBases?: ChurchDoctrinalBase[]
 }
