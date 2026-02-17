@@ -4,6 +4,7 @@ import { ChurchStatus } from "./enums/ChurchStatus.enum"
 import { Minister } from "./Minister"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import type { ChurchDoctrinalBase } from "./type/ChurchDoctrinalBase.type"
 
 export class Church extends AggregateRoot {
   private id?: string
@@ -28,6 +29,7 @@ export class Church extends AggregateRoot {
   private phoneNumberId?: string
   private accessTokenSecretId?: string
   private logoUrl?: string
+  private doctrinalBases: ChurchDoctrinalBase[] = []
 
   static create(params: {
     name: string
@@ -47,6 +49,7 @@ export class Church extends AggregateRoot {
     phoneNumberId?: string
     accessTokenSecretId?: string
     logoUrl?: string
+    doctrinalBases?: ChurchDoctrinalBase[]
   }): Church {
     const {
       name,
@@ -65,6 +68,7 @@ export class Church extends AggregateRoot {
       phoneNumberId,
       accessTokenSecretId,
       logoUrl,
+      doctrinalBases,
       //region,
     } = params
     const c: Church = new Church()
@@ -89,6 +93,7 @@ export class Church extends AggregateRoot {
     c.phoneNumberId = phoneNumberId
     c.accessTokenSecretId = accessTokenSecretId
     c.logoUrl = logoUrl
+    c.doctrinalBases = Church.normalizeDoctrinalBases(doctrinalBases)
 
     return c
   }
@@ -119,6 +124,7 @@ export class Church extends AggregateRoot {
     c.phoneNumberId = plainData.phoneNumberId
     c.accessTokenSecretId = plainData.accessTokenSecretId
     c.logoUrl = plainData.logoUrl
+    c.doctrinalBases = Church.normalizeDoctrinalBases(plainData.doctrinalBases)
 
     return c
   }
@@ -225,6 +231,14 @@ export class Church extends AggregateRoot {
     return this.logoUrl
   }
 
+  setDoctrinalBases(doctrinalBases: ChurchDoctrinalBase[]) {
+    this.doctrinalBases = Church.normalizeDoctrinalBases(doctrinalBases)
+  }
+
+  getDoctrinalBases(): ChurchDoctrinalBase[] {
+    return [...this.doctrinalBases]
+  }
+
   getName(): string {
     return this.name
   }
@@ -268,6 +282,35 @@ export class Church extends AggregateRoot {
       phoneNumberId: this.phoneNumberId,
       accessTokenSecretId: this.accessTokenSecretId,
       logoUrl: this.logoUrl,
+      doctrinalBases: this.doctrinalBases,
     }
+  }
+
+  private static normalizeDoctrinalBases(
+    doctrinalBases: unknown
+  ): ChurchDoctrinalBase[] {
+    if (!Array.isArray(doctrinalBases)) {
+      return []
+    }
+
+    return doctrinalBases
+      .map((item) => {
+        const title =
+          typeof item?.title === "string" ? item.title.trim() : undefined
+        const scripture =
+          typeof item?.scripture === "string"
+            ? item.scripture.trim()
+            : undefined
+
+        if (!title || !scripture) {
+          return undefined
+        }
+
+        return {
+          title,
+          scripture,
+        }
+      })
+      .filter(Boolean) as ChurchDoctrinalBase[]
   }
 }

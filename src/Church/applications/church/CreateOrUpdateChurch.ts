@@ -75,6 +75,10 @@ export class CreateOrUpdateChurch {
       church.setStatus(churchRequest.status)
     }
 
+    if (churchRequest.doctrinalBases) {
+      church.setDoctrinalBases(churchRequest.doctrinalBases)
+    }
+
     await this.churchRepository.upsert(church)
 
     return church
@@ -106,6 +110,7 @@ export class CreateOrUpdateChurch {
       lang: churchRequest.lang ?? "pt-BR",
       symbolFormatMoney: churchRequest.symbolFormatMoney,
       country: churchRequest.country ?? "BR",
+      doctrinalBases: churchRequest.doctrinalBases,
       //region,
       registerNumber: churchRequest.registerNumber,
     })
