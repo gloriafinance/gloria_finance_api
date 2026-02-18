@@ -63,11 +63,16 @@ export class CloudflareWorkersAIService implements IProxyIAService {
     }
 
     const normalizedSchema = normalizeStructuredSchema(schemaResponse)
+    const generationConfig = {
+      temperature: 0.2,
+      top_p: 0.9,
+    }
 
     this.logger.info(`🚀 Enviando datos a Cloudflare Workers AI (${model})...`)
 
     const firstAttempt = await this.requestCloudflare(apiToken, accountId, {
       model,
+      ...generationConfig,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -91,6 +96,7 @@ export class CloudflareWorkersAIService implements IProxyIAService {
 
       const secondAttempt = await this.requestCloudflare(apiToken, accountId, {
         model,
+        ...generationConfig,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: fallbackPrompt },
@@ -129,10 +135,11 @@ export class CloudflareWorkersAIService implements IProxyIAService {
   async repairInvalidResponse(
     input: AIRepairInvalidResponseInput
   ): Promise<AIExecutionResult> {
+    const normalizedSchema = normalizeStructuredSchema(input.schemaResponse)
     return this.execute(
       input.systemPrompt,
       this.buildRepairPrompt(
-        input.userPrompt,
+        normalizedSchema,
         input.invalidPayload,
         input.reason.rawMessage
       ),
@@ -293,24 +300,27 @@ export class CloudflareWorkersAIService implements IProxyIAService {
   }
 
   private buildRepairPrompt(
-    originalUserPrompt: string,
+    normalizedSchema: Record<string, unknown>,
     invalidPayload: unknown,
     reason: string
   ): string {
     const serializedPayload =
       typeof invalidPayload === "string"
         ? invalidPayload
-        : JSON.stringify(invalidPayload)
+        : JSON.stringify(invalidPayload, null, 2)
+    const serializedSchema = JSON.stringify(normalizedSchema, null, 2)
 
     return [
-      originalUserPrompt,
+      "TAREA: reparar JSON invalido.",
+      "Responde UNICAMENTE con un JSON valido, sin markdown ni texto adicional.",
+      "NO reescribas desde cero: conserva el sentido del contenido existente y corrige solo formato/estructura/longitudes.",
       "",
-      "REPARACION OBLIGATORIA:",
-      "Corrige el siguiente JSON para que cumpla exactamente el schema y limites de caracteres.",
-      "No cambies el sentido del contenido, solo corrige formato/longitudes/campos faltantes.",
-      "Responde UNICAMENTE con JSON valido, sin markdown ni texto extra.",
+      "Debes cumplir EXACTAMENTE este JSON schema:",
+      serializedSchema,
+      "",
       `Motivo de validacion fallida: ${reason}`,
-      `JSON a corregir: ${serializedPayload}`,
+      "JSON a corregir:",
+      serializedPayload,
     ].join("\n")
   }
 }

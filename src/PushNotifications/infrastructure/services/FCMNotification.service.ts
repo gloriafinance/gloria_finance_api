@@ -31,6 +31,11 @@ export class FCMNotificationService {
     return FCMNotificationService.instance
   }
 
+  /**
+   * Send a un token específico.
+   * @param token
+   * @param payload
+   */
   async sendToToken(
     token: string,
     payload: FCMNotificationPayload
@@ -44,7 +49,6 @@ export class FCMNotificationService {
     }
 
     await this.messaging!.send(msg)
-    //return { messageId }
   }
 
   /**

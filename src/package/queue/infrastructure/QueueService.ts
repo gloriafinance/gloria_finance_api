@@ -1,7 +1,7 @@
 import { QueueRegistry } from "./QueueRegistry.ts"
 import { QueueProcessor } from "./QueueProcessor.ts"
 import { QueueDispatcher } from "./QueueDispatcher.ts"
-import type { IListQueue } from "../domain"
+import type { IListQueue, QueueDispatchOptions } from "../domain"
 import { QueueName } from "../domain"
 
 export class QueueService {
@@ -49,8 +49,12 @@ export class QueueService {
     }
   }
 
-  dispatch<T>(queueName: QueueName, data: T): void {
-    this.dispatcher.dispatch(queueName, data)
+  dispatch<T>(
+    queueName: QueueName,
+    data: T,
+    options?: QueueDispatchOptions
+  ): void {
+    this.dispatcher.dispatch(queueName, data, options)
   }
 
   async shutdown(): Promise<void> {

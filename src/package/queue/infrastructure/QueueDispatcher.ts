@@ -1,4 +1,4 @@
-import type { IQueueService } from "../domain"
+import type { IQueueService, QueueDispatchOptions } from "../domain"
 import { QueueName } from "../domain"
 import { QueueRegistry } from "./QueueRegistry.ts"
 import { RequestContext } from "bun-platform-kit"
@@ -21,7 +21,11 @@ export class QueueDispatcher implements IQueueService {
   /**
    * Envía un trabajo a una cola específica
    */
-  dispatch<T>(queueName: QueueName, args: T): void {
+  dispatch<T>(
+    queueName: QueueName,
+    args: T,
+    options?: QueueDispatchOptions
+  ): void {
     const currentRequestId = RequestContext.requestId
     const requestId = currentRequestId || crypto.randomUUID()
 
@@ -43,7 +47,10 @@ export class QueueDispatcher implements IQueueService {
 
         // BullMQ requiere un nombre de job como primer parámetro
         // Usamos el queueName como nombre del job por defecto
-        await queue.add(queueName, jobData)
+        await queue.add(queueName, jobData, {
+          delay: Math.max(0, Number(options?.delayMs ?? 0)),
+          jobId: options?.jobId,
+        })
       } catch (error) {
         console.error(`Error dispatching job to queue ${queueName}:`, error)
       }

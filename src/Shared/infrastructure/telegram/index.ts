@@ -1,4 +1,4 @@
-import { IJob } from "../../domain"
+import type { IJob } from "@/package/queue/domain"
 
 const chatId = process.env.TELEGRAM_CHAT_ID
 

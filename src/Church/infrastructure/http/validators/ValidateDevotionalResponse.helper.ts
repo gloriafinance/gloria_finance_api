@@ -4,10 +4,65 @@ import {
 } from "@/package/ai/errors/AIProviderError.ts"
 import type { DevotionalResponse } from "@/Church/domain"
 
-const hasOnlyKeys = (obj: Record<string, unknown>, keys: string[]): boolean => {
-  const objKeys = Object.keys(obj).sort()
-  const expected = [...keys].sort()
-  return JSON.stringify(objKeys) === JSON.stringify(expected)
+const readFirstString = (
+  source: Record<string, unknown>,
+  keys: string[]
+): string | null => {
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim()
+    }
+  }
+  return null
+}
+
+const compactText = (value: string): string =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+const limit = (value: string, max: number): string =>
+  value.length > max ? value.slice(0, max).trim() : value
+
+const fallbackPushBodyFromDevotional = (devotional: string): string => {
+  const compact = compactText(devotional)
+  if (!compact) return ""
+  return limit(compact, 120)
+}
+
+const normalizeScriptures = (
+  rawScriptures: unknown
+): Array<{ reference: string; quote: string }> => {
+  if (!Array.isArray(rawScriptures)) {
+    return []
+  }
+
+  const normalized = rawScriptures
+    .map((item) => {
+      if (!item || typeof item !== "object") return null
+      const scripture = item as Record<string, unknown>
+      const reference = readFirstString(scripture, ["reference", "ref"])
+      const quote = readFirstString(scripture, ["quote", "text"])
+      if (!reference || !quote) return null
+      return {
+        reference: compactText(reference),
+        quote: compactText(quote),
+      }
+    })
+    .filter(
+      (item): item is { reference: string; quote: string } => item !== null
+    )
+
+  if (normalized.length === 0) {
+    return []
+  }
+
+  if (normalized.length > 3) {
+    return normalized.slice(0, 3)
+  }
+
+  return normalized
 }
 
 export const validateDevotionalResponse = (
@@ -24,31 +79,12 @@ export const validateDevotionalResponse = (
   }
 
   const response = payload as Record<string, unknown>
-
-  if (!hasOnlyKeys(response, ["title", "devotional", "scriptures", "push"])) {
-    throw new AIProviderError(
-      provider,
-      undefined,
-      AIProviderErrorCode.INVALID_RESPONSE,
-      "Invalid devotional response: unexpected top-level keys"
-    )
-  }
-
-  const title = response.title
-  const devotional = response.devotional
-  const scriptures = response.scriptures
-  const push = response.push
-
-  if (typeof title !== "string" || title.length === 0 || title.length > 60) {
-    throw new AIProviderError(
-      provider,
-      undefined,
-      AIProviderErrorCode.INVALID_RESPONSE,
-      "Invalid devotional response: title must be 1..60 characters"
-    )
-  }
-
-  if (typeof devotional !== "string" || devotional.length === 0) {
+  const devotionalRaw = readFirstString(response, [
+    "devotional",
+    "content",
+    "message",
+  ])
+  if (!devotionalRaw) {
     throw new AIProviderError(
       provider,
       undefined,
@@ -56,12 +92,10 @@ export const validateDevotionalResponse = (
       "Invalid devotional response: devotional must be a non-empty string"
     )
   }
+  const devotional = compactText(devotionalRaw)
 
-  if (
-    !Array.isArray(scriptures) ||
-    scriptures.length < 1 ||
-    scriptures.length > 3
-  ) {
+  const scriptures = normalizeScriptures(response.scriptures)
+  if (scriptures.length < 1 || scriptures.length > 3) {
     throw new AIProviderError(
       provider,
       undefined,
@@ -70,41 +104,7 @@ export const validateDevotionalResponse = (
     )
   }
 
-  for (const item of scriptures) {
-    if (!item || typeof item !== "object") {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid devotional response: scripture item must be an object"
-      )
-    }
-
-    const scripture = item as Record<string, unknown>
-    if (!hasOnlyKeys(scripture, ["reference", "quote"])) {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid devotional response: scripture item has unexpected keys"
-      )
-    }
-
-    if (
-      typeof scripture.reference !== "string" ||
-      typeof scripture.quote !== "string" ||
-      !scripture.reference.trim() ||
-      !scripture.quote.trim()
-    ) {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid devotional response: scripture fields must be non-empty strings"
-      )
-    }
-  }
-
+  const push = response.push
   if (!push || typeof push !== "object") {
     throw new AIProviderError(
       provider,
@@ -115,20 +115,31 @@ export const validateDevotionalResponse = (
   }
 
   const pushObj = push as Record<string, unknown>
-  if (!hasOnlyKeys(pushObj, ["push_title", "push_body"])) {
+  const titleRaw =
+    readFirstString(response, ["title", "titulo"]) ??
+    readFirstString(pushObj, ["push_title", "pushTitle", "title"]) ??
+    devotional.slice(0, 60)
+  const title = limit(compactText(titleRaw), 60)
+
+  if (!title) {
     throw new AIProviderError(
       provider,
       undefined,
       AIProviderErrorCode.INVALID_RESPONSE,
-      "Invalid devotional response: push has unexpected keys"
+      "Invalid devotional response: title must be 1..60 characters"
     )
   }
 
-  if (
-    typeof pushObj.push_title !== "string" ||
-    pushObj.push_title.length === 0 ||
-    pushObj.push_title.length > 40
-  ) {
+  const pushTitleRaw =
+    readFirstString(pushObj, ["push_title", "pushTitle", "title"]) ?? title
+  const pushBodyRaw =
+    readFirstString(pushObj, ["push_body", "pushBody", "body"]) ??
+    fallbackPushBodyFromDevotional(devotional)
+
+  const pushTitle = limit(compactText(pushTitleRaw), 40)
+  const pushBody = limit(compactText(pushBodyRaw), 120)
+
+  if (!pushTitle) {
     throw new AIProviderError(
       provider,
       undefined,
@@ -137,11 +148,7 @@ export const validateDevotionalResponse = (
     )
   }
 
-  if (
-    typeof pushObj.push_body !== "string" ||
-    pushObj.push_body.length === 0 ||
-    pushObj.push_body.length > 120
-  ) {
+  if (!pushBody) {
     throw new AIProviderError(
       provider,
       undefined,
@@ -150,5 +157,15 @@ export const validateDevotionalResponse = (
     )
   }
 
-  return response as unknown as DevotionalResponse
+  const normalized: DevotionalResponse = {
+    title,
+    devotional,
+    scriptures,
+    push: {
+      push_title: pushTitle,
+      push_body: pushBody,
+    },
+  }
+
+  return normalized
 }

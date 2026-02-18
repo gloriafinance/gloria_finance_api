@@ -7,6 +7,7 @@ import { MemberMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type.ts"
 import { PermissionMiddleware } from "@/Shared/infrastructure"
+import { FCMNotificationService } from "@/PushNotifications/infrastructure/services/FCMNotification.service.ts"
 
 @Controller("/api/v1/notifications")
 export class NotificationController {
@@ -46,5 +47,23 @@ export class NotificationController {
     } catch (e) {
       domainResponse(e, res)
     }
+  }
+
+  @Post("/test")
+  @Use(PermissionMiddleware)
+  async test(@Req() req: AuthenticatedRequest, @Res() res: ServerResponse) {
+    const member = (await MemberMongoRepository.getInstance().one({
+      email: "programador.angel@gmail.com",
+    }))!
+
+    await FCMNotificationService.getInstance().sendToToken(
+      member.getSettings().token!,
+      {
+        title: "test",
+        body: "body test",
+      }
+    )
+
+    res.status(HttpStatus.OK).send("Test route")
   }
 }

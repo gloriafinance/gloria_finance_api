@@ -217,7 +217,7 @@ export class AIProviderRouterService {
           providerPayload !== undefined &&
           config.service.repairInvalidResponse
         ) {
-          this.logger.debug(
+          this.logger.info(
             `AI Router repair pass triggered provider=${candidate.provider} reason=${mapped.rawMessage}`
           )
 

@@ -17,5 +17,6 @@ export type ChurchRequest = {
   lang?: string
   symbolFormatMoney?: string
   country?: string
+  timezone?: string
   doctrinalBases?: ChurchDoctrinalBase[]
 }

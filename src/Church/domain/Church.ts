@@ -21,6 +21,7 @@ export class Church extends AggregateRoot {
   private ministerId: string
   private lang: string
   private country: string
+  private timezone: string
   private symbolFormatMoney: string
   //private region: Region;
   private status: ChurchStatus
@@ -43,6 +44,7 @@ export class Church extends AggregateRoot {
     //region: Region,
     lang: string
     country: string
+    timezone?: string
     registerNumber?: string
     symbolFormatMoney?: string
     wabaId?: string
@@ -63,6 +65,7 @@ export class Church extends AggregateRoot {
       openingDate,
       lang,
       country,
+      timezone,
       symbolFormatMoney,
       wabaId,
       phoneNumberId,
@@ -84,6 +87,7 @@ export class Church extends AggregateRoot {
     c.openingDate = openingDate
     c.lang = lang
     c.country = country
+    c.timezone = Church.normalizeTimezone(timezone, country)
     c.symbolFormatMoney = symbolFormatMoney
     //c.region = region;
     c.createdAt = DateBR()
@@ -119,6 +123,7 @@ export class Church extends AggregateRoot {
     c.status = plainData.status
 
     c.country = plainData.country ?? "BR"
+    c.timezone = Church.normalizeTimezone(plainData.timezone, c.country)
     c.createdAt = plainData.createdAt
     c.wabaId = plainData.wabaId
     c.phoneNumberId = plainData.phoneNumberId
@@ -271,6 +276,14 @@ export class Church extends AggregateRoot {
     return this.name
   }
 
+  setTimezone(timezone: string) {
+    this.timezone = Church.normalizeTimezone(timezone, this.country)
+  }
+
+  getTimezone(): string {
+    return this.timezone
+  }
+
   getMinisterId() {
     return this.ministerId
   }
@@ -305,6 +318,7 @@ export class Church extends AggregateRoot {
       status: this.status,
       lang: this.lang,
       country: this.country,
+      timezone: this.timezone,
       symbolFormatMoney: this.symbolFormatMoney,
       wabaId: this.wabaId,
       phoneNumberId: this.phoneNumberId,
@@ -312,5 +326,44 @@ export class Church extends AggregateRoot {
       logoUrl: this.logoUrl,
       doctrinalBases: this.doctrinalBases,
     }
+  }
+
+  private static normalizeTimezone(
+    timezone: unknown,
+    country?: string
+  ): string {
+    const normalized = String(timezone ?? "").trim()
+    if (normalized) {
+      return normalized
+    }
+
+    const countryCode = String(country ?? "")
+      .trim()
+      .toUpperCase()
+
+    const map: Record<string, string> = {
+      BR: "America/Sao_Paulo",
+      US: "America/New_York",
+      CA: "America/Toronto",
+      MX: "America/Mexico_City",
+      CO: "America/Bogota",
+      PE: "America/Lima",
+      VE: "America/Caracas",
+      AR: "America/Argentina/Buenos_Aires",
+      CL: "America/Santiago",
+      BO: "America/La_Paz",
+      PY: "America/Asuncion",
+      UY: "America/Montevideo",
+      EC: "America/Guayaquil",
+      PA: "America/Panama",
+      CR: "America/Costa_Rica",
+      GT: "America/Guatemala",
+      HN: "America/Tegucigalpa",
+      SV: "America/El_Salvador",
+      DO: "America/Santo_Domingo",
+      PR: "America/Puerto_Rico",
+    }
+
+    return map[countryCode] ?? "America/Sao_Paulo"
   }
 }
