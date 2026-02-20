@@ -11,15 +11,15 @@ import {
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
 import {
-  CreateScheduleEventRequest,
+  type CreateScheduleEventRequest,
   type ListScheduleEventsFiltersRequest,
 } from "@/Schedule/domain/requests/ScheduleItem.request"
-import { IScheduleItemRepository } from "@/Schedule/domain/interfaces/ScheduleItemRepository.interface"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import { type IScheduleItemRepository } from "@/Schedule/domain/interfaces/ScheduleItemRepository.interface"
+import { Criteria, type Paginate } from "@abejarano/ts-mongodb-criteria"
 import { Church } from "@/Church/domain/Church"
-import { IChurchRepository } from "@/Church/domain/interfaces/ChurchRepository.interface"
+import { type IChurchRepository } from "@/Church/domain/interfaces/ChurchRepository.interface"
 import { ChurchStatus } from "@/Church/domain/enums/ChurchStatus.enum"
-import { ChurchDTO } from "@/Church/domain"
+import { type ChurchDTO } from "@/Church/domain"
 
 class InMemoryScheduleItemRepository implements IScheduleItemRepository {
   public lastCriteria?: Criteria
@@ -41,7 +41,7 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
     churchId?: string
     scheduleItemId?: string
   }): Promise<ScheduleEvent | undefined> {
-    return this.items.find((item) => {
+    const item = this.items.find((item) => {
       if (filter.churchId && item.getChurchId() !== filter.churchId) {
         return false
       }
@@ -53,6 +53,8 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
       }
       return true
     })
+
+    return item
   }
 
   async list(criteria: Criteria): Promise<Paginate<ScheduleEvent>> {
@@ -86,6 +88,75 @@ class InMemoryScheduleItemRepository implements IScheduleItemRepository {
       }
       return true
     })
+  }
+
+  async findTodayByChurch(
+    churchId: string
+  ): Promise<ScheduleEvent | undefined> {
+    const dayOfWeekByIndex: Record<number, DayOfWeek> = {
+      0: DayOfWeek.SUNDAY,
+      1: DayOfWeek.MONDAY,
+      2: DayOfWeek.TUESDAY,
+      3: DayOfWeek.WEDNESDAY,
+      4: DayOfWeek.THURSDAY,
+      5: DayOfWeek.FRIDAY,
+      6: DayOfWeek.SATURDAY,
+    }
+
+    const now = new Date()
+    const today = dayOfWeekByIndex[now.getDay()]
+    const startOfDay = new Date(now)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(now)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const item = this.items.find((scheduleItem) => {
+      const recurrencePattern = scheduleItem.getRecurrencePattern()
+      const recurrenceEndDate = recurrencePattern.endDate
+
+      return (
+        scheduleItem.getChurchId() === churchId &&
+        scheduleItem.getIsActive() &&
+        recurrencePattern.dayOfWeek === today &&
+        recurrencePattern.startDate <= endOfDay &&
+        (!recurrenceEndDate || recurrenceEndDate >= startOfDay)
+      )
+    })
+
+    return item
+  }
+
+  async deactivatePreviousDayEvents(): Promise<number> {
+    const now = new Date()
+    const startOfYesterday = new Date(now)
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1)
+    startOfYesterday.setHours(0, 0, 0, 0)
+
+    const endOfYesterday = new Date(now)
+    endOfYesterday.setDate(endOfYesterday.getDate() - 1)
+    endOfYesterday.setHours(23, 59, 59, 999)
+
+    let deactivated = 0
+
+    this.items = this.items.map((item) => {
+      if (!item.getIsActive()) {
+        return item
+      }
+
+      const recurrenceEndDate = item.getRecurrencePattern().endDate
+      if (
+        recurrenceEndDate &&
+        recurrenceEndDate >= startOfYesterday &&
+        recurrenceEndDate <= endOfYesterday
+      ) {
+        item.deactivate()
+        deactivated += 1
+      }
+
+      return item
+    })
+
+    return deactivated
   }
 
   getAll(): ScheduleEvent[] {
@@ -345,5 +416,49 @@ describe("Schedule module", () => {
     const ids = leaderOccurrences.map((occ) => occ.scheduleItemId)
     expect(ids).toContain(mondayPublic.getScheduleItemId())
     expect(ids).toContain(wednesdayInternal.getScheduleItemId())
+  })
+
+  it("includes events when recurrence dates are stored at 03:00:00Z for the same local day", async () => {
+    const repo = new InMemoryScheduleItemRepository()
+
+    const fridayCell = ScheduleEvent.fromPrimitives({
+      id: "mongo-id-friday-cell",
+      scheduleItemId: "urn:schedule:9c3855c2-3354-4ed2-ab79-4f8432614284",
+      churchId: "church-1",
+      type: ScheduleEventType.CELL,
+      title: "Grupo Familia",
+      description: "Evento semanal",
+      location: { name: "Santana de Parnaíba" },
+      recurrencePattern: {
+        type: RecurrenceType.WEEKLY,
+        dayOfWeek: DayOfWeek.FRIDAY,
+        time: "19:30",
+        durationMinutes: 60,
+        timezone: "America/Sao_Paulo",
+        startDate: "2026-02-20T03:00:00.000Z",
+        endDate: "2026-02-20T03:00:00.000Z",
+      },
+      visibility: ScheduleEventVisibility.PUBLIC,
+      director: "Yamileth Ledezma",
+      preacher: "Jonathan Jiménez",
+      isActive: true,
+      createdAt: "2026-02-17T20:10:41.004Z",
+      createdByUserId: "user-1",
+    })
+
+    await repo.upsert(fridayCell)
+
+    const useCase = new ListWeeklyScheduleOccurrences(repo)
+    const occurrences = await useCase.execute({
+      churchId: "church-1",
+      weekStartDate: "2026-02-15",
+      visibilityScope: ScheduleEventVisibility.PUBLIC,
+    })
+
+    expect(occurrences).toHaveLength(1)
+    expect(occurrences[0].scheduleItemId).toBe(fridayCell.getScheduleItemId())
+    expect(occurrences[0].date).toBe("2026-02-20")
+    expect(occurrences[0].startTime).toBe("19:30")
+    expect(occurrences[0].endTime).toBe("20:30")
   })
 })

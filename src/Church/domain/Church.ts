@@ -98,7 +98,7 @@ export class Church extends AggregateRoot {
     return c
   }
 
-  static fromPrimitives(plainData: any): Church {
+  static override fromPrimitives(plainData: any): Church {
     const c: Church = new Church()
 
     c.id = plainData.id
@@ -129,6 +129,34 @@ export class Church extends AggregateRoot {
     return c
   }
 
+  private static normalizeDoctrinalBases(
+    doctrinalBases: unknown
+  ): ChurchDoctrinalBase[] {
+    if (!Array.isArray(doctrinalBases)) {
+      return []
+    }
+
+    return doctrinalBases
+      .map((item) => {
+        const title =
+          typeof item?.title === "string" ? item.title.trim() : undefined
+        const scripture =
+          typeof item?.scripture === "string"
+            ? item.scripture.trim()
+            : undefined
+
+        if (!title || !scripture) {
+          return undefined
+        }
+
+        return {
+          title,
+          scripture,
+        }
+      })
+      .filter(Boolean) as ChurchDoctrinalBase[]
+  }
+
   setName(name: string) {
     this.name = name
   }
@@ -145,13 +173,13 @@ export class Church extends AggregateRoot {
     return this.churchId
   }
 
-  getLang(): string {
-    return this.lang
-  }
-
   // setRegion(region: Region) {
   //   this.region = region;
   // }
+
+  getLang(): string {
+    return this.lang
+  }
 
   setRegisterNumber(registerNumber: string) {
     this.registerNumber = registerNumber
@@ -251,13 +279,13 @@ export class Church extends AggregateRoot {
     this.ministerId = undefined
   }
 
-  getAddress(): string {
-    return `${this.address}, ${this.street}, ${this.number}, ${this.postalCode}, ${this.city}`
-  }
-
   // getRegion(): Region {
   //   return this.region;
   // }
+
+  getAddress(): string {
+    return `${this.address}, ${this.street}, ${this.number}, ${this.postalCode}, ${this.city}`
+  }
 
   toPrimitives(): any {
     return {
@@ -284,33 +312,5 @@ export class Church extends AggregateRoot {
       logoUrl: this.logoUrl,
       doctrinalBases: this.doctrinalBases,
     }
-  }
-
-  private static normalizeDoctrinalBases(
-    doctrinalBases: unknown
-  ): ChurchDoctrinalBase[] {
-    if (!Array.isArray(doctrinalBases)) {
-      return []
-    }
-
-    return doctrinalBases
-      .map((item) => {
-        const title =
-          typeof item?.title === "string" ? item.title.trim() : undefined
-        const scripture =
-          typeof item?.scripture === "string"
-            ? item.scripture.trim()
-            : undefined
-
-        if (!title || !scripture) {
-          return undefined
-        }
-
-        return {
-          title,
-          scripture,
-        }
-      })
-      .filter(Boolean) as ChurchDoctrinalBase[]
   }
 }

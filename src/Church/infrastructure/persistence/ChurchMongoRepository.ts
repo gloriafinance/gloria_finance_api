@@ -34,9 +34,9 @@ export class ChurchMongoRepository
     return Church.fromPrimitives({ id: result._id.toString(), ...result })
   }
 
-  async all(): Promise<Church[]> {
+  async all(filter: object): Promise<Church[]> {
     const collection = await this.collection()
-    const result = await collection.find().toArray()
+    const result = await collection.find(filter).toArray()
     return result.map((r) =>
       Church.fromPrimitives({ id: r._id.toString(), ...r })
     )
