@@ -10,7 +10,7 @@ import { PermissionMiddleware } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/notifications")
 export class NotificationController {
-  @Post("/")
+  @Post("/push-tokens")
   @Use(PermissionMiddleware)
   async token(
     @Body()
@@ -23,6 +23,12 @@ export class NotificationController {
     @Res() res: ServerResponse
   ) {
     try {
+      if (!body?.token?.trim() || !body?.deviceId?.trim() || !body?.platform) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          message: "token, platform and deviceId are required",
+        })
+      }
+
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
       ).execute(req.auth.memberId)
@@ -30,9 +36,9 @@ export class NotificationController {
       const settings = member.getSettings()
       member.setSettings({
         ...settings,
-        token: body.token,
+        token: body.token.trim(),
         platform: body.platform,
-        deviceId: body.deviceId,
+        deviceId: body.deviceId.trim(),
       })
 
       await MemberMongoRepository.getInstance().upsert(member)
