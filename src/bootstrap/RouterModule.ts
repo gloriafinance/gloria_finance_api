@@ -7,7 +7,7 @@ import { RbacController } from "@/SecuritySystem/infrastructure/http/controllers
 import { financeConfigControllers } from "@/FinanceConfig/infrastructure/controllers"
 import { scheduleControllers } from "@/Schedule/infrastructure/http/controllers"
 import { OnboardingController } from "@/Customers/infrastructure/http/controllers/Onboarding.controller"
-import { NotificationController } from "@/Shared/infrastructure/controllers/Notification.controller"
+import { NotificationController } from "@/PushNotifications/infrastructure/http/controllers/Notification.controller"
 import { accountsReceivableControllers } from "@/AccountsReceivable/infrastructure/http/controllers"
 import { AccountPayableController } from "@/AccountsPayable/infrastructure/http/controllers/AccountPayable.controller"
 import { bankControllers } from "@/Banking/infrastructure/http/controllers"

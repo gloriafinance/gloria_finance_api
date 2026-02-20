@@ -18,6 +18,7 @@ import type { IListQueue } from "@/package/queue/domain"
 import { SendMailJob } from "./package/email/SendMail.job"
 import { ReportQueue } from "@/Reports/infrastructure/http/jobs"
 import { ChurchQueue } from "@/Church/infrastructure/Church.queue"
+import { ScheduleQueue } from "@/Schedule/infrastructure/jobs/Schedule.job.ts"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({
@@ -30,6 +31,7 @@ export const Queues = (): IListQueue[] => [
   ...CustomerQueue(),
   ...PurchasesQueue(),
   ...ReportQueue(),
+  ...ScheduleQueue(),
   {
     name: CreateUserForMemberJob.name,
     useClass: CreateUserForMemberJob,

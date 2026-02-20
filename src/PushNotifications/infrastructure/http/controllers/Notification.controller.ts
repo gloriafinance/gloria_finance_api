@@ -1,16 +1,16 @@
 import type { ServerResponse } from "bun-platform-kit"
 import { Body, Controller, Post, Req, Res, Use } from "bun-platform-kit"
 
-import domainResponse from "@/Shared/helpers/domainResponse"
+import domainResponse from "@/Shared/helpers/domainResponse.ts"
 import { FindMemberById } from "@/Church/applications"
 import { MemberMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
-import { PermissionMiddleware } from "../middleware/Permission.middleware"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type.ts"
+import { PermissionMiddleware } from "@/Shared/infrastructure"
 
-@Controller("/api/v1/PushNotifications")
+@Controller("/api/v1/notifications")
 export class NotificationController {
-  @Post("/push-tokens")
+  @Post("/")
   @Use(PermissionMiddleware)
   async token(
     @Body()

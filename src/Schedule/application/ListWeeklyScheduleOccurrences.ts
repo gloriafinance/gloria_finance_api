@@ -1,14 +1,22 @@
 import { Logger } from "@/Shared/adapter"
 import {
-  IScheduleItemRepository,
-  LocationDTO,
-  RecurrencePatternDTO,
+  type IScheduleItemRepository,
+  type LocationDTO,
+  type RecurrencePatternDTO,
   ScheduleEventType,
   ScheduleEventVisibility,
   ScheduleItemException,
-  WeeklyScheduleOccurrenceDTO,
-  WeeklyScheduleOccurrencesRequest,
+  type WeeklyScheduleOccurrenceDTO,
+  type WeeklyScheduleOccurrencesRequest,
 } from "@/Schedule/domain"
+import dayjs, { type Dayjs } from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 type DayOfWeekIndex = {
   [key: string]: number
@@ -36,14 +44,14 @@ export class ListWeeklyScheduleOccurrences {
   ): Promise<WeeklyScheduleOccurrenceDTO[]> {
     this.logger.info("Listing weekly schedule occurrences", request)
 
-    const weekStart = new Date(`${request.weekStartDate}T00:00:00`)
+    const weekStart = dayjs.tz(
+      `${request.weekStartDate}T00:00:00`,
+      DEFAULT_TIMEZONE
+    )
 
-    if (Number.isNaN(weekStart.getTime())) {
+    if (!weekStart.isValid()) {
       throw new ScheduleItemException("Invalid weekStartDate")
     }
-
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekEnd.getDate() + 6)
 
     const scheduleItems = await this.scheduleItemRepository.findManyByChurch(
       request.churchId,
@@ -66,9 +74,13 @@ export class ListWeeklyScheduleOccurrences {
           item.getLocation(),
           item.getRecurrencePattern(),
           item.getVisibility(),
-          weekStart,
-          weekEnd
+          request.weekStartDate
         )
+      )
+      .sort(
+        (left, right) =>
+          left.date.localeCompare(right.date) ||
+          left.startTime.localeCompare(right.startTime)
       )
   }
 
@@ -79,30 +91,38 @@ export class ListWeeklyScheduleOccurrences {
     location: LocationDTO,
     recurrencePattern: RecurrencePatternDTO,
     visibility: ScheduleEventVisibility,
-    weekStart: Date,
-    weekEnd: Date
+    weekStartDate: string
   ): WeeklyScheduleOccurrenceDTO[] {
+    const recurrenceTimezone =
+      recurrencePattern.timezone?.trim() || DEFAULT_TIMEZONE
+    const weekStart = dayjs.tz(`${weekStartDate}T00:00:00`, recurrenceTimezone)
+    const weekEnd = weekStart.add(6, "day").endOf("day")
+
     const targetIndex =
       this.dayOfWeekIndex[recurrencePattern.dayOfWeek] ?? undefined
     if (targetIndex === undefined) {
       return []
     }
 
-    const startIndex = weekStart.getDay()
+    const startIndex = weekStart.day()
     const offset = (targetIndex - startIndex + 7) % 7
-    const occurrenceDate = new Date(weekStart)
-    occurrenceDate.setDate(weekStart.getDate() + offset)
-
-    if (occurrenceDate < recurrencePattern.startDate) {
-      return []
-    }
-
+    const occurrenceDate = weekStart.add(offset, "day").startOf("day")
+    const recurrenceStartDate = dayjs(recurrencePattern.startDate)
+      .tz(recurrenceTimezone)
+      .startOf("day")
     const recurrenceEndDate = recurrencePattern.endDate
-    if (recurrenceEndDate && occurrenceDate > recurrenceEndDate) {
+      ? dayjs(recurrencePattern.endDate).tz(recurrenceTimezone).startOf("day")
+      : null
+
+    if (occurrenceDate.isBefore(recurrenceStartDate, "day")) {
       return []
     }
 
-    if (occurrenceDate > weekEnd) {
+    if (recurrenceEndDate && occurrenceDate.isAfter(recurrenceEndDate, "day")) {
+      return []
+    }
+
+    if (occurrenceDate.isAfter(weekEnd, "day")) {
       return []
     }
 
@@ -110,7 +130,8 @@ export class ListWeeklyScheduleOccurrences {
     const endTime = this.calculateEndTime(
       startTime,
       recurrencePattern.durationMinutes,
-      occurrenceDate
+      occurrenceDate,
+      recurrenceTimezone
     )
 
     return [
@@ -118,7 +139,7 @@ export class ListWeeklyScheduleOccurrences {
         scheduleItemId,
         title,
         type,
-        date: occurrenceDate.toISOString().split("T")[0],
+        date: occurrenceDate.format("YYYY-MM-DD"),
         startTime,
         endTime,
         location,
@@ -130,22 +151,18 @@ export class ListWeeklyScheduleOccurrences {
   private calculateEndTime(
     startTime: string,
     durationMinutes: number,
-    occurrenceDate: Date
+    occurrenceDate: Dayjs,
+    timezoneName: string
   ): string {
     const [hours, minutes] = startTime.split(":").map(Number)
-    const startDateTime = new Date(occurrenceDate)
-    startDateTime.setHours(hours)
-    startDateTime.setMinutes(minutes)
-    startDateTime.setSeconds(0)
-    startDateTime.setMilliseconds(0)
+    const startDateTime = occurrenceDate
+      .tz(timezoneName)
+      .hour(hours)
+      .minute(minutes)
+      .second(0)
+      .millisecond(0)
+    const endDateTime = startDateTime.add(durationMinutes, "minute")
 
-    const endDateTime = new Date(
-      startDateTime.getTime() + durationMinutes * 60000
-    )
-
-    const endHours = `${endDateTime.getHours()}`.padStart(2, "0")
-    const endMinutes = `${endDateTime.getMinutes()}`.padStart(2, "0")
-
-    return `${endHours}:${endMinutes}`
+    return endDateTime.format("HH:mm")
   }
 }

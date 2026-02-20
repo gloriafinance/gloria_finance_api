@@ -1,4 +1,4 @@
-import { type IChurchRepository } from "@/Church/domain"
+import { ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { Logger } from "@/Shared/adapter"
 import type { ISecretManagerService } from "@/Shared/domain"
 import { SecretManagerProviderService } from "@/Shared/infrastructure"
@@ -31,7 +31,9 @@ export class RotateWhatsappAccessTokensJob implements IJob {
       return
     }
 
-    const churches = await this.churchRepository.all()
+    const churches = await this.churchRepository.all({
+      status: ChurchStatus.ACTIVE,
+    })
     let processed = 0
     let rotated = 0
 

@@ -2,8 +2,8 @@ import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { DateBR, StringToDate } from "@/Shared/helpers"
 
 import {
-  LocationDTO,
-  RecurrencePatternDTO,
+  type LocationDTO,
+  type RecurrencePatternDTO,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
@@ -82,10 +82,11 @@ export class ScheduleEvent extends AggregateRoot {
     return scheduleItem
   }
 
-  static fromPrimitives(plainData: any): ScheduleEvent {
+  static override fromPrimitives(plainData: any): ScheduleEvent {
     const scheduleItem = new ScheduleEvent()
     scheduleItem.id = plainData.id
-    scheduleItem.scheduleEventId = plainData.scheduleEventId
+    scheduleItem.scheduleEventId =
+      plainData.scheduleEventId ?? plainData.scheduleItemId
     scheduleItem.churchId = plainData.churchId
     scheduleItem.type = plainData.type
     scheduleItem.title = plainData.title
