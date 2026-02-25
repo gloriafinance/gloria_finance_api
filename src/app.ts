@@ -3,6 +3,7 @@ import {
   BunKitServer,
   CorsModule,
   FileUploadModule,
+  HealthModule,
   RateLimitModule,
   RequestContextModule,
   SecurityModule,
@@ -24,6 +25,7 @@ server.addModules([
   new CorsModule({
     allowedHeaders: ["content-type", "authorization"],
   }),
+  new HealthModule(),
   new SecurityModule(),
   new RequestContextModule(),
   new RateLimitModule(),
