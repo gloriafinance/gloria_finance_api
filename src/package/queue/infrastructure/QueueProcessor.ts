@@ -1,6 +1,7 @@
 import { Worker } from "bullmq"
 import { QueueRegistry } from "./QueueRegistry.ts"
 import { RequestContext } from "bun-platform-kit"
+import { readRedisConnectionOptions } from "@/Shared/helpers/ReadRedisConnectionOptions.helper"
 
 export class QueueProcessor {
   private static instance: QueueProcessor
@@ -8,12 +9,7 @@ export class QueueProcessor {
   private registry: QueueRegistry
   private workers: Map<string, Worker> = new Map()
 
-  private redisConfig = {
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT || "6379"),
-    username: process.env.REDIS_USER,
-    password: process.env.REDIS_PASSWORD,
-  }
+  private redisConfig = readRedisConnectionOptions()
 
   private constructor() {
     this.registry = QueueRegistry.getInstance()

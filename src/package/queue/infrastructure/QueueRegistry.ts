@@ -1,17 +1,13 @@
 import { Queue } from "bullmq"
 import type { IListQueue } from "../domain"
+import { readRedisConnectionOptions } from "@/Shared/helpers/ReadRedisConnectionOptions.helper"
 
 export class QueueRegistry {
   private static instance: QueueRegistry
   private queueInstances: Map<string, Queue> = new Map()
   private queueDefinitions: Map<string, IListQueue> = new Map()
 
-  private redisConfig = {
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT || "6379"),
-    username: process.env.REDIS_USER,
-    password: process.env.REDIS_PASSWORD,
-  }
+  private redisConfig = readRedisConnectionOptions()
 
   private constructor() {}
 

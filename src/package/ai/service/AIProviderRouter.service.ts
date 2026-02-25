@@ -16,6 +16,7 @@ import { GroqService } from "@/package/ai/service/Groq.service"
 import { CerebrasService } from "@/package/ai/service/Cerebras.service"
 import { OpenRouterService } from "@/package/ai/service/OpenRouter.service"
 import { CloudflareWorkersAIService } from "@/package/ai/service/CloudflareWorkersAI.service"
+import { readRedisConnectionOptions } from "@/Shared/helpers/ReadRedisConnectionOptions.helper"
 
 type AIProviderName = string
 
@@ -113,14 +114,7 @@ export class AIProviderRouterService {
       "AI_OPENROUTER_RELEASE_PRIMARY_REMAINING_THRESHOLD"
     )
 
-    this.redisClient = new Redis({
-      host: this.requiredStringEnv("REDIS_HOST"),
-      port: this.requiredNumberEnv("REDIS_PORT"),
-      username: process.env.REDIS_USER,
-      password: process.env.REDIS_PASSWORD,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-    })
+    this.redisClient = this.buildRedisClient()
     this.configs = this.buildProviderConfigs()
   }
 
@@ -1162,5 +1156,22 @@ return tostring(next)
       AIProviderErrorCode.CONFIG_ERROR,
       `Env var ${key} must be 'true' or 'false'`
     )
+  }
+
+  private buildRedisClient(): Redis {
+    try {
+      return new Redis({
+        ...readRedisConnectionOptions(),
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+      })
+    } catch (error) {
+      throw new AIProviderError(
+        "Router",
+        undefined,
+        AIProviderErrorCode.CONFIG_ERROR,
+        error instanceof Error ? error.message : "Invalid Redis configuration"
+      )
+    }
   }
 }

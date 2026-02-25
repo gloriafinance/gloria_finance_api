@@ -2,6 +2,7 @@ import Redis from "ioredis"
 
 import { Logger } from "@/Shared/adapter"
 import { type ICacheService } from "@/Shared/domain"
+import { readRedisConnectionOptions } from "@/Shared/helpers/ReadRedisConnectionOptions.helper"
 
 type CachePayload<T> = {
   value: T
@@ -11,16 +12,15 @@ export class RedisCacheService implements ICacheService {
   private static instance: RedisCacheService
   private readonly logger = Logger(RedisCacheService.name)
   private readonly client: Redis
+  private connectPromise?: Promise<boolean>
 
   private constructor() {
     this.client = new Redis({
-      host: process.env.REDIS_HOST,
-      port: Number(process.env.REDIS_PORT || 6379),
-      username: process.env.REDIS_USER,
-      password: process.env.REDIS_PASSWORD,
+      ...readRedisConnectionOptions(),
       lazyConnect: true,
       maxRetriesPerRequest: 1,
     })
+    this.bindClientEvents()
   }
 
   static getInstance(): RedisCacheService {
@@ -32,19 +32,39 @@ export class RedisCacheService implements ICacheService {
   }
 
   async set(key: string, value: any, ttlSeconds: number): Promise<void> {
-    await this.connectIfNeeded()
+    const connected = await this.connectIfNeeded()
+    if (!connected) return
 
     const payload: CachePayload<any> = {
       value: value ?? null,
     }
 
-    await this.client.set(key, JSON.stringify(payload), "EX", ttlSeconds)
+    try {
+      await this.client.set(key, JSON.stringify(payload), "EX", ttlSeconds)
+    } catch (error) {
+      this.logger.error("Redis cache set failed", {
+        key,
+        error,
+        status: this.client.status,
+      })
+    }
   }
 
   async get<T>(key: string): Promise<T | null> {
-    await this.connectIfNeeded()
+    const connected = await this.connectIfNeeded()
+    if (!connected) return null
 
-    const raw = await this.client.get(key)
+    let raw: string | null
+    try {
+      raw = await this.client.get(key)
+    } catch (error) {
+      this.logger.error("Redis cache get failed", {
+        key,
+        error,
+        status: this.client.status,
+      })
+      return null
+    }
 
     if (!raw) {
       return null
@@ -59,31 +79,58 @@ export class RedisCacheService implements ICacheService {
   }
 
   async invalidate(key: string): Promise<void> {
-    await this.connectIfNeeded()
-    await this.client.del(key)
-  }
-
-  invalidateByPrefix(prefix: string): void {
-    void this.invalidateByPrefixAsync(prefix)
-  }
-
-  private async connectIfNeeded(): Promise<void> {
-    if (this.client.status === "ready" || this.client.status === "connecting") {
-      return
-    }
+    const connected = await this.connectIfNeeded()
+    if (!connected) return
 
     try {
-      await this.client.connect()
+      await this.client.del(key)
     } catch (error) {
-      this.logger.error("Redis cache connection failed", {
+      this.logger.error("Redis cache invalidate failed", {
+        key,
         error,
         status: this.client.status,
       })
     }
   }
 
+  invalidateByPrefix(prefix: string): void {
+    void this.invalidateByPrefixAsync(prefix)
+  }
+
+  private async connectIfNeeded(): Promise<boolean> {
+    if (this.client.status === "ready") {
+      return true
+    }
+
+    if (
+      this.client.status === "connecting" ||
+      this.client.status === "reconnecting"
+    ) {
+      return this.waitUntilReady()
+    }
+
+    if (this.connectPromise) {
+      return this.connectPromise
+    }
+
+    this.connectPromise = this.connectAndWait()
+
+    try {
+      return await this.connectPromise
+    } catch (error) {
+      this.logger.error("Redis cache connection failed", {
+        error,
+        status: this.client.status,
+      })
+      return false
+    } finally {
+      this.connectPromise = undefined
+    }
+  }
+
   private async invalidateByPrefixAsync(prefix: string): Promise<void> {
-    await this.connectIfNeeded()
+    const connected = await this.connectIfNeeded()
+    if (!connected) return
 
     try {
       const keys = await this.scanKeys(`${prefix}*`)
@@ -97,6 +144,7 @@ export class RedisCacheService implements ICacheService {
       this.logger.error("Redis cache invalidateByPrefix failed", {
         error,
         prefix,
+        status: this.client.status,
       })
     }
   }
@@ -119,5 +167,70 @@ export class RedisCacheService implements ICacheService {
     } while (cursor !== "0")
 
     return keys
+  }
+
+  private bindClientEvents(): void {
+    this.client.on("error", (error) => {
+      this.logger.error("Redis cache client error", {
+        error,
+        status: this.client.status,
+      })
+    })
+  }
+
+  private async connectAndWait(): Promise<boolean> {
+    if (this.client.status === "ready") {
+      return true
+    }
+
+    if (
+      this.client.status === "wait" ||
+      this.client.status === "end" ||
+      this.client.status === "close"
+    ) {
+      await this.client.connect()
+    }
+
+    if (
+      this.client.status === "connect" ||
+      this.client.status === "connecting" ||
+      this.client.status === "reconnecting"
+    ) {
+      return this.waitUntilReady()
+    }
+
+    return false
+  }
+
+  private async waitUntilReady(timeoutMs: number = 10000): Promise<boolean> {
+    if (this.client.status === "ready") {
+      return true
+    }
+
+    return await new Promise<boolean>((resolve) => {
+      const timeout = setTimeout(() => {
+        cleanup()
+        resolve(String(this.client.status) === "ready")
+      }, timeoutMs)
+
+      const onReady = () => {
+        cleanup()
+        resolve(true)
+      }
+
+      const onEnd = () => {
+        cleanup()
+        resolve(false)
+      }
+
+      const cleanup = () => {
+        clearTimeout(timeout)
+        this.client.off("ready", onReady)
+        this.client.off("end", onEnd)
+      }
+
+      this.client.on("ready", onReady)
+      this.client.on("end", onEnd)
+    })
   }
 }
