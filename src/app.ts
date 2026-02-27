@@ -4,7 +4,6 @@ import {
   CorsModule,
   FileUploadModule,
   HealthModule,
-  RateLimitModule,
   RequestContextModule,
   SecurityModule,
 } from "bun-platform-kit"
@@ -14,6 +13,7 @@ import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
 import { BunHostAdapter } from "@/Shared/adapter/BunHostAdapter"
+import { RateLimitModule } from "@/Shared/infrastructure/modules/RateLimitModule"
 
 export const APP_DIR = __dirname
 
@@ -28,7 +28,13 @@ server.addModules([
   new HealthModule(),
   new SecurityModule(),
   new RequestContextModule(),
-  new RateLimitModule(),
+  new RateLimitModule({
+    excludePaths: ["/ui/queues", "/health"],
+    windowMs: 8 * 60 * 1000,
+    limit: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
   new FileUploadModule({
     maxBodyBytes: Number(process.env.UPLOAD_MAX_BODY_BYTES ?? 25 * 1024 * 1024),
     maxFileBytes: Number(process.env.UPLOAD_MAX_FILE_BYTES ?? 25 * 1024 * 1024),
