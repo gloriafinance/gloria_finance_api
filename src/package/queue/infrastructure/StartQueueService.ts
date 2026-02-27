@@ -7,20 +7,82 @@ import type { ServerApp } from "bun-platform-kit"
 
 type BunRoutes = ReturnType<BunAdapter["getRoutes"]>
 
-const findRouteHandler = (routes: BunRoutes, method: string, path: string) => {
-  const handlers = routes[path]
-  if (handlers && handlers[method]) {
-    return handlers[method]
+const normalizePath = (value: string): string => {
+  if (!value) {
+    return "/"
   }
 
-  for (const [routePath, routeHandlers] of Object.entries(routes)) {
-    if (!routePath.endsWith("/*")) {
+  const normalized = value.startsWith("/") ? value : `/${value}`
+  return normalized !== "/" ? normalized.replace(/\/+$/, "") : normalized
+}
+
+const extractParamsFromPattern = (
+  routePattern: string,
+  requestPath: string
+): Record<string, string> | undefined => {
+  const normalizedPattern = normalizePath(routePattern)
+  const normalizedPath = normalizePath(requestPath)
+
+  if (normalizedPattern === normalizedPath) {
+    return {}
+  }
+
+  if (normalizedPattern.endsWith("/*")) {
+    const prefix = normalizedPattern.slice(0, -2)
+    if (normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)) {
+      return {}
+    }
+    return undefined
+  }
+
+  const patternParts = normalizedPattern.split("/").filter(Boolean)
+  const pathParts = normalizedPath.split("/").filter(Boolean)
+
+  if (patternParts.length !== pathParts.length) {
+    return undefined
+  }
+
+  const params: Record<string, string> = {}
+
+  for (const [index, patternPart] of patternParts.entries()) {
+    const pathPart = pathParts[index]
+    if (pathPart === undefined) {
+      return undefined
+    }
+
+    if (patternPart.startsWith(":")) {
+      params[patternPart.slice(1)] = decodeURIComponent(pathPart)
       continue
     }
 
-    const prefix = routePath.slice(0, -1)
-    if (path.startsWith(prefix) && routeHandlers[method]) {
-      return routeHandlers[method]
+    if (patternPart !== pathPart) {
+      return undefined
+    }
+  }
+
+  return params
+}
+
+const findRouteHandler = (routes: BunRoutes, method: string, path: string) => {
+  const handlers = routes[path]
+  if (handlers && handlers[method]) {
+    return {
+      handler: handlers[method],
+      params: {} as Record<string, string>,
+    }
+  }
+
+  for (const [routePath, routeHandlers] of Object.entries(routes)) {
+    if (!routeHandlers[method]) {
+      continue
+    }
+
+    const params = extractParamsFromPattern(routePath, path)
+    if (params) {
+      return {
+        handler: routeHandlers[method],
+        params,
+      }
     }
   }
 
@@ -67,14 +129,24 @@ const registerBunRoutes = (
 
     const method = String(req.method || "").toUpperCase()
     const path = String(req.path || "")
-    const handler = findRouteHandler(routes, method, path)
+    const route = findRouteHandler(routes, method, path)
 
-    if (!handler) {
+    if (!route) {
       next()
       return
     }
 
-    const response = await handler(req.raw as Request)
+    const rawRequest = req.raw as Request
+    const requestWithParams = new Proxy(rawRequest as Request & any, {
+      get(target, property, receiver) {
+        if (property === "params") {
+          return route.params
+        }
+        return Reflect.get(target, property, receiver)
+      },
+    })
+
+    const response = await route.handler(requestWithParams as Request)
     res.send(response)
   })
 }

@@ -1,6 +1,7 @@
 import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
+  AccountReceivableType,
   type IAccountsReceivableRepository,
   InstallmentNotFound,
   PayAccountReceivableNotFound,
@@ -12,7 +13,10 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import { type IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import {
+  type IAvailabilityAccountRepository,
+  type IFinancialConceptRepository,
+} from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
@@ -23,6 +27,7 @@ export class PayAccountReceivable {
   private logger = Logger(PayAccountReceivable.name)
 
   constructor(
+    private readonly financialConceptRepository: IFinancialConceptRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly accountReceivableRepository: IAccountsReceivableRepository,
     private readonly queueService: IQueueService
@@ -87,6 +92,8 @@ export class PayAccountReceivable {
         )
       }
 
+      const financialConcept = await this.financialConcept(accountReceivable)
+
       await new DispatchCreateFinancialRecord(this.queueService).execute({
         voucher,
         churchId: accountReceivable.getChurchId(),
@@ -100,8 +107,8 @@ export class PayAccountReceivable {
           ...availabilityAccount.toPrimitives(),
           id: availabilityAccount.getId(),
         },
-        financialConcept: accountReceivable.getFinancialConcept(),
-        description: `Conta a Receber criada: ${accountReceivable.getDescription()}`,
+        financialConcept,
+        description: `${financialConcept.getDescription()}: ${accountReceivable.getDescription()}`,
         reference: {
           entityId: `${accountReceivable.getAccountReceivableId()} installments ${req.installmentIds.join(",")}`,
           type: "AccountReceivable",
@@ -111,9 +118,21 @@ export class PayAccountReceivable {
       await unitOfWork.commit()
 
       this.logger.info(`Finished Pay Account Receivable`)
-    } catch (e) {
+    } catch (e: any) {
       await unitOfWork.rollback()
+      this.logger.error(`Error pay account receivable`, e)
       throw e
     }
+  }
+
+  private async financialConcept(accountReceivable: AccountReceivable) {
+    if (accountReceivable.getType() === AccountReceivableType.LOAN) {
+      return (await this.financialConceptRepository.one({
+        tag: "COLLECT_LOANDS",
+        churchId: accountReceivable.getChurchId(),
+      }))!
+    }
+
+    return accountReceivable.getFinancialConcept()
   }
 }
