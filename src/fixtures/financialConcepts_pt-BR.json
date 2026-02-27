@@ -60,16 +60,17 @@
     "isSystem": true
   },
   {
-    "name": "Conta a Receber",
-    "description": "Valor a receber por pagamento de uma conta a receber.",
+    "name": "Recebimento de Empréstimos",
+    "description": "Recebimento de valores de empréstimos concedidos.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE",
+    "statementCategory": "OTHER",
     "affectsCashFlow": true,
-    "affectsResult": true,
-    "affectsBalance": false,
-    "isOperational": true,
-    "isSystem": true
+    "affectsResult": false,
+    "affectsBalance": true,
+    "isOperational": false,
+    "isSystem": true,
+    "tag": "COLLECT_LOANDS"
   },
   {
     "name": "Empréstimos Concedidos",

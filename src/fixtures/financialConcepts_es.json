@@ -60,16 +60,17 @@
     "isSystem": true
   },
   {
-    "name": "Cuenta por cobrar",
-    "description": "Importe a recibir por el pago de una cuenta por cobrar.",
+    "name": "Cobro de Préstamos",
+    "description": "Cobro de valores de préstamos otorgados.",
     "type": "INCOME",
     "active": true,
-    "statementCategory": "REVENUE",
+    "statementCategory": "OTHER",
     "affectsCashFlow": true,
-    "affectsResult": true,
-    "affectsBalance": false,
-    "isOperational": true,
-    "isSystem": true
+    "affectsResult": false,
+    "affectsBalance": true,
+    "isOperational": false,
+    "isSystem": true,
+    "tag": "COLLECT_LOANDS"
   },
   {
     "name": "Préstamos otorgados",

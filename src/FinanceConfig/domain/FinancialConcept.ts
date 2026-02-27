@@ -1,6 +1,6 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { ConceptType } from "./enums/ConcepType.enum"
-import { StatementCategory } from "../../Financial/domain/enums/StatementCategory.enum"
+import { StatementCategory } from "@/Financial/domain"
 import { Church } from "@/Church/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
@@ -30,6 +30,7 @@ export class FinancialConcept extends AggregateRoot {
   private affectsResult: boolean
   private affectsBalance: boolean
   private isOperational: boolean
+  private tag?: string
 
   private constructor() {
     super()
@@ -43,6 +44,7 @@ export class FinancialConcept extends AggregateRoot {
     statementCategory: StatementCategory,
     church: Church,
     impactOverrides: FinancialConceptImpactOverrides,
+    tag?: string,
     isSystem: boolean = false
   ): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
@@ -54,16 +56,17 @@ export class FinancialConcept extends AggregateRoot {
     concept.statementCategory = statementCategory
     concept.churchId = church.getChurchId()
     concept.createdAt = DateBR()
-    concept.affectsBalance = impactOverrides.affectsBalance
-    concept.affectsResult = impactOverrides.affectsResult
-    concept.affectsCashFlow = impactOverrides.affectsCashFlow
-    concept.isOperational = impactOverrides.isOperational
+    concept.affectsBalance = impactOverrides.affectsBalance!
+    concept.affectsResult = impactOverrides.affectsResult!
+    concept.affectsCashFlow = impactOverrides.affectsCashFlow!
+    concept.isOperational = impactOverrides.isOperational!
+    concept.tag = tag
     concept.isSystem = isSystem
 
     return concept
   }
 
-  static fromPrimitives(plainData: any): FinancialConcept {
+  static override fromPrimitives(plainData: any): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
     concept.id = plainData.id
     concept.financialConceptId = plainData.financialConceptId
@@ -86,6 +89,7 @@ export class FinancialConcept extends AggregateRoot {
     concept.affectsBalance = plainData.affectsBalance
     concept.isOperational = plainData.isOperational
     concept.isSystem = plainData.isSystem
+    concept.tag = plainData.tag
 
     return concept
   }
@@ -269,6 +273,7 @@ export class FinancialConcept extends AggregateRoot {
       affectsResult: this.affectsResult,
       affectsBalance: this.affectsBalance,
       isOperational: this.isOperational,
+      tag: this.tag,
       isSystem: this.isSystem,
     }
   }
