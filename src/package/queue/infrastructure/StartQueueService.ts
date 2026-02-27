@@ -102,6 +102,31 @@ const registerBunRoutes = (
   const pass = credentials?.password || ""
   const hasAuth = user.length > 0 && pass.length > 0
 
+  const ensureRequestForHandler = (
+    req: any,
+    method: string
+  ): Request & { params?: Record<string, string> } => {
+    const rawRequest = req.raw as Request
+
+    if (method === "GET" || method === "HEAD" || req?.body === undefined) {
+      return rawRequest as Request & { params?: Record<string, string> }
+    }
+
+    const headers = new Headers(rawRequest.headers)
+    const bodyPayload =
+      typeof req.body === "string" ? req.body : JSON.stringify(req.body)
+
+    if (!headers.get("content-type")) {
+      headers.set("content-type", "application/json")
+    }
+
+    return new Request(rawRequest.url, {
+      method,
+      headers,
+      body: bodyPayload,
+    }) as Request & { params?: Record<string, string> }
+  }
+
   app.use(basePath, async (req: any, res: any, next: () => void) => {
     if (hasAuth) {
       const authorization =
@@ -136,10 +161,10 @@ const registerBunRoutes = (
       return
     }
 
-    const rawRequest = req.raw as Request & { params?: Record<string, string> }
-    rawRequest.params = route.params
+    const requestForHandler = ensureRequestForHandler(req, method)
+    requestForHandler.params = route.params
 
-    const response = await route.handler(rawRequest as Request)
+    const response = await route.handler(requestForHandler as Request)
     res.send(response)
   })
 }
