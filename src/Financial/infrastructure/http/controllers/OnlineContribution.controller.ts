@@ -18,7 +18,6 @@ import {
   OnlineContributionsMongoRepository,
 } from "../../persistence"
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
-import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { Logger } from "@/Shared/adapter"
 import { type Paginate } from "@abejarano/ts-mongodb-criteria"
 import type { ServerResponse } from "bun-platform-kit"
@@ -32,6 +31,7 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
+import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 
 @Controller("/api/v1/finance/contributions")
 export class ContributionController {
@@ -75,9 +75,9 @@ export class ContributionController {
   ) {
     try {
       await new UpdateContributionStatus(
+        FinancialConceptMongoRepository.getInstance(),
         OnlineContributionsMongoRepository.getInstance(),
         QueueService.getInstance(),
-        FinanceRecordMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
         AccountsReceivableMongoRepository.getInstance()
       ).execute({

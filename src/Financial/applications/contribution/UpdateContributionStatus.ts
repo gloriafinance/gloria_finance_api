@@ -8,7 +8,10 @@ import {
   OnlineContributionsStatus,
   TypeOperationMoney,
 } from "../../domain"
-import type { IOnlineContributionsRepository } from "../../domain/interfaces"
+import type {
+  IFinancialConceptRepository,
+  IOnlineContributionsRepository,
+} from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
 import { AmountValue } from "@/Shared/domain"
 import {
@@ -16,10 +19,7 @@ import {
   DispatchUpdateAvailabilityAccountBalance,
 } from "@/Financial/applications"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
-import type {
-  IAvailabilityAccountRepository,
-  IFinancialRecordRepository,
-} from "@/Financial/domain/interfaces"
+import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import type { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
 import type { IQueueService } from "@/package/queue/domain"
 
@@ -27,9 +27,9 @@ export class UpdateContributionStatus {
   private logger = Logger(UpdateContributionStatus.name)
 
   constructor(
+    private readonly financialConceptRepository: IFinancialConceptRepository,
     private readonly contributionRepository: IOnlineContributionsRepository,
     private readonly queueService: IQueueService,
-    private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly accountReceivableRepository: IAccountsReceivableRepository
   ) {}
@@ -81,7 +81,7 @@ export class UpdateContributionStatus {
       contribution.getInstallmentId()
     ) {
       await new PayAccountReceivable(
-        this.financialRecordRepository,
+        this.financialConceptRepository,
         this.availabilityAccountRepository,
         this.accountReceivableRepository,
         this.queueService
