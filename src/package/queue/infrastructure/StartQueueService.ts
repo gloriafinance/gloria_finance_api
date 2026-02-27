@@ -136,17 +136,10 @@ const registerBunRoutes = (
       return
     }
 
-    const rawRequest = req.raw as Request
-    const requestWithParams = new Proxy(rawRequest as Request & any, {
-      get(target, property, receiver) {
-        if (property === "params") {
-          return route.params
-        }
-        return Reflect.get(target, property, receiver)
-      },
-    })
+    const rawRequest = req.raw as Request & { params?: Record<string, string> }
+    rawRequest.params = route.params
 
-    const response = await route.handler(requestWithParams as Request)
+    const response = await route.handler(rawRequest as Request)
     res.send(response)
   })
 }
