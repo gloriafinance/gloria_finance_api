@@ -7,7 +7,7 @@ export class DispatchCreateFinancialRecord {
 
   constructor(private readonly queueService: IQueueService) {}
 
-  execute(financialRecord: FinancialRecordCreateQueue) {
+  async execute(financialRecord: FinancialRecordCreateQueue): Promise<void> {
     this.logger.info(`DispatchFinancialRecord`, financialRecord)
 
     this.queueService.dispatch(

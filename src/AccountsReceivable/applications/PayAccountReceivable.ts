@@ -1,31 +1,28 @@
 import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
-  IAccountsReceivableRepository,
+  type IAccountsReceivableRepository,
   InstallmentNotFound,
   PayAccountReceivableNotFound,
-  PayAccountReceivableRequest,
+  type PayAccountReceivableRequest,
 } from "@/AccountsReceivable/domain"
-import { IQueueService } from "@/Shared/domain"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import {
-  IAvailabilityAccountRepository,
-  IFinancialRecordRepository,
-} from "@/Financial/domain/interfaces"
+import { type IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import type { IQueueService } from "@/package/queue/domain"
+import { StorageProviderService } from "@/Shared/infrastructure"
 
 export class PayAccountReceivable {
   private logger = Logger(PayAccountReceivable.name)
 
   constructor(
-    private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly accountReceivableRepository: IAccountsReceivableRepository,
     private readonly queueService: IQueueService
@@ -34,7 +31,7 @@ export class PayAccountReceivable {
   async execute(req: PayAccountReceivableRequest) {
     this.logger.info(`Start Pay Account Receivable`, req)
 
-    const accountReceivable: AccountReceivable =
+    const accountReceivable: AccountReceivable | null =
       await this.accountReceivableRepository.one({
         accountReceivableId: req.accountReceivableId,
       })
@@ -83,8 +80,15 @@ export class PayAccountReceivable {
 
       this.logger.info(`Account Receivable ${req.accountReceivableId} updated`)
 
-      new DispatchCreateFinancialRecord(this.queueService).execute({
-        file: req.file,
+      let voucher = undefined
+      if (req.file) {
+        voucher = await StorageProviderService.getInstance().uploadFile(
+          req.file
+        )
+      }
+
+      await new DispatchCreateFinancialRecord(this.queueService).execute({
+        voucher,
         churchId: accountReceivable.getChurchId(),
         date: DateBR(),
         createdBy: req.createdBy,

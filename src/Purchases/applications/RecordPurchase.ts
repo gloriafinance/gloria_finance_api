@@ -63,7 +63,7 @@ export class RecordPurchase {
       financialConceptId: request.financialConceptId,
     })
 
-    new DispatchCreateFinancialRecord(this.queueService).execute({
+    await new DispatchCreateFinancialRecord(this.queueService).execute({
       financialConcept: concept,
       churchId: request.churchId,
       amount: request.total,

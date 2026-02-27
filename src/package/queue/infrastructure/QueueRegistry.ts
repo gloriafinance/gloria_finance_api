@@ -50,8 +50,8 @@ export class QueueRegistry {
           connection: this.redisConfig,
           defaultJobOptions: {
             delay: definition.delay ? definition.delay * 1000 : 0,
-            removeOnComplete: true,
-            removeOnFail: false,
+            // removeOnComplete: true,
+            // removeOnFail: false,
           },
         })
 

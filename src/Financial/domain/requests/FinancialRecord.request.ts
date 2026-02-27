@@ -20,7 +20,6 @@ export type FinancialRecordCreateQueue = {
   financialConcept: FinancialConcept
   availabilityAccount?: any
   createdBy: string
-  file?: any
   voucher?: string
   reference?: {
     type: string
@@ -34,7 +33,6 @@ export type UpdateStatusFinancialRecordQueue = {
 }
 
 export type FinancialRecordRequest = {
-  file?: any
   bankingOperation?: BankingOperationType
   financialConceptId: string
   churchId: string

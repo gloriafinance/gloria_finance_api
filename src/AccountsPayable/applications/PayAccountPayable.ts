@@ -2,16 +2,16 @@ import { Logger } from "@/Shared/adapter"
 import {
   AccountPayable,
   AccountPayableNotFound,
-  IAccountPayableRepository,
+  type IAccountPayableRepository,
   InstallmentNotFound,
   type PayAccountPayableRequest,
 } from "@/AccountsPayable/domain"
-import {
+import type {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import { AmountValue, IQueueService } from "@/Shared/domain"
+import { AmountValue } from "@/Shared/domain"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR, UnitOfWork } from "@/Shared/helpers"
@@ -23,6 +23,8 @@ import {
 } from "@/Financial/domain"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import { FinancialConceptNotFound } from "@/FinanceConfig/domain"
+import { StorageProviderService } from "@/Shared/infrastructure"
+import type { IQueueService } from "@/package/queue/domain"
 
 export class PayAccountPayable {
   private logger = Logger(PayAccountPayable.name)
@@ -40,7 +42,7 @@ export class PayAccountPayable {
 
     const unitOfWork = new UnitOfWork()
 
-    const accountPayable: AccountPayable =
+    const accountPayable: AccountPayable | undefined =
       await this.accountPayableRepository.one({
         accountPayableId: req.accountPayableId,
       })
@@ -84,10 +86,17 @@ export class PayAccountPayable {
     }
 
     unitOfWork.execPostCommit(async () => {
-      new DispatchCreateFinancialRecord(this.queueService).execute({
+      let voucher = undefined
+      if (req.file) {
+        voucher = await StorageProviderService.getInstance().uploadFile(
+          req.file
+        )
+      }
+
+      await new DispatchCreateFinancialRecord(this.queueService).execute({
         churchId: accountPayable.getChurchId(),
         costCenter: { ...costCenter.toPrimitives() },
-        file: req.file,
+        voucher,
         date: DateBR(),
         createdBy: req.createdBy,
         availabilityAccount,
