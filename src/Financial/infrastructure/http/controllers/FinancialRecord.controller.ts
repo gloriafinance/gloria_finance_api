@@ -105,8 +105,9 @@ export class FinancialRecordController {
     const request = {
       ...body,
       churchId: req.auth.churchId,
-      file: req?.files?.file,
     }
+    let deleteVoucherOnRollback = false
+
     try {
       const financialConcept =
         await new FindFinancialConceptByChurchIdAndFinancialConceptId(
@@ -142,6 +143,12 @@ export class FinancialRecordController {
         ).execute(request.churchId, request.costCenterId)
       }
 
+      if (req?.files?.file) {
+        request.voucher = await StorageProviderService.getInstance().uploadFile(
+          req?.files?.file
+        )
+      }
+
       await new CreateFinancialRecordJob(
         FinancialYearMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
@@ -149,6 +156,7 @@ export class FinancialRecordController {
         QueueService.getInstance()
       ).handle({
         ...request,
+        deleteVoucherOnRollback,
         costCenter,
         financialConcept,
         financialRecordType: toFinancialRecordType(financialConcept.getType()),
@@ -162,7 +170,9 @@ export class FinancialRecordController {
       })
     } catch (e) {
       if (request.voucher) {
-        await StorageProviderService.getInstance().deleteFile(request.voucher)
+        await StorageProviderService.getInstance()
+          .deleteFile(request.voucher)
+          .catch(() => undefined)
       }
 
       return domainResponse(e, res)

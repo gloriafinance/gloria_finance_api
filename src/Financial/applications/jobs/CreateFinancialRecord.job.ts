@@ -50,9 +50,12 @@ export class CreateFinancialRecordJob implements IJob {
         ? AvailabilityAccount.fromPrimitives(args.availabilityAccount)
         : args.availabilityAccount
 
-    let voucher = args.voucher
-    if (args.file && !args.voucher) {
-      voucher = await this.uploadFile(args.file)
+    const voucher = args.voucher
+
+    if (voucher) {
+      this.unitOfWork.registerRollbackActions(async () => {
+        await this.store.deleteFile(voucher)
+      })
     }
 
     try {
@@ -88,23 +91,11 @@ export class CreateFinancialRecordJob implements IJob {
         churchId: args.churchId,
         financialRecordId: financialRecord.getFinancialRecordId(),
       })
-    } catch (e) {
+    } catch (e: any) {
+      this.logger.error(`Error in create financial record process`, e)
       await this.unitOfWork.rollback()
       throw e
     }
-  }
-
-  private async uploadFile(file?: any): Promise<string | undefined> {
-    if (!file) {
-      return undefined
-    }
-    const voucher = await this.store.uploadFile(file)
-
-    this.unitOfWork.registerRollbackActions(async () => {
-      if (voucher) await this.store.deleteFile(voucher)
-    })
-
-    return voucher
   }
 
   private postCommitCostCenter(args: FinancialRecordCreateQueue) {

@@ -188,7 +188,6 @@ export class AccountReceivableController {
       }
 
       await new PayAccountReceivable(
-        FinanceRecordMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
         AccountsReceivableMongoRepository.getInstance(),
         QueueService.getInstance()

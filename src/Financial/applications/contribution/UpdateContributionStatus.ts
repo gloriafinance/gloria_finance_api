@@ -104,7 +104,7 @@ export class UpdateContributionStatus {
       return
     }
 
-    new DispatchCreateFinancialRecord(this.queueService).execute({
+    await new DispatchCreateFinancialRecord(this.queueService).execute({
       financialConcept: concept,
       amount: contribution.getAmount(),
       churchId: contribution.getMember().getChurch().churchId,
