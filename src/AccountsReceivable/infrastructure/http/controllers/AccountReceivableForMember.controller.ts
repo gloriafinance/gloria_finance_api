@@ -114,7 +114,7 @@ export class AccountReceivableForMemberController {
     }
   }
 
-  @Post("/payment-declaration")
+  @Post("/member/payment-declaration")
   @Use([
     PermissionMiddleware,
     Can("accounts_receivable", "member_commitments"),
