@@ -60,6 +60,17 @@
     "isSystem": true
   },
   {
+    "name": "Ofrenda a Invitados",
+    "description": "Valores entregados como ofrenda o apoyo a invitados en actividades.",
+    "type": "OUTGO",
+    "statementCategory": "MINISTRY_TRANSFERS",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": true,
+    "isOperational": false,
+    "isSystem": true
+  },
+  {
     "name": "Cobro de Préstamos",
     "description": "Cobro de valores de préstamos otorgados.",
     "type": "INCOME",

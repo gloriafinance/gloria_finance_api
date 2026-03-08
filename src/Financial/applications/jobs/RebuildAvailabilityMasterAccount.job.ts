@@ -1,6 +1,6 @@
-import { IAvailabilityAccountMasterRepository } from "@/Financial/domain/interfaces"
-import { IJob } from "@/Shared/domain"
+import { type IAvailabilityAccountMasterRepository } from "@/Financial/domain/interfaces"
 import { Logger } from "@/Shared/adapter"
+import type { IJob } from "@/package/queue/domain"
 
 export class RebuildAvailabilityMasterAccountJob implements IJob {
   private logger = Logger(RebuildAvailabilityMasterAccountJob.name)

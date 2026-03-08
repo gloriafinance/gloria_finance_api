@@ -11,10 +11,12 @@ import {
   Controller,
   Post,
   Req,
+  Res,
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
 import { QueueName } from "@/package/queue/domain"
+import domainResponse from "@/Shared/helpers/domainResponse.ts"
 
 @Controller("/api/v1/finance/tools")
 export class FinancialRecordJobController {
@@ -37,19 +39,23 @@ export class FinancialRecordJobController {
       month: number
     },
     @Req() req: AuthenticatedRequest,
-    res: ServerResponse
+    @Res() res: ServerResponse
   ) {
-    QueueService.getInstance().dispatch<{
-      churchId: string
-      year: number
-      month: number
-    }>(QueueName.RebuildAvailabilityMasterAccountJob, {
-      month: Number(body.month),
-      year: Number(body.year),
-      churchId: req.auth.churchId,
-    })
+    try {
+      QueueService.getInstance().dispatch<{
+        churchId: string
+        year: number
+        month: number
+      }>(QueueName.RebuildAvailabilityMasterAccountJob, {
+        month: Number(body.month),
+        year: Number(body.year),
+        churchId: req.auth.churchId,
+      })
 
-    res.status(HttpStatus.OK).send({ message: "process" })
+      res.status(HttpStatus.OK).send({ message: "process" })
+    } catch (e) {
+      return domainResponse(e, res)
+    }
   }
 
   /**
@@ -67,7 +73,7 @@ export class FinancialRecordJobController {
   async rebuildCostCentral(
     @Body() body: { month: number; year: number },
     @Req() req: AuthenticatedRequest,
-    res: ServerResponse
+    @Res() res: ServerResponse
   ) {
     QueueService.getInstance().dispatch<{
       churchId: string

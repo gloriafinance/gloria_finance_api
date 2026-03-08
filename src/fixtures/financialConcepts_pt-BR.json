@@ -48,6 +48,17 @@
     "isSystem": true
   },
   {
+    "name": "Oferta a Convidados",
+    "description": "Valores entregues como oferta ou apoio a convidados em atividades.",
+    "type": "OUTGO",
+    "statementCategory": "MINISTRY_TRANSFERS",
+    "affectsCashFlow": true,
+    "affectsResult": true,
+    "affectsBalance": true,
+    "isOperational": false,
+    "isSystem": true
+  },
+  {
     "name": "Contas a Pagar",
     "description": "Valor a pagar por conta a pagar.",
     "type": "OUTGO",
