@@ -1,5 +1,5 @@
-import { OnlineContributions } from "../../domain"
 import type { FilterContributionsRequest } from "../../domain"
+import { OnlineContributions } from "../../domain"
 import {
   Criteria,
   Filters,
@@ -7,7 +7,7 @@ import {
   Order,
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
-import { IOnlineContributionsRepository } from "../../domain/interfaces"
+import { type IOnlineContributionsRepository } from "../../domain/interfaces"
 import { StringToDate } from "@/Shared/helpers"
 
 export class ListContributions {
@@ -23,6 +23,7 @@ export class ListContributions {
 
   private prepareFilter(reqFilters: FilterContributionsRequest) {
     const filters = []
+    const memberId = reqFilters.memberId?.trim()
 
     if (reqFilters.startDate) {
       filters.push(
@@ -54,12 +55,21 @@ export class ListContributions {
       )
     }
 
-    if (reqFilters.memberId) {
+    if (memberId) {
+      const normalizedMemberId = memberId.replace(/^urn:member:/i, "")
+      const acceptedMemberIds = Array.from(
+        new Set([
+          memberId,
+          normalizedMemberId,
+          `urn:member:${normalizedMemberId}`,
+        ])
+      )
+
       filters.push(
         new Map([
           ["field", "member.memberId"],
-          ["operator", Operator.EQUAL],
-          ["value", reqFilters.memberId],
+          ["operator", Operator.IN],
+          ["value", acceptedMemberIds],
         ])
       )
     }
