@@ -18,6 +18,7 @@ type rawFinancialConcept = {
   affectsResult: boolean
   affectsBalance: boolean
   isOperational: boolean
+  tag?: string
   isSystem: boolean
 }
 
@@ -51,6 +52,7 @@ export class FirstLoadFinancialConcepts {
             affectsBalance: concept.affectsBalance,
             isOperational: concept.isOperational,
           },
+          concept.tag,
           concept.isSystem
         )
       )

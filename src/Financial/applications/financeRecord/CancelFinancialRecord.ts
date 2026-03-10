@@ -16,14 +16,14 @@ import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
-import { GenericException, type IQueueService } from "@/Shared/domain"
-import { QueueName } from "@/package/queue/domain"
+import { GenericException } from "@/Shared/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,
-  DispatchUpdateStatusFinancialRecord,
 } from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinancialRecord"
 
 /**
  * Este caso de uso se encarga de anular un registro financiero.
@@ -116,15 +116,18 @@ export class CancelFinancialRecord {
       availabilityOperation: TypeOperationMoney.MONEY_IN,
     })
 
-    this.unitOfWork.execPostCommit(() => {
-      new DispatchUpdateCostCenterMaster(this.queueService).execute({
-        costCenterId: financialRecord.getCostCenterId()!,
-        amount: financialRecord.getAmount(),
-        churchId: financialRecord.getChurchId(),
-        operation: "subtract",
-        availabilityAccount: financialRecord.getAvailabilityAccount(),
+    const costCenterId = financialRecord.getCostCenterId()
+    if (costCenterId) {
+      this.unitOfWork.execPostCommit(() => {
+        new DispatchUpdateCostCenterMaster(this.queueService).execute({
+          costCenterId: costCenterId,
+          amount: financialRecord.getAmount(),
+          churchId: financialRecord.getChurchId(),
+          operation: "subtract",
+          availabilityAccount: financialRecord.getAvailabilityAccount(),
+        })
       })
-    })
+    }
 
     if (
       financialRecord.getFinancialConcept().getType() === ConceptType.PURCHASE
@@ -179,15 +182,25 @@ export class CancelFinancialRecord {
       operation: availabilityOperation,
     })
 
-    this.unitOfWork.execPostCommit(() => {
-      new DispatchUpdateStatusFinancialRecord(this.queueService).execute({
+    await new UpdateFinancialRecord(
+      this.financialYearRepository,
+      this.financialRecordRepository,
+      this.availabilityAccountRepository,
+      this.queueService
+    ).execute(
+      {
         financialRecord: {
           ...financialRecord.toPrimitives(),
           id: financialRecord.getId(),
         },
         status: FinancialRecordStatus.VOID,
-      })
-    })
+      },
+      {
+        validateFinancialMonth: false,
+        deferSideEffect: (sideEffect) =>
+          this.unitOfWork.execPostCommit(sideEffect),
+      }
+    )
   }
 
   private async financeRecordReversal(params: {

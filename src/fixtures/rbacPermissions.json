@@ -147,6 +147,20 @@
     "isSystem": true
   },
   {
+    "permissionId": "financial_records:transfer_between_accounts",
+    "module": "financial_records",
+    "action": "transfer_between_accounts",
+    "description": "Registrar transferências internas entre contas de disponibilidade",
+    "isSystem": true
+  },
+  {
+    "permissionId": "financial_records:reverse_transfer",
+    "module": "financial_records",
+    "action": "reverse_transfer",
+    "description": "Reverter transferências internas e cancelar os movimentos vinculados",
+    "isSystem": true
+  },
+  {
     "permissionId": "financial_records:reports",
     "module": "financial_records",
     "action": "reports",

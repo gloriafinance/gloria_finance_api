@@ -6,6 +6,7 @@ import type {
   FinanceRecordReportRequest,
   FinancialRecordCreateQueue,
   FinancialRecordRequest,
+  InternalTransferRequest,
 } from "../../../domain"
 import {
   AccountType,
@@ -17,8 +18,10 @@ import {
 } from "../../../domain"
 import {
   CancelFinancialRecord,
+  CreateInternalTransfer,
   FetchingFinanceRecord,
   GenerateFinanceRecordReport,
+  ReverseInternalTransfer,
 } from "@/Financial/applications"
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
@@ -58,6 +61,7 @@ import {
   Use,
 } from "bun-platform-kit"
 import FinancialRecordValidator from "@/Financial/infrastructure/http/validators/FinancialRecord.validator"
+import InternalTransferValidator from "@/Financial/infrastructure/http/validators/InternalTransfer.validator"
 import FinanceRecordPaginateDTO from "@/Financial/infrastructure/http/dto/FinanceRecordPaginate.dto"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
@@ -179,6 +183,40 @@ export class FinancialRecordController {
     }
   }
 
+  @Post("/transfer-between-accounts")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "transfer_between_accounts"),
+    InternalTransferValidator,
+  ])
+  async transferBetweenAccounts(
+    @Body() body: Omit<InternalTransferRequest, "churchId" | "createdBy">,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const transfer = await new CreateInternalTransfer(
+        FinancialYearMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        FinancialConceptMongoRepository.getInstance(),
+        ChurchMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute({
+        ...body,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
+      })
+
+      return res.status(HttpStatus.CREATED).send({
+        message: "successful internal transfer registration",
+        transfer,
+      })
+    } catch (e) {
+      return domainResponse(e, res)
+    }
+  }
+
   @Patch("/cancel/:financialRecordId")
   @Use([PermissionMiddleware, Can("financial_records", "cancel")])
   async CancelFinancialRecordController(
@@ -203,6 +241,33 @@ export class FinancialRecordController {
       })
     } catch (e) {
       domainResponse(e, res)
+    }
+  }
+
+  @Patch("/reverse-transfer/:transferId")
+  @Use([PermissionMiddleware, Can("financial_records", "reverse_transfer")])
+  async reverseTransferController(
+    @Param("transferId") transferId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new ReverseInternalTransfer(
+        FinancialYearMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute({
+        transferId,
+        churchId: req.auth.churchId,
+        createdBy: req.auth.name,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "successful internal transfer reversal",
+      })
+    } catch (e) {
+      return domainResponse(e, res)
     }
   }
 

@@ -2,16 +2,16 @@ import { Logger } from "@/Shared/adapter/CustomLogger"
 import {
   BankStatement,
   BankStatementDirection,
-  IBankStatementRepository,
+  type IBankStatementRepository,
 } from "@/Banking/domain"
 import {
   FinanceRecord,
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import { DispatchUpdateStatusFinancialRecord } from "@/Financial/applications"
-import { IQueueService } from "@/Shared/domain"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IQueueService } from "@/package/queue/domain"
 
 const DIRECTION_TO_TYPES: Record<
   BankStatementDirection,
@@ -83,7 +83,7 @@ export class BankStatementReconciler {
 
   private async findMatchingFinancialRecord(
     statement: BankStatement
-  ): Promise<FinanceRecord | undefined> {
+  ): Promise<FinanceRecord | null> {
     const postedAt = statement.getPostedAt()
     const directionTypes = DIRECTION_TO_TYPES[statement.getDirection()]
     const startDate = this.shiftDate(postedAt, -1)

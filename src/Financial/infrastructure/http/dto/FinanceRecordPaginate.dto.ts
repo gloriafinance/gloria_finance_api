@@ -22,6 +22,7 @@ export default async (list: Paginate<any>) => {
       availabilityAccount: item.availabilityAccount,
       description: item.description,
       status: item.status,
+      reference: item.reference,
     }
 
     if (item.type === ConceptType.OUTGO) {

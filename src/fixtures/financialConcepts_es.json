@@ -526,5 +526,18 @@
     "affectsBalance": false,
     "isOperational": false,
     "isSystem": true
+  },
+  {
+    "name": "TRANSFER_INTERNAL",
+    "description": "Transferencia interna entre cuentas de disponibilidad de la iglesia.",
+    "type": "OUTGO",
+    "active": true,
+    "statementCategory": "OTHER",
+    "affectsCashFlow": true,
+    "affectsResult": false,
+    "affectsBalance": false,
+    "isOperational": false,
+    "tag": "TRANSFER_INTERNAL",
+    "isSystem": true
   }
 ]

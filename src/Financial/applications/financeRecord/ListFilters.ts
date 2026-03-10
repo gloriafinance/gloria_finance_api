@@ -52,6 +52,26 @@ export const PrepareFinanceRecordCriteria = (
     )
   }
 
+  if (request.referenceType) {
+    filters.push(
+      new Map([
+        ["field", "reference.type"],
+        ["operator", Operator.EQUAL],
+        ["value", request.referenceType],
+      ])
+    )
+  }
+
+  if (request.referenceEntityId) {
+    filters.push(
+      new Map([
+        ["field", "reference.entityId"],
+        ["operator", Operator.EQUAL],
+        ["value", request.referenceEntityId],
+      ])
+    )
+  }
+
   if (request.startDate && request.endDate) {
     const startDate = new Date(request.startDate)
     const endDate = new Date(request.endDate)

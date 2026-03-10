@@ -27,11 +27,6 @@ export type FinancialRecordCreateQueue = {
   }
 }
 
-export type UpdateStatusFinancialRecordQueue = {
-  financialRecord: any
-  status: FinancialRecordStatus
-}
-
 export type FinancialRecordRequest = {
   bankingOperation?: BankingOperationType
   financialConceptId: string

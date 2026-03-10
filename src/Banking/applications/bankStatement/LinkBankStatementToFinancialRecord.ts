@@ -1,9 +1,12 @@
-import { BankStatementStatus, IBankStatementRepository } from "@/Banking/domain"
-import { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import {
+  BankStatementStatus,
+  type IBankStatementRepository,
+  type LinkBankStatementRequest,
+} from "@/Banking/domain"
 import { DispatchUpdateStatusFinancialRecord } from "@/Financial/applications"
-import { IQueueService } from "@/Shared/domain"
 import { FinancialRecordStatus } from "@/Financial/domain"
-import { LinkBankStatementRequest } from "@/Banking/domain/requests/LinkBankStatement.request"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IQueueService } from "@/package/queue/domain"
 
 export class LinkBankStatementToFinancialRecord {
   private readonly dispatcher: DispatchUpdateStatusFinancialRecord

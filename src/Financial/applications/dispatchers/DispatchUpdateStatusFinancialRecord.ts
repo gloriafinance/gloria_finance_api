@@ -1,6 +1,11 @@
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import { UpdateStatusFinancialRecordQueue } from "../../domain"
 import { Logger } from "@/Shared/adapter"
+import { FinancialRecordStatus } from "@/Financial/domain"
+
+type UpdateStatusFinancialRecordQueue = {
+  financialRecord: any
+  status: FinancialRecordStatus
+}
 
 export class DispatchUpdateStatusFinancialRecord {
   private logger = Logger(DispatchUpdateStatusFinancialRecord.name)
