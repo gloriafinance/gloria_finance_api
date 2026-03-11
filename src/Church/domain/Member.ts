@@ -73,6 +73,7 @@ export class Member extends AggregateRoot {
         notifyPaymentCommitments: true,
         notifyChurchEvents: true,
         notifyStatusContributions: true,
+        whatsappOptIn: false,
         lang: church.getLang(),
       }
     } else {
@@ -106,6 +107,7 @@ export class Member extends AggregateRoot {
           notificationPaymentCommitments: true,
           notificationChurchEvents: true,
           notificationStatusContributions: true,
+          whatsappOptIn: false,
           lang: "pt-BR",
         }
 
@@ -182,6 +184,10 @@ export class Member extends AggregateRoot {
 
   getSettings() {
     return this.settings
+  }
+
+  getBirthdate(): Date {
+    return this.birthdate
   }
 
   toPrimitives(): any {

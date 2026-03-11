@@ -1,12 +1,13 @@
 import pino from "pino"
 import { RequestContext } from "bun-platform-kit"
 import { LoggerProviderService } from "@/Shared/infrastructure/services/LoggerProvider.service"
+
 class CustomLogger {
   private logger: pino.Logger
 
   constructor(private name: string) {
     const pinoOptions = {
-      level: "info", // Configura el nivel mínimo de log
+      level: "debug", // Configura el nivel mínimo de log
       formatters: {
         level(label: string) {
           return { level: label.toUpperCase() }

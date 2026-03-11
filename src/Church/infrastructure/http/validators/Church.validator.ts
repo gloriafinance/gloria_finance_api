@@ -18,6 +18,7 @@ export default async (req, res, next) => {
     email: "required|email",
     openingDate: "required|dateFormat:YYYY-MM-DD",
     regionId: "required",
+    timezone: "string|maxLength:80",
   }
 
   const v = new Validator(payload, rule)

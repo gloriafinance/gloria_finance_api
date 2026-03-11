@@ -1,3 +1,7 @@
 export { ChurchMongoRepository } from "./persistence/ChurchMongoRepository"
 export { MemberMongoRepository } from "./persistence/MemberMongoRepository"
 export { MinisterMongoRepository } from "./persistence/MinisterMongoRepository"
+export { DevotionalWeeklyPlanMongoRepository } from "./persistence/devotional/DevotionalWeeklyPlanMongoRepository"
+export { DevotionalMongoRepository } from "./persistence/devotional/DevotionalMongoRepository"
+export { DevotionalDeliveryLogMongoRepository } from "./persistence/devotional/DevotionalDeliveryLogMongoRepository"
+export { DevotionalDateDayjsService } from "./services/DevotionalDateDayjsService"

@@ -17,4 +17,6 @@ export enum QueueName {
   NotifyFCMJob = "NotifyFCMJob",
   IncomeStatementJob = "IncomeStatementJob",
   DREJob = "DREJob",
+  GenerateDevotionalJob = "GenerateDevotionalJob",
+  SendScheduledDevotionalJob = "SendScheduledDevotionalJob",
 }
