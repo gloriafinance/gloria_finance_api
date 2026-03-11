@@ -47,7 +47,7 @@ export class CloudflareWorkersAIService implements IProxyIAService {
       throw buildAIProviderError({
         provider: "CloudflareWorkersAI",
         message:
-          "Missing apiKey in AI_PROVIDER_CONFIG for service 'cloudflare'",
+          "Missing apiKey in AI provider YAML config for service 'cloudflare'",
       })
     }
 
@@ -58,7 +58,8 @@ export class CloudflareWorkersAIService implements IProxyIAService {
     if (!model) {
       throw buildAIProviderError({
         provider: "CloudflareWorkersAI",
-        message: "Missing model in AI_PROVIDER_CONFIG for service 'cloudflare'",
+        message:
+          "Missing model in AI provider YAML config for service 'cloudflare'",
       })
     }
 

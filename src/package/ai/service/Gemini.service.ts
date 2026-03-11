@@ -26,7 +26,8 @@ export class GeminiService {
     if (!apiKey) {
       throw buildAIProviderError({
         provider: "Gemini",
-        message: "Missing apiKey in AI_PROVIDER_CONFIG for service 'gemini'",
+        message:
+          "Missing apiKey in AI provider YAML config for service 'gemini'",
       })
     }
 
@@ -35,7 +36,8 @@ export class GeminiService {
       if (!modelName) {
         throw buildAIProviderError({
           provider: "Gemini",
-          message: "Missing model in AI_PROVIDER_CONFIG for service 'gemini'",
+          message:
+            "Missing model in AI provider YAML config for service 'gemini'",
         })
       }
 

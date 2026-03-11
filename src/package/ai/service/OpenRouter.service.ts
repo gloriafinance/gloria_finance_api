@@ -46,7 +46,7 @@ export class OpenRouterService implements IProxyIAService {
       throw buildAIProviderError({
         provider: "OpenRouter",
         message:
-          "Missing apiKey in AI_PROVIDER_CONFIG for service 'openrouter'",
+          "Missing apiKey in AI provider YAML config for service 'openrouter'",
       })
     }
 
@@ -54,7 +54,8 @@ export class OpenRouterService implements IProxyIAService {
     if (!model) {
       throw buildAIProviderError({
         provider: "OpenRouter",
-        message: "Missing model in AI_PROVIDER_CONFIG for service 'openrouter'",
+        message:
+          "Missing model in AI provider YAML config for service 'openrouter'",
       })
     }
     const normalizedSchema = normalizeStructuredSchema(schemaResponse)

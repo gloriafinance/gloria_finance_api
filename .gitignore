@@ -39,3 +39,4 @@ upload
 .env
 .dist/
 backups
+ai-providers.yaml

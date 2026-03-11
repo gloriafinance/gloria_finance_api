@@ -45,7 +45,8 @@ export class CerebrasService implements IProxyIAService {
     if (!apiKey) {
       throw buildAIProviderError({
         provider: "Cerebras",
-        message: "Missing apiKey in AI_PROVIDER_CONFIG for service 'cerebras'",
+        message:
+          "Missing apiKey in AI provider YAML config for service 'cerebras'",
       })
     }
 
@@ -53,7 +54,8 @@ export class CerebrasService implements IProxyIAService {
     if (!model) {
       throw buildAIProviderError({
         provider: "Cerebras",
-        message: "Missing model in AI_PROVIDER_CONFIG for service 'cerebras'",
+        message:
+          "Missing model in AI provider YAML config for service 'cerebras'",
       })
     }
     const normalizedSchema = normalizeStructuredSchema(schemaResponse)

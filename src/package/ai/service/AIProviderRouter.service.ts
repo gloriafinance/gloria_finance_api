@@ -10,7 +10,10 @@ import {
   AIProviderErrorCode,
 } from "@/package/ai/errors/AIProviderError"
 import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
-import { readAIProviderConfig } from "@/package/ai/helpers/AIProviderConfig.helper"
+import {
+  readAIRouterSettings,
+  readAIProviderConfig,
+} from "@/package/ai/helpers/AIProviderConfig.helper"
 import { GeminiService } from "@/package/ai/service/Gemini.service"
 import { GroqService } from "@/package/ai/service/Groq.service"
 import { CerebrasService } from "@/package/ai/service/Cerebras.service"
@@ -92,27 +95,21 @@ export class AIProviderRouterService {
   private readonly releaseOpenRouterPrimaryRemainingThreshold: number
 
   constructor() {
-    this.cooldownRateLimitSeconds = this.requiredNumberEnv(
-      "AI_COOLDOWN_RATE_LIMIT_SECONDS"
-    )
-    this.cooldownProviderErrorSeconds = this.requiredNumberEnv(
-      "AI_COOLDOWN_PROVIDER_ERROR_SECONDS"
-    )
-    this.blockPaymentRequiredSeconds = this.requiredNumberEnv(
-      "AI_BLOCK_PAYMENT_REQUIRED_SECONDS"
-    )
-    this.sliceMinutes = this.requiredNumberEnv("AI_SLICE_MINUTES")
-    this.sliceBurstFactor = this.requiredNumberEnv("AI_SLICE_BURST_FACTOR")
-    this.externalRemainingLowThreshold = this.requiredNumberEnv(
-      "AI_EXTERNAL_REMAINING_LOW_THRESHOLD"
-    )
-    this.reserveOpenRouter = this.requiredBooleanEnv("AI_RESERVE_OPENROUTER")
-    this.releaseOpenRouterHoursToReset = this.requiredNumberEnv(
-      "AI_OPENROUTER_RELEASE_HOURS_TO_RESET"
-    )
-    this.releaseOpenRouterPrimaryRemainingThreshold = this.requiredNumberEnv(
-      "AI_OPENROUTER_RELEASE_PRIMARY_REMAINING_THRESHOLD"
-    )
+    const routerSettings = this.readRouterSettings()
+    this.cooldownRateLimitSeconds = routerSettings.cooldownRateLimitSeconds
+    this.cooldownProviderErrorSeconds =
+      routerSettings.cooldownProviderErrorSeconds
+    this.blockPaymentRequiredSeconds =
+      routerSettings.blockPaymentRequiredSeconds
+    this.sliceMinutes = routerSettings.sliceMinutes
+    this.sliceBurstFactor = routerSettings.sliceBurstFactor
+    this.externalRemainingLowThreshold =
+      routerSettings.externalRemainingLowThreshold
+    this.reserveOpenRouter = routerSettings.reserveOpenRouter
+    this.releaseOpenRouterHoursToReset =
+      routerSettings.releaseOpenRouterHoursToReset
+    this.releaseOpenRouterPrimaryRemainingThreshold =
+      routerSettings.releaseOpenRouterPrimaryRemainingThreshold
 
     this.redisClient = this.buildRedisClient()
     this.configs = this.buildProviderConfigs()
@@ -355,7 +352,9 @@ export class AIProviderRouterService {
         "Router",
         undefined,
         AIProviderErrorCode.CONFIG_ERROR,
-        error instanceof Error ? error.message : "Invalid AI_PROVIDER_CONFIG"
+        error instanceof Error
+          ? error.message
+          : "Invalid AI provider YAML config"
       )
     }
 
@@ -365,11 +364,26 @@ export class AIProviderRouterService {
         "Router",
         undefined,
         AIProviderErrorCode.CONFIG_ERROR,
-        "AI_PROVIDER_CONFIG has no enabled providers"
+        "AI provider YAML config has no enabled providers"
       )
     }
 
     return enabled.map((p) => this.readProviderConfig(p.serviceName))
+  }
+
+  private readRouterSettings() {
+    try {
+      return readAIRouterSettings()
+    } catch (error) {
+      throw new AIProviderError(
+        "Router",
+        undefined,
+        AIProviderErrorCode.CONFIG_ERROR,
+        error instanceof Error
+          ? error.message
+          : "Invalid AI provider YAML config"
+      )
+    }
   }
 
   private readProviderConfig(serviceName: AIProviderName): ProviderConfig {
@@ -381,7 +395,7 @@ export class AIProviderRouterService {
         "Router",
         undefined,
         AIProviderErrorCode.CONFIG_ERROR,
-        `Provider service '${serviceName}' not found in AI_PROVIDER_CONFIG`
+        `Provider service '${serviceName}' not found in AI provider YAML config`
       )
     }
     const service = this.resolveProviderService(serviceName)
@@ -411,7 +425,7 @@ export class AIProviderRouterService {
       "Router",
       undefined,
       AIProviderErrorCode.CONFIG_ERROR,
-      `Unsupported service '${serviceName}' in AI_PROVIDER_CONFIG. Allowed: groq|gemini|cerebras|openrouter|cloudflare`
+      `Unsupported service '${serviceName}' in AI provider YAML config. Allowed: groq|gemini|cerebras|openrouter|cloudflare`
     )
   }
 
@@ -1117,45 +1131,6 @@ return tostring(next)
 
   private concurrencyKey(provider: AIProviderName): string {
     return `ai:router:concurrency:${provider}`
-  }
-
-  private requiredStringEnv(key: string): string {
-    const value = process.env[key]
-    if (!value) {
-      throw new AIProviderError(
-        "Router",
-        undefined,
-        AIProviderErrorCode.CONFIG_ERROR,
-        `Missing required env var: ${key}`
-      )
-    }
-    return value
-  }
-
-  private requiredNumberEnv(key: string): number {
-    const raw = this.requiredStringEnv(key)
-    const n = Number(raw)
-    if (!Number.isFinite(n)) {
-      throw new AIProviderError(
-        "Router",
-        undefined,
-        AIProviderErrorCode.CONFIG_ERROR,
-        `Env var ${key} must be a valid number`
-      )
-    }
-    return n
-  }
-
-  private requiredBooleanEnv(key: string): boolean {
-    const raw = this.requiredStringEnv(key).toLowerCase()
-    if (raw === "true") return true
-    if (raw === "false") return false
-    throw new AIProviderError(
-      "Router",
-      undefined,
-      AIProviderErrorCode.CONFIG_ERROR,
-      `Env var ${key} must be 'true' or 'false'`
-    )
   }
 
   private buildRedisClient(): Redis {

@@ -45,7 +45,7 @@ export class GroqService implements IProxyIAService {
     if (!apiKey) {
       throw buildAIProviderError({
         provider: "Groq",
-        message: "Missing apiKey in AI_PROVIDER_CONFIG for service 'groq'",
+        message: "Missing apiKey in AI provider YAML config for service 'groq'",
       })
     }
 
@@ -53,7 +53,7 @@ export class GroqService implements IProxyIAService {
     if (!model) {
       throw buildAIProviderError({
         provider: "Groq",
-        message: "Missing model in AI_PROVIDER_CONFIG for service 'groq'",
+        message: "Missing model in AI provider YAML config for service 'groq'",
       })
     }
     const normalizedSchema = normalizeStructuredSchema(schemaResponse)

@@ -1,0 +1,56 @@
+router:
+  sliceMinutes: 60
+  sliceBurstFactor: 1
+  externalRemainingLowThreshold: 0.15
+  reserveOpenRouter: true
+  releaseOpenRouterHoursToReset: 4
+  releaseOpenRouterPrimaryRemainingThreshold: 0.2
+  cooldownRateLimitSeconds: 120
+  cooldownProviderErrorSeconds: 45
+  blockPaymentRequiredSeconds: 86400
+
+providers:
+  - serviceName: groq
+    apiKey: ""
+    model: "moonshotai/kimi-k2-instruct-0905"
+    priority: 100
+    dailyBudgetRequests: 1200
+    dailyBudgetTokens: 0
+    maxConcurrency: 4
+    maxRequestsPerMinute: 25
+
+  - serviceName: gemini
+    apiKey: ""
+    model: "gemini-2.5-flash"
+    priority: 98
+    dailyBudgetRequests: 1000
+    dailyBudgetTokens: 0
+    maxConcurrency: 4
+    maxRequestsPerMinute: 20
+
+  - serviceName: cerebras
+    apiKey: ""
+    model: "llama-3.3-70b"
+    priority: 98
+    dailyBudgetRequests: 900
+    dailyBudgetTokens: 0
+    maxConcurrency: 3
+    maxRequestsPerMinute: 15
+
+  - serviceName: openrouter
+    apiKey: ""
+    model: "openai/gpt-4o-mini"
+    priority: 20
+    dailyBudgetRequests: 50
+    dailyBudgetTokens: 0
+    maxConcurrency: 2
+    maxRequestsPerMinute: 3
+
+  - serviceName: cloudflare
+    apiKey: ""
+    model: "@cf/meta/llama-3.1-8b-instruct"
+    priority: 94
+    dailyBudgetRequests: 900
+    dailyBudgetTokens: 0
+    maxConcurrency: 3
+    maxRequestsPerMinute: 15
