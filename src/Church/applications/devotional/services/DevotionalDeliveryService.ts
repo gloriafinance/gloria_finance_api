@@ -96,12 +96,13 @@ export class DevotionalDeliveryService {
   ): Promise<void> {
     this.logger.info(`notify the pastor to review the devotional`)
 
-    const pastors = await this.memberRepository.all(church.getChurchId(), {
+    const pastor = await this.memberRepository.one({
+      churchId: church.getChurchId(),
       active: true,
       isMinister: true,
     })
 
-    if (!pastors.length) {
+    if (!pastor) {
       this.logger.debug(`pastor not found`)
       return
     }
@@ -122,15 +123,13 @@ export class DevotionalDeliveryService {
         : `"${content.title}" está em revisão e espera aprovação.`
 
     if (church.isWhatsappConnected()) {
-      const whatsappPastors = pastors.filter((member) => {
-        const settings = member.getSettings()
-        const phone = String(member.getPhone() ?? "").replace(/[^\d]/g, "")
-        return Boolean(settings?.whatsappOptIn && phone.length >= 10)
-      })
+      const settings = pastor.getSettings()
+      const phone = String(pastor.getPhone() ?? "").replace(/[^\d]/g, "")
+      const whatsappPastor = Boolean(
+        settings?.whatsappOptIn && phone.length >= 10
+      )
 
-      if (whatsappPastors.length > 0) {
-        const pastor = whatsappPastors[0]!
-        const phone = String(pastor.getPhone() ?? "").replace(/[^\d]/g, "")
+      if (whatsappPastor) {
         try {
           await new SendWhatsappTextMessage(this.churchRepository).execute({
             churchId: church.getChurchId(),
@@ -140,7 +139,6 @@ export class DevotionalDeliveryService {
           })
         } catch (e) {
           this.logger.info(`Failure to notify the pastor via WhatsApp`)
-          // silently fallback to push below when all fail
 
           this.queueService.dispatch(QueueName.TelegramNotificationJob, {
             message: `Error al enviar notificación al pastor via whatsapp acerca de la aprobación de devocional ${JSON.stringify(e)}`,
@@ -151,7 +149,7 @@ export class DevotionalDeliveryService {
 
     this.queueService.dispatch(QueueName.NotifyFCMJob, {
       churchId: church.getChurchId(),
-      memberId: pastors.map((member) => member.getMemberId()),
+      memberId: pastor.getMemberId(),
       title,
       body,
       data: {
