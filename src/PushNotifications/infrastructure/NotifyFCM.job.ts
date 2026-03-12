@@ -38,7 +38,10 @@ export class NotifyFCMJob implements IJob {
   ) {
     const { members } = args
 
-    args.data = { ...args.data, deepLink: this.getDeepLink(args.data) }
+    args.data = {
+      ...args.data,
+      deepLink: this.resolveDeepLink(args.data),
+    }
 
     const tokenList: string[] = []
 
@@ -77,16 +80,50 @@ export class NotifyFCMJob implements IJob {
   }
 
   // Genera el deep link según el tipo de notificación, para que la app abra la pantalla correcta
-  private getDeepLink(data: any): string {
+  private resolveDeepLink(data: any): string {
+    const explicitDeepLink = this.normalizeIncomingDeepLink(data?.deepLink)
+    if (explicitDeepLink) {
+      return explicitDeepLink
+    }
+
+    return this.getDeepLinkByType(data)
+  }
+
+  private getDeepLinkByType(data: any): string {
     switch (data.type) {
       case NotificationsTopic.EVENT_NEW:
-        return `/events/${data.id}`
+        return `/member/schedule`
       case NotificationsTopic.PAYMENT_COMMITMENT_DUE:
-        return `news/${data.id}`
+        return `/member/commitments`
       case NotificationsTopic.CONTRIBUTION_STATUS_CHANGED:
-        return `/notifications/${data.id}`
+        return `/member/contribute`
+      case NotificationsTopic.SYSTEM_ANNOUNCEMENT:
+        return `/dashboard`
       default:
-        return `/home`
+        return `/dashboard`
     }
+  }
+
+  private normalizeIncomingDeepLink(value: unknown): string | undefined {
+    const raw = String(value ?? "").trim()
+    if (!raw) {
+      return undefined
+    }
+
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+      try {
+        const parsed = new URL(raw)
+        const path = `${parsed.pathname || ""}${parsed.search || ""}${parsed.hash || ""}`
+        return path.startsWith("/") ? path : `/${path}`
+      } catch {
+        return undefined
+      }
+    }
+
+    if (raw.startsWith("/")) {
+      return raw
+    }
+
+    return `/${raw}`
   }
 }

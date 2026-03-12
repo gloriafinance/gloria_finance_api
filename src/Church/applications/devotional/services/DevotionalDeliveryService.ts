@@ -148,12 +148,13 @@ export class DevotionalDeliveryService {
 
     this.queueService.dispatch(QueueName.NotifyFCMJob, {
       churchId: church.getChurchId(),
-      memberId: pastor.getMemberId(),
+      memberId: [pastor.getMemberId()],
       title,
       body,
       data: {
         type: NotificationsTopic.SYSTEM_ANNOUNCEMENT,
         id: devotional.getDevotionalId(),
+        deepLink: this.buildDevotionalDeepLink(devotional.getDevotionalId()),
       },
     })
   }
@@ -224,6 +225,9 @@ export class DevotionalDeliveryService {
             data: {
               type: NotificationsTopic.SYSTEM_ANNOUNCEMENT,
               id: devotional.getDevotionalId(),
+              deepLink: this.buildDevotionalDeepLink(
+                devotional.getDevotionalId()
+              ),
             },
           })
         }
@@ -433,5 +437,10 @@ export class DevotionalDeliveryService {
     }
 
     return Math.max(age, 0)
+  }
+
+  private buildDevotionalDeepLink(devotionalId: string): string {
+    const normalizedId = devotionalId.replace(/^urn:devotional:/i, "")
+    return `/member/devotional/${encodeURIComponent(normalizedId)}`
   }
 }

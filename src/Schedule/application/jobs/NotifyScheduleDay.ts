@@ -53,7 +53,7 @@ export class NotifyScheduleDay implements IJob {
         data: {
           type: NotificationsTopic.EVENT_NEW,
           id: scheduleItems.getScheduleItemId(),
-          deepLink: `https://yourapp.com/schedule/${scheduleItems.getScheduleItemId()}`,
+          deepLink: "/member/schedule",
         },
       })
     }
