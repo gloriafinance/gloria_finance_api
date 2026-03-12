@@ -26,7 +26,7 @@ export class DevotionalApproved {
       devotionalId
     )
     if (!devotional) {
-      this.logger.warn("Devotional not found on approve", {
+      this.logger.debug("Devotional not found on approve", {
         churchId,
         devotionalId,
       })

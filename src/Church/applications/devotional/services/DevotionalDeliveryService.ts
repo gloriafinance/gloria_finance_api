@@ -30,12 +30,15 @@ export class DevotionalDeliveryService {
   ) {}
 
   async retrySend(churchId: string, devotionalId: string): Promise<Devotional> {
+    this.logger.info(`Starting retry send devotional ${devotionalId}`)
+
     const devotional = await this.devotionalRepository.findByDevotionalId(
       churchId,
       devotionalId
     )
 
     if (!devotional) {
+      this.logger.error(`Devotional not found`)
       throw new DevotionalNotFound()
     }
 
@@ -48,23 +51,19 @@ export class DevotionalDeliveryService {
   }
 
   async sendScheduled(churchId: string, devotionalId: string): Promise<void> {
-    this.logger.info(`Send `)
     const devotional = await this.devotionalRepository.findByDevotionalId(
       churchId,
       devotionalId
     )
     if (!devotional) {
+      this.logger.info(`Devotional not found`)
       return
     }
 
-    if (
-      devotional.getStatus() === DevotionalStatus.SENT ||
-      devotional.getStatus() === DevotionalStatus.SENDING
-    ) {
-      return
-    }
-
-    if (devotional.getStatus() !== DevotionalStatus.APPROVED) {
+    if (devotional.getStatus() !== DevotionalStatus.PENDING) {
+      this.logger.info(
+        `it is not possible to send the devotional because it has status ${devotional.getStatus()}`
+      )
       return
     }
 
@@ -190,6 +189,7 @@ export class DevotionalDeliveryService {
     const content = devotional.getContent()
 
     if (!content) {
+      this.logger.info(`Devotional content is not generated`)
       throw new DevotionalPlanException("Devotional content is not generated")
     }
 
@@ -209,10 +209,13 @@ export class DevotionalDeliveryService {
     if (snapshot.channels.pushEnabled) {
       try {
         if (!devotional.wasPushDelivered() || force) {
+          this.logger.info(`sending via push notification`)
+
           const audienceMembers = await this.resolveAudienceMembers(
             devotional.getChurchId(),
             snapshot.audience
           )
+
           this.queueService.dispatch(QueueName.NotifyFCMJob, {
             churchId: devotional.getChurchId(),
             memberId: audienceMembers.map((member) => member.getMemberId()),
@@ -226,6 +229,9 @@ export class DevotionalDeliveryService {
         }
         pushResult = DevotionalChannelResult.SENT
       } catch (error: any) {
+        this.logger.error(
+          `Push delivery failed: ${error?.message ?? "unknown"}`
+        )
         errors.push(`Push delivery failed: ${error?.message ?? "unknown"}`)
         pushResult = DevotionalChannelResult.FAILED
       }
@@ -233,11 +239,18 @@ export class DevotionalDeliveryService {
 
     if (snapshot.channels.whatsappEnabled) {
       if (!church.isWhatsappConnected()) {
+        this.logger.error(
+          "WhatsApp channel is enabled but church is disconnected"
+        )
+
         errors.push("WhatsApp channel is enabled but church is disconnected")
         whatsappResult = DevotionalChannelResult.FAILED
       } else {
+        //TODO debe ser refactorizado para que sea de forma asincrona, es decir disparar job por mensaje
         try {
           if (!devotional.wasWhatsappDelivered() || force) {
+            this.logger.info(`sending via whatsapp`)
+
             const summary = await this.sendWhatsappToAudience(devotional)
 
             if (summary.sent > 0 && summary.failed === 0) {
@@ -385,6 +398,7 @@ export class DevotionalDeliveryService {
     churchId: string,
     audience: DevotionalAudience
   ) {
+    this.logger.info(`Resolving audience`)
     const members = await this.memberRepository.all(churchId, { active: true })
 
     if (audience === DevotionalAudience.ALL) {

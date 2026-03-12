@@ -34,29 +34,28 @@ export class NotifyScheduleDay implements IJob {
         `The church ${church.getName()} have ${scheduleItems?.getTitle()} today`
       )
 
-      if (scheduleItems) {
-        this.logger.info(
-          `Notifying schedule day for church ${church.getName()} event: ${scheduleItems.getTitle()}`
-        )
-
-        // TODO it is notifying everyone, however the evaluation of the visibility field must be implemented
-        this.queueService.dispatch<NotificationRequest>(
-          QueueName.NotifyFCMJob,
-          {
-            churchId: church.getChurchId(),
-            title: "Schedule Day",
-            body:
-              scheduleItems.getTitle() +
-              " at " +
-              new Date().toLocaleString("en-US", { timeZone: "UTC" }),
-            data: {
-              type: NotificationsTopic.EVENT_NEW,
-              id: scheduleItems.getScheduleItemId(),
-              deepLink: `https://yourapp.com/schedule/${scheduleItems.getScheduleItemId()}`,
-            },
-          }
-        )
+      if (!scheduleItems) {
+        continue
       }
+
+      this.logger.info(
+        `Notifying schedule day for church ${church.getName()} event: ${scheduleItems.getTitle()}`
+      )
+
+      // TODO it is notifying everyone, however the evaluation of the visibility field must be implemented
+      this.queueService.dispatch<NotificationRequest>(QueueName.NotifyFCMJob, {
+        churchId: church.getChurchId(),
+        title: "Schedule Day",
+        body:
+          scheduleItems.getTitle() +
+          " at " +
+          new Date().toLocaleString("en-US", { timeZone: "UTC" }),
+        data: {
+          type: NotificationsTopic.EVENT_NEW,
+          id: scheduleItems.getScheduleItemId(),
+          deepLink: `https://yourapp.com/schedule/${scheduleItems.getScheduleItemId()}`,
+        },
+      })
     }
 
     this.logger.info(`Deactivate previous events`)
