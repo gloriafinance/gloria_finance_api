@@ -19,6 +19,7 @@ import { SendMailJob } from "./package/email/SendMail.job"
 import { ReportQueue } from "@/Reports/infrastructure/http/jobs"
 import { ChurchQueue } from "@/Church/infrastructure/Church.queue"
 import { ScheduleQueue } from "@/Schedule/infrastructure/jobs/Schedule.job.ts"
+import { MemberMongoRepository } from "@/Church/infrastructure"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({
@@ -53,6 +54,7 @@ export const Queues = (): IListQueue[] => [
     name: NotifyFCMJob.name,
     useClass: NotifyFCMJob,
     inject: [
+      MemberMongoRepository.getInstance(),
       NotificationMongoRepository.getInstance(),
       FCMNotificationService.getInstance(),
     ],

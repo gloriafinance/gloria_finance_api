@@ -88,11 +88,17 @@ export class QueueProcessor {
       queueName,
       async (job) => {
         const requestId = job.data?.requestId || `job-${job.id}`
+        const host = process.env.HOSTNAME || "unknown-host"
 
         return RequestContext.run({ requestId }, async () => {
           try {
+            await job.log(`[${host}] started requestId=${requestId}`)
             await workerInstance.handle(job.data)
+            await job.log(`[${host}] completed requestId=${requestId}`)
           } catch (error: any) {
+            await job.log(
+              `[${host}] failed requestId=${requestId} message=${error?.message || "unknown"}`
+            )
             console.error(
               `Error processing job ${job.id} in queue ${queueName}:`,
               error
