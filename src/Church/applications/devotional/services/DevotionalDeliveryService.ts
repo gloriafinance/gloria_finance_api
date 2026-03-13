@@ -60,7 +60,7 @@ export class DevotionalDeliveryService {
       return
     }
 
-    if (devotional.getStatus() !== DevotionalStatus.PENDING) {
+    if (devotional.getStatus() !== DevotionalStatus.APPROVED) {
       this.logger.info(
         `it is not possible to send the devotional because it has status ${devotional.getStatus()}`
       )
@@ -440,7 +440,6 @@ export class DevotionalDeliveryService {
   }
 
   private buildDevotionalDeepLink(devotionalId: string): string {
-    const normalizedId = devotionalId.replace(/^urn:devotional:/i, "")
-    return `/member/devotional/${encodeURIComponent(normalizedId)}`
+    return `/member/devotional/${encodeURIComponent(devotionalId)}`
   }
 }

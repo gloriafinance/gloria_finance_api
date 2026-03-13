@@ -15,6 +15,7 @@ Follow the conventions below when extending or modifying the codebase.
 - `Fix at source`: corregir siempre en la fuente de verdad (contrato/API/modelo) y actualizar todos los consumidores en el mismo cambio.
 - `Schema changes`: si hay cambio estructural de datos, hacer migration/backfill formal (idempotente) y retirar la estructura anterior; no mantener ambas.
 - `No hidden transitions`: si una transición es inevitable, debe estar aprobada explícitamente, con fecha de retiro y tareas de limpieza definidas.
+- `Strict contracts only`: backend, frontend y jobs deben intercambiar exactamente el formato pactado. Está prohibido agregar normalizaciones silenciosas, coerciones, reparaciones automáticas o tolerancia de payloads mal formados entre capas.
 
 ---
 

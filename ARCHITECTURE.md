@@ -154,6 +154,7 @@ src/
 - ❌ No framework dependencies
 - ❌ No database or HTTP concerns
 - ❌ Do not implement fallback chains.
+- ❌ Do not add silent normalization between producers and consumers of a contract. Fix the payload or contract at the source.
 - ✅ Only imports from `domain`, `Shared/domain`, and standard libraries
 
 **Example:**
