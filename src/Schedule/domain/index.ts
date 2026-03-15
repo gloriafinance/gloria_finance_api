@@ -4,6 +4,7 @@ export * from "./enums/ScheduleEventType"
 export * from "./types/ScheduleItem.type"
 
 export * from "./interfaces/ScheduleItemRepository.interface"
+export * from "./interfaces/ScheduleReminderService.interface"
 export * from "./requests/ScheduleItem.request"
 
 export * from "./exceptions/ScheduleItemException"

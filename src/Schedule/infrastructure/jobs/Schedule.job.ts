@@ -1,8 +1,12 @@
 import type { IListQueue } from "@/package/queue/domain"
 import { NotifyScheduleDay } from "@/Schedule/application/jobs/NotifyScheduleDay.ts"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
-import { ScheduleItemMongoRepository } from "@/Schedule/infrastructure"
+import {
+  ScheduleItemMongoRepository,
+  ScheduleReminderDayjsService,
+} from "@/Schedule/infrastructure"
 import { QueueService } from "@/package/queue/infrastructure"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 export const ScheduleQueue = (): IListQueue[] => [
   {
@@ -12,10 +16,12 @@ export const ScheduleQueue = (): IListQueue[] => [
       ChurchMongoRepository.getInstance(),
       ScheduleItemMongoRepository.getInstance(),
       QueueService.getInstance(),
+      ScheduleReminderDayjsService.getInstance(),
+      CacheProviderService.getInstance(),
     ],
     scheduler: {
-      pattern: "* 9 * * *",
-      tz: "America/Sao_Paulo",
+      pattern: "0 12 * * *",
+      tz: "UTC",
     },
   },
 ]
