@@ -37,14 +37,12 @@ export class DevotionalPlanService {
 
     const timezone = church.getTimezone()
 
-    const currentWeekStartDate =
+    const expectedWeekStartDate =
       this.devotionalDateService.getWeekStartDateForTimezone(timezone)
-    const nextWeekStartDate =
-      this.devotionalDateService.getNextWeekStartDateForTimezone(timezone)
 
-    if (![currentWeekStartDate, nextWeekStartDate].includes(weekStartDate)) {
+    if (weekStartDate !== expectedWeekStartDate) {
       throw new DevotionalPlanException(
-        `Only current or next week can be configured. Allowed weekStartDate values: ${currentWeekStartDate}, ${nextWeekStartDate}`
+        `Only current week can be configured. Expected weekStartDate ${expectedWeekStartDate}`
       )
     }
 

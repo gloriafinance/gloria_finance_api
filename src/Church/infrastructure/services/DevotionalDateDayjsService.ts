@@ -35,19 +35,6 @@ export class DevotionalDateDayjsService implements IDevotionalDateService {
     return now.add(diff, "day").startOf("day").format("YYYY-MM-DD")
   }
 
-  getNextWeekStartDateForTimezone(
-    timezoneName: string,
-    baseDate?: Date
-  ): string {
-    return dayjs
-      .tz(
-        this.getWeekStartDateForTimezone(timezoneName, baseDate),
-        timezoneName
-      )
-      .add(7, "day")
-      .format("YYYY-MM-DD")
-  }
-
   scheduleDateForDay(
     weekStartDate: string,
     dayOfWeek: DevotionalDayOfWeek,

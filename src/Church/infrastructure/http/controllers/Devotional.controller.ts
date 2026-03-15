@@ -62,7 +62,7 @@ export class DevotionalController {
     @Body()
     body: Omit<
       UpsertDevotionalWeeklyPlanRequest,
-      "churchId" | "currentUserId" | "timezone" | "mode"
+      "churchId" | "currentUserId" | "weekStartDate" | "timezone" | "mode"
     >,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
@@ -73,12 +73,10 @@ export class DevotionalController {
       ).execute(req.auth.churchId)
 
       const timezone = church.getTimezone()
-      const currentWeekStartDate =
+      const weekStartDate =
         DevotionalDateDayjsService.getInstance().getWeekStartDateForTimezone(
           timezone
         )
-      const weekStartDate =
-        String(body.weekStartDate ?? "").trim() || currentWeekStartDate
 
       const response = await this.planService().upsertWeeklyPlan({
         ...body,

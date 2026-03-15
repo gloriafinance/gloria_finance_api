@@ -3,8 +3,6 @@ import type { DevotionalDayOfWeek } from "@/Church/domain/enums/DevotionalDayOfW
 export interface IDevotionalDateService {
   getWeekStartDateForTimezone(timezoneName: string, baseDate?: Date): string
 
-  getNextWeekStartDateForTimezone(timezoneName: string, baseDate?: Date): string
-
   scheduleDateForDay(
     weekStartDate: string,
     dayOfWeek: DevotionalDayOfWeek,

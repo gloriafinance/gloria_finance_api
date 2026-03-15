@@ -1,7 +1,12 @@
-import { ChurchStatus, type IChurchRepository } from "@/Church/domain"
+import {
+  ChurchStatus,
+  type Church,
+  type IChurchRepository,
+} from "@/Church/domain"
 import {
   type IScheduleItemRepository,
   type IScheduleReminderService,
+  type ScheduleEvent,
 } from "@/Schedule/domain"
 import { Logger } from "@/Shared/adapter"
 import {
@@ -34,82 +39,99 @@ export class NotifyScheduleDay implements IJob {
       status: ChurchStatus.ACTIVE,
     })
 
-    for (const church of churches) {
-      const scheduleItems = await this.scheduleRepository.findManyByChurch(
-        church.getChurchId(),
-        {
-          isActive: true,
-        }
-      )
-
-      for (const scheduleItem of scheduleItems) {
-        const notificationDateKey =
-          this.scheduleReminderService.notificationDateKey(
-            scheduleItem,
-            church.getTimezone(),
-            referenceDate
-          )
-        const schedulingLockKey = `schedule-day:queued:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`
-
-        if (
-          !this.scheduleReminderService.shouldQueueReminder(
-            scheduleItem,
-            church.getTimezone(),
-            referenceDate
-          )
-        ) {
-          continue
-        }
-
-        if (await this.cacheService.get<boolean>(schedulingLockKey)) {
-          this.logger.info(
-            `Skipping already queued schedule reminder ${schedulingLockKey}`
-          )
-          continue
-        }
-
-        this.logger.info(
-          `Notifying schedule day for church ${church.getName()} event: ${scheduleItem.getTitle()}`
-        )
-
-        // TODO it is notifying everyone, however the evaluation of the visibility field must be implemented
-        this.queueService.dispatch<NotificationRequest>(
-          QueueName.NotifyFCMJob,
-          {
-            churchId: church.getChurchId(),
-            title: "Schedule Day",
-            body: `${scheduleItem.getTitle()} at ${this.scheduleReminderService.formatScheduledDateTime(
-              scheduleItem,
-              church.getTimezone(),
-              referenceDate
-            )}`,
-            data: {
-              type: NotificationsTopic.EVENT_NEW,
-              id: scheduleItem.getScheduleItemId(),
-              deepLink: "/member/schedule",
-            },
-          },
-          {
-            jobId: `schedule-day:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`,
-            delayMs: this.scheduleReminderService.reminderDelayMs(
-              scheduleItem,
-              church.getTimezone(),
-              referenceDate
-            ),
-          }
-        )
-        await this.cacheService.set(schedulingLockKey, true, 60 * 60 * 48)
-      }
-
-      await this.deactivateExpiredEvents(
-        church.getChurchId(),
-        church.getTimezone(),
-        scheduleItems,
-        referenceDate
-      )
-    }
+    await Promise.all(
+      churches.map((church) => this.processChurch(church, referenceDate))
+    )
 
     this.logger.info(`Finish NotifyScheduleDay`)
+  }
+
+  private async processChurch(
+    church: Church,
+    referenceDate: Date
+  ): Promise<void> {
+    const scheduleItems = await this.scheduleRepository.findManyByChurch(
+      church.getChurchId(),
+      {
+        isActive: true,
+      }
+    )
+
+    await Promise.all(
+      scheduleItems.map((scheduleItem) =>
+        this.processScheduleReminder(church, scheduleItem, referenceDate)
+      )
+    )
+
+    await this.deactivateExpiredEvents(
+      church.getChurchId(),
+      church.getTimezone(),
+      scheduleItems,
+      referenceDate
+    )
+  }
+
+  private async processScheduleReminder(
+    church: Church,
+    scheduleItem: ScheduleEvent,
+    referenceDate: Date
+  ): Promise<void> {
+    const notificationDateKey =
+      this.scheduleReminderService.notificationDateKey(
+        scheduleItem,
+        church.getTimezone(),
+        referenceDate
+      )
+    const schedulingLockKey = `schedule-day:queued:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`
+
+    if (
+      !this.scheduleReminderService.shouldQueueReminder(
+        scheduleItem,
+        church.getTimezone(),
+        referenceDate
+      )
+    ) {
+      return
+    }
+
+    if (await this.cacheService.get<boolean>(schedulingLockKey)) {
+      this.logger.info(
+        `Skipping already queued schedule reminder ${schedulingLockKey}`
+      )
+      return
+    }
+
+    this.logger.info(
+      `Notifying schedule day for church ${church.getName()} event: ${scheduleItem.getTitle()}`
+    )
+
+    // TODO it is notifying everyone, however the evaluation of the visibility field must be implemented
+    this.queueService.dispatch<NotificationRequest>(
+      QueueName.NotifyFCMJob,
+      {
+        churchId: church.getChurchId(),
+        title: "Schedule Day",
+        body: `${scheduleItem.getTitle()} at ${this.scheduleReminderService.formatScheduledDateTime(
+          scheduleItem,
+          church.getTimezone(),
+          referenceDate
+        )}`,
+        data: {
+          type: NotificationsTopic.EVENT_NEW,
+          id: scheduleItem.getScheduleItemId(),
+          deepLink: "/member/schedule",
+        },
+      },
+      {
+        jobId: `schedule-day:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`,
+        delayMs: this.scheduleReminderService.reminderDelayMs(
+          scheduleItem,
+          church.getTimezone(),
+          referenceDate
+        ),
+      }
+    )
+    await this.cacheService.set(schedulingLockKey, true, 60 * 60 * 48)
   }
 
   private async deactivateExpiredEvents(
@@ -120,23 +142,25 @@ export class NotifyScheduleDay implements IJob {
     >,
     referenceDate: Date
   ): Promise<void> {
-    for (const scheduleItem of scheduleItems) {
-      if (
-        !this.scheduleReminderService.isExpired(
-          scheduleItem,
-          churchTimezone,
-          referenceDate
+    await Promise.all(
+      scheduleItems.map(async (scheduleItem) => {
+        if (
+          !this.scheduleReminderService.isExpired(
+            scheduleItem,
+            churchTimezone,
+            referenceDate
+          )
+        ) {
+          return
+        }
+
+        scheduleItem.deactivate()
+        await this.scheduleRepository.upsert(scheduleItem)
+
+        this.logger.info(
+          `Deactivated expired schedule item ${scheduleItem.getScheduleItemId()} for church ${churchId}`
         )
-      ) {
-        continue
-      }
-
-      scheduleItem.deactivate()
-      await this.scheduleRepository.upsert(scheduleItem)
-
-      this.logger.info(
-        `Deactivated expired schedule item ${scheduleItem.getScheduleItemId()} for church ${churchId}`
-      )
-    }
+      })
+    )
   }
 }
