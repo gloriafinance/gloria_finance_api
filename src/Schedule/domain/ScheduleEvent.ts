@@ -4,6 +4,7 @@ import { DateBR, StringToDate } from "@/Shared/helpers"
 import {
   type LocationDTO,
   type RecurrencePatternDTO,
+  ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
@@ -36,7 +37,7 @@ export class ScheduleEvent extends AggregateRoot {
   private director: string
   private preacher: string
   private observations?: string
-  private active: boolean
+  private status: ScheduleEventStatus
   private createdAt: Date
   private createdByUserId: string
   private updatedAt?: Date
@@ -75,7 +76,7 @@ export class ScheduleEvent extends AggregateRoot {
     scheduleItem.director = params.director.trim()
     scheduleItem.preacher = params.preacher.trim()
     scheduleItem.observations = params.observations?.trim()
-    scheduleItem.active = true
+    scheduleItem.status = ScheduleEventStatus.ACTIVE
     scheduleItem.createdAt = params.createdAt ?? DateBR()
     scheduleItem.createdByUserId = params.createdByUserId
 
@@ -99,7 +100,7 @@ export class ScheduleEvent extends AggregateRoot {
     scheduleItem.director = plainData.director ?? ""
     scheduleItem.preacher = plainData.preacher
     scheduleItem.observations = plainData.observations
-    scheduleItem.active = plainData.isActive ?? plainData.active ?? true
+    scheduleItem.status = plainData.status
     scheduleItem.createdAt = StringToDate(plainData.createdAt)
     scheduleItem.createdByUserId = plainData.createdByUserId
     scheduleItem.updatedAt = plainData.updatedAt
@@ -123,7 +124,7 @@ export class ScheduleEvent extends AggregateRoot {
     }
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 
@@ -133,7 +134,7 @@ export class ScheduleEvent extends AggregateRoot {
     this.location = params.location
     this.visibility = params.visibility
     this.director = params.director.trim()
-    this.preacher = params.preacher?.trim()
+    this.preacher = params.preacher?.trim() ?? ""
     this.observations = params.observations?.trim()
     this.touch(params.updatedByUserId)
   }
@@ -147,13 +148,18 @@ export class ScheduleEvent extends AggregateRoot {
     this.touch(updatedByUserId)
   }
 
-  deactivate(updatedByUserId?: string): void {
-    this.active = false
+  suspend(updatedByUserId?: string): void {
+    this.status = ScheduleEventStatus.SUSPENDED
+    this.touch(updatedByUserId)
+  }
+
+  finalize(updatedByUserId?: string): void {
+    this.status = ScheduleEventStatus.FINALIZED
     this.touch(updatedByUserId)
   }
 
   activate(updatedByUserId?: string): void {
-    this.active = true
+    this.status = ScheduleEventStatus.ACTIVE
     this.touch(updatedByUserId)
   }
 
@@ -201,8 +207,8 @@ export class ScheduleEvent extends AggregateRoot {
     return this.observations
   }
 
-  getIsActive(): boolean {
-    return this.active
+  getStatus(): ScheduleEventStatus {
+    return this.status
   }
 
   getCreatedAt(): Date {
@@ -234,7 +240,7 @@ export class ScheduleEvent extends AggregateRoot {
       director: this.director,
       preacher: this.preacher,
       observations: this.observations,
-      isActive: this.active,
+      status: this.status,
       createdAt: this.createdAt,
       createdByUserId: this.createdByUserId,
       updatedAt: this.updatedAt,

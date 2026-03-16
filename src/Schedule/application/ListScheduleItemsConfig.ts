@@ -30,7 +30,6 @@ export class ListScheduleItemsConfig {
 
   private prepareCriteria(request: ListScheduleEventsFiltersRequest) {
     const filters: Array<Map<string, any>> = []
-    const normalizedIsActive = this.normalizeBoolean(request?.isActive)
 
     filters.push(
       new Map([
@@ -59,12 +58,12 @@ export class ListScheduleItemsConfig {
       )
     }
 
-    if (normalizedIsActive !== undefined) {
+    if (request?.status) {
       filters.push(
         new Map<string, any>([
-          ["field", "isActive"],
+          ["field", "status"],
           ["operator", Operator.EQUAL],
-          ["value", normalizedIsActive],
+          ["value", request.status],
         ])
       )
     }
@@ -75,18 +74,5 @@ export class ListScheduleItemsConfig {
       Number(request.perPage),
       Number(request.page)
     )
-  }
-
-  private normalizeBoolean(value?: unknown): boolean | undefined {
-    if (typeof value === "boolean") return value
-    if (typeof value === "number") {
-      return value === 1 ? true : value === 0 ? false : undefined
-    }
-    if (typeof value === "string") {
-      const normalized = value.toLowerCase()
-      if (["true", "1"].includes(normalized)) return true
-      if (["false", "0"].includes(normalized)) return false
-    }
-    return undefined
   }
 }

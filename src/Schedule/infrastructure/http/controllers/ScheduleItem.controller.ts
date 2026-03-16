@@ -228,7 +228,7 @@ export class ScheduleController {
 
       res
         .status(HttpStatus.OK)
-        .send({ message: "Schedule item deactivated successfully" })
+        .send({ message: "Schedule item suspended successfully" })
     } catch (error) {
       domainResponse(error, res)
     }

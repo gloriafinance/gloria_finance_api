@@ -1,6 +1,7 @@
 import {
   type LocationDTO,
   type RecurrencePatternDTO,
+  ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
@@ -37,7 +38,7 @@ export type UpdateScheduleEventRequest = {
 export type ListScheduleEventsFiltersRequest = {
   type?: ScheduleEventType
   visibility?: ScheduleEventVisibility
-  isActive?: boolean
+  status?: ScheduleEventStatus
 } & ListParams
 
 export type WeeklyScheduleOccurrencesRequest = {

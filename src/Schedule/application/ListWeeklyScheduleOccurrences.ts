@@ -3,6 +3,7 @@ import {
   type IScheduleItemRepository,
   type LocationDTO,
   type RecurrencePatternDTO,
+  ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
   ScheduleItemException,
@@ -56,7 +57,7 @@ export class ListWeeklyScheduleOccurrences {
     const scheduleItems = await this.scheduleItemRepository.findManyByChurch(
       request.churchId,
       {
-        isActive: true,
+        status: ScheduleEventStatus.ACTIVE,
       }
     )
 

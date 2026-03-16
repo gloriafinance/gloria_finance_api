@@ -1,12 +1,13 @@
 import {
-  ChurchStatus,
   type Church,
+  ChurchStatus,
   type IChurchRepository,
 } from "@/Church/domain"
 import {
   type IScheduleItemRepository,
   type IScheduleReminderService,
   type ScheduleEvent,
+  ScheduleEventStatus,
 } from "@/Schedule/domain"
 import { Logger } from "@/Shared/adapter"
 import {
@@ -53,7 +54,7 @@ export class NotifyScheduleDay implements IJob {
     const scheduleItems = await this.scheduleRepository.findManyByChurch(
       church.getChurchId(),
       {
-        isActive: true,
+        status: ScheduleEventStatus.ACTIVE,
       }
     )
 
@@ -63,7 +64,7 @@ export class NotifyScheduleDay implements IJob {
       )
     )
 
-    await this.deactivateExpiredEvents(
+    await this.finalizedEvents(
       church.getChurchId(),
       church.getTimezone(),
       scheduleItems,
@@ -134,7 +135,7 @@ export class NotifyScheduleDay implements IJob {
     await this.cacheService.set(schedulingLockKey, true, 60 * 60 * 48)
   }
 
-  private async deactivateExpiredEvents(
+  private async finalizedEvents(
     churchId: string,
     churchTimezone: string,
     scheduleItems: Awaited<
@@ -154,7 +155,7 @@ export class NotifyScheduleDay implements IJob {
           return
         }
 
-        scheduleItem.deactivate()
+        scheduleItem.finalize()
         await this.scheduleRepository.upsert(scheduleItem)
 
         this.logger.info(

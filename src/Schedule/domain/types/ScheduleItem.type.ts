@@ -1,6 +1,7 @@
 import {
   DayOfWeek,
   RecurrenceType,
+  ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
@@ -22,7 +23,7 @@ export type ScheduleItemConfigDTO = {
   director: string
   preacher?: string
   observations?: string
-  isActive: boolean
+  status: ScheduleEventStatus
   createdAt: Date
   createdByUserId: string
   updatedAt?: Date

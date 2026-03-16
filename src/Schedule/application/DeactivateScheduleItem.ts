@@ -1,6 +1,6 @@
 import { Logger } from "@/Shared/adapter"
 import {
-  IScheduleItemRepository,
+  type IScheduleItemRepository,
   ScheduleItemNotFoundException,
 } from "@/Schedule/domain"
 
@@ -16,7 +16,7 @@ export class DeactivateScheduleItem {
     scheduleItemId: string
     currentUserId: string
   }): Promise<void> {
-    this.logger.info("Deactivating schedule item", params)
+    this.logger.info("Suspending schedule item", params)
 
     const scheduleItem = await this.scheduleItemRepository.one({
       churchId: params.churchId,
@@ -27,7 +27,7 @@ export class DeactivateScheduleItem {
       throw new ScheduleItemNotFoundException()
     }
 
-    scheduleItem.deactivate(params.currentUserId)
+    scheduleItem.suspend(params.currentUserId)
 
     await this.scheduleItemRepository.upsert(scheduleItem)
   }

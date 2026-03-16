@@ -3,6 +3,7 @@ import {
   DayOfWeek,
   type IScheduleItemRepository,
   ScheduleEvent,
+  ScheduleEventStatus,
 } from "@/Schedule/domain"
 import { Collection } from "mongodb"
 import dayjs from "dayjs"
@@ -61,8 +62,8 @@ export class ScheduleItemMongoRepository
       query.visibility = filters.visibility
     }
 
-    if (filters?.isActive !== undefined) {
-      query.isActive = filters.isActive
+    if (filters?.status) {
+      query.status = filters.status
     }
 
     const result = await collection.find(query).toArray()
@@ -87,7 +88,7 @@ export class ScheduleItemMongoRepository
     const result = await collection.findOne(
       {
         churchId,
-        isActive: true,
+        status: ScheduleEventStatus.ACTIVE,
         "recurrencePattern.dayOfWeek": dayOfWeek,
         "recurrencePattern.startDate": {
           $lte: endOfDay,
@@ -131,7 +132,7 @@ export class ScheduleItemMongoRepository
 
     const collection = await this.collection()
     const filter = {
-      isActive: true,
+      status: ScheduleEventStatus.ACTIVE,
       "recurrencePattern.endDate": {
         $gte: startOfYesterday,
         $lte: endOfYesterday,
@@ -139,7 +140,7 @@ export class ScheduleItemMongoRepository
     }
     const update = {
       $set: {
-        isActive: false,
+        status: ScheduleEventStatus.FINALIZED,
         updatedAt: now.toDate(),
       },
     }
@@ -157,7 +158,7 @@ export class ScheduleItemMongoRepository
     await collection.createIndex(
       {
         churchId: 1,
-        isActive: 1,
+        status: 1,
         "recurrencePattern.dayOfWeek": 1,
         "recurrencePattern.startDate": 1,
         "recurrencePattern.endDate": 1,
@@ -170,13 +171,13 @@ export class ScheduleItemMongoRepository
         churchId: 1,
         type: 1,
         visibility: 1,
-        isActive: 1,
+        status: 1,
       },
       { background: true, name: "idx_schedule_filters" }
     )
     await collection.createIndex(
       {
-        isActive: 1,
+        status: 1,
         "recurrencePattern.endDate": 1,
       },
       { background: true, name: "idx_schedule_deactivate_previous_day_global" }

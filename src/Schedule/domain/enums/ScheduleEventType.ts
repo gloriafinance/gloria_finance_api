@@ -11,6 +11,12 @@ export enum ScheduleEventVisibility {
   INTERNAL_LEADERS = "INTERNAL_LEADERS",
 }
 
+export enum ScheduleEventStatus {
+  ACTIVE = "ACTIVE",
+  SUSPENDED = "SUSPENDED",
+  FINALIZED = "FINALIZED",
+}
+
 export enum RecurrenceType {
   WEEKLY = "WEEKLY",
 }

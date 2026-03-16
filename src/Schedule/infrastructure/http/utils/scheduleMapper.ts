@@ -12,7 +12,7 @@ export const mapToConfigDTO = (scheduleItem: ScheduleEvent) => ({
   director: scheduleItem.getDirector(),
   preacher: scheduleItem.getPreacher(),
   observations: scheduleItem.getObservations(),
-  isActive: scheduleItem.getIsActive(),
+  status: scheduleItem.getStatus(),
   createdAt: scheduleItem.getCreatedAt(),
   createdByUserId: scheduleItem.getCreatedByUserId(),
   updatedAt: scheduleItem.getUpdatedAt(),
