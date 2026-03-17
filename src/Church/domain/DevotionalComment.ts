@@ -54,6 +54,19 @@ export class DevotionalComment extends AggregateRoot {
     return comment
   }
 
+  getCommentId(): string {
+    return this.commentId
+  }
+
+  getMemberId(): string {
+    return this.memberId
+  }
+
+  updateMessage(message: string) {
+    this.message = message.trim()
+    this.updatedAt = DateBR()
+  }
+
   toPrimitives(): DevotionalCommentPrimitives {
     return {
       commentId: this.commentId,

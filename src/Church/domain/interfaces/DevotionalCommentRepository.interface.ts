@@ -1,7 +1,12 @@
 import type { DevotionalComment } from "@/Church/domain"
 
 export interface IDevotionalCommentRepository {
-  create(comment: DevotionalComment): Promise<void>
+  save(comment: DevotionalComment): Promise<void>
+  findByCommentId(
+    churchId: string,
+    devotionalId: string,
+    commentId: string
+  ): Promise<DevotionalComment | undefined>
   listRecentByDevotional(
     churchId: string,
     devotionalId: string,

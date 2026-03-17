@@ -1,12 +1,10 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   Res,
@@ -21,14 +19,11 @@ import { DevotionalPlanService } from "@/Church/applications/devotional/services
 import { DevotionalQueriesService } from "@/Church/applications/devotional/services/DevotionalQueriesService"
 import { DevotionalDeliveryService } from "@/Church/applications/devotional/services/DevotionalDeliveryService"
 import { DevotionalGenerationService } from "@/Church/applications/devotional/services/DevotionalGenerationService"
-import { DevotionalCommunityService } from "@/Church/applications/devotional/services/DevotionalCommunityService"
 import {
   ChurchMongoRepository,
-  DevotionalCommentMongoRepository,
   DevotionalDateDayjsService,
   DevotionalDeliveryLogMongoRepository,
   DevotionalMongoRepository,
-  DevotionalReactionMongoRepository,
   DevotionalWeeklyPlanMongoRepository,
   MemberMongoRepository,
 } from "@/Church/infrastructure"
@@ -40,19 +35,15 @@ import {
 import {
   DevotionalPlanMode,
   DevotionalStatus,
-  type CreateDevotionalCommentRequest,
   type ListDevotionalAgendaRequest,
   type ListDevotionalHistoryRequest,
-  type SetDevotionalReactionRequest,
   type UpdateDevotionalContentRequest,
   type UpsertDevotionalWeeklyPlanRequest,
 } from "@/Church/domain"
-import CreateDevotionalCommentValidator from "../validators/CreateDevotionalComment.validator"
 import UpsertDevotionalWeeklyPlanValidator from "../validators/UpsertDevotionalWeeklyPlan.validator"
 import UpdateDevotionalContentValidator from "../validators/UpdateDevotionalContent.validator"
 import ListDevotionalAgendaValidator from "../validators/ListDevotionalAgenda.validator"
 import ListDevotionalHistoryValidator from "../validators/ListDevotionalHistory.validator"
-import SetDevotionalReactionValidator from "../validators/SetDevotionalReaction.validator"
 import { DevotionalGeneratorJob } from "../jobs/DevotionalGenerator.job"
 import {
   AIProviderError,
@@ -209,114 +200,6 @@ export class DevotionalController {
       )
 
       res.status(HttpStatus.OK).send({ data })
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Get("/:devotionalId/community")
-  @Use(PermissionMiddleware)
-  async getCommunity(
-    @Param("devotionalId") devotionalId: string,
-    @Req() req: AuthenticatedRequest,
-    @Res() res: ServerResponse
-  ) {
-    try {
-      const data = await this.communityService().getCommunity(
-        req.auth.churchId,
-        devotionalId,
-        req.auth.memberId
-      )
-
-      res.status(HttpStatus.OK).send({ data })
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Put("/:devotionalId/reaction")
-  @Use([PermissionMiddleware, SetDevotionalReactionValidator])
-  async setReaction(
-    @Param("devotionalId") devotionalId: string,
-    @Body()
-    body: Omit<
-      SetDevotionalReactionRequest,
-      "churchId" | "devotionalId" | "memberId"
-    >,
-    @Req() req: AuthenticatedRequest,
-    @Res() res: ServerResponse
-  ) {
-    const memberId = this.requireMemberScope(req, res)
-    if (!memberId) {
-      return
-    }
-
-    try {
-      const data = await this.communityService().setReaction({
-        churchId: req.auth.churchId,
-        devotionalId,
-        memberId,
-        reactionType: body.reactionType,
-      })
-
-      res.status(HttpStatus.OK).send({ data })
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Delete("/:devotionalId/reaction")
-  @Use(PermissionMiddleware)
-  async clearReaction(
-    @Param("devotionalId") devotionalId: string,
-    @Req() req: AuthenticatedRequest,
-    @Res() res: ServerResponse
-  ) {
-    const memberId = this.requireMemberScope(req, res)
-    if (!memberId) {
-      return
-    }
-
-    try {
-      const data = await this.communityService().clearReaction({
-        churchId: req.auth.churchId,
-        devotionalId,
-        memberId,
-      })
-
-      res.status(HttpStatus.OK).send({ data })
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Post("/:devotionalId/comments")
-  @Use([PermissionMiddleware, CreateDevotionalCommentValidator])
-  async addComment(
-    @Param("devotionalId") devotionalId: string,
-    @Body()
-    body: Omit<
-      CreateDevotionalCommentRequest,
-      "churchId" | "devotionalId" | "memberId" | "authorName"
-    >,
-    @Req() req: AuthenticatedRequest,
-    @Res() res: ServerResponse
-  ) {
-    const memberId = this.requireMemberScope(req, res)
-    if (!memberId) {
-      return
-    }
-
-    try {
-      const data = await this.communityService().addComment({
-        churchId: req.auth.churchId,
-        devotionalId,
-        memberId,
-        authorName: req.auth.name,
-        message: body.message,
-      })
-
-      res.status(HttpStatus.CREATED).send({ data })
     } catch (error) {
       domainResponse(error, res)
     }
@@ -547,27 +430,5 @@ export class DevotionalController {
       ChurchMongoRepository.getInstance()
       //this.deliveryService()
     )
-  }
-
-  private communityService() {
-    return new DevotionalCommunityService(
-      DevotionalMongoRepository.getInstance(),
-      DevotionalReactionMongoRepository.getInstance(),
-      DevotionalCommentMongoRepository.getInstance()
-    )
-  }
-
-  private requireMemberScope(
-    req: AuthenticatedRequest,
-    res: ServerResponse
-  ): string | undefined {
-    if (!req.auth.memberId) {
-      res.status(HttpStatus.FORBIDDEN).send({
-        message: "Member scope is required for devotional community actions",
-      })
-      return undefined
-    }
-
-    return req.auth.memberId
   }
 }

@@ -24,6 +24,8 @@ export { MinisterNotFound } from "./exceptions/MinisterNotFound.exception"
 export { WhatsappCredentialAlreadyAssigned } from "./exceptions/WhatsappCredentialAlreadyAssigned.exception"
 export { WhatsappCredentialsNotConfigured } from "./exceptions/WhatsappCredentialsNotConfigured.exception"
 export { DevotionalNotFound } from "./exceptions/DevotionalNotFound.exception"
+export { DevotionalCommentNotFound } from "./exceptions/DevotionalCommentNotFound.exception"
+export { DevotionalCommentEditNotAllowed } from "./exceptions/DevotionalCommentEditNotAllowed.exception"
 export { DevotionalPlanException } from "./exceptions/DevotionalPlanException"
 
 export type { ChurchDTO } from "./type/Church.dto.type"
@@ -42,6 +44,7 @@ export type { UpdateDevotionalContentRequest } from "./requests/UpdateDevotional
 export type { ListDevotionalHistoryRequest } from "./requests/ListDevotionalHistory.request"
 export type { SetDevotionalReactionRequest } from "./requests/SetDevotionalReaction.request"
 export type { CreateDevotionalCommentRequest } from "./requests/CreateDevotionalComment.request"
+export type { UpdateDevotionalCommentRequest } from "./requests/UpdateDevotionalComment.request"
 
 export { ChurchStatus } from "./enums/ChurchStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"

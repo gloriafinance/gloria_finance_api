@@ -1,5 +1,7 @@
 import {
   DevotionalComment,
+  DevotionalCommentEditNotAllowed,
+  DevotionalCommentNotFound,
   DevotionalNotFound,
   DevotionalReaction,
   DEVOTIONAL_REACTION_TYPE_VALUES,
@@ -9,6 +11,7 @@ import {
   type IDevotionalReactionRepository,
   type IDevotionalRepository,
   type SetDevotionalReactionRequest,
+  type UpdateDevotionalCommentRequest,
 } from "@/Church/domain"
 
 export class DevotionalCommunityService {
@@ -122,7 +125,7 @@ export class DevotionalCommunityService {
   async addComment(request: CreateDevotionalCommentRequest) {
     await this.assertDevotionalExists(request.churchId, request.devotionalId)
 
-    await this.devotionalCommentRepository.create(
+    await this.devotionalCommentRepository.save(
       DevotionalComment.create({
         churchId: request.churchId,
         devotionalId: request.devotionalId,
@@ -131,6 +134,33 @@ export class DevotionalCommunityService {
         message: request.message,
       })
     )
+
+    return this.getCommunity(
+      request.churchId,
+      request.devotionalId,
+      request.memberId
+    )
+  }
+
+  async updateComment(request: UpdateDevotionalCommentRequest) {
+    await this.assertDevotionalExists(request.churchId, request.devotionalId)
+
+    const comment = await this.devotionalCommentRepository.findByCommentId(
+      request.churchId,
+      request.devotionalId,
+      request.commentId
+    )
+
+    if (!comment) {
+      throw new DevotionalCommentNotFound()
+    }
+
+    if (comment.getMemberId() !== request.memberId) {
+      throw new DevotionalCommentEditNotAllowed()
+    }
+
+    comment.updateMessage(request.message)
+    await this.devotionalCommentRepository.save(comment)
 
     return this.getCommunity(
       request.churchId,

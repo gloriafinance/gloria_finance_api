@@ -27,7 +27,7 @@ export class DevotionalCommentMongoRepository
     return "devotional_comments"
   }
 
-  async create(comment: DevotionalComment): Promise<void> {
+  async save(comment: DevotionalComment): Promise<void> {
     const collection = await this.collection()
     const payload = comment.toPrimitives()
 
@@ -40,6 +40,24 @@ export class DevotionalCommentMongoRepository
       { $set: payload },
       { upsert: true }
     )
+  }
+
+  async findByCommentId(
+    churchId: string,
+    devotionalId: string,
+    commentId: string
+  ): Promise<DevotionalComment | undefined> {
+    const collection = await this.collection()
+    const row = await collection.findOne({ churchId, devotionalId, commentId })
+
+    if (!row) {
+      return undefined
+    }
+
+    return DevotionalComment.fromPrimitives({
+      id: row._id.toString(),
+      ...row,
+    })
   }
 
   async listRecentByDevotional(
