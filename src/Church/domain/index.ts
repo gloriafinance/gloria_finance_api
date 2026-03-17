@@ -4,6 +4,8 @@ export { Minister } from "./Minister"
 export { DevotionalWeeklyPlan } from "./DevotionalWeeklyPlan"
 export { Devotional } from "./Devotional"
 export { DevotionalDeliveryLog } from "./DevotionalDeliveryLog"
+export { DevotionalReaction } from "./DevotionalReaction"
+export { DevotionalComment } from "./DevotionalComment"
 
 export type { IChurchRepository } from "./interfaces/ChurchRepository.interface"
 export type { IMemberRepository } from "./interfaces/MemberRepository.interface"
@@ -12,6 +14,8 @@ export type { IDevotionalWeeklyPlanRepository } from "./interfaces/DevotionalWee
 export type { IDevotionalRepository } from "./interfaces/DevotionalRepository.interface"
 export type { IDevotionalDeliveryLogRepository } from "./interfaces/DevotionalDeliveryLogRepository.interface"
 export type { IDevotionalDateService } from "./interfaces/DevotionalDateService.interface"
+export type { IDevotionalReactionRepository } from "./interfaces/DevotionalReactionRepository.interface"
+export type { IDevotionalCommentRepository } from "./interfaces/DevotionalCommentRepository.interface"
 
 export { ChurchNotFound } from "./exceptions/ChurchNotFound.exception"
 export { MemberNotFound } from "./exceptions/MemberNotFound.exception"
@@ -36,6 +40,8 @@ export type { UpsertDevotionalWeeklyPlanRequest } from "./requests/UpsertDevotio
 export type { ListDevotionalAgendaRequest } from "./requests/ListDevotionalAgenda.request"
 export type { UpdateDevotionalContentRequest } from "./requests/UpdateDevotionalContent.request"
 export type { ListDevotionalHistoryRequest } from "./requests/ListDevotionalHistory.request"
+export type { SetDevotionalReactionRequest } from "./requests/SetDevotionalReaction.request"
+export type { CreateDevotionalCommentRequest } from "./requests/CreateDevotionalComment.request"
 
 export { ChurchStatus } from "./enums/ChurchStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"
@@ -60,9 +66,14 @@ export {
   DEVOTIONAL_TONE_VALUES,
 } from "./enums/DevotionalTone.enum"
 export { DevotionalChannelResult } from "./enums/DevotionalChannelResult.enum"
+export {
+  DevotionalReactionType,
+  DEVOTIONAL_REACTION_TYPE_VALUES,
+} from "./enums/DevotionalReactionType.enum"
 
 export type * from "./type/MemberSettings.type"
 export type * from "./type/DevotionalResponse.type.ts"
 export type * from "./type/DevotionalWeeklyPlan.type"
 export type * from "./type/Devotional.type"
 export type * from "./type/DevotionalDeliveryLog.type"
+export type * from "./type/DevotionalCommunity.type"
