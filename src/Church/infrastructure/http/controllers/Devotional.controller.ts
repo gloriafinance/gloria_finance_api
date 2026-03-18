@@ -51,6 +51,7 @@ import {
 } from "@/package/ai/errors/AIProviderError"
 import { QueueName } from "@/package/queue/domain"
 import { DevotionalApproved } from "@/Church/applications/devotional"
+import { Cache } from "@/Shared/decorators"
 
 @Controller("/api/v1/church/devotional")
 export class DevotionalController {
@@ -151,6 +152,7 @@ export class DevotionalController {
   }
 
   @Get("/agenda")
+  @Cache("devotional-today", 5 * 60)
   @Use([PermissionMiddleware, ListDevotionalAgendaValidator])
   async agenda(
     @Query() query: Omit<ListDevotionalAgendaRequest, "churchId">,
