@@ -24,5 +24,24 @@ export const StringToDate = (dateString: any): Date => {
   //
   // return dAsLocal
 
-  return dayjs.tz(dateString, "America/Sao_Paulo").toDate()
+  return dayjs.tz(dateString, "America/Sao_Paulo").local().toDate()
+}
+
+export const buildUtcDateTime = (date: string, time: string): Date => {
+  const dateParts = date.split("-").map(Number)
+  const timeParts = time.split(":").map(Number)
+
+  if (
+    dateParts.length !== 3 ||
+    timeParts.length !== 3 ||
+    dateParts.some(Number.isNaN) ||
+    timeParts.some(Number.isNaN)
+  ) {
+    throw new Error(`Invalid UTC date time: ${date} ${time}`)
+  }
+
+  const [year, month, day] = dateParts as [number, number, number]
+  const [hours, minutes, seconds] = timeParts as [number, number, number]
+
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds))
 }

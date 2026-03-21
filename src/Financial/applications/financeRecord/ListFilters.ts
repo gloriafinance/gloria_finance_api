@@ -1,4 +1,4 @@
-import { FilterFinanceRecordRequest } from "@/Financial/domain"
+import { type FilterFinanceRecordRequest } from "@/Financial/domain"
 import {
   Criteria,
   Filters,
@@ -6,6 +6,7 @@ import {
   Order,
   OrderTypes,
 } from "@abejarano/ts-mongodb-criteria"
+import { buildUtcDateTime } from "@/Shared/helpers"
 
 export const PrepareFinanceRecordCriteria = (
   request: FilterFinanceRecordRequest
@@ -73,8 +74,11 @@ export const PrepareFinanceRecordCriteria = (
   }
 
   if (request.startDate && request.endDate) {
-    const startDate = new Date(request.startDate)
-    const endDate = new Date(request.endDate)
+    const startDate = buildUtcDateTime(request.startDate.toString(), "00:00:00")
+    const endDate = buildUtcDateTime(request.endDate.toString(), "23:59:29")
+
+    console.log(startDate)
+    console.log(endDate)
 
     filters.push(
       new Map<string, any>([
@@ -89,7 +93,7 @@ export const PrepareFinanceRecordCriteria = (
         new Map<string, string | Date>([
           ["field", "date"],
           ["operator", Operator.GTE],
-          ["value", new Date(request.startDate)],
+          ["value", buildUtcDateTime(request.startDate.toString(), "00:00:00")],
         ])
       )
     }
@@ -99,7 +103,7 @@ export const PrepareFinanceRecordCriteria = (
         new Map<string, string | Date>([
           ["field", "date"],
           ["operator", Operator.LTE],
-          ["value", new Date(request.endDate)],
+          ["value", buildUtcDateTime(request.endDate.toString(), "23:59:29")],
         ])
       )
     }
