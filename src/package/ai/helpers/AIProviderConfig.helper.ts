@@ -2,15 +2,31 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { YAML } from "bun"
 
-type AIProviderConfigEntry = {
+export type AICodexOAuthConfig = {
+  issuer?: string
+  clientId?: string
+  audience?: string
+  scopes?: string[]
+  authorizePath?: string
+  tokenPath?: string
+  revokePath?: string
+  redirectUri?: string
+  storagePath?: string
+  refreshSkewMs?: number
+}
+
+export type AIProviderConfigEntry = {
   serviceName: string
-  apiKey: string
+  apiKey?: string
   model: string
   priority: number
   dailyBudgetRequests: number
   dailyBudgetTokens: number
   maxConcurrency: number
   maxRequestsPerMinute: number
+  authProfile?: string
+  baseUrl?: string
+  oauth?: AICodexOAuthConfig
   enabled?: boolean
 }
 
@@ -18,9 +34,6 @@ type AIRouterSettings = {
   sliceMinutes: number
   sliceBurstFactor: number
   externalRemainingLowThreshold: number
-  reserveOpenRouter: boolean
-  releaseOpenRouterHoursToReset: number
-  releaseOpenRouterPrimaryRemainingThreshold: number
   cooldownRateLimitSeconds: number
   cooldownProviderErrorSeconds: number
   blockPaymentRequiredSeconds: number

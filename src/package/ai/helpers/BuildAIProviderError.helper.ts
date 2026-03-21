@@ -42,6 +42,18 @@ export const buildAIProviderError = (params: {
   }
 
   if (
+    lower.includes("missing oauth profile") ||
+    lower.includes("no valid refresh token")
+  ) {
+    return new AIProviderError(
+      provider,
+      status,
+      AIProviderErrorCode.AUTH_ERROR,
+      "No hay credenciales OAuth validas para este profile. Ejecuta ai auth login."
+    )
+  }
+
+  if (
     status === 401 ||
     status === 403 ||
     lower.includes("unauthorized") ||

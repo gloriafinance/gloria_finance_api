@@ -2,6 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["jest", "node"],
-    "isolatedModules": false
+    "isolatedModules": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "verbatimModuleSyntax": false
   }
 }

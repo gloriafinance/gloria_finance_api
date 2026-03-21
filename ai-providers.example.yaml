@@ -2,22 +2,33 @@ router:
   sliceMinutes: 60
   sliceBurstFactor: 1
   externalRemainingLowThreshold: 0.15
-  reserveOpenRouter: true
-  releaseOpenRouterHoursToReset: 4
-  releaseOpenRouterPrimaryRemainingThreshold: 0.2
   cooldownRateLimitSeconds: 120
   cooldownProviderErrorSeconds: 45
   blockPaymentRequiredSeconds: 86400
 
 providers:
-  - serviceName: groq
-    apiKey: ""
-    model: "moonshotai/kimi-k2-instruct-0905"
+  - serviceName: codex
+    authProfile: "personal"
+    baseUrl: "https://chatgpt.com/backend-api"
+    model: "gpt-5-codex"
     priority: 100
-    dailyBudgetRequests: 1200
+    dailyBudgetRequests: 1000
     dailyBudgetTokens: 0
     maxConcurrency: 4
-    maxRequestsPerMinute: 25
+    maxRequestsPerMinute: 20
+    oauth:
+      issuer: "https://auth.openai.com"
+      clientId: "app_EMoamEEZ73f0CkXaXp7hrann"
+      redirectUri: "urn:ietf:wg:oauth:2.0:oob"
+      scopes:
+        - "openid"
+        - "profile"
+        - "email"
+        - "offline_access"
+      authorizePath: "/oauth/authorize"
+      tokenPath: "/oauth/token"
+      storagePath: ".codex-oauth"
+      refreshSkewMs: 300000
 
   - serviceName: gemini
     apiKey: ""
@@ -27,30 +38,3 @@ providers:
     dailyBudgetTokens: 0
     maxConcurrency: 4
     maxRequestsPerMinute: 20
-
-  - serviceName: cerebras
-    apiKey: ""
-    model: "llama-3.3-70b"
-    priority: 98
-    dailyBudgetRequests: 900
-    dailyBudgetTokens: 0
-    maxConcurrency: 3
-    maxRequestsPerMinute: 15
-
-  - serviceName: openrouter
-    apiKey: ""
-    model: "openai/gpt-4o-mini"
-    priority: 20
-    dailyBudgetRequests: 50
-    dailyBudgetTokens: 0
-    maxConcurrency: 2
-    maxRequestsPerMinute: 3
-
-  - serviceName: cloudflare
-    apiKey: ""
-    model: "@cf/meta/llama-3.1-8b-instruct"
-    priority: 94
-    dailyBudgetRequests: 900
-    dailyBudgetTokens: 0
-    maxConcurrency: 3
-    maxRequestsPerMinute: 15

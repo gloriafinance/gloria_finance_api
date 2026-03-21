@@ -1,17 +1,17 @@
 import { Logger } from "@/Shared/adapter"
 import { GoogleGenerativeAI, type Schema } from "@google/generative-ai"
-import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
-import type { AIExecutionResult } from "@/package/ai/ai.interface"
-import { findAIProviderByService } from "@/package/ai/helpers/AIProviderConfig.helper"
+import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper.ts"
+import type { AIExecutionResult } from "@/package/ai/ai.interface.ts"
+import { findAIProviderByService } from "@/package/ai/helpers/AIProviderConfig.helper.ts"
 
-export class GeminiService {
-  private static _instance: GeminiService | null = null
+export class GeminiAIService {
+  private static _instance: GeminiAIService | null = null
 
-  private logger = Logger(GeminiService.name)
+  private logger = Logger(GeminiAIService.name)
 
   static getInstance() {
     if (!this._instance) {
-      this._instance = new GeminiService()
+      this._instance = new GeminiAIService()
     }
     return this._instance
   }

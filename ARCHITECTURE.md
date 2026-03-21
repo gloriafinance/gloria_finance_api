@@ -687,6 +687,20 @@ constructor and wire them in the controller/bootstrap layer.)
 
 ---
 
+## AI Provider
+
+La capa de IA soporta dos providers: `codex` y `gemini`.
+
+- Router: `src/package/ai/service/AIProviderRouter.service.ts`
+- Providers:
+  - `src/package/ai/providers/codex/CodexAIService.ts`
+  - `src/package/ai/service/Gemini.service.ts`
+- Configuración: `ai-providers.yaml` con `serviceName: codex` y `serviceName: gemini`
+
+No existe ya soporte para `groq`, `cerebras`, `openrouter` ni `cloudflare` dentro del módulo `src/package/ai`.
+
+---
+
 For more details on specific layers:
 
 - Database operations: See `DATABASE.md`

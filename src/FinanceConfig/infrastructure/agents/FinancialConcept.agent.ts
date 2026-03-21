@@ -25,15 +25,6 @@ export type FinancialConceptAgentResponse = {
   concept: AIFinancialConcept
 }
 
-type FinancialConceptJustificationLabels = {
-  conceptType: string
-  statementCategory: string
-  impactsCashFlow: string
-  impactsResult: string
-  impactsBalanceSheet: string
-  recurringOperationalEvent: string
-}
-
 type FinancialConceptPromptGuide = {
   languageName: string
   conceptTypeUiValues: string[]
@@ -72,7 +63,6 @@ export class FinancialConceptAgent {
       isOperational: item.getIsOperational(),
     }))
 
-    const justificationLabels = this.getJustificationLabels(lang)
     const promptGuide = this.getPromptGuide(lang)
 
     const responseSchema: Schema = {
@@ -81,7 +71,8 @@ export class FinancialConceptAgent {
         needsCreate: { type: SchemaType.BOOLEAN },
         justification: {
           type: SchemaType.STRING,
-          description: "Justificativa (máx 640 chars), sem markdown",
+          description:
+            "Justificación natural, breve y sin markdown; máximo 640 caracteres",
         },
         concept: {
           type: SchemaType.OBJECT,
@@ -190,15 +181,12 @@ Reglas de decision:
 	- OPEX => isOperational=true (si no es recurrente, no debe ser OPEX).
 	- COGS => isOperational=false (costo directo de accion/proyecto/evento especifico).
 
-	Formato obligatorio de justification (maximo 640 chars):
-	Valores visibles para "${justificationLabels.conceptType}": ${promptGuide.conceptTypeUiValues.join(" | ")}
-	Valores visibles para "${justificationLabels.statementCategory}": ${promptGuide.statementCategoryUiValues.join(" | ")}
-	${justificationLabels.conceptType}: <valor visible en UI> - <razon>;
-	${justificationLabels.statementCategory}: <valor visible en UI> - <razon>;
-	${justificationLabels.impactsCashFlow}: <true|false> - <razon>;
-	${justificationLabels.impactsResult}: <true|false> - <razon>;
-	${justificationLabels.impactsBalanceSheet}: <true|false> - <razon>;
-	${justificationLabels.recurringOperationalEvent}: <true|false> - <razon>.
+	Formato obligatorio de justification:
+	- 1 a 3 frases naturales.
+	- Maximo 640 caracteres.
+	- Explica de forma humana por que ese concepto encaja y, si aplica, por que la categoria elegida es la correcta.
+	- No la conviertas en checklist, lista de campos, etiquetas con ":" ni repitas booleanos.
+	- No uses codigos tecnicos como OUTGO, COGS, OPEX, CAPEX, REVENUE o MINISTRY_TRANSFERS dentro del texto.
     `.trim()
 
     const userPrompt = `
@@ -210,9 +198,8 @@ ${JSON.stringify(conceptsForAI)}
 
 	Recuerda:
 	- Si el contexto describe algo eventual/no recurrente, isOperational debe ser false.
-	- En justification explica por que elegiste cada campo siguiendo el formato obligatorio.
-	- Debe verse explicitamente el valor seleccionado en cada linea (enum o true/false).
-	- NO uses codigos tecnicos (OUTGO, COGS, etc.) dentro de justification; usa el texto visible para usuario final.
+	- En justification habla como explicarias la decisión a un usuario final.
+	- NO uses codigos tecnicos (OUTGO, COGS, etc.) dentro de justificatión.
 	- justification/name/description deben venir solo en ${promptGuide.languageName}.
 	- Si mezclas idiomas, la respuesta sera rechazada.
     `.trim()
@@ -289,25 +276,13 @@ ${JSON.stringify(conceptsForAI)}
       )
     }
 
-    const labels = this.getJustificationLabels(lang)
     const justificationNormalized = this.normalizeText(justification)
-    const requiredRationaleLabels = [
-      `${this.normalizeText(labels.conceptType)}:`,
-      `${this.normalizeText(labels.statementCategory)}:`,
-      `${this.normalizeText(labels.impactsCashFlow)}:`,
-      `${this.normalizeText(labels.impactsResult)}:`,
-      `${this.normalizeText(labels.impactsBalanceSheet)}:`,
-      `${this.normalizeText(labels.recurringOperationalEvent)}:`,
-    ]
-    const missingLabel = requiredRationaleLabels.find(
-      (label) => !justificationNormalized.includes(label)
-    )
-    if (missingLabel) {
+    if (justification.trim().length > 320) {
       throw new AIProviderError(
         provider,
         undefined,
         AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid response: justification must explain type, statementCategory, affectsCashFlow, affectsResult, affectsBalance and isOperational"
+        "Invalid response: justification too long (max 320)"
       )
     }
 
@@ -422,48 +397,6 @@ ${JSON.stringify(conceptsForAI)}
           `Invalid response: concept.${k} must be boolean`
         )
       }
-    }
-
-    const promptGuide = this.getPromptGuide(lang)
-    const conceptTypeValue = this.extractLabeledValue(
-      justificationNormalized,
-      labels.conceptType
-    )
-    const statementCategoryValue = this.extractLabeledValue(
-      justificationNormalized,
-      labels.statementCategory
-    )
-    if (!conceptTypeValue || !statementCategoryValue) {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid response: justification must include a user-facing value for concept type and statement category"
-      )
-    }
-
-    const allowedConceptTypeValues = promptGuide.conceptTypeUiValues.map(
-      (item) => this.normalizeText(item)
-    )
-    const allowedStatementCategoryValues =
-      promptGuide.statementCategoryUiValues.map((item) =>
-        this.normalizeText(item)
-      )
-
-    const conceptTypeMatches = allowedConceptTypeValues.some((allowed) =>
-      conceptTypeValue.includes(allowed)
-    )
-    const statementCategoryMatches = allowedStatementCategoryValues.some(
-      (allowed) => statementCategoryValue.includes(allowed)
-    )
-
-    if (!conceptTypeMatches || !statementCategoryMatches) {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid response: justification must use the UI-visible value for concept type and statement category in the requested language"
-      )
     }
 
     const technicalCodePattern =
@@ -592,12 +525,7 @@ ${JSON.stringify(conceptsForAI)}
 
     return {
       needsCreate,
-      justification: this.ensureIndicatorValuesInJustification(
-        justification.trim(),
-        labels,
-        c as unknown as AIFinancialConcept,
-        lang
-      ),
+      justification: justification.trim(),
       concept: c as unknown as AIFinancialConcept,
     }
   }
@@ -615,87 +543,6 @@ ${JSON.stringify(conceptsForAI)}
     target.affectsResult = source.getAffectsResult()
     target.affectsBalance = source.getAffectsBalance()
     target.isOperational = source.getIsOperational()
-  }
-
-  private ensureIndicatorValuesInJustification(
-    original: string,
-    labels: FinancialConceptJustificationLabels,
-    concept: AIFinancialConcept,
-    lang: string
-  ): string {
-    const base = original.trim()
-    const normalizedBase = this.normalizeText(base)
-    const reason = this.getIndicatorAutoReason(lang)
-    const requiredLines = [
-      `${labels.impactsCashFlow}: ${String(concept.affectsCashFlow).toLowerCase()} - ${reason}`,
-      `${labels.impactsResult}: ${String(concept.affectsResult).toLowerCase()} - ${reason}`,
-      `${labels.impactsBalanceSheet}: ${String(concept.affectsBalance).toLowerCase()} - ${reason}`,
-      `${labels.recurringOperationalEvent}: ${String(concept.isOperational).toLowerCase()} - ${reason}`,
-    ]
-
-    const missingLines = requiredLines.filter(
-      (line) => !normalizedBase.includes(this.normalizeText(line))
-    )
-    if (missingLines.length === 0) return base
-    if (!base) return missingLines.join("; ")
-
-    const separator = base.endsWith(";") ? " " : "; "
-    return `${base}${separator}${missingLines.join("; ")}`
-  }
-
-  private getIndicatorAutoReason(lang: string): string {
-    const normalizedLang = String(lang ?? "")
-      .trim()
-      .toLowerCase()
-
-    if (normalizedLang.startsWith("pt")) {
-      return "alinhado com as regras contabeis"
-    }
-
-    if (normalizedLang.startsWith("en")) {
-      return "aligned with accounting rules"
-    }
-
-    return "alineado con reglas contables"
-  }
-
-  private getJustificationLabels(
-    lang: string
-  ): FinancialConceptJustificationLabels {
-    const normalizedLang = String(lang ?? "")
-      .trim()
-      .toLowerCase()
-
-    if (normalizedLang.startsWith("pt")) {
-      return {
-        conceptType: "Tipo de conceito",
-        statementCategory: "Categoria do demonstrativo",
-        impactsCashFlow: "Impacta fluxo de caixa",
-        impactsResult: "Impacta o resultado (DRE)",
-        impactsBalanceSheet: "Impacta o balanço patrimonial",
-        recurringOperationalEvent: "Evento operacional recorrente",
-      }
-    }
-
-    if (normalizedLang.startsWith("en")) {
-      return {
-        conceptType: "Concept type",
-        statementCategory: "Statement category",
-        impactsCashFlow: "Impacts cash flow",
-        impactsResult: "Impacts result (P&L)",
-        impactsBalanceSheet: "Impacts balance sheet",
-        recurringOperationalEvent: "Recurring operational event",
-      }
-    }
-
-    return {
-      conceptType: "Tipo de concepto",
-      statementCategory: "Categoría del estado",
-      impactsCashFlow: "Impacta flujo de caja",
-      impactsResult: "Impacta el resultado (DRE)",
-      impactsBalanceSheet: "Impacta el balance general",
-      recurringOperationalEvent: "Evento operacional recurrente",
-    }
   }
 
   private getPromptGuide(lang: string): FinancialConceptPromptGuide {
@@ -753,22 +600,6 @@ ${JSON.stringify(conceptsForAI)}
     }
   }
 
-  private extractLabeledValue(
-    normalizedText: string,
-    label: string
-  ): string | null {
-    const labelPattern = new RegExp(
-      `${this.escapeRegExp(this.normalizeText(label))}\\s*:\\s*([^;\\n]+)`
-    )
-    const match = normalizedText.match(labelPattern)
-    if (!match || !match[1]) return null
-
-    const selectedValue = match[1].split(/\s-\s/)[0]?.trim()
-    if (!selectedValue) return null
-
-    return selectedValue
-  }
-
   private getLanguageLeakPattern(lang: string): RegExp | null {
     const normalizedLang = String(lang ?? "")
       .trim()
@@ -796,9 +627,5 @@ ${JSON.stringify(conceptsForAI)}
       .toLowerCase()
       .replace(/\s+/g, " ")
       .trim()
-  }
-
-  private escapeRegExp(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   }
 }

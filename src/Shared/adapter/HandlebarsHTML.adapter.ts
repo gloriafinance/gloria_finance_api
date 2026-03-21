@@ -2,7 +2,6 @@ import type { IHTMLAdapter } from "@/Shared/domain/interfaces/GenerateHTML.inter
 import Handlebars from "handlebars"
 import * as fs from "fs"
 import * as path from "node:path"
-import { APP_DIR } from "@/app"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 
 const handlebars =
@@ -190,9 +189,6 @@ export class HandlebarsHTMLAdapter implements IHTMLAdapter {
   private loadTranslations(): Record<string, Translations> {
     const translations: Record<string, Translations> = {}
     const roots = [
-      typeof APP_DIR === "string"
-        ? path.join(APP_DIR, "templates", "i18n")
-        : undefined,
       path.join(process.cwd(), "dist", "templates", "i18n"),
       path.join(process.cwd(), "src", "templates", "i18n"),
       path.join(process.cwd(), "templates", "i18n"),

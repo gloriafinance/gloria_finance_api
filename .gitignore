@@ -40,3 +40,4 @@ upload
 .dist/
 backups
 ai-providers.yaml
+.codex-oauth
