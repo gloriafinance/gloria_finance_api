@@ -1,5 +1,5 @@
 import { type Schema, SchemaType } from "@google/generative-ai"
-import { AIProviderRouterService } from "@/package/ai/service/AIProviderRouter.service.ts"
+import { AITextService } from "@/package/ai/service/AITextService.ts"
 import { validateDevotionalResponse } from "@/Church/infrastructure/http/validators/ValidateDevotionalResponse.helper.ts"
 import { AIProviderError } from "@/package/ai/errors/AIProviderError.ts"
 
@@ -146,7 +146,7 @@ export class DevotionalAgent {
       `.trim()
 
     try {
-      return await AIProviderRouterService.getInstance().execute({
+      return await AITextService.getInstance().execute({
         systemPrompt,
         userPrompt,
         schema: responseSchema,

@@ -19,28 +19,12 @@ export type AIProviderConfigEntry = {
   serviceName: string
   apiKey?: string
   model: string
-  priority: number
-  dailyBudgetRequests: number
-  dailyBudgetTokens: number
-  maxConcurrency: number
-  maxRequestsPerMinute: number
   authProfile?: string
   baseUrl?: string
   oauth?: AICodexOAuthConfig
-  enabled?: boolean
-}
-
-type AIRouterSettings = {
-  sliceMinutes: number
-  sliceBurstFactor: number
-  externalRemainingLowThreshold: number
-  cooldownRateLimitSeconds: number
-  cooldownProviderErrorSeconds: number
-  blockPaymentRequiredSeconds: number
 }
 
 type AIProviderConfigFile = {
-  router: AIRouterSettings
   providers: AIProviderConfigEntry[]
 }
 
@@ -71,6 +55,10 @@ const readAIProviderConfigFile = (): AIProviderConfigFile => {
     throw new Error("AI provider YAML config must be valid YAML")
   }
 
+  if (!parsed || !Array.isArray(parsed.providers)) {
+    throw new Error("AI provider YAML config must define a 'providers' array")
+  }
+
   cachePath = absolutePath
   cacheRaw = rawFile
   cacheParsed = parsed
@@ -81,15 +69,19 @@ export const readAIProviderConfig = (): AIProviderConfigEntry[] => {
   return readAIProviderConfigFile().providers
 }
 
-export const readAIRouterSettings = (): AIRouterSettings => {
-  return readAIProviderConfigFile().router
-}
-
 export const findAIProviderByService = (
   serviceName: string
 ): AIProviderConfigEntry | undefined => {
   const expected = serviceName.toLowerCase()
-  return readAIProviderConfig().find(
-    (p) => p.serviceName?.toLowerCase() === expected && p.enabled !== false
+  const matches = readAIProviderConfig().filter(
+    (p) => p.serviceName?.toLowerCase() === expected
   )
+
+  if (matches.length > 1) {
+    throw new Error(
+      `AI provider YAML config must not define duplicate providers for service '${expected}'`
+    )
+  }
+
+  return matches[0]
 }

@@ -1,5 +1,5 @@
 import { ConceptType, FinancialConcept } from "@/FinanceConfig/domain"
-import { AIProviderRouterService } from "@/package/ai/service/AIProviderRouter.service.ts"
+import { AITextService } from "@/package/ai/service/AITextService.ts"
 import {
   AIProviderError,
   AIProviderErrorCode,
@@ -208,7 +208,7 @@ ${JSON.stringify(conceptsForAI)}
     `.trim()
 
     try {
-      return await AIProviderRouterService.getInstance().execute({
+      return await AITextService.getInstance().execute({
         systemPrompt,
         userPrompt,
         schema: responseSchema,

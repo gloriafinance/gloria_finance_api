@@ -1,21 +1,8 @@
-router:
-  sliceMinutes: 60
-  sliceBurstFactor: 1
-  externalRemainingLowThreshold: 0.15
-  cooldownRateLimitSeconds: 120
-  cooldownProviderErrorSeconds: 45
-  blockPaymentRequiredSeconds: 86400
-
 providers:
   - serviceName: codex
     authProfile: "personal"
     baseUrl: "https://chatgpt.com/backend-api"
     model: "gpt-5-codex"
-    priority: 100
-    dailyBudgetRequests: 1000
-    dailyBudgetTokens: 0
-    maxConcurrency: 4
-    maxRequestsPerMinute: 20
     oauth:
       issuer: "https://auth.openai.com"
       clientId: "app_EMoamEEZ73f0CkXaXp7hrann"
@@ -33,8 +20,3 @@ providers:
   - serviceName: gemini
     apiKey: ""
     model: "gemini-2.5-flash"
-    priority: 98
-    dailyBudgetRequests: 1000
-    dailyBudgetTokens: 0
-    maxConcurrency: 4
-    maxRequestsPerMinute: 20

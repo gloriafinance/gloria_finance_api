@@ -229,8 +229,11 @@ export class CodexAIService implements IProxyIAService {
 
   private resolveBaseUrl(configuredBaseUrl?: string): string {
     const configured = configuredBaseUrl?.trim().replace(/\/+$/g, "")
-    if (!configured || configured === "https://api.openai.com/v1") {
-      return "https://chatgpt.com/backend-api"
+    if (!configured) {
+      throw buildAIProviderError({
+        provider: "CodexAI",
+        message: "Missing baseUrl in AI provider YAML config for service 'codex'",
+      })
     }
     return configured
   }

@@ -6,8 +6,10 @@ import {
   AIProviderErrorCode,
 } from "@/package/ai/errors/AIProviderError"
 import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
-import { readAIProviderConfig } from "@/package/ai/helpers/AIProviderConfig.helper"
-import { GeminiAIService } from "@/package/ai/providers/gemini/GeminiAI.service"
+import {
+  findAIProviderByService,
+  readAIProviderConfig,
+} from "@/package/ai/helpers/AIProviderConfig.helper"
 import { CodexAIService } from "@/package/ai/providers/codex/CodexAI.service"
 
 type AIProviderName = string
@@ -15,76 +17,45 @@ type AIProviderName = string
 type ProviderConfig = {
   name: AIProviderName
   service: IProxyIAService
-  priority: number
 }
 
-type RouterExecuteArgs<T> = {
+type AITextExecuteArgs<T> = {
   systemPrompt: string
   userPrompt: string
   schema: Schema
   validate: (provider: AIProviderName, payload: unknown) => T
 }
 
-export class AIProviderRouterService {
-  private static instance: AIProviderRouterService
+export class AITextService {
+  private static instance: AITextService
 
-  private readonly logger = Logger(AIProviderRouterService.name)
-  private readonly configs: ProviderConfig[]
+  private readonly logger = Logger(AITextService.name)
+  private readonly config: ProviderConfig
 
   constructor() {
-    this.configs = this.buildProviderConfigs()
+    this.config = this.buildProviderConfig()
   }
 
-  static getInstance(): AIProviderRouterService {
+  static getInstance(): AITextService {
     if (!this.instance) {
-      this.instance = new AIProviderRouterService()
+      this.instance = new AITextService()
     }
 
     return this.instance
   }
 
-  async execute<T>(args: RouterExecuteArgs<T>): Promise<T> {
-    if (this.configs.length === 0) {
-      throw new AIProviderError(
-        "Router",
-        undefined,
-        AIProviderErrorCode.CONFIG_ERROR,
-        "AI provider YAML config has no enabled providers"
-      )
-    }
-
-    const orderedConfigs = [...this.configs].sort(
-      (a, b) => b.priority - a.priority
-    )
-    let lastError: Error | undefined
-
-    for (const config of orderedConfigs) {
-      try {
-        return await this.executeDirect(args, config)
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
-      }
-    }
-
-    throw (
-      lastError ??
-      new AIProviderError(
-        "Router",
-        undefined,
-        AIProviderErrorCode.PROVIDER_ERROR,
-        "No provider completed request"
-      )
-    )
+  async execute<T>(args: AITextExecuteArgs<T>): Promise<T> {
+    return this.executeDirect(args, this.config)
   }
 
   private async executeDirect<T>(
-    args: RouterExecuteArgs<T>,
+    args: AITextExecuteArgs<T>,
     config: ProviderConfig
   ): Promise<T> {
     const start = Date.now()
     let providerPayload: unknown | undefined
 
-    this.logger.info(`AI Router direct provider=${config.name}`)
+    this.logger.info(`AI Text direct provider=${config.name}`)
 
     try {
       const execution = await config.service.execute(
@@ -97,7 +68,7 @@ export class AIProviderRouterService {
       const validated = args.validate(config.name, execution.data)
 
       this.logger.info(
-        `AI Router direct success provider=${config.name} durationMs=${Date.now() - start}`
+        `AI Text direct success provider=${config.name} durationMs=${Date.now() - start}`
       )
 
       return validated
@@ -116,7 +87,7 @@ export class AIProviderRouterService {
         config.service.repairInvalidResponse
       ) {
         this.logger.info(
-          `AI Router direct repair pass provider=${config.name} reason=${mapped.rawMessage}`
+          `AI Text repair pass provider=${config.name} reason=${mapped.rawMessage}`
         )
 
         try {
@@ -134,7 +105,7 @@ export class AIProviderRouterService {
           )
 
           this.logger.info(
-            `AI Router direct success provider=${config.name} via=repair_pass durationMs=${Date.now() - start}`
+            `AI Text direct success provider=${config.name} via=repair_pass durationMs=${Date.now() - start}`
           )
 
           return repairedValidated
@@ -153,20 +124,19 @@ export class AIProviderRouterService {
       }
 
       this.logger.error(
-        `AI Router direct error provider=${config.name} code=${mapped.code} status=${mapped.status} durationMs=${Date.now() - start} message=${mapped.rawMessage}`
+        `AI Text direct error provider=${config.name} code=${mapped.code} status=${mapped.status} durationMs=${Date.now() - start} message=${mapped.rawMessage}`
       )
 
       throw mapped
     }
   }
 
-  private buildProviderConfigs(): ProviderConfig[] {
-    let envProviders
+  private buildProviderConfig(): ProviderConfig {
     try {
-      envProviders = readAIProviderConfig()
+      readAIProviderConfig()
     } catch (error) {
       throw new AIProviderError(
-        "Router",
+        "AIText",
         undefined,
         AIProviderErrorCode.CONFIG_ERROR,
         error instanceof Error
@@ -175,34 +145,32 @@ export class AIProviderRouterService {
       )
     }
 
-    const enabled = envProviders.filter((p) => p.enabled !== false)
-    if (enabled.length === 0) {
+    const entry = findAIProviderByService("codex")
+    if (!entry) {
       throw new AIProviderError(
-        "Router",
+        "AIText",
         undefined,
         AIProviderErrorCode.CONFIG_ERROR,
-        "AI provider YAML config has no enabled providers"
+        "AI text service requires one configured 'codex' provider. Gemini is reserved for direct image-analysis agents."
       )
     }
 
-    return enabled.map((entry) => ({
+    return {
       name: entry.serviceName,
       service: this.resolveProviderService(entry.serviceName),
-      priority: entry.priority,
-    }))
+    }
   }
 
-  private resolveProviderService(serviceId: string): IProxyIAService {
-    const serviceName = serviceId.toLowerCase()
+  private resolveProviderService(serviceName: string): IProxyIAService {
+    serviceName = serviceName.toLowerCase()
 
-    if (serviceName === "gemini") return GeminiAIService.getInstance()
     if (serviceName === "codex") return CodexAIService.getInstance()
 
     throw new AIProviderError(
-      "Router",
+      "AIText",
       undefined,
       AIProviderErrorCode.CONFIG_ERROR,
-      `Unsupported service '${serviceName}' in AI provider YAML config. Allowed: gemini|codex`
+      `Unsupported text AI service '${serviceName}'. AI text service only supports 'codex'; use Gemini directly for image-analysis agents.`
     )
   }
 }
