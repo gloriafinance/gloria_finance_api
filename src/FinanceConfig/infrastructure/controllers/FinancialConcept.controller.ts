@@ -1,4 +1,7 @@
-import { ConceptType, type FinancialConceptRequest } from "@/Financial/domain"
+import {
+  type FilterFinancialConceptRequest,
+  type FinancialConceptRequest,
+} from "@/Financial/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
@@ -12,6 +15,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Res,
   type ServerResponse,
   Use,
@@ -51,35 +55,14 @@ export class FinancialConceptController {
   ])
   async findFinancialConceptsByChurchId(
     @Param("churchId") churchId: string,
+    @Query() query: FilterFinancialConceptRequest,
     @Res() res: ServerResponse
   ) {
     try {
       const financial = await new FindFinancialConceptsByChurchIdAndTypeConcept(
         FinancialConceptMongoRepository.getInstance(),
         ChurchMongoRepository.getInstance()
-      ).execute(churchId)
-
-      res.status(HttpStatus.OK).send(financial)
-    } catch (error) {
-      domainResponse(error, res)
-    }
-  }
-
-  @Get("/:churchId/:typeConcept")
-  @Use([
-    PermissionMiddleware,
-    Can("financial_configuration", ["manage_concepts", "list_concepts"]),
-  ])
-  async findFinancialConceptsByChurchIdAndTypeConcept(
-    @Param("churchId") churchId: string,
-    @Param("typeConcept") typeConcept: ConceptType,
-    @Res() res: ServerResponse
-  ) {
-    try {
-      const financial = await new FindFinancialConceptsByChurchIdAndTypeConcept(
-        FinancialConceptMongoRepository.getInstance(),
-        ChurchMongoRepository.getInstance()
-      ).execute(churchId, typeConcept)
+      ).execute(churchId, query.type, query.statementCategory)
 
       res.status(HttpStatus.OK).send(financial)
     } catch (error) {

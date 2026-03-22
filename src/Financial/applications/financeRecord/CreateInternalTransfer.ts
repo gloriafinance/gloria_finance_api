@@ -219,9 +219,9 @@ export class CreateInternalTransfer {
       StatementCategory.OTHER,
       church,
       {
-        affectsCashFlow: true,
+        affectsCashFlow: false,
         affectsResult: false,
-        affectsBalance: false,
+        affectsBalance: true,
         isOperational: false,
       },
       INTERNAL_TRANSFER_CONCEPT_TAG,

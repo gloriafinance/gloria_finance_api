@@ -119,7 +119,7 @@ export class FinanceRecordMongoRepository
       status: { $in: REALIZED_STATUSES },
       $or: [
         { "financialConcept.affectsResult": true },
-        { "financialConcept.affectsBalance": true }, // incluye CAPEX
+        { "financialConcept.affectsBalance": true }, // incluye movimientos patrimoniales/balance
       ],
     }
 

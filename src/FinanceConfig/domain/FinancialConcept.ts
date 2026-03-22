@@ -78,12 +78,6 @@ export class FinancialConcept extends AggregateRoot {
       plainData.statementCategory ?? StatementCategory.OTHER
     concept.createdAt = plainData.createdAt
     concept.churchId = plainData.churchId
-    // concept.applyImpactFlags({
-    //   affectsCashFlow: plainData.affectsCashFlow,
-    //   affectsResult: plainData.affectsResult,
-    //   affectsBalance: plainData.affectsBalance,
-    //   isOperational: plainData.isOperational,
-    // })
     concept.affectsCashFlow = plainData.affectsCashFlow
     concept.affectsResult = plainData.affectsResult
     concept.affectsBalance = plainData.affectsBalance
@@ -92,77 +86,6 @@ export class FinancialConcept extends AggregateRoot {
     concept.tag = plainData.tag
 
     return concept
-  }
-
-  // private applyImpactFlags(
-  //   overrides?: FinancialConceptImpactOverrides
-  // ): void {
-  //   const defaults = FinancialConcept.resolveImpactDefaults(
-  //     this.type,
-  //     this.statementCategory
-  //   )
-  //
-  //   this.affectsCashFlow =
-  //     overrides?.affectsCashFlow ?? defaults.affectsCashFlow
-  //   this.affectsResult = overrides?.affectsResult ?? defaults.affectsResult
-  //   this.affectsBalance = overrides?.affectsBalance ?? defaults.affectsBalance
-  //   this.isOperational = overrides?.isOperational ?? defaults.isOperational
-  // }
-
-  private static resolveImpactDefaults(
-    type: ConceptType,
-    statementCategory: StatementCategory
-  ): FinancialConceptImpactFlags {
-    switch (statementCategory) {
-      case StatementCategory.REVENUE:
-        return {
-          affectsCashFlow: true,
-          affectsResult: true,
-          affectsBalance: false,
-          isOperational: true,
-        }
-      case StatementCategory.OPEX:
-      case StatementCategory.COGS:
-        return {
-          affectsCashFlow: true,
-          affectsResult: true,
-          affectsBalance: false,
-          isOperational: true,
-        }
-      case StatementCategory.CAPEX:
-        return {
-          affectsCashFlow: true,
-          affectsResult: false,
-          affectsBalance: true,
-          isOperational: false,
-        }
-      case StatementCategory.OTHER:
-      default:
-        if (type === ConceptType.PURCHASE) {
-          return {
-            affectsCashFlow: true,
-            affectsResult: false,
-            affectsBalance: true,
-            isOperational: false,
-          }
-        }
-
-        if (type === ConceptType.REVERSAL) {
-          return {
-            affectsCashFlow: false,
-            affectsResult: false,
-            affectsBalance: false,
-            isOperational: false,
-          }
-        }
-
-        return {
-          affectsCashFlow: true,
-          affectsResult: true,
-          affectsBalance: false,
-          isOperational: false,
-        }
-    }
   }
 
   getFinancialConceptId(): string {

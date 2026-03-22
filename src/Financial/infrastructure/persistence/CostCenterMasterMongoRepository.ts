@@ -108,7 +108,7 @@ export class CostCenterMasterMongoRepository
           costCenter: { $exists: true },
           $or: [
             { "financialConcept.affectsResult": true },
-            { "financialConcept.affectsBalance": true }, // inclui CAPEX
+            { "financialConcept.affectsBalance": true }, // inclui movimentos patrimoniais/balance
           ],
           type: { $in: [ConceptType.OUTGO, ConceptType.PURCHASE] },
         },

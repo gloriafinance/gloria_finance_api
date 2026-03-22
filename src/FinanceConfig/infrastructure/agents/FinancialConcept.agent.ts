@@ -41,6 +41,7 @@ const STATEMENT_CATEGORIES = [
   "MINISTRY_TRANSFERS",
   "OTHER",
 ] as const
+const JUSTIFICATION_MAX_CHARS = 640
 
 export class FinancialConceptAgent {
   constructor() {}
@@ -182,9 +183,10 @@ Reglas de decision:
 	- COGS => isOperational=false (costo directo de accion/proyecto/evento especifico).
 
 	Formato obligatorio de justification:
-	- 1 a 3 frases naturales.
-	- Maximo 640 caracteres.
-	- Explica de forma humana por que ese concepto encaja y, si aplica, por que la categoria elegida es la correcta.
+	- 2 a 4 frases naturales.
+	- Maximo ${JUSTIFICATION_MAX_CHARS} caracteres.
+	- Si hay ambigüedad razonable, compara 3 o 4 categorias plausibles antes de recomendar una.
+	- Explica de forma humana por que ese concepto encaja y por que la categoria elegida es la mejor recomendacion para este caso.
 	- No la conviertas en checklist, lista de campos, etiquetas con ":" ni repitas booleanos.
 	- No uses codigos tecnicos como OUTGO, COGS, OPEX, CAPEX, REVENUE o MINISTRY_TRANSFERS dentro del texto.
     `.trim()
@@ -199,6 +201,7 @@ ${JSON.stringify(conceptsForAI)}
 	Recuerda:
 	- Si el contexto describe algo eventual/no recurrente, isOperational debe ser false.
 	- En justification habla como explicarias la decisión a un usuario final.
+	- Si el caso admite mas de una lectura contable, menciona 3 o 4 alternativas plausibles y termina con una recomendacion clara.
 	- NO uses codigos tecnicos (OUTGO, COGS, etc.) dentro de justificatión.
 	- justification/name/description deben venir solo en ${promptGuide.languageName}.
 	- Si mezclas idiomas, la respuesta sera rechazada.
@@ -277,12 +280,12 @@ ${JSON.stringify(conceptsForAI)}
     }
 
     const justificationNormalized = this.normalizeText(justification)
-    if (justification.trim().length > 320) {
+    if (justification.trim().length > JUSTIFICATION_MAX_CHARS) {
       throw new AIProviderError(
         provider,
         undefined,
         AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid response: justification too long (max 320)"
+        `Invalid response: justification too long (max ${JUSTIFICATION_MAX_CHARS})`
       )
     }
 
@@ -397,17 +400,6 @@ ${JSON.stringify(conceptsForAI)}
           `Invalid response: concept.${k} must be boolean`
         )
       }
-    }
-
-    const technicalCodePattern =
-      /\b(income|outgo|purchase|reversal|cogs|revenue|opex|capex|ministry_transfers)\b/
-    if (technicalCodePattern.test(justificationNormalized)) {
-      throw new AIProviderError(
-        provider,
-        undefined,
-        AIProviderErrorCode.INVALID_RESPONSE,
-        "Invalid response: justification must use user-facing labels instead of technical enum codes"
-      )
     }
 
     const languageLeakPattern = this.getLanguageLeakPattern(lang)

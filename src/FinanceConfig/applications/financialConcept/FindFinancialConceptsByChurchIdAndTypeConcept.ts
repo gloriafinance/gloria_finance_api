@@ -1,6 +1,6 @@
-import { ConceptType } from "../../../Financial/domain"
-import { ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { IFinancialConceptRepository } from "../../../Financial/domain/interfaces"
+import { ConceptType, StatementCategory } from "../../../Financial/domain"
+import { ChurchNotFound, type IChurchRepository } from "@/Church/domain"
+import { type IFinancialConceptRepository } from "@/FinanceConfig/domain"
 
 export class FindFinancialConceptsByChurchIdAndTypeConcept {
   constructor(
@@ -8,17 +8,20 @@ export class FindFinancialConceptsByChurchIdAndTypeConcept {
     private readonly churchRepository: IChurchRepository
   ) {}
 
-  async execute(churchId: string, typeConcept?: ConceptType) {
+  async execute(
+    churchId: string,
+    typeConcept?: ConceptType,
+    statementCategory?: StatementCategory
+  ) {
     const church = await this.churchRepository.one({ churchId })
     if (!church) {
       throw new ChurchNotFound()
     }
 
-    let filter = { churchId }
-    if (typeConcept) {
-      filter["type"] = typeConcept
-    }
-
-    return await this.financialConceptRepository.search(filter)
+    return await this.financialConceptRepository.search({
+      churchId,
+      type: typeConcept,
+      statementCategory,
+    })
   }
 }
