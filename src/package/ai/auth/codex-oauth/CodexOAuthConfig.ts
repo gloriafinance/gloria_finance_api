@@ -24,14 +24,14 @@ export const resolveCodexOAuthConfig = (
   providerCfg?: AIProviderConfigEntry
 ): ResolvedCodexOAuthConfig => {
   const oauth = providerCfg?.oauth
-  const issuer = oauth?.issuer?.trim()
+  const issuer = "https://auth.openai.com"
   const clientId = oauth?.clientId?.trim()
-  const authorizePath = oauth?.authorizePath?.trim()
-  const tokenPath = oauth?.tokenPath?.trim()
+  const authorizePath = "/oauth/authorize"
+  const tokenPath = "/oauth/token"
   const revokePath = oauth?.revokePath?.trim()
-  const redirectUri = oauth?.redirectUri?.trim()
+  const redirectUri = "urn:ietf:wg:oauth:2.0:oob"
   const scopes = oauth?.scopes?.filter(Boolean)
-  const storagePathConfig = oauth?.storagePath?.trim()
+  const storagePathConfig = ".codex-oauth"
   const refreshSkewMs = Math.max(Number(oauth?.refreshSkewMs ?? 300000), 0)
 
   if (!issuer) {

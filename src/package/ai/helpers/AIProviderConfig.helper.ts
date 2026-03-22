@@ -20,7 +20,7 @@ export type AIProviderConfigEntry = {
   apiKey?: string
   model: string
   authProfile?: string
-  baseUrl?: string
+  //baseUrl?: string
   oauth?: AICodexOAuthConfig
 }
 

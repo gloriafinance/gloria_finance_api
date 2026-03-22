@@ -1,7 +1,10 @@
 import { Logger } from "@/Shared/adapter"
 import type { File } from "@/Shared/domain/types/file"
 import type { Schema } from "@google/generative-ai"
-import { AIProviderError, AIProviderErrorCode } from "@/package/ai/errors/AIProviderError"
+import {
+  AIProviderError,
+  AIProviderErrorCode,
+} from "@/package/ai/errors/AIProviderError"
 import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
 import {
   findAIProviderByService,

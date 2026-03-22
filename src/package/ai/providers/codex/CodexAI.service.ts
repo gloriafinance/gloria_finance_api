@@ -54,7 +54,7 @@ export class CodexAIService implements IProxyIAService {
 
     const auth = await this.resolveAuthorization(providerCfg)
     const normalizedSchema = normalizeStructuredSchema(schemaResponse)
-    const baseUrl = this.resolveBaseUrl(providerCfg?.baseUrl)
+    const baseUrl = "https://chatgpt.com/backend-api"
 
     this.logger.info(
       `Codex execute model=${model} auth=oauth token=${maskCodexSecret(auth.bearerToken)}`
@@ -232,7 +232,8 @@ export class CodexAIService implements IProxyIAService {
     if (!configured) {
       throw buildAIProviderError({
         provider: "CodexAI",
-        message: "Missing baseUrl in AI provider YAML config for service 'codex'",
+        message:
+          "Missing baseUrl in AI provider YAML config for service 'codex'",
       })
     }
     return configured
