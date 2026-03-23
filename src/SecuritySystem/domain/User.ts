@@ -71,7 +71,7 @@ export class User extends AggregateRoot {
     return this.churchId
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

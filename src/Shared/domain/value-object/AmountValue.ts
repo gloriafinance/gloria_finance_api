@@ -2,7 +2,7 @@ import { ValueObject } from "./ValueObject"
 import { InvalidArgumentError } from "@/Shared/domain"
 
 export class AmountValue extends ValueObject<number> {
-  private constructor(readonly value: any) {
+  private constructor(protected override readonly value: number) {
     super(value)
     this.ensureValueIsPositive()
   }

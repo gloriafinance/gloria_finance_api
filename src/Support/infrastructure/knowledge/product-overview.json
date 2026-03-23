@@ -1,0 +1,31 @@
+{
+  "id": "product-overview",
+  "title": "Gloria Finance overview",
+  "summary": "Gloria Finance is a church financial management system for registrations, treasury operations, configuration, banking, patrimony and reports.",
+  "capabilities": [
+    "Register financial records",
+    "Manage accounts payable and accounts receivable",
+    "Review and process member or online contributions",
+    "Configure financial concepts, availability accounts and cost centers",
+    "Configure suppliers, banks, financial months and church profile settings",
+    "Import bank statements and reconcile movements",
+    "Generate financial reports such as DRE, income statement and monthly tithes",
+    "Manage purchases, patrimony and devotional workflows"
+  ],
+  "limitations": [
+    "Recommendations must respect configured permissions",
+    "Some actions require concepts, accounts or centers to exist before registration",
+    "Analytical guidance depends on the report data or attached document provided by the user"
+  ],
+  "keywords": [
+    "gloria finance",
+    "what is gloria finance",
+    "que es gloria finance",
+    "qué es gloria finance",
+    "o que e gloria finance",
+    "o que é gloria finance",
+    "what can i do",
+    "que puedo hacer",
+    "o que posso fazer"
+  ]
+}

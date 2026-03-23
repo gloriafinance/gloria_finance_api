@@ -1,7 +1,10 @@
 import type { DevotionalDayOfWeek } from "@/Church/domain/enums/DevotionalDayOfWeek.enum"
 
 export interface IDevotionalDateService {
-  getWeekStartDateForTimezone(timezoneName: string, baseDate?: Date): string
+  getWeekStartDateForTimezone(
+    timezoneName: string,
+    baseDate?: Date | string
+  ): string
 
   scheduleDateForDay(
     weekStartDate: string,

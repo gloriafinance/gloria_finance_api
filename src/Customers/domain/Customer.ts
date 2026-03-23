@@ -49,7 +49,7 @@ export class Customer extends AggregateRoot {
     return customer
   }
 
-  static fromPrimitives(data: any): Customer {
+  static override fromPrimitives(data: any): Customer {
     const customer = new Customer()
     customer.id = data.id
     customer.customerId = data.customerId
@@ -64,7 +64,7 @@ export class Customer extends AggregateRoot {
     return customer
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

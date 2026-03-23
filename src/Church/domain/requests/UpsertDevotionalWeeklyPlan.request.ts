@@ -8,7 +8,7 @@ import {
 
 export type UpsertDevotionalWeeklyPlanRequest = {
   church: Church
-  weekStartDate?: string
+  weekStartDate: string
   isEnabled: boolean
   themeWeek?: string
   daysOfWeek?: DevotionalDayOfWeek[]

@@ -165,7 +165,7 @@ export class AccountPayable extends AggregateRoot {
     return accountPayable
   }
 
-  static fromPrimitives(params: any): AccountPayable {
+  static override fromPrimitives(params: any): AccountPayable {
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.id = params.id
     const persistedInstallments = Array.isArray(params.installments)
@@ -346,7 +346,7 @@ export class AccountPayable extends AggregateRoot {
     }
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

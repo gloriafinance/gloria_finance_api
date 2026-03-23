@@ -25,7 +25,7 @@ export class DREMaster extends AggregateRoot {
     return dreMaster
   }
 
-  static fromPrimitives(primitives: any): DREMaster {
+  static override fromPrimitives(primitives: any): DREMaster {
     const dreMaster = new DREMaster()
     dreMaster.id = primitives.id
     dreMaster.dreMasterId = primitives.dreMasterId
@@ -40,7 +40,7 @@ export class DREMaster extends AggregateRoot {
     return dreMaster
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

@@ -75,7 +75,7 @@ export class Purchase extends AggregateRoot {
     return p
   }
 
-  static fromPrimitives(plainData: any): Purchase {
+  static override fromPrimitives(plainData: any): Purchase {
     const p: Purchase = new Purchase()
 
     p.purchaseId = plainData.purchaseId
@@ -96,7 +96,7 @@ export class Purchase extends AggregateRoot {
     return p
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

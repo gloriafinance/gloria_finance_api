@@ -28,8 +28,14 @@ export class DevotionalDateDayjsService implements IDevotionalDateService {
     return DevotionalDateDayjsService.instance
   }
 
-  getWeekStartDateForTimezone(timezoneName: string, baseDate?: Date): string {
-    const now = dayjs.tz(baseDate ?? new Date(), timezoneName)
+  getWeekStartDateForTimezone(
+    timezoneName: string,
+    baseDate?: Date | string
+  ): string {
+    const now =
+      typeof baseDate === "string"
+        ? dayjs.tz(`${baseDate}T00:00:00`, timezoneName)
+        : dayjs.tz(baseDate ?? new Date(), timezoneName)
     const day = now.day()
     const diff = day === 0 ? -6 : 1 - day
     return now.add(diff, "day").startOf("day").format("YYYY-MM-DD")

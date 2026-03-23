@@ -6,7 +6,7 @@ export class States extends AggregateRoot {
   private stateId: string
   private name: string
 
-  static fromPrimitives(plainData: any): States {
+  static override fromPrimitives(plainData: any): States {
     const s: States = new States()
     s.id = plainData.id
     s.countryId = plainData.countryId
@@ -15,7 +15,7 @@ export class States extends AggregateRoot {
     return s
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

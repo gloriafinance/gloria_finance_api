@@ -45,7 +45,7 @@ export class DevotionalDeliveryLog extends AggregateRoot {
     return log
   }
 
-  getId() {
+  getId(): string | undefined {
     return this.id
   }
 

@@ -34,7 +34,7 @@ export class Minister extends AggregateRoot {
     return m
   }
 
-  static fromPrimitives(plainData: any): Minister {
+  static override fromPrimitives(plainData: any): Minister {
     const m: Minister = new Minister()
     m.id = plainData.id
     m.name = plainData.name
@@ -61,7 +61,7 @@ export class Minister extends AggregateRoot {
     this.name = name
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

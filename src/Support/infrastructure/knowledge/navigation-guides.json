@@ -1,0 +1,328 @@
+[
+  {
+    "id": "guide:register-paid-expense",
+    "title": "How to register a paid expense",
+    "summary": "Use financial record when the church already paid and cash has moved.",
+    "route": "/financial-record/add",
+    "steps": [
+      "Open Register financial record",
+      "Select the availability account used for payment",
+      "Choose the matching financial concept",
+      "Add cost center if the concept is an outgoing movement",
+      "Attach voucher if available and save"
+    ],
+    "keywords": ["paid expense", "gasto pagado", "despesa paga", "register expense"]
+  },
+  {
+    "id": "guide:register-received-contribution",
+    "title": "How to register a received contribution",
+    "summary": "When treasury already received the money, register it as a financial record using an existing income concept. Use contributions list only for online or member-submitted contribution review.",
+    "route": "/financial-record/add",
+    "steps": [
+      "Open Register financial record",
+      "Fill date and amount of the received contribution",
+      "Select the availability account where the money entered",
+      "Choose an existing income financial concept that matches the contribution, such as the configured concept for tithe, offering, primicia or another recurring contribution",
+      "Save the record; if no suitable concept exists, review financial concepts before posting"
+    ],
+    "keywords": ["received contribution", "registrar contribucion", "registrar contribuição", "primicia", "primícia", "ofrenda", "oferta", "diezmo", "dízimo", "donacion", "doação"]
+  },
+  {
+    "id": "guide:review-submitted-contribution",
+    "title": "How to review a submitted contribution",
+    "summary": "Use the contributions list to review online or member-submitted contributions, inspect the receipt and approve or reject the submission.",
+    "route": "/contributions_list",
+    "steps": [
+      "Open Contributions list",
+      "Filter by status or member if needed",
+      "Open the contribution detail to review member, concept, account and receipt",
+      "Approve the contribution when it is valid or reject it when the submission is incorrect"
+    ],
+    "keywords": ["review contribution", "aprobar contribucion", "aprovar contribuição", "approve contribution", "receipt review", "contributions list"]
+  },
+  {
+    "id": "guide:register-pending-bill",
+    "title": "How to register a pending bill",
+    "summary": "Use accounts payable when the obligation exists but has not been paid yet.",
+    "route": "/accounts-payable/add",
+    "steps": [
+      "Open Create account payable",
+      "Select or create supplier",
+      "Define installments and due dates",
+      "Select the financial concept",
+      "Save the commitment and pay it later from accounts payable"
+    ],
+    "keywords": ["pending bill", "cuenta por pagar", "conta a pagar", "unpaid invoice"]
+  },
+  {
+    "id": "guide:configure-new-concept",
+    "title": "How to create a new financial concept",
+    "summary": "Create a concept only when no existing concept matches the scenario.",
+    "route": "/financial-concepts/add",
+    "steps": [
+      "Review the current concepts list first",
+      "Open Create financial concept",
+      "Define type and statement category",
+      "Explain the use case in name and description",
+      "Save and reuse the concept in future movements"
+    ],
+    "keywords": ["new financial concept", "nuevo concepto", "novo conceito"]
+  },
+  {
+    "id": "guide:register-church-asset",
+    "title": "How to register a church asset",
+    "summary": "Use patrimony when the church needs to track a durable good such as equipment, furniture, instruments or other assets.",
+    "route": "/patrimony/assets/new",
+    "steps": [
+      "Open the patrimony asset form",
+      "Fill in the asset name, category and acquisition data",
+      "Set value, quantity, location and responsible person if applicable",
+      "Attach supporting files if available",
+      "Save the asset so it can be tracked, inventoried or disposed later"
+    ],
+    "keywords": ["church assets", "bienes de la iglesia", "bens da igreja", "register asset", "registrar patrimonio", "registrar patrimônio", "equipment", "instrumentos"]
+  },
+  {
+    "id": "guide:reconcile-bank-statement",
+    "title": "How to reconcile bank statements",
+    "summary": "Use the banking module to import statements and review pending, unmatched or reconciled movements.",
+    "route": "/finance/bank-statements",
+    "steps": [
+      "Open bank reconciliation",
+      "Import the statement file when needed",
+      "Review pending and unmatched movements",
+      "Compare statement movements against existing records",
+      "Resolve unmatched items before considering the reconciliation complete"
+    ],
+    "keywords": ["bank reconciliation", "conciliacion bancaria", "conciliação bancária", "bank statement", "extrato", "extracto"]
+  },
+  {
+    "id": "guide:configure-availability-account",
+    "title": "How to configure an availability account",
+    "summary": "Create or review the accounts where the church keeps money available for financial postings.",
+    "route": "/availability-accounts/add",
+    "steps": [
+      "Open the availability account form",
+      "Define the account type and identifying information",
+      "Save the account and use it later in financial records",
+      "Review whether the account should be active before using it"
+    ],
+    "keywords": ["availability account", "cuenta de disponibilidad", "conta de disponibilidade", "cash account", "bank account setup"]
+  },
+  {
+    "id": "guide:configure-bank",
+    "title": "How to configure a bank",
+    "summary": "Use bank configuration before reconciliation or banking flows that depend on bank setup.",
+    "route": "/banks/add",
+    "steps": [
+      "Open the bank form",
+      "Fill in bank identity and account details",
+      "Save the bank and keep it active for later use",
+      "Return to banking or financial flows once the bank exists"
+    ],
+    "keywords": ["configure bank", "configurar banco", "banco", "bank setup", "bank form"]
+  },
+  {
+    "id": "guide:configure-cost-center",
+    "title": "How to configure a cost center",
+    "summary": "Create cost centers to classify outgoing records by ministry, project or area.",
+    "route": "/cost-center/add",
+    "steps": [
+      "Open the cost center form",
+      "Define code, name and category",
+      "Assign responsible person when applicable",
+      "Save and reuse the center in outgoing records"
+    ],
+    "keywords": ["cost center", "centro de costo", "centro de custo", "expense classification", "project classification"]
+  },
+  {
+    "id": "guide:register-purchase",
+    "title": "How to register a purchase",
+    "summary": "Use the purchases module when supplier, invoice and itemized purchase control matter.",
+    "route": "/purchase/register",
+    "steps": [
+      "Open Register purchase",
+      "Select or create the supplier when needed",
+      "Fill the purchase date and financial context",
+      "Add each purchased item",
+      "Attach invoice or supporting document and save"
+    ],
+    "keywords": ["register purchase", "registrar compra", "registrar compra", "purchase workflow", "supplier invoice"]
+  },
+  {
+    "id": "guide:register-supplier",
+    "title": "How to register a supplier",
+    "summary": "Create the supplier first when purchase or payable flows require a supplier that does not yet exist.",
+    "route": "/suppliers/register",
+    "steps": [
+      "Open the supplier form",
+      "Fill the supplier identification data",
+      "Save the supplier",
+      "Return to purchase or payable flow and select the created supplier"
+    ],
+    "keywords": ["register supplier", "registrar proveedor", "registrar fornecedor", "new supplier"]
+  },
+  {
+    "id": "guide:register-internal-transfer",
+    "title": "How to register an internal transfer",
+    "summary": "Use internal transfer when money moves between church availability accounts and should not be treated as income or expense.",
+    "route": "/financial-record/internal-transfer/add",
+    "steps": [
+      "Open Create internal transfer",
+      "Select the origin and destination availability accounts",
+      "Fill the transfer amount and date",
+      "Save the transfer without creating a normal income or expense record"
+    ],
+    "keywords": ["internal transfer", "transferencia interna", "transferência interna", "between accounts", "move treasury money"]
+  },
+  {
+    "id": "guide:review-financial-month",
+    "title": "How to review financial month status",
+    "summary": "Use financial months to confirm whether the accounting period is open before trying to register or adjust movements.",
+    "route": "/financial-months",
+    "steps": [
+      "Open Financial months",
+      "Review whether the target month is open, closed or reopened",
+      "If the period is closed, resolve reopening or administrative action before posting"
+    ],
+    "keywords": ["financial month", "mes financiero", "mês financeiro", "closed period", "period control"]
+  },
+  {
+    "id": "guide:review-church-profile",
+    "title": "How to review church profile configuration",
+    "summary": "Use church profile when the user needs institutional or profile-level configuration rather than treasury setup.",
+    "route": "/church-profile",
+    "steps": [
+      "Open Church profile",
+      "Review institutional data and configured profile information",
+      "Save the changes before returning to the operational flow"
+    ],
+    "keywords": ["church profile", "perfil de la iglesia", "perfil da igreja", "church configuration"]
+  },
+  {
+    "id": "guide:settle-accounts-payable",
+    "title": "How to settle a payable already registered",
+    "summary": "Use the payable detail and settlement flow when the debt was already created and now needs payment follow-up.",
+    "route": "/accounts-payable/list",
+    "steps": [
+      "Open Accounts payable list",
+      "Find the payable and open its detail",
+      "Review installment, supplier and due date before settling",
+      "Apply the payment through the payable flow instead of creating a disconnected new expense"
+    ],
+    "keywords": ["settle payable", "pagar cuenta por pagar", "pagar conta a pagar", "pay installment", "payable detail"]
+  },
+  {
+    "id": "guide:collect-accounts-receivable",
+    "title": "How to collect an existing receivable",
+    "summary": "Use the receivable detail when the future income already exists and the church is now applying a collection.",
+    "route": "/accounts-receivables",
+    "steps": [
+      "Open Accounts receivable list",
+      "Find the receivable and open its detail",
+      "Review debtor, installment schedule and pending balance",
+      "Apply or confirm the collection using the receivable flow before creating a disconnected new receipt"
+    ],
+    "keywords": ["collect receivable", "cobrar cuenta por cobrar", "receber conta a receber", "receivable detail", "apply payment"]
+  },
+  {
+    "id": "guide:review-member-commitments",
+    "title": "How to support member commitments",
+    "summary": "Use member commitments when the question belongs to the member-side commitment flow rather than treasury registration.",
+    "route": "/member/commitments",
+    "steps": [
+      "Open Member commitments",
+      "Review the commitment status and pending information",
+      "Confirm or guide the member flow from there instead of creating a treasury posting"
+    ],
+    "keywords": ["member commitments", "compromisos del miembro", "compromissos do membro", "member flow", "commitment status"]
+  },
+  {
+    "id": "guide:analyze-report-with-assistant",
+    "title": "How to analyze a report with Gloria Assistance",
+    "summary": "Run the report first and then open Gloria Assistance from the report screen to analyze the emitted payload.",
+    "route": "/support-assistant",
+    "steps": [
+      "Open the report screen and generate the report",
+      "Use the analyze action available in that report",
+      "Review the executive summary, attention points and suggested follow-up"
+    ],
+    "keywords": ["analyze report", "analizar reporte", "analisar relatório", "gloria assistance reports", "report analysis"]
+  },
+  {
+    "id": "guide:register-benevolence-support",
+    "title": "How to register benevolence or targeted assistance",
+    "summary": "Use a direct financial record only when the church already delivered the aid and the money has already left treasury.",
+    "route": "/financial-record/add",
+    "steps": [
+      "Confirm that the aid was already paid from cash or bank",
+      "Open Register financial record",
+      "Choose the outgoing concept for benevolence or assistance if it already exists",
+      "Select the availability account that actually funded the aid",
+      "Add supporting notes or voucher and save the posting"
+    ],
+    "keywords": ["benevolencia", "benevolência", "benevolence", "social aid", "help to family", "assistance expense"]
+  },
+  {
+    "id": "guide:register-guest-event-payment",
+    "title": "How to register a payment to a guest minister or musician",
+    "summary": "First confirm whether the payment belongs to a specific event, a ministry transfer or a non-recurring support case, then register it in the correct financial flow.",
+    "route": "/financial-record/add",
+    "steps": [
+      "Confirm that the payment was already made and treasury cash already moved",
+      "Open Register financial record",
+      "Review whether an event-related, ministry-transfer or guest-payment concept already exists",
+      "Choose the availability account used for the payment and save the record"
+    ],
+    "keywords": ["guest preacher", "predicador invitado", "pregador convidado", "guest musician", "event payment", "conference payment"]
+  },
+  {
+    "id": "guide:register-loan-receivable",
+    "title": "How to register money the church expects to recover later",
+    "summary": "Use accounts receivable when the church expects collection later instead of posting the case as a normal donation or treasury receipt.",
+    "route": "/accounts-receivables/add",
+    "steps": [
+      "Open Create account receivable",
+      "Register the debtor or expected payer",
+      "Define installments, due dates and the matching concept",
+      "Save the receivable and use the collection flow later when money comes in"
+    ],
+    "keywords": ["loan receivable", "prestamo por cobrar", "empréstimo a receber", "future collection", "receivable workflow"]
+  },
+  {
+    "id": "guide:resolve-closed-financial-month",
+    "title": "How to proceed when the financial month is closed",
+    "summary": "Review the financial month status before trying to force the posting in another operational flow.",
+    "route": "/financial-months",
+    "steps": [
+      "Open Financial months",
+      "Confirm whether the target period is closed",
+      "If needed, request reopening or administrative action before posting the movement"
+    ],
+    "keywords": ["closed month", "mes cerrado", "mês fechado", "closed period", "financial months", "period control"]
+  },
+  {
+    "id": "guide:register-received-loan",
+    "title": "How to handle money received as a loan",
+    "summary": "When the church receives money that must be repaid later, do not treat it as a normal contribution or offering.",
+    "route": "/accounts-payable/add",
+    "steps": [
+      "Confirm whether the case creates an obligation that the church must repay later",
+      "If it is a real debt, review the payable or controlled commitment flow before using a normal income registration",
+      "Use direct treasury registration only when the configured concept and accounting policy explicitly support that borrowed-money entry"
+    ],
+    "keywords": ["received loan", "prestamo recibido", "préstamo recibido", "emprestimo recebido", "empréstimo recebido", "borrowed money"]
+  },
+  {
+    "id": "guide:resolve-partial-payment",
+    "title": "How to proceed with a partial payment or collection",
+    "summary": "When the church is paying or collecting only part of an existing commitment, continue the original payable or receivable flow instead of creating a disconnected new posting.",
+    "route": "/accounts-payable/list",
+    "steps": [
+      "Identify whether the church already created a payable or receivable for that obligation",
+      "Open the original commitment and review the remaining balance",
+      "Apply the partial settlement in that same flow instead of registering a disconnected direct movement"
+    ],
+    "keywords": ["partial payment", "pago parcial", "pagamento parcial", "partial collection", "remaining balance", "installment balance"]
+  }
+]

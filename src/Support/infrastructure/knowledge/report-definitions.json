@@ -1,0 +1,88 @@
+[
+  {
+    "id": "report:monthly-tithes",
+    "title": "Monthly tithes report",
+    "route": "/report/monthly-tithes",
+    "summary": "Shows tithes for a church and period.",
+    "useCases": [
+      "Review tithes collected in a period",
+      "Validate giving behavior by month"
+    ],
+    "analysisFocus": [
+      "How much tithe entered in the period",
+      "Whether the movement is concentrated in a treasury or account",
+      "Whether the result suggests growth, drop or concentration risk"
+    ],
+    "managementQuestions": [
+      "Did tithe income remain stable in the period?",
+      "Was the collected amount concentrated in one treasury?",
+      "Does the report suggest a relevant drop or inconsistency to review?"
+    ],
+    "keywords": ["monthly tithes", "diezmos mensuales", "dizimos mensais", "tithes report"]
+  },
+  {
+    "id": "report:income-statement",
+    "title": "Income statement",
+    "route": "/report/income-statement",
+    "summary": "Summarizes revenue, direct costs, operating expenses and net result for a period.",
+    "useCases": [
+      "Understand financial performance for the month",
+      "Review revenue, cogs, opex and net income"
+    ],
+    "analysisFocus": [
+      "How the month closed overall",
+      "Which categories brought the main income",
+      "Where expenses were concentrated",
+      "Whether treasury balances and cost centers show attention points"
+    ],
+    "managementQuestions": [
+      "Did the church close the month with surplus or deficit?",
+      "What consumed most of the income?",
+      "Is there a treasury with negative balance or a center with unusually high spending?"
+    ],
+    "keywords": ["income statement", "estado de resultados", "demonstrativo de resultado", "report"]
+  },
+  {
+    "id": "report:dre",
+    "title": "DRE report",
+    "route": "/report/dre",
+    "summary": "Shows the statement of results for the period with revenue, direct costs, operational expenses and net result.",
+    "useCases": [
+      "Analyze the result of the month",
+      "Review gross revenue, direct costs, operating expenses and net result"
+    ],
+    "analysisFocus": [
+      "Operational profitability in the period",
+      "Pressure from direct costs and operating expenses",
+      "Which categories explain the result"
+    ],
+    "managementQuestions": [
+      "Was the operational result healthy for the month?",
+      "What categories explain the profit or loss?",
+      "Do expenses seem too high relative to revenue?"
+    ],
+    "keywords": ["dre", "estado de resultado", "demonstracao do resultado", "report analysis"]
+  },
+  {
+    "id": "report:patrimony-inventory",
+    "title": "Patrimony inventory report",
+    "route": "/patrimony/assets",
+    "summary": "Supports inventory review of church assets, including controlled items, verification status and patrimony tracking.",
+    "useCases": [
+      "Review church goods under patrimony control",
+      "Prepare inventory follow-up and physical verification",
+      "Understand which assets need inventory action or lifecycle updates"
+    ],
+    "analysisFocus": [
+      "Assets pending verification or follow-up",
+      "Inventory control quality",
+      "Items that may need maintenance, disposal or reassignment"
+    ],
+    "managementQuestions": [
+      "Which assets still need inventory action?",
+      "Are there items with status requiring follow-up?",
+      "Does the inventory suggest patrimony control weaknesses?"
+    ],
+    "keywords": ["patrimony report", "inventory report", "reporte de patrimonio", "relatorio de patrimonio", "relatório de patrimônio", "church assets", "bienes de la iglesia", "bens da igreja"]
+  }
+]

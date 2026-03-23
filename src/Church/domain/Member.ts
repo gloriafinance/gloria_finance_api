@@ -83,7 +83,7 @@ export class Member extends AggregateRoot {
     return m
   }
 
-  static fromPrimitives(plainData: any): Member {
+  static override fromPrimitives(plainData: any): Member {
     const m: Member = new Member()
     m.memberId = plainData.memberId
     m.name = plainData.name
@@ -114,7 +114,7 @@ export class Member extends AggregateRoot {
     return m
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

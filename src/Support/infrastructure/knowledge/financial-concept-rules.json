@@ -1,0 +1,106 @@
+[
+  {
+    "id": "concept-rule:types-overview",
+    "title": "Financial concept types overview",
+    "summary": "Financial concepts classify the operational nature of a movement before the record is posted.",
+    "guidance": [
+      "INCOME is used for incoming resources",
+      "OUTGO is used for outgoing payments or expenses",
+      "PURCHASE is used when the movement belongs to a purchase flow",
+      "REVERSAL is used for reversals or adjustments that undo a prior movement"
+    ],
+    "keywords": ["concept types", "tipo de concepto", "tipo de conceito", "income", "outgo", "purchase", "reversal"]
+  },
+  {
+    "id": "concept-rule:statement-category-overview",
+    "title": "Statement category overview",
+    "summary": "Statement category defines how the concept is interpreted in the financial statements and business reporting.",
+    "guidance": [
+      "REVENUE covers regular income and period revenue",
+      "COGS covers direct costs tied to a specific activity or delivery",
+      "OPEX covers recurring operating expenses",
+      "CAPEX covers long-term investments and durable asset spending",
+      "MINISTRY_TRANSFERS covers transfers to ministries",
+      "OTHER covers extraordinary or less routine items"
+    ],
+    "keywords": ["statement category", "categoria del demonstrativo", "categoria do demonstrativo", "revenue", "cogs", "opex", "capex", "other", "ministry transfers"]
+  },
+  {
+    "id": "concept-rule:indicators-overview",
+    "title": "Financial concept indicators overview",
+    "summary": "The concept indicators explain whether a movement affects cash flow, result, patrimonial movement and whether it is operational.",
+    "guidance": [
+      "affectsCashFlow indicates whether available money changes",
+      "affectsResult indicates whether the movement should compose the DRE or period result",
+      "affectsBalance indicates whether the movement has patrimonial impact beyond pure result interpretation",
+      "isOperational indicates whether the movement belongs to ordinary recurring operations"
+    ],
+    "keywords": ["affectsCashFlow", "affectsResult", "affectsBalance", "isOperational", "indicadores", "indicadores del concepto", "movimento patrimonial", "impacta resultado"]
+  },
+  {
+    "id": "concept-rule:concept-vs-category",
+    "title": "Concept meaning versus statement category",
+    "summary": "Type and statement category are related but different decisions and should not be confused.",
+    "guidance": [
+      "Type answers what kind of movement it is operationally",
+      "Statement category answers how the movement should be reported",
+      "A good concept should have a reusable name and description, then a coherent statement category and indicators"
+    ],
+    "keywords": ["type vs category", "tipo vs categoria", "tipo versus categoria", "financial concept setup", "concept configuration"]
+  },
+  {
+    "id": "concept-rule:recurring-vs-nonrecurring",
+    "title": "Recurring versus non-recurring concept logic",
+    "summary": "A concept should reflect whether the movement belongs to ordinary recurring church operation or to a more exceptional case.",
+    "guidance": [
+      "Use recurring operating logic for ordinary, repeated church expenses and revenues",
+      "Avoid using a recurring operating concept for a truly exceptional or isolated case",
+      "When the case is occasional, let the concept description and indicators reflect that non-recurring nature"
+    ],
+    "keywords": ["recurring", "recurrente", "recorrente", "non recurring", "extraordinary", "operational concept"]
+  },
+  {
+    "id": "concept-rule:capex-vs-opex",
+    "title": "CAPEX versus OPEX concept logic",
+    "summary": "Long-term asset acquisition should not be classified the same way as normal recurring operating expense.",
+    "guidance": [
+      "Use OPEX for recurring operational expenses of the period",
+      "Use CAPEX when the spending represents a durable investment or long-term church asset",
+      "If the purchase creates a church asset that should be tracked, review patrimony follow-up as well"
+    ],
+    "keywords": ["capex vs opex", "capex", "opex", "investment", "durable asset", "ativo durável", "activo duradero"]
+  },
+  {
+    "id": "concept-rule:ministry-transfer-vs-other",
+    "title": "Ministry transfer versus other category",
+    "summary": "Ministry transfer should be used only when the church intentionally treats the movement as a transfer to ministry, not just as any unusual expense.",
+    "guidance": [
+      "Use MINISTRY_TRANSFERS when the configured concept explicitly represents a transfer to ministry",
+      "Use OTHER for exceptional items that are not ordinary operations and do not fit a more precise category",
+      "Do not default to ministry transfer only because the expense feels special or non-routine"
+    ],
+    "keywords": ["ministry transfer", "transferencia ministerial", "transferência ministerial", "other category", "categoria other"]
+  },
+  {
+    "id": "concept-rule:direct-cost-vs-operating-expense",
+    "title": "Direct cost versus operating expense logic",
+    "summary": "A cost directly tied to a specific event, delivery or activity should be distinguished from general recurring operating expenses.",
+    "guidance": [
+      "Use COGS when the expense is directly tied to a specific event, conference, retreat or delivery activity",
+      "Use OPEX for recurring administrative and operational expenses of the period",
+      "Do not default to OPEX when the spending clearly exists because of one identifiable event"
+    ],
+    "keywords": ["cogs vs opex", "costo directo", "custo direto", "event cost", "conference cost", "direct activity cost", "guest preacher", "predicador invitado", "pregador convidado", "guest musician", "musico invitado", "músico convidado", "event payment"]
+  },
+  {
+    "id": "concept-rule:benevolence-vs-generic-opex",
+    "title": "Benevolence should not be hidden inside generic OPEX",
+    "summary": "Targeted social aid and benevolence should be represented by a more specific concept than a generic recurring office or administrative expense.",
+    "guidance": [
+      "Prefer a benevolence or assistance concept when the church already configured one",
+      "Avoid using a generic administrative OPEX concept for help given to a family or person in need",
+      "If no suitable concept exists, review the financial concept catalog before posting"
+    ],
+    "keywords": ["benevolence concept", "benevolencia", "benevolência", "assistance concept", "generic opex", "social aid concept"]
+  }
+]

@@ -1,0 +1,295 @@
+[
+  {
+    "id": "rule:financial-record-vs-payable",
+    "title": "Financial record versus accounts payable",
+    "summary": "Choose the flow based on whether cash has already moved or the debt is still pending.",
+    "guidance": [
+      "Use financial record when the church already paid or received the money",
+      "Use accounts payable when the debt exists first and will be paid later",
+      "Use accounts receivable when the church expects to receive money in the future"
+    ],
+    "keywords": ["financial record", "accounts payable", "accounts receivable", "gasto", "expense", "debt", "pending"]
+  },
+  {
+    "id": "rule:concept-reuse",
+    "title": "Reuse an existing financial concept before creating a new one",
+    "summary": "Financial concepts should be reusable and not overly specific to one isolated case.",
+    "guidance": [
+      "Prefer an existing concept when it already describes the transaction well",
+      "Create a new concept only when no existing concept fits the use case",
+      "Names and descriptions should be general enough to reuse in future records"
+    ],
+    "keywords": ["financial concept", "concepto", "conceito", "reuse", "new concept"]
+  },
+  {
+    "id": "rule:cost-center-outgo",
+    "title": "Outgoing movements usually need cost center context",
+    "summary": "Outgoing financial records are commonly tied to a cost center to classify where the expense belongs.",
+    "guidance": [
+      "If the concept type is outgoing, review whether a cost center is required",
+      "Use cost centers to organize ministry, project or area expenses"
+    ],
+    "keywords": ["cost center", "outgo", "expense classification", "centro de costo", "centro de custo"]
+  },
+  {
+    "id": "rule:internal-transfer",
+    "title": "Internal transfer is not a normal expense",
+    "summary": "Transfers between availability accounts should use the internal transfer flow instead of a regular expense record.",
+    "guidance": [
+      "Use internal transfer when money only moves between church accounts",
+      "Do not classify internal transfers as normal income or expense"
+    ],
+    "keywords": ["internal transfer", "transfer between accounts", "transferencia interna", "transferência interna"]
+  },
+  {
+    "id": "rule:asset-vs-expense",
+    "title": "Church assets should go to patrimony when they need lifecycle control",
+    "summary": "Use patrimony for church goods that need identification, tracking, inventory or disposal history instead of treating them as a simple expense flow.",
+    "guidance": [
+      "Use patrimony when the church is registering a durable good, equipment, furniture or another asset that should be tracked over time",
+      "Use a normal financial or purchase flow only when you need the accounting registration without asset lifecycle management",
+      "If the user asks about church goods, patrimony is usually the first module to review"
+    ],
+    "keywords": ["church assets", "bienes de la iglesia", "bens da igreja", "patrimony", "patrimonio", "patrimônio", "asset", "equipment", "mobiliario", "mobiliário"]
+  },
+  {
+    "id": "rule:purchase-vs-financial-record",
+    "title": "Purchase flow should be used when invoice and item control matter",
+    "summary": "Use the purchases module when the user needs invoice attachment, supplier context or itemized purchase handling beyond a simple cash posting.",
+    "guidance": [
+      "Use purchases when the transaction belongs to the purchasing workflow and should keep invoice context",
+      "Use a normal financial record when a simple accounting posting is enough",
+      "If the purchase results in a durable church asset, also review patrimony registration"
+    ],
+    "keywords": ["purchase", "compra", "invoice", "nota fiscal", "factura", "items", "supplier", "proveedor", "fornecedor"]
+  },
+  {
+    "id": "rule:bank-reconciliation",
+    "title": "Bank statement reconciliation is a review flow, not a normal posting flow",
+    "summary": "Imported statements and reconciliation should be handled in banking screens, while accounting registration happens in the appropriate financial flow.",
+    "guidance": [
+      "Use bank statements when the user needs to import, review or reconcile bank movements",
+      "Do not treat reconciliation as the same thing as creating a new financial record",
+      "If a bank movement is unmatched, review whether the accounting entry already exists or must be created"
+    ],
+    "keywords": ["bank statement", "bank reconciliation", "extrato", "extracto bancario", "conciliação", "conciliacion", "unmatched movement"]
+  },
+  {
+    "id": "rule:configuration-prerequisites",
+    "title": "Some registrations depend on prior financial configuration",
+    "summary": "Before registering movements, the church may need financial concepts, availability accounts, banks or cost centers already configured.",
+    "guidance": [
+      "If the user cannot continue a flow, verify whether concepts, accounts, banks or cost centers are missing",
+      "Availability accounts are needed to register cash or bank impact",
+      "Cost centers are commonly needed for outgoing classifications"
+    ],
+    "keywords": ["configuration", "setup", "availability account", "bank", "cost center", "financial concept", "missing configuration"]
+  },
+  {
+    "id": "rule:online-contribution-vs-financial-record",
+    "title": "Member contribution review is different from direct treasury registration",
+    "summary": "Use contributions list to review contributions submitted through the member flow, but use financial record when treasury is manually registering money that already entered cash or bank.",
+    "guidance": [
+      "Use financial record when the church already received the money and treasury is posting it directly",
+      "Use contributions list only when the contribution was submitted through the online or member contribution flow and needs review or status update",
+      "If the user asks for a specific concept such as primicia, only recommend it when that concept exists in the church financial concepts delivered in context",
+      "If no suitable concept is found, guide the user to review the financial concepts list before creating a new concept"
+    ],
+    "keywords": ["contribution", "contribucion", "contribución", "contribuição", "ofrenda", "oferta", "donacion", "doação", "diezmo", "dízimo", "primicia", "primícia", "contributions list", "financial record"]
+  },
+  {
+    "id": "rule:supplier-prerequisite",
+    "title": "Suppliers should exist before some purchase or payable flows",
+    "summary": "Purchases and payable registrations may require a supplier to exist first.",
+    "guidance": [
+      "If the supplier is missing, create it before continuing the purchase or payable flow",
+      "Avoid creating duplicate suppliers when one already exists"
+    ],
+    "keywords": ["supplier", "proveedor", "fornecedor", "purchase supplier", "accounts payable supplier"]
+  },
+  {
+    "id": "rule:bank-vs-availability-account",
+    "title": "Bank setup and availability account setup are related but different",
+    "summary": "A bank is institutional configuration, while availability accounts are the accounts used directly in postings and balances.",
+    "guidance": [
+      "Configure the bank when the banking institution is missing from system setup",
+      "Configure the availability account when the church needs the account to appear in financial postings or balance views",
+      "Some flows may depend on both being correctly configured"
+    ],
+    "keywords": ["bank", "availability account", "cuenta de disponibilidad", "conta de disponibilidade", "bank setup", "account setup"]
+  },
+  {
+    "id": "rule:financial-month-control",
+    "title": "Financial month status can block operational postings",
+    "summary": "Some accounting actions depend on the financial month being open or administratively available.",
+    "guidance": [
+      "If the user cannot post in a period, verify whether the financial month is open",
+      "Use financial month management for period control rather than bypassing the accounting status"
+    ],
+    "keywords": ["financial month", "mes financiero", "mês financeiro", "closed month", "period closed", "month control"]
+  },
+  {
+    "id": "rule:purchase-with-asset-followup",
+    "title": "Some purchases also need patrimony follow-up",
+    "summary": "A purchase may be correctly registered in the purchases module and still require patrimony registration if the result is a durable church asset.",
+    "guidance": [
+      "Use purchases to record supplier, invoice and item details",
+      "If the purchased item is durable and should be inventoried, also review patrimony registration"
+    ],
+    "keywords": ["purchase asset", "compra de bem", "compra de bien", "patrimony follow-up", "durable good"]
+  },
+  {
+    "id": "rule:payable-payment-settlement",
+    "title": "Paying an account payable is different from creating the commitment",
+    "summary": "The payable flow creates the obligation first; the cash movement happens later when the installment is settled.",
+    "guidance": [
+      "Create the payable when the debt exists but is still unpaid",
+      "When the installment is actually paid, the treasury flow should settle that commitment instead of creating a brand new unrelated expense",
+      "Avoid duplicating the same obligation as both a payable and a separate direct expense"
+    ],
+    "keywords": ["settle payable", "pagar conta a pagar", "pagar cuenta por pagar", "duplicate expense", "installment payment"]
+  },
+  {
+    "id": "rule:receivable-collection-settlement",
+    "title": "Collecting an account receivable is different from creating the receivable",
+    "summary": "The receivable flow tracks future income, while the actual receipt should respect the collection or settlement flow when money is received.",
+    "guidance": [
+      "Create the receivable when the church expects to receive money later",
+      "When the money is effectively collected, avoid duplicating the same future income as a separate unrelated receivable",
+      "Review whether the operational flow should settle the receivable instead of registering a disconnected new commitment"
+    ],
+    "keywords": ["collect receivable", "cobrar cuenta por cobrar", "receber conta a receber", "future income settlement", "duplicate receivable"]
+  },
+  {
+    "id": "rule:security-configuration",
+    "title": "Some support issues are really permission or access issues",
+    "summary": "When a user cannot see or execute a flow, the cause may be missing role permissions instead of financial misconfiguration.",
+    "guidance": [
+      "Review roles and permissions when the user reports missing menus or blocked actions",
+      "Review users and access when the issue is specific to one user account",
+      "Do not treat access-control problems as accounting configuration problems"
+    ],
+    "keywords": ["permission issue", "acceso", "acesso", "roles", "users access", "missing menu", "blocked action"]
+  },
+  {
+    "id": "rule:availability-account-required",
+    "title": "Cash-impact postings depend on an availability account",
+    "summary": "Whenever the movement changes treasury or bank balance, the posting should identify the availability account used in that operation.",
+    "guidance": [
+      "Use the availability account that actually received or paid the money",
+      "If the needed account does not exist, configure it first before posting",
+      "Do not confuse bank institutional setup with the account used directly in treasury postings"
+    ],
+    "keywords": ["availability account", "cuenta de disponibilidad", "conta de disponibilidade", "cash impact", "treasury account"]
+  },
+  {
+    "id": "rule:member-commitment-vs-treasury-receipt",
+    "title": "Member commitments are not the same as direct treasury receipts",
+    "summary": "A member commitment belongs to the receivable or member flow, while a treasury receipt is a cash posting that already happened.",
+    "guidance": [
+      "Use member commitments or accounts receivable for future obligations tied to members",
+      "Use financial record when the church already received the money in cash or bank",
+      "Avoid registering the same member obligation twice in both flows"
+    ],
+    "keywords": ["member commitment", "compromiso del miembro", "compromisso do membro", "treasury receipt", "duplicate registration"]
+  },
+  {
+    "id": "rule:bank-setup-before-reconciliation",
+    "title": "Bank reconciliation depends on prior bank setup",
+    "summary": "If the banking institution or related setup is missing, the user should configure the bank before expecting reconciliation to work correctly.",
+    "guidance": [
+      "Create the bank when the institution is missing from system setup",
+      "Then review whether the availability account linked to that treasury or bank account also exists",
+      "Only after the setup is complete should the user continue with statement import or reconciliation"
+    ],
+    "keywords": ["bank setup", "configurar banco", "configurar bank", "reconciliation prerequisite", "statement import"]
+  },
+  {
+    "id": "rule:church-profile-vs-financial-configuration",
+    "title": "Church profile settings are different from financial configuration",
+    "summary": "Institutional church data belongs to the church profile, while treasury and accounting behavior belong to financial configuration modules.",
+    "guidance": [
+      "Use church profile for institutional data and church-level information",
+      "Use financial concepts, accounts, banks and cost centers for treasury configuration",
+      "Do not treat profile settings as if they were accounting setup"
+    ],
+    "keywords": ["church profile", "perfil de la iglesia", "perfil da igreja", "institutional settings", "financial configuration"]
+  },
+  {
+    "id": "rule:benevolence-vs-operating-expense",
+    "title": "Benevolence should not be treated like a normal recurring operating expense",
+    "summary": "Support given to a family, member or person in need is usually a targeted assistance flow rather than a routine operating expense of the church.",
+    "guidance": [
+      "Treat benevolence as a specific outgoing aid or assistance case, not as a normal recurring office expense",
+      "Use an existing benevolence or assistance concept if the church already has one configured",
+      "If no suitable concept exists, review concepts before forcing the registration into a generic OPEX concept"
+    ],
+    "keywords": ["benevolencia", "benevolência", "benevolence", "assistance", "help to family", "ayuda", "ajuda social"]
+  },
+  {
+    "id": "rule:event-guest-payment",
+    "title": "A payment to a guest minister or musician depends on the event context",
+    "summary": "Payments to invited preachers or musicians should be evaluated according to whether they belong to a specific event, a ministry transfer or an exceptional support case.",
+    "guidance": [
+      "If the guest payment is tied directly to a specific event or conference, compare it against event-related concepts first",
+      "If the payment is truly exceptional and non-recurring, avoid forcing it into a normal recurring operating concept",
+      "If the church treats this kind of disbursement as a ministry transfer, use that concept only when the configured concepts and local policy support it"
+    ],
+    "keywords": ["guest preacher", "predicador invitado", "pregador convidado", "guest musician", "musico invitado", "músico convidado", "conference payment", "event expense"]
+  },
+  {
+    "id": "rule:loan-vs-donation-vs-receivable",
+    "title": "Loans, donations and future receivables are different financial cases",
+    "summary": "The assistant should not confuse a loan granted, a donation received and an amount expected in the future because each one belongs to a different accounting intention.",
+    "guidance": [
+      "Use accounts receivable when the church expects to collect money later",
+      "Use a donation or contribution concept only when the money is not expected back",
+      "When the church grants or recovers a loan, avoid classifying that movement as a normal offering or expense"
+    ],
+    "keywords": ["loan", "prestamo", "préstamo", "emprestimo", "empréstimo", "receivable", "donation", "donacion", "doação"]
+  },
+  {
+    "id": "rule:partial-payment-follow-up",
+    "title": "Partial payments should continue the original commitment when one exists",
+    "summary": "If the church already created a payable or receivable, partial settlements should normally follow that original commitment instead of creating disconnected duplicate records.",
+    "guidance": [
+      "If only part of an installment was paid or collected, prefer the settlement flow of the original commitment",
+      "Avoid creating multiple unrelated direct records for the same payable or receivable obligation",
+      "Use direct treasury posting only when there is no prior commitment controlling that balance"
+    ],
+    "keywords": ["partial payment", "pago parcial", "pagamento parcial", "partial collection", "installment balance", "settlement"]
+  },
+  {
+    "id": "rule:closed-period-posting",
+    "title": "A closed month should be treated as a period-control issue, not as a posting shortcut",
+    "summary": "When the user cannot register a movement because the month is closed, the correct action is to review financial month status instead of bypassing the period control.",
+    "guidance": [
+      "If the posting period is closed, review financial months first",
+      "Do not recommend creating records in another module just to avoid period control",
+      "Treat this as an administrative or accounting-control issue, not as a concept-classification issue"
+    ],
+    "keywords": ["closed month", "mes cerrado", "mês fechado", "closed period", "period locked", "month control", "financial months"]
+  },
+  {
+    "id": "rule:received-loan-vs-offering",
+    "title": "A received loan should not be treated like a normal contribution or offering",
+    "summary": "When the church receives money that must be returned later, the movement should not be classified as tithe, offering or donation income.",
+    "guidance": [
+      "Do not classify borrowed money as a normal contribution or recurring income concept",
+      "If the church received a loan that must be repaid later, review whether the case belongs to a liability or controlled commitment flow",
+      "Use direct treasury posting only when cash already entered and the configured concept correctly represents that borrowed-money scenario"
+    ],
+    "keywords": ["received loan", "prestamo recibido", "préstamo recibido", "emprestimo recebido", "empréstimo recebido", "borrowed money", "loan from member", "loan from church"]
+  },
+  {
+    "id": "rule:event-vs-recurring-ministry-expense",
+    "title": "Event spending should be distinguished from recurring ministry spending",
+    "summary": "An isolated congress, conference or guest activity should not automatically be classified the same way as the church's ordinary recurring ministry expense.",
+    "guidance": [
+      "If the disbursement belongs to a specific event, retreat or conference, compare event-related concepts first",
+      "If the spending is part of recurring ministry operation, compare ordinary recurring concepts instead",
+      "Avoid using a generic recurring OPEX concept just because the exact event concept is still unclear"
+    ],
+    "keywords": ["event expense", "conference expense", "congreso", "congresso", "retiro", "retreat", "special event", "gasto de evento"]
+  }
+]

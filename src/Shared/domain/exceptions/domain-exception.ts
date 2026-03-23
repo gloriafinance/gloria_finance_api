@@ -2,7 +2,7 @@ export abstract class DomainException implements Error {
   abstract message: string
   abstract name: string
 
-  data?: []
+  data?: unknown[]
 
   getMessage(): string {
     return this.message
@@ -12,7 +12,7 @@ export abstract class DomainException implements Error {
     return this.name
   }
 
-  getData(): [] {
+  getData(): unknown[] | undefined {
     return this.data
   }
 }

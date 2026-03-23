@@ -43,7 +43,7 @@ export class Supplier extends AggregateRoot {
     return supplier
   }
 
-  static fromPrimitives(params: any): Supplier {
+  static override fromPrimitives(params: any): Supplier {
     const supplier: Supplier = new Supplier()
     supplier.churchId = params.churchId
     supplier.supplierId = params.supplierId
@@ -81,7 +81,7 @@ export class Supplier extends AggregateRoot {
     return this.phone
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

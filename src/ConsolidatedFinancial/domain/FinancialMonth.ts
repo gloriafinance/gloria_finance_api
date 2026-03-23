@@ -22,7 +22,7 @@ export class FinancialMonth extends AggregateRoot {
     return financialMonths
   }
 
-  static fromPrimitives(plainData: any): FinancialMonth {
+  static override fromPrimitives(plainData: any): FinancialMonth {
     const financialMonths: FinancialMonth = new FinancialMonth()
     financialMonths.id = plainData.id
     financialMonths.month = plainData.month
@@ -48,7 +48,7 @@ export class FinancialMonth extends AggregateRoot {
     this.closed = false
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

@@ -92,7 +92,7 @@ export class FinancialConcept extends AggregateRoot {
     return this.financialConceptId
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

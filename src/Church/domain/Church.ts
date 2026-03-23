@@ -170,7 +170,7 @@ export class Church extends AggregateRoot {
     this.status = status
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

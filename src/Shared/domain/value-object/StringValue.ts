@@ -2,7 +2,7 @@ import { ValueObject } from "./ValueObject"
 import { InvalidArgumentError } from "@/Shared/domain"
 
 export class StringValue extends ValueObject<string> {
-  constructor(readonly value: any) {
+  constructor(protected override readonly value: string) {
     super(value)
     this.ensureStringIsNotEmpty()
   }

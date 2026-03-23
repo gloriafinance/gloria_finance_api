@@ -58,7 +58,7 @@ export class BankStatement extends AggregateRoot {
     return statement
   }
 
-  static fromPrimitives(primitives: any): BankStatement {
+  static override fromPrimitives(primitives: any): BankStatement {
     const statement = new BankStatement()
     statement.id = primitives.id
     statement.bankStatementId = primitives.bankStatementId
@@ -82,7 +82,7 @@ export class BankStatement extends AggregateRoot {
     return statement
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

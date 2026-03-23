@@ -43,7 +43,7 @@ export class NotificationInbox extends AggregateRoot {
     return notification
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 

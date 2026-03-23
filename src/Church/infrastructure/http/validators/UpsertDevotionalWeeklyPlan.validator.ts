@@ -15,6 +15,7 @@ export default async (
   logger.info("Validating devotional weekly plan payload", payload)
 
   const rules = {
+    weekStartDate: "required|dateFormat:YYYY-MM-DD",
     isEnabled: "required|boolean",
     themeWeek: "sometimes|string|maxLength:140",
     daysOfWeek: "array",

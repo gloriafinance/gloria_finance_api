@@ -42,7 +42,7 @@ export class Role extends AggregateRoot {
     return role
   }
 
-  static fromPrimitives(data: any): Role {
+  static override fromPrimitives(data: any): Role {
     const role = new Role()
     role.id = data.id
     role.churchId = data.churchId
@@ -86,7 +86,7 @@ export class Role extends AggregateRoot {
     }
   }
 
-  getId(): string {
+  getId(): string | undefined {
     return this.id
   }
 }

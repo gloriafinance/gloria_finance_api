@@ -1,0 +1,643 @@
+[
+  {
+    "id": "screen:members-list",
+    "title": "Members list",
+    "route": "/members",
+    "module": "members",
+    "summary": "Lists church members and supports opening the member registration flow.",
+    "whenToUse": [
+      "You need to review or manage members already registered in the system"
+    ],
+    "avoidWhen": [
+      "You are trying to register a financial posting or treasury movement"
+    ],
+    "requiredFields": [],
+    "permissions": ["members:manage"],
+    "keywords": ["members", "miembros", "membros", "member list", "lista de miembros", "lista de membros"]
+  },
+  {
+    "id": "screen:member-add",
+    "title": "Create member",
+    "route": "/member/add",
+    "module": "members",
+    "summary": "Registers a new member in the church directory.",
+    "whenToUse": [
+      "The church needs to create a new member record before using member-dependent flows"
+    ],
+    "avoidWhen": [
+      "The person is already registered as a member"
+    ],
+    "requiredFields": [
+      "name",
+      "email"
+    ],
+    "permissions": ["members:manage"],
+    "keywords": ["new member", "nuevo miembro", "novo membro", "register member"]
+  },
+  {
+    "id": "screen:rbac-roles",
+    "title": "Roles and permissions",
+    "route": "/rbac/roles",
+    "module": "security",
+    "summary": "Manages role permissions for the ERP modules.",
+    "whenToUse": [
+      "You need to review or change which permissions each role has"
+    ],
+    "avoidWhen": [
+      "You only need to post a financial movement"
+    ],
+    "requiredFields": [],
+    "permissions": ["rbac:manage_roles"],
+    "keywords": ["roles", "permissions", "permisos", "permissões", "roles and permissions", "rbac"]
+  },
+  {
+    "id": "screen:rbac-users",
+    "title": "Users and access",
+    "route": "/rbac/users",
+    "module": "security",
+    "summary": "Manages user access, assigned roles and authorization inside the ERP.",
+    "whenToUse": [
+      "You need to grant or review system access for a user"
+    ],
+    "avoidWhen": [
+      "You only need to configure accounting or treasury records"
+    ],
+    "requiredFields": [],
+    "permissions": ["rbac:manage_users"],
+    "keywords": ["users access", "usuarios y acceso", "usuários e acesso", "rbac users", "permissions by user"]
+  },
+  {
+    "id": "screen:financial-record-add",
+    "title": "Register financial record",
+    "route": "/financial-record/add",
+    "module": "financial_records",
+    "summary": "Registers an income or expense already paid or received with immediate cash impact.",
+    "whenToUse": [
+      "Cash already moved",
+      "You want to register income or expense directly"
+    ],
+    "avoidWhen": [
+      "The obligation exists but has not been paid yet",
+      "You need to create a payable or receivable commitment first"
+    ],
+    "requiredFields": [
+      "date",
+      "amount",
+      "financialConceptId",
+      "availabilityAccountId"
+    ],
+    "permissions": ["financial_records:create"],
+    "keywords": ["financial record", "registrar gasto", "registrar ingreso", "registrar contribucion", "registrar contribuição", "lancar", "lançar", "cash", "expense", "income", "contribucion", "contribuição", "ofrenda", "oferta", "donacion", "doação", "diezmo", "dízimo", "primicia", "primícia"]
+  },
+  {
+    "id": "screen:contributions-list",
+    "title": "Contributions list",
+    "route": "/contributions_list",
+    "module": "financial_records",
+    "summary": "Lists online or member-submitted contributions for treasury review, approval or rejection.",
+    "whenToUse": [
+      "You need to review contributions already submitted through the member contribution flow",
+      "Treasury must approve or reject a submitted receipt or online contribution"
+    ],
+    "avoidWhen": [
+      "You need to manually register money already received at treasury",
+      "You need to create a new direct income record in cash or bank"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_records:list_contributions"],
+    "keywords": ["contributions list", "lista de contribuciones", "lista de contribuições", "approve contribution", "aprobar contribucion", "aprovar contribuição", "online contribution", "receipt review"]
+  },
+  {
+    "id": "screen:accounts-payable-add",
+    "title": "Create account payable",
+    "route": "/accounts-payable/add",
+    "module": "accounts_payable",
+    "summary": "Registers a supplier or payment commitment that still has pending installments.",
+    "whenToUse": [
+      "The church has a debt or bill pending payment",
+      "You need to control due dates and future payments"
+    ],
+    "avoidWhen": [
+      "The expense was already paid and should go directly to financial record"
+    ],
+    "requiredFields": [
+      "supplier",
+      "installments",
+      "financialConceptId"
+    ],
+    "permissions": ["accounts_payable:manage"],
+    "keywords": ["accounts payable", "cuentas por pagar", "contas a pagar", "bill", "supplier", "pending payment"]
+  },
+  {
+    "id": "screen:accounts-receivable-add",
+    "title": "Create account receivable",
+    "route": "/accounts-receivables/add",
+    "module": "accounts_receivable",
+    "summary": "Registers an amount the church expects to receive in the future.",
+    "whenToUse": [
+      "There is a future incoming commitment",
+      "You need to track installments to collect later"
+    ],
+    "avoidWhen": [
+      "The amount was already received and should go directly to financial record"
+    ],
+    "requiredFields": [
+      "debtor",
+      "installments",
+      "financialConceptId"
+    ],
+    "permissions": ["accounts_receivable:manage"],
+    "keywords": ["accounts receivable", "cuentas por cobrar", "contas a receber", "loan receivable", "future income"]
+  },
+  {
+    "id": "screen:accounts-payable-list",
+    "title": "Accounts payable list",
+    "route": "/accounts-payable/list",
+    "module": "accounts_payable",
+    "summary": "Lists payables, installments and pending commitments already registered by the church.",
+    "whenToUse": [
+      "You need to review payable commitments, due dates or installments",
+      "You want to open an existing payable to settle or verify it"
+    ],
+    "avoidWhen": [
+      "You need to register a brand-new direct expense already paid"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_payable:read"],
+    "keywords": ["accounts payable list", "lista de cuentas por pagar", "lista de contas a pagar", "pending bills", "payables list"]
+  },
+  {
+    "id": "screen:accounts-payable-view",
+    "title": "Account payable detail",
+    "route": "/account-payable/view",
+    "module": "accounts_payable",
+    "summary": "Shows a payable detail with installments, reconciliation and payment follow-up.",
+    "whenToUse": [
+      "You need to inspect or settle a specific payable",
+      "You want to confirm due dates, supplier and payment history"
+    ],
+    "avoidWhen": [
+      "You need to create a new payable from scratch"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_payable:read"],
+    "keywords": ["payable detail", "detalle de cuenta por pagar", "detalhe de conta a pagar", "settle payable", "installments"]
+  },
+  {
+    "id": "screen:accounts-receivables-list",
+    "title": "Accounts receivable list",
+    "route": "/accounts-receivables",
+    "module": "accounts_receivable",
+    "summary": "Lists receivables, expected collections and future commitments already registered.",
+    "whenToUse": [
+      "You need to review amounts the church still expects to receive",
+      "You want to open an existing receivable for collection follow-up"
+    ],
+    "avoidWhen": [
+      "The money was already received and should be posted directly in treasury"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_receivable:read"],
+    "keywords": ["accounts receivable list", "lista de cuentas por cobrar", "lista de contas a receber", "future collections", "receivables list"]
+  },
+  {
+    "id": "screen:accounts-receivable-view",
+    "title": "Account receivable detail",
+    "route": "/account-receivables/view",
+    "module": "accounts_receivable",
+    "summary": "Shows the detail of a receivable with installments, expected collections and payment applications.",
+    "whenToUse": [
+      "You need to inspect a specific receivable before collecting or applying a payment",
+      "You want to review debtor, schedule and collection history"
+    ],
+    "avoidWhen": [
+      "You need to create a new receivable from scratch"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_receivable:read"],
+    "keywords": ["receivable detail", "detalle de cuenta por cobrar", "detalhe de conta a receber", "collect receivable", "payment application"]
+  },
+  {
+    "id": "screen:member-commitments",
+    "title": "Member commitments",
+    "route": "/member/commitments",
+    "module": "accounts_receivable",
+    "summary": "Lets members review or confirm their own commitments and payment obligations.",
+    "whenToUse": [
+      "The question is about a member viewing or confirming commitments",
+      "You need to support a member-side receivable flow rather than treasury posting"
+    ],
+    "avoidWhen": [
+      "You need to register treasury income directly"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_receivable:member_commitments"],
+    "keywords": ["member commitments", "compromisos del miembro", "compromissos do membro", "member receivable", "self service commitments"]
+  },
+  {
+    "id": "screen:financial-concepts-list",
+    "title": "Financial concepts list",
+    "route": "/financial-concepts",
+    "module": "finance_configuration",
+    "summary": "Lists and filters financial concepts configured for the church.",
+    "whenToUse": [
+      "You need to review or search concepts",
+      "You want to edit an existing concept"
+    ],
+    "avoidWhen": [
+      "You need to register a movement directly"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_configuration:list_concepts"],
+    "keywords": ["financial concept", "financial-concepts", "concepto financiero", "conceito financeiro"]
+  },
+  {
+    "id": "screen:financial-concepts-add",
+    "title": "Create financial concept",
+    "route": "/financial-concepts/add",
+    "module": "finance_configuration",
+    "summary": "Creates a new financial concept to classify future movements.",
+    "whenToUse": [
+      "No existing concept fits the case",
+      "You need a reusable concept for future transactions"
+    ],
+    "avoidWhen": [
+      "An existing concept already matches the use case"
+    ],
+    "requiredFields": [
+      "name",
+      "description",
+      "type",
+      "statementCategory"
+    ],
+    "permissions": ["financial_configuration:manage_concepts"],
+    "keywords": ["new concept", "crear concepto", "criar conceito", "financial-concepts/add"]
+  },
+  {
+    "id": "screen:availability-accounts-list",
+    "title": "Availability accounts",
+    "route": "/availability-accounts",
+    "module": "finance_configuration",
+    "summary": "Manages cash, bank and availability accounts used in financial records.",
+    "whenToUse": [
+      "You need to review or create accounts where money is available"
+    ],
+    "avoidWhen": [
+      "You only need to register a movement using an existing account"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_configuration:availability_accounts"],
+    "keywords": ["availability account", "cuenta de disponibilidad", "conta de disponibilidade", "bank account"]
+  },
+  {
+    "id": "screen:availability-accounts-add",
+    "title": "Create availability account",
+    "route": "/availability-accounts/add",
+    "module": "finance_configuration",
+    "summary": "Creates a new availability account used in financial records and cash-impact flows.",
+    "whenToUse": [
+      "The church needs a new cash, wallet, bank or investment account for postings"
+    ],
+    "avoidWhen": [
+      "An existing availability account already covers the need"
+    ],
+    "requiredFields": [
+      "name",
+      "type"
+    ],
+    "permissions": ["financial_configuration:availability_accounts"],
+    "keywords": ["new availability account", "crear cuenta de disponibilidad", "nova conta de disponibilidade", "cash account setup"]
+  },
+  {
+    "id": "screen:cost-center-list",
+    "title": "Cost centers",
+    "route": "/cost-center",
+    "module": "finance_configuration",
+    "summary": "Manages cost centers used to classify outgoing movements.",
+    "whenToUse": [
+      "You need to configure or review cost centers for expenses"
+    ],
+    "avoidWhen": [
+      "You only need to register a movement with an existing center"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_configuration:cost_centers"],
+    "keywords": ["cost center", "centro de costo", "centro de custo", "cost-center"]
+  },
+  {
+    "id": "screen:cost-center-add",
+    "title": "Create cost center",
+    "route": "/cost-center/add",
+    "module": "finance_configuration",
+    "summary": "Creates a new cost center to classify expenses by area, ministry or project.",
+    "whenToUse": [
+      "The current cost centers do not cover the area or project that should receive the expense"
+    ],
+    "avoidWhen": [
+      "An existing center already matches the classification need"
+    ],
+    "requiredFields": [
+      "code",
+      "name"
+    ],
+    "permissions": ["financial_configuration:cost_centers"],
+    "keywords": ["new cost center", "crear centro de costo", "novo centro de custo", "project classification"]
+  },
+  {
+    "id": "screen:purchase-register",
+    "title": "Register purchase",
+    "route": "/purchase/register",
+    "module": "purchases",
+    "summary": "Registers a purchase flow with invoice attachment and purchase-specific data.",
+    "whenToUse": [
+      "You need the purchase workflow and invoice handling",
+      "The expense belongs to the purchases module"
+    ],
+    "avoidWhen": [
+      "A normal financial record is enough"
+    ],
+    "requiredFields": [
+      "purchaseDate",
+      "items",
+      "file"
+    ],
+    "permissions": ["purchases:manage"],
+    "keywords": ["purchase", "compra", "invoice", "nota fiscal", "factura"]
+  },
+  {
+    "id": "screen:purchase-list",
+    "title": "Purchases list",
+    "route": "/purchase",
+    "module": "purchases",
+    "summary": "Lists purchase records and helps review the purchasing workflow already registered in the system.",
+    "whenToUse": [
+      "You need to review prior purchases or continue the purchase workflow"
+    ],
+    "avoidWhen": [
+      "You need to create a normal financial record rather than a purchase flow"
+    ],
+    "requiredFields": [],
+    "permissions": ["purchases:manage"],
+    "keywords": ["purchase list", "lista de compras", "compras", "purchase workflow"]
+  },
+  {
+    "id": "screen:banks-list",
+    "title": "Banks list",
+    "route": "/banks",
+    "module": "finance_configuration",
+    "summary": "Lists configured banks used by banking and reconciliation flows.",
+    "whenToUse": [
+      "You need to review available banks before bank reconciliation or setup"
+    ],
+    "avoidWhen": [
+      "You already know the bank is configured and only need to reconcile movements"
+    ],
+    "requiredFields": [],
+    "permissions": ["banking:read"],
+    "keywords": ["banks", "bancos", "bank list", "configured banks"]
+  },
+  {
+    "id": "screen:banks-add",
+    "title": "Create bank",
+    "route": "/banks/add",
+    "module": "finance_configuration",
+    "summary": "Creates a bank entry used later by banking and account configuration flows.",
+    "whenToUse": [
+      "The bank is missing from configuration"
+    ],
+    "avoidWhen": [
+      "The bank already exists and the user only needs to create postings"
+    ],
+    "requiredFields": [
+      "name"
+    ],
+    "permissions": ["banking:manage"],
+    "keywords": ["new bank", "crear banco", "novo banco", "bank configuration"]
+  },
+  {
+    "id": "screen:bank-statements",
+    "title": "Bank reconciliation",
+    "route": "/finance/bank-statements",
+    "module": "banking",
+    "summary": "Imports statements and manages reconciliation status for bank movements.",
+    "whenToUse": [
+      "You need to import a bank statement",
+      "You want to reconcile pending or unmatched bank movements"
+    ],
+    "avoidWhen": [
+      "You only need to create a financial posting without reconciliation"
+    ],
+    "requiredFields": [],
+    "permissions": ["banking:statements", "banking:read_statements"],
+    "keywords": ["bank reconciliation", "conciliação bancária", "conciliacion bancaria", "bank statement", "extrato", "extracto"]
+  },
+  {
+    "id": "screen:suppliers-list",
+    "title": "Suppliers list",
+    "route": "/suppliers",
+    "module": "providers",
+    "summary": "Lists suppliers used by purchases and payable flows.",
+    "whenToUse": [
+      "You need to review or reuse an existing supplier"
+    ],
+    "avoidWhen": [
+      "You only need to create a single movement without supplier context"
+    ],
+    "requiredFields": [],
+    "permissions": ["accounts_payable:suppliers_manage"],
+    "keywords": ["suppliers", "proveedores", "fornecedores", "supplier list"]
+  },
+  {
+    "id": "screen:suppliers-add",
+    "title": "Create supplier",
+    "route": "/suppliers/register",
+    "module": "providers",
+    "summary": "Registers a supplier to be reused in purchases and accounts payable.",
+    "whenToUse": [
+      "The church needs to register a new supplier before payable or purchase flows"
+    ],
+    "avoidWhen": [
+      "The supplier already exists"
+    ],
+    "requiredFields": [
+      "name"
+    ],
+    "permissions": ["accounts_payable:suppliers_manage"],
+    "keywords": ["new supplier", "nuevo proveedor", "novo fornecedor", "register supplier"]
+  },
+  {
+    "id": "screen:financial-months",
+    "title": "Financial months",
+    "route": "/financial-months",
+    "module": "finance_configuration",
+    "summary": "Manages open, closed and reopened financial months for period control.",
+    "whenToUse": [
+      "You need to close or reopen a financial month"
+    ],
+    "avoidWhen": [
+      "You only need to register a movement inside an already open period"
+    ],
+    "requiredFields": [],
+    "permissions": ["consolidated_financial:generate_months"],
+    "keywords": ["financial months", "mes financeiro", "mes financiero", "close month", "reopen month"]
+  },
+  {
+    "id": "screen:church-profile",
+    "title": "Church profile",
+    "route": "/church-profile",
+    "module": "church_configuration",
+    "summary": "Manages church profile information and related institutional settings.",
+    "whenToUse": [
+      "You need to review or change church profile information"
+    ],
+    "avoidWhen": [
+      "You need to register a financial movement"
+    ],
+    "requiredFields": [],
+    "permissions": ["church:upsert"],
+    "keywords": ["church profile", "perfil de la iglesia", "perfil da igreja", "church configuration"]
+  },
+  {
+    "id": "screen:internal-transfer-list",
+    "title": "Internal transfers",
+    "route": "/financial-record/internal-transfer",
+    "module": "financial_records",
+    "summary": "Lists transfers between availability accounts without treating them as income or expense.",
+    "whenToUse": [
+      "You need to review movements already made between church accounts"
+    ],
+    "avoidWhen": [
+      "You need to register a normal income, expense or purchase"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_records:list"],
+    "keywords": ["internal transfers", "transferencias internas", "transferências internas", "between accounts"]
+  },
+  {
+    "id": "screen:internal-transfer-add",
+    "title": "Create internal transfer",
+    "route": "/financial-record/internal-transfer/add",
+    "module": "financial_records",
+    "summary": "Registers a transfer between church availability accounts.",
+    "whenToUse": [
+      "Money is moving from one church cash or bank account to another"
+    ],
+    "avoidWhen": [
+      "The transaction is a real expense, income or supplier payment"
+    ],
+    "requiredFields": [
+      "originAvailabilityAccountId",
+      "destinationAvailabilityAccountId",
+      "amount"
+    ],
+    "permissions": ["financial_records:create"],
+    "keywords": ["new internal transfer", "nueva transferencia interna", "nova transferência interna", "move money between accounts"]
+  },
+  {
+    "id": "screen:patrimony-assets-list",
+    "title": "Patrimony assets list",
+    "route": "/patrimony/assets",
+    "module": "patrimony",
+    "summary": "Lists church assets under patrimony control and supports inventory, editing and lifecycle tracking.",
+    "whenToUse": [
+      "You need to review church goods already registered",
+      "You want to manage inventory, status or patrimony history"
+    ],
+    "avoidWhen": [
+      "You only need to register a normal cash movement without asset tracking"
+    ],
+    "requiredFields": [],
+    "permissions": ["patrimony:list_assets"],
+    "keywords": ["patrimony", "patrimonio", "patrimônio", "church assets", "bienes de la iglesia", "bens da igreja", "asset list", "inventory"]
+  },
+  {
+    "id": "screen:patrimony-assets-new",
+    "title": "Create patrimony asset",
+    "route": "/patrimony/assets/new",
+    "module": "patrimony",
+    "summary": "Registers a new asset for church patrimony with identification, value, category and lifecycle data.",
+    "whenToUse": [
+      "You need to register an equipment, furniture item, instrument or other church good",
+      "You want future inventory and disposal control"
+    ],
+    "avoidWhen": [
+      "The transaction only needs a financial posting and not patrimony lifecycle control"
+    ],
+    "requiredFields": [
+      "name",
+      "category",
+      "value",
+      "quantity"
+    ],
+    "permissions": ["patrimony:manage_assets"],
+    "keywords": ["new asset", "nuevo bien", "novo bem", "registrar patrimonio", "registrar patrimônio", "asset form", "church goods", "equipamento", "equipo", "mobiliario", "mobiliário"]
+  },
+  {
+    "id": "screen:report-monthly-tithes",
+    "title": "Monthly tithes report",
+    "route": "/report/monthly-tithes",
+    "module": "reports",
+    "summary": "Shows tithe performance for the selected period and treasury context.",
+    "whenToUse": [
+      "You need to review tithe income in a month or period",
+      "You want to analyze tithe concentration or trend"
+    ],
+    "avoidWhen": [
+      "You need to register a new contribution directly"
+    ],
+    "requiredFields": [],
+    "permissions": ["reports:monthly_tithes"],
+    "keywords": ["monthly tithes", "diezmos mensuales", "dízimos mensais", "tithes report"]
+  },
+  {
+    "id": "screen:report-income-statement",
+    "title": "Income statement",
+    "route": "/report/income-statement",
+    "module": "reports",
+    "summary": "Displays the period result with revenue, expenses, balances and cost center pressure.",
+    "whenToUse": [
+      "You need to understand the financial result for the period",
+      "You want to analyze revenue versus expenses and surplus or deficit"
+    ],
+    "avoidWhen": [
+      "You need to post a new transaction"
+    ],
+    "requiredFields": [],
+    "permissions": ["reports:income_statements"],
+    "keywords": ["income statement", "estado de resultados", "demonstrativo de resultado", "financial result"]
+  },
+  {
+    "id": "screen:report-dre",
+    "title": "DRE report",
+    "route": "/report/dre",
+    "module": "reports",
+    "summary": "Shows the statement of results for the period with direct and operational result analysis.",
+    "whenToUse": [
+      "You need an operational result view of the period",
+      "You want to review profitability, direct costs and operating pressure"
+    ],
+    "avoidWhen": [
+      "You only need a treasury posting flow"
+    ],
+    "requiredFields": [],
+    "permissions": ["financial_records:reports"],
+    "keywords": ["dre", "estado de resultado", "demonstracao do resultado", "report analysis"]
+  },
+  {
+    "id": "screen:support-assistant",
+    "title": "Gloria Assistance",
+    "route": "/support-assistant",
+    "module": "support",
+    "summary": "Central support assistant to answer product, accounting and contextual workflow questions.",
+    "whenToUse": [
+      "You need guidance about a screen, registration flow, concept or report",
+      "You want to analyze a document or ask a contextual question"
+    ],
+    "avoidWhen": [
+      "You already know the exact operational screen and only need to execute the action"
+    ],
+    "requiredFields": [],
+    "permissions": ["authenticated"],
+    "keywords": ["gloria assistance", "support assistant", "ayuda", "ajuda", "technical support"]
+  }
+]
