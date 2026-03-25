@@ -82,7 +82,7 @@ export class MemberController {
 
   @Get("/:memberId")
   @Use([PermissionMiddleware, Can("members", "manage")])
-  async findById(memberId: string, res: ServerResponse) {
+  async findById(@Param("memberId") memberId: string, res: ServerResponse) {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
