@@ -11,6 +11,7 @@ import {
   readAIProviderConfig,
 } from "@/package/ai/helpers/AIProviderConfig.helper"
 import { CodexAIService } from "@/package/ai/providers/codex/CodexAI.service"
+import { GeminiAIService } from "@/package/ai/providers/gemini/GeminiAIService.ts"
 
 type AIProviderName = string
 
@@ -145,7 +146,7 @@ export class AITextService {
       )
     }
 
-    const entry = findAIProviderByService("codex")
+    const entry = findAIProviderByService(process.env.LLM_TEXT_PROVIDER!)
     if (!entry) {
       throw new AIProviderError(
         "AIText",
@@ -164,10 +165,15 @@ export class AITextService {
   private resolveProviderService(serviceName: string): IProxyIAService {
     serviceName = serviceName.toLowerCase()
 
-    if (serviceName === "codex") return CodexAIService.getInstance()
+    switch (serviceName) {
+      case "gemini":
+        return GeminiAIService.getInstance()
+      case "codex":
+        return CodexAIService.getInstance()
+    }
 
     throw new AIProviderError(
-      "AIText",
+      serviceName,
       undefined,
       AIProviderErrorCode.CONFIG_ERROR,
       `Unsupported text AI service '${serviceName}'. AI text service only supports 'codex'; use Gemini directly for image-analysis agents.`

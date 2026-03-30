@@ -17,6 +17,7 @@ export type AICodexOAuthConfig = {
 
 export type AIProviderConfigEntry = {
   serviceName: string
+  enable: boolean
   apiKey?: string
   model: string
   authProfile?: string
