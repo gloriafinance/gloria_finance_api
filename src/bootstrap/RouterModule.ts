@@ -18,6 +18,7 @@ import { churchControllers } from "@/Church/infrastructure/http/controllers"
 import { WorldController } from "@/World/infrastructure/http/controllers/World.controller"
 import { WhatsappController } from "@/Webhook/infrastructure/http/controllers/Whatsapp.controller.ts"
 import { supportControllers } from "@/Support/infrastructure/controllers"
+import { CashFlowController } from "@/Reports/infrastructure/http/controllers/CashFlow.controller.ts"
 
 export const controllersModule = () =>
   new ControllersModule([
@@ -40,4 +41,5 @@ export const controllersModule = () =>
     PatrimonyController,
     WorldController,
     WhatsappController,
+    CashFlowController,
   ])
