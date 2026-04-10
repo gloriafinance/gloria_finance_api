@@ -76,7 +76,7 @@ export class PayAccountPayable {
       throw new FinancialConceptNotFound()
     }
 
-    let costCenter: CostCenter
+    let costCenter: CostCenter | undefined
     if (req.costCenterId) {
       costCenter =
         await this.financialConfigurationRepository.findCostCenterByCostCenterId(
@@ -95,7 +95,7 @@ export class PayAccountPayable {
 
       await new DispatchCreateFinancialRecord(this.queueService).execute({
         churchId: accountPayable.getChurchId(),
-        costCenter: { ...costCenter.toPrimitives() },
+        costCenter: { ...costCenter?.toPrimitives() },
         voucher,
         date: DateBR(),
         createdBy: req.createdBy,
@@ -136,7 +136,7 @@ export class PayAccountPayable {
       await unitOfWork.commit()
 
       this.logger.info(`Finished Pay Account Payable`)
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error paying Account Payable`, error)
       await unitOfWork.rollback()
     }

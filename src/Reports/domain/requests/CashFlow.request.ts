@@ -1,12 +1,20 @@
 export type CashFlowGroupBy = "day" | "week" | "month"
+export type CashFlowExportFormat = "csv" | "pdf"
 
 export interface CashFlowFilters {
   churchId: string
   startDate: Date
   endDate: Date
   groupBy: CashFlowGroupBy
-  availabilityAccountId?: string
-  financialConceptId?: string
+  availabilityAccountId?: string | string[]
   costCenterId?: string
-  accountType?: string // lo mapearía a moneyLocation o accountType, según tu UX
+  includeProjection?: boolean
+  projectionBuckets?: number
+}
+
+export type CashFlowBucketDetailsFilters = CashFlowFilters
+
+export type CashFlowExportRequest = CashFlowFilters & {
+  format: CashFlowExportFormat
+  lang: string
 }

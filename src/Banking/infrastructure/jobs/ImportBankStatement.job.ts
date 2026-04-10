@@ -1,4 +1,3 @@
-import { promises as fs } from "fs"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 
 import {
@@ -24,7 +23,7 @@ type ImportBankStatementJobPayload = {
   }
   month: number
   year: number
-  filePath: string
+  fileContent: string
   uploadedBy: string
 }
 
@@ -43,53 +42,43 @@ export class ImportBankStatementJob implements IJob {
 
     const bank = Bank.fromPrimitives(payload.bank)
 
-    let localFilePath: string | undefined
-
-    try {
-      localFilePath = this.resolveFilePath(payload)
-      const parser = this.parserFactory.resolve(bank.getBankName())
-
-      const intermediates = await parser.parse({
-        bank,
-        availabilityAccount: payload.availabilityAccount,
-        filePath: localFilePath,
-        month: payload.month,
-        year: payload.year,
-      })
-
-      const { inserted, duplicates } =
-        await this.persistNewStatements(intermediates)
-
-      const reconciliationResult = await this.reconcileStatements(inserted)
-
-      await this.notifyResult({
-        payload,
-        accountName: bank.getTag(),
-        bankName: bank.getBankName(),
-        total: intermediates.length,
-        inserted: inserted.length,
-        duplicates,
-        ...reconciliationResult,
-      })
-
-      this.logger.info("Bank statement import job finished", {
-        ...payload,
-        ...reconciliationResult,
-        duplicates,
-      })
-    } finally {
-      if (localFilePath) {
-        await this.cleanupTempFile(localFilePath)
-      }
-    }
-  }
-
-  private resolveFilePath(payload: ImportBankStatementJobPayload): string {
-    if (!payload.filePath) {
-      throw new Error("ImportBankStatementJob requires a local file path")
+    if (!payload.fileContent) {
+      throw new Error("ImportBankStatementJob requires CSV file content")
     }
 
-    return payload.filePath
+    const parser = this.parserFactory.resolve(bank.getBankName())
+
+    const intermediates = await parser.parse({
+      bank,
+      availabilityAccount: payload.availabilityAccount,
+      fileContent: payload.fileContent,
+      month: payload.month,
+      year: payload.year,
+    })
+
+    const { inserted, duplicates } =
+      await this.persistNewStatements(intermediates)
+
+    const reconciliationResult = await this.reconcileStatements(inserted)
+
+    await this.notifyResult({
+      payload,
+      accountName: bank.getTag(),
+      bankName: bank.getBankName(),
+      total: intermediates.length,
+      inserted: inserted.length,
+      duplicates,
+      ...reconciliationResult,
+    })
+
+    this.logger.info("Bank statement import job finished", {
+      churchId: payload.churchId,
+      bankId: bank.getBankId(),
+      month: payload.month,
+      year: payload.year,
+      ...reconciliationResult,
+      duplicates,
+    })
   }
 
   private async persistNewStatements(
@@ -190,23 +179,5 @@ export class ImportBankStatementJob implements IJob {
       .join("\n")
 
     this.queueService.dispatch(QueueName.TelegramNotificationJob, { message })
-  }
-
-  private async cleanupTempFile(localFilePath: string): Promise<void> {
-    const shouldSkipCleanup =
-      /^https?:\/\//i.test(localFilePath) || !localFilePath
-
-    if (shouldSkipCleanup) {
-      return
-    }
-
-    try {
-      await fs.unlink(localFilePath)
-    } catch (error) {
-      this.logger.error("Failed to remove temporary bank statement file", {
-        localFilePath,
-        error,
-      })
-    }
   }
 }

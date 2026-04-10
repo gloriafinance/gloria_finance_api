@@ -2,12 +2,39 @@ import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { FinanceRecord } from "@/Financial/domain"
 import type { Collection, Document, Filter } from "mongodb"
 import type {
+  CashFlowBucketDetail,
+  CashFlowBucketDetailsFilters,
   CashFlowFilters,
   CashFlowGroupBy,
+  CashFlowProjectionResult,
   CashFlowReportResult,
   CashFlowSeriesRow,
-  ICasFlowRepository,
+  ICashFlowRepository,
 } from "@/Reports/domain"
+
+const INVALID_FINANCE_RECORD_DATE = new Date("1970-01-01T00:00:00.000Z")
+
+const DEFAULT_PROJECTION_BUCKETS: Record<CashFlowGroupBy, number> = {
+  day: 7,
+  week: 4,
+  month: 3,
+}
+
+type CashFlowNormalizedFilters = Omit<
+  CashFlowFilters,
+  "availabilityAccountId" | "includeProjection" | "projectionBuckets"
+> & {
+  availabilityAccountIds?: string[]
+  includeProjection: boolean
+  projectionBuckets: number
+}
+
+type CashFlowBucketAggregate = {
+  period: Date
+  entries: number
+  exits: number
+  net: number
+}
 
 const getDateTruncUnit = (
   groupBy: CashFlowGroupBy
@@ -16,9 +43,83 @@ const getDateTruncUnit = (
   if (groupBy === "week") return "week"
   return "month"
 }
+
+const roundAmount = (value: number): number => {
+  const rounded = Math.round((Number(value) || 0) * 100) / 100
+  return Object.is(rounded, -0) ? 0 : rounded
+}
+
+const normalizeStringArray = (
+  value?: string | string[]
+): string[] | undefined => {
+  if (value === undefined || value === null) {
+    return undefined
+  }
+
+  const items = (Array.isArray(value) ? value : [value])
+    .flatMap((entry) => String(entry).split(","))
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+  return items.length > 0 ? Array.from(new Set(items)) : undefined
+}
+
+const truncateDateToBucket = (date: Date, groupBy: CashFlowGroupBy): Date => {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth()
+  const day = date.getUTCDate()
+
+  if (groupBy === "month") {
+    return new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
+  }
+
+  if (groupBy === "week") {
+    const start = new Date(Date.UTC(year, month, day, 0, 0, 0, 0))
+    start.setUTCDate(start.getUTCDate() - start.getUTCDay())
+    return start
+  }
+
+  return new Date(Date.UTC(year, month, day, 0, 0, 0, 0))
+}
+
+const addBuckets = (
+  date: Date,
+  groupBy: CashFlowGroupBy,
+  count: number
+): Date => {
+  const next = new Date(date.getTime())
+
+  if (groupBy === "month") {
+    return new Date(
+      Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + count, 1, 0, 0, 0, 0)
+    )
+  }
+
+  if (groupBy === "week") {
+    next.setUTCDate(next.getUTCDate() + count * 7)
+    return next
+  }
+
+  next.setUTCDate(next.getUTCDate() + count)
+  return next
+}
+
+const subtractMonthsUtc = (date: Date, months: number): Date =>
+  new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() - months,
+      date.getUTCDate(),
+      0,
+      0,
+      0,
+      0
+    )
+  )
+
 export class CashFlowMongoRepository
   extends MongoRepository<FinanceRecord>
-  implements ICasFlowRepository
+  implements ICashFlowRepository
 {
   private static instance: CashFlowMongoRepository
 
@@ -39,9 +140,11 @@ export class CashFlowMongoRepository
   }
 
   async getCashFlowDirectReport(
-    filters: CashFlowFilters
+    rawFilters: CashFlowFilters
   ): Promise<CashFlowReportResult> {
+    const filters = this.normalizeFilters(rawFilters)
     const collection = await this.collection()
+
     const [openingRow] = await collection
       .aggregate<{
         openingBalance: number
@@ -63,23 +166,47 @@ export class CashFlowMongoRepository
         this.buildCashFlowSeriesPipeline(filters, openingBalance)
       )
       .toArray()
+    const lastSeriesRow = series.at(-1)
 
-    const entries = summaryRow?.entries ?? 0
-    const exits = summaryRow?.exits ?? 0
-    const net = summaryRow?.net ?? 0
-    const closingBalance =
-      series.length > 0
-        ? series[series.length - 1].runningBalance
-        : Number((openingBalance + net).toFixed(2))
+    const summary = {
+      openingBalance,
+      entries: summaryRow?.entries ?? 0,
+      exits: summaryRow?.exits ?? 0,
+      net: summaryRow?.net ?? 0,
+      closingBalance: lastSeriesRow
+        ? lastSeriesRow.runningBalance
+        : roundAmount(openingBalance + (summaryRow?.net ?? 0)),
+    }
+
+    const projection = await this.buildProjection(
+      collection,
+      filters,
+      summary.closingBalance,
+      series
+    )
 
     return {
-      openingBalance,
-      entries,
-      exits,
-      net,
-      closingBalance,
+      summary,
       series,
+      projection,
     }
+  }
+
+  async getCashFlowBucketDetails(
+    rawFilters: CashFlowBucketDetailsFilters
+  ): Promise<CashFlowBucketDetail[]> {
+    const filters = this.normalizeFilters(rawFilters)
+    const collection = await this.collection()
+
+    return await collection
+      .aggregate<CashFlowBucketDetail>(
+        this.buildCashFlowBucketDetailsPipeline(
+          filters,
+          filters.startDate,
+          filters.endDate
+        )
+      )
+      .toArray()
   }
 
   protected override async ensureIndexes(
@@ -100,25 +227,120 @@ export class CashFlowMongoRepository
 
     await collection.createIndex({
       churchId: 1,
-      "financialConcept.financialConceptId": 1,
+      "costCenter.costCenterId": 1,
       status: 1,
       date: 1,
     })
   }
 
-  private buildCashFlowSummaryPipeline(filters: CashFlowFilters): Document[] {
-    const match = this.buildBaseMatch(filters)
+  private normalizeFilters(
+    rawFilters: CashFlowFilters
+  ): CashFlowNormalizedFilters {
+    return {
+      ...rawFilters,
+      availabilityAccountIds: normalizeStringArray(
+        rawFilters.availabilityAccountId
+      ),
+      includeProjection: rawFilters.includeProjection === true,
+      projectionBuckets:
+        rawFilters.projectionBuckets && rawFilters.projectionBuckets > 0
+          ? rawFilters.projectionBuckets
+          : DEFAULT_PROJECTION_BUCKETS[rawFilters.groupBy],
+    }
+  }
 
+  private async buildProjection(
+    collection: Collection,
+    filters: CashFlowNormalizedFilters,
+    closingBalance: number,
+    series: CashFlowSeriesRow[]
+  ): Promise<CashFlowProjectionResult> {
+    if (!filters.includeProjection) {
+      return {
+        status: "unavailable",
+        historicalMonthCount: 0,
+        buckets: [],
+      }
+    }
+
+    const historicalStartDate = subtractMonthsUtc(filters.endDate, 3)
+    const historicalBuckets = await collection
+      .aggregate<CashFlowBucketAggregate>(
+        this.buildBucketAggregatePipeline(
+          filters,
+          historicalStartDate,
+          filters.endDate
+        )
+      )
+      .toArray()
+
+    if (historicalBuckets.length === 0) {
+      return {
+        status: "unavailable",
+        historicalMonthCount: 0,
+        buckets: [],
+      }
+    }
+
+    const entriesAverage = roundAmount(
+      historicalBuckets.reduce((sum, row) => sum + row.entries, 0) /
+        historicalBuckets.length
+    )
+    const exitsAverage = roundAmount(
+      historicalBuckets.reduce((sum, row) => sum + row.exits, 0) /
+        historicalBuckets.length
+    )
+    const netAverage = roundAmount(entriesAverage - exitsAverage)
+
+    const uniqueMonths = new Set(
+      historicalBuckets.map(
+        (row) =>
+          `${row.period.getUTCFullYear()}-${row.period.getUTCMonth() + 1}`
+      )
+    ).size
+
+    const status = uniqueMonths >= 3 ? "available" : "degraded"
+
+    const lastRealizedRow = series.at(-1)
+    const anchorDate =
+      lastRealizedRow?.period ??
+      truncateDateToBucket(filters.endDate, filters.groupBy)
+
+    const buckets = []
+    let previousBalance = closingBalance
+
+    for (let index = 1; index <= filters.projectionBuckets; index++) {
+      const period = addBuckets(anchorDate, filters.groupBy, index)
+      const projectedBalance = roundAmount(previousBalance + netAverage)
+
+      buckets.push({
+        period,
+        projectedEntries: entriesAverage,
+        projectedExits: exitsAverage,
+        projectedNet: netAverage,
+        projectedBalance,
+      })
+
+      previousBalance = projectedBalance
+    }
+
+    return {
+      status,
+      historicalMonthCount: uniqueMonths,
+      buckets,
+    }
+  }
+
+  private buildCashFlowSummaryPipeline(
+    filters: CashFlowNormalizedFilters
+  ): Document[] {
     return [
       {
-        $match: {
-          ...match,
-          date: {
-            $gte: filters.startDate,
-            $lte: filters.endDate,
-            $ne: new Date("1970-01-01T00:00:00.000Z"),
-          },
-        },
+        $match: this.buildMatchWithDateRange(
+          filters,
+          filters.startDate,
+          filters.endDate
+        ),
       },
       {
         $group: {
@@ -153,12 +375,18 @@ export class CashFlowMongoRepository
   }
 
   private buildCashFlowBucketDetailsPipeline(
-    filters: CashFlowFilters
+    filters: CashFlowNormalizedFilters,
+    bucketStartDate: Date,
+    bucketEndDate: Date
   ): Document[] {
-    const match: Filter<Document> = this.buildBaseMatch(filters)
-
     return [
-      { $match: match },
+      {
+        $match: this.buildMatchWithDateRange(
+          filters,
+          bucketStartDate,
+          bucketEndDate
+        ),
+      },
       {
         $project: {
           _id: 0,
@@ -167,8 +395,10 @@ export class CashFlowMongoRepository
           description: 1,
           amount: { $round: ["$amount", 2] },
           type: 1,
+          flowType: {
+            $cond: [{ $in: ["$type", ["OUTGO", "PURCHASE"]] }, "exit", "entry"],
+          },
           status: 1,
-          method: "$moneyLocation",
           accountId: "$availabilityAccount.availabilityAccountId",
           accountName: "$availabilityAccount.accountName",
           accountType: "$availabilityAccount.accountType",
@@ -184,18 +414,16 @@ export class CashFlowMongoRepository
       { $sort: { date: 1, financialRecordId: 1 } },
     ]
   }
-  private buildOpeningBalancePipeline(filters: CashFlowFilters) {
-    const match = this.buildBaseMatch(filters)
 
+  private buildOpeningBalancePipeline(filters: CashFlowNormalizedFilters) {
     return [
       {
-        $match: {
-          ...match,
+        $match: this.buildDateMatch({
+          ...this.buildBaseMatch(filters),
           date: {
             $lt: filters.startDate,
-            $ne: new Date("1970-01-01T00:00:00.000Z"),
           },
-        },
+        }),
       },
       {
         $addFields: {
@@ -232,23 +460,18 @@ export class CashFlowMongoRepository
   }
 
   private buildCashFlowSeriesPipeline(
-    filters: CashFlowFilters,
+    filters: CashFlowNormalizedFilters,
     openingBalance: number
   ): Document[] {
-    const match = this.buildBaseMatch(filters)
     const unit = getDateTruncUnit(filters.groupBy)
 
     return [
       {
-        $match: {
-          ...match,
-          // excluye registros basura obvios
-          date: {
-            $gte: filters.startDate,
-            $lte: filters.endDate,
-            $ne: new Date("1970-01-01T00:00:00.000Z"),
-          },
-        },
+        $match: this.buildMatchWithDateRange(
+          filters,
+          filters.startDate,
+          filters.endDate
+        ),
       },
       {
         $addFields: {
@@ -263,7 +486,7 @@ export class CashFlowMongoRepository
             $switch: {
               branches: [
                 {
-                  case: { $in: ["$type", ["INCOME"]] },
+                  case: { $eq: ["$type", "INCOME"] },
                   then: "INCOME",
                 },
                 {
@@ -348,35 +571,99 @@ export class CashFlowMongoRepository
     ]
   }
 
-  private buildBaseMatch(filters: CashFlowFilters): Filter<Document> {
+  private buildBucketAggregatePipeline(
+    filters: CashFlowNormalizedFilters,
+    startDate: Date,
+    endDate: Date
+  ): Document[] {
+    const unit = getDateTruncUnit(filters.groupBy)
+
+    return [
+      {
+        $match: this.buildMatchWithDateRange(filters, startDate, endDate),
+      },
+      {
+        $group: {
+          _id: {
+            $dateTrunc: {
+              date: "$date",
+              unit,
+              timezone: "UTC",
+            },
+          },
+          entries: {
+            $sum: {
+              $cond: [
+                { $in: ["$type", ["INCOME", "INIT_BALANCE"]] },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          exits: {
+            $sum: {
+              $cond: [{ $in: ["$type", ["OUTGO", "PURCHASE"]] }, "$amount", 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          period: "$_id",
+          entries: { $round: ["$entries", 2] },
+          exits: { $round: ["$exits", 2] },
+          net: {
+            $round: [{ $subtract: ["$entries", "$exits"] }, 2],
+          },
+        },
+      },
+      { $sort: { period: 1 } },
+    ]
+  }
+
+  private buildBaseMatch(filters: CashFlowNormalizedFilters): Filter<Document> {
     const match: Filter<Document> = {
       churchId: filters.churchId,
-      status: "CLEARED",
+      status: { $in: ["CLEARED", "RECONCILED"] },
       "financialConcept.affectsCashFlow": true,
-      date: {
-        $gte: filters.startDate,
-        $lte: filters.endDate,
-      },
       amount: { $type: "number" },
     }
 
-    if (filters.availabilityAccountId) {
-      match["availabilityAccount.availabilityAccountId"] =
-        filters.availabilityAccountId
-    }
-
-    if (filters.financialConceptId) {
-      match["financialConcept.financialConceptId"] = filters.financialConceptId
+    if (filters.availabilityAccountIds?.length) {
+      match["availabilityAccount.availabilityAccountId"] = {
+        $in: filters.availabilityAccountIds,
+      }
     }
 
     if (filters.costCenterId) {
       match["costCenter.costCenterId"] = filters.costCenterId
     }
 
-    if (filters.accountType) {
-      match["availabilityAccount.accountType"] = filters.accountType
-    }
-
     return match
+  }
+
+  private buildMatchWithDateRange(
+    filters: CashFlowNormalizedFilters,
+    startDate: Date,
+    endDate: Date
+  ): Filter<Document> {
+    return this.buildDateMatch({
+      ...this.buildBaseMatch(filters),
+      date: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    })
+  }
+
+  private buildDateMatch(match: Filter<Document>): Filter<Document> {
+    return {
+      ...match,
+      date: {
+        ...((match.date as Record<string, unknown>) ?? {}),
+        $ne: INVALID_FINANCE_RECORD_DATE,
+      },
+    }
   }
 }

@@ -1,0 +1,226 @@
+<html lang="{{i18nLang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Flujo de Caja (Directo)</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        color: #1f2937;
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 8px;
+        color: #0f172a;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      h2 {
+        margin-top: 28px;
+        font-size: 16px;
+      }
+
+      .meta p,
+      .messages p {
+        margin: 4px 0;
+        font-size: 12px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        gap: 12px;
+        margin: 20px 0 12px;
+      }
+
+      .card {
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+        padding: 12px;
+        background: #f8fafc;
+      }
+
+      .card .label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 6px;
+      }
+
+      .card .value {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .projection-box {
+        margin-top: 20px;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: #eff6ff;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-top: 12px;
+      }
+
+      th,
+      td {
+        border: 1px solid #dbe3ea;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background: #e2e8f0;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: #334155;
+      }
+
+      .number {
+        text-align: right;
+      }
+
+      .empty {
+        text-align: center;
+        color: #64748b;
+        padding: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Flujo de Caja (Directo)</h1>
+
+    <div class="meta">
+      <p><strong>Iglesia:</strong>
+        {{#if church}}{{church}}{{else}}N/A{{/if}}</p>
+      <p><strong>Generado:</strong> {{formatDate generatedAt}}</p>
+      <p><strong>Período:</strong>
+        {{formatDate filters.startDate}}
+        -
+        {{formatDate filters.endDate}}</p>
+      <p><strong>Agrupación:</strong> {{filters.groupBy}}</p>
+      {{#if filters.method}}
+        <p><strong>Método:</strong> {{filters.method}}</p>
+      {{/if}}
+      {{#if filters.financialConceptId}}
+        <p><strong>Concepto financiero:</strong>
+          {{filters.financialConceptId}}</p>
+      {{/if}}
+      {{#if filters.costCenterId}}
+        <p><strong>Centro de costo:</strong> {{filters.costCenterId}}</p>
+      {{/if}}
+    </div>
+
+    <div class="summary-grid">
+      <div class="card">
+        <span class="label">Saldo inicial</span>
+        <span class="value">{{formatCurrency summary.openingBalance}}</span>
+      </div>
+      <div class="card">
+        <span class="label">Entradas</span>
+        <span class="value">{{formatCurrency summary.entries}}</span>
+      </div>
+      <div class="card">
+        <span class="label">Salidas</span>
+        <span class="value">{{formatCurrency summary.exits}}</span>
+      </div>
+      <div class="card">
+        <span class="label">Neto</span>
+        <span class="value">{{formatCurrency summary.net}}</span>
+      </div>
+      <div class="card">
+        <span class="label">Saldo final</span>
+        <span class="value">{{formatCurrency summary.closingBalance}}</span>
+      </div>
+    </div>
+
+    {{#if messages.length}}
+      <div class="messages">
+        {{#each messages}}
+          <p>{{this}}</p>
+        {{/each}}
+      </div>
+    {{/if}}
+
+    <h2>Serie realizada</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Período</th>
+          <th class="number">Entradas</th>
+          <th class="number">Salidas</th>
+          <th class="number">Neto</th>
+          <th class="number">Saldo acumulado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#if series.length}}
+          {{#each series}}
+            <tr>
+              <td>{{formatDate period}}</td>
+              <td class="number">{{formatCurrency entries}}</td>
+              <td class="number">{{formatCurrency exits}}</td>
+              <td class="number">{{formatCurrency net}}</td>
+              <td class="number">{{formatCurrency runningBalance}}</td>
+            </tr>
+          {{/each}}
+        {{else}}
+          <tr>
+            <td class="empty" colspan="5">No hay datos para los filtros
+              seleccionados.</td>
+          </tr>
+        {{/if}}
+      </tbody>
+    </table>
+
+    <div class="projection-box">
+      <h2>{{projection.label}}</h2>
+      <p>Estado: {{projection.status}}</p>
+      {{#if projection.message}}
+        <p>{{projection.message}}</p>
+      {{/if}}
+      <p>Esta proyección es una referencia simple basada en el comportamiento
+        reciente. No considera eventos futuros, compromisos programados ni
+        presupuesto.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th class="number">Entradas proyectadas</th>
+            <th class="number">Salidas proyectadas</th>
+            <th class="number">Neto proyectado</th>
+            <th class="number">Saldo proyectado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#if projection.buckets.length}}
+            {{#each projection.buckets}}
+              <tr>
+                <td>{{formatDate period}}</td>
+                <td class="number">{{formatCurrency projectedEntries}}</td>
+                <td class="number">{{formatCurrency projectedExits}}</td>
+                <td class="number">{{formatCurrency projectedNet}}</td>
+                <td class="number">{{formatCurrency projectedBalance}}</td>
+              </tr>
+            {{/each}}
+          {{else}}
+            <tr>
+              <td class="empty" colspan="5">Proyección indisponible.</td>
+            </tr>
+          {{/if}}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

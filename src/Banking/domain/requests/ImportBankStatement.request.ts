@@ -3,6 +3,6 @@ export type ImportBankStatementRequest = {
   month: number | string
   year: number | string
   churchId: string
-  file: any
+  fileContent: string
   uploadedBy: string
 }

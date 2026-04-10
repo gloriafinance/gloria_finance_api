@@ -29,11 +29,11 @@ export class MonthlyTithes {
         $gte: startDate,
         $lt: endDate,
       },
-      "financialConcept.name": {
-        $regex: church.getLang() === "pt-BR" ? "Dízimos" : "Diezmos",
-      },
+      "financialConcept.tag": "Tithes",
       type: ConceptType.INCOME,
     }
+
+    console.log(filters)
 
     const result = await this.financialRecordRepository.titheList(filters)
 

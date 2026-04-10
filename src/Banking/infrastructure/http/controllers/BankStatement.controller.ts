@@ -8,6 +8,7 @@ import {
   Query,
   Req,
   Res,
+  type BunMultipartFile,
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
@@ -46,7 +47,7 @@ import type { IQueueService } from "@/package/queue/domain"
 
 type ImportBankStatementPayload = Omit<
   ImportBankStatementRequest,
-  "file" | "uploadedBy" | "churchId"
+  "fileContent" | "uploadedBy" | "churchId"
 >
 
 @Controller("/api/v1/bank/statements")
@@ -98,6 +99,7 @@ export class BankStatementController {
         return
       }
 
+      const fileContent = await this.readUploadedCsv(file as BunMultipartFile)
       const bank = await this.resolveBankForParsing(body.bankId)
 
       const result = await new ImportBankStatement(
@@ -106,7 +108,7 @@ export class BankStatementController {
       ).execute({
         bank,
         ...body,
-        file,
+        fileContent,
         uploadedBy: req.auth.name,
         churchId: req.auth.churchId,
       })
@@ -236,5 +238,13 @@ export class BankStatementController {
     }
 
     return bank
+  }
+
+  private async readUploadedCsv(file: BunMultipartFile): Promise<string> {
+    if (file.text) {
+      return await file.text()
+    }
+
+    return Buffer.from(await file.arrayBuffer()).toString("utf-8")
   }
 }

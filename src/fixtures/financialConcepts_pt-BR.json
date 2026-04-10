@@ -141,7 +141,8 @@
     "affectsResult": true,
     "affectsBalance": true,
     "isOperational": false,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Tithes of Tithes"
   },
   {
     "name": "Gastos de Pessoal",
@@ -441,7 +442,8 @@
     "affectsResult": true,
     "affectsBalance": false,
     "isOperational": true,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Tithes"
   },
   {
     "name": "Oferta Mensal para Terreno",
