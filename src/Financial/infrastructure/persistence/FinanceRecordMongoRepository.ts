@@ -71,6 +71,7 @@ export class FinanceRecordMongoRepository
             _id: null,
             records: {
               $push: {
+                description: "$description",
                 amount: "$amount",
                 date: "$date",
                 availabilityAccountName: "$availabilityAccount.accountName",

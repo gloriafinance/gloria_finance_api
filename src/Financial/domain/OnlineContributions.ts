@@ -88,8 +88,8 @@ export class OnlineContributions extends AggregateRoot {
     this.status = status
   }
 
-  getContributionsId(): string {
-    return this.contributionId
+  getChurchId() {
+    return this.churchId
   }
 
   getId(): string | undefined {

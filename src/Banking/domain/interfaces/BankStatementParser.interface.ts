@@ -1,4 +1,4 @@
-import { Bank, IntermediateBankStatement } from "@/Banking/domain"
+import { Bank, type IntermediateBankStatement } from "@/Banking/domain"
 
 export interface IBankStatementParser {
   supports(bank: string): boolean
@@ -8,7 +8,7 @@ export interface IBankStatementParser {
       accountName: string
       availabilityAccountId: string
     }
-    filePath: string
+    fileContent: string
     accountName?: string
     month: number
     year: number

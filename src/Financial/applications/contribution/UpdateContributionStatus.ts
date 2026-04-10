@@ -107,15 +107,15 @@ export class UpdateContributionStatus {
     await new DispatchCreateFinancialRecord(this.queueService).execute({
       financialConcept: concept,
       amount: contribution.getAmount(),
-      churchId: contribution.getMember().getChurch().churchId,
+      churchId: contribution.getChurchId(),
       date: contribution.getPaidAt(),
       createdBy,
       financialRecordType: FinancialRecordType.INCOME,
       source: FinancialRecordSource.AUTO,
-      status: FinancialRecordStatus.RECONCILED,
+      status: FinancialRecordStatus.CLEARED,
       availabilityAccount: contribution.getAvailabilityAccount(),
       voucher: contribution.getBankTransferReceipt(),
-      description: concept.getName(),
+      description: `${concept.getName()}: ${contribution.getMember().getName()}`,
     })
   }
 }

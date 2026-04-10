@@ -1,13 +1,12 @@
-import { createReadStream } from "node:fs"
 import { parse } from "@fast-csv/parse"
 import { createHash } from "crypto"
-import { once } from "events"
 import { Logger } from "@/Shared/adapter/CustomLogger"
+import { Readable } from "node:stream"
 import {
   Bank,
   BankStatementDirection,
-  IBankStatementParser,
-  IntermediateBankStatement,
+  type IBankStatementParser,
+  type IntermediateBankStatement,
 } from "@/Banking/domain"
 
 type NubankCsvRow = {
@@ -32,73 +31,65 @@ export class NuBankCsvParser implements IBankStatementParser {
       accountName: string
       availabilityAccountId: string
     }
-    filePath: string
+    fileContent: string
     month: number
     year: number
   }): Promise<IntermediateBankStatement[]> {
-    const { filePath, bank, month, year, availabilityAccount } = params
+    const { fileContent, bank, month, year, availabilityAccount } = params
 
     this.logger.info("Parsing Nubank CSV bank statement", {
-      filePath,
+      contentLength: fileContent.length,
       bank,
       month,
       year,
     })
 
-    const stream = createReadStream(filePath, { encoding: "utf-8" })
-    const csvStream = stream.pipe(
-      parse<NubankCsvRow, NubankCsvRow>({
-        headers: true,
-        trim: true,
-        ignoreEmpty: true,
-      })
-    )
-
     const statements: IntermediateBankStatement[] = []
-    const errors: Error[] = []
+    await new Promise<void>((resolve, reject) => {
+      const csvStream = Readable.from([fileContent]).pipe(
+        parse<NubankCsvRow, NubankCsvRow>({
+          headers: true,
+          trim: true,
+          ignoreEmpty: true,
+        })
+      )
 
-    csvStream.on("data", (row: NubankCsvRow) => {
-      const postedAt = this.toUtcDate(row.Data)
-      const amount = Number(row.Valor.replace(",", "."))
-      const direction =
-        amount >= 0
-          ? BankStatementDirection.INCOME
-          : BankStatementDirection.OUTGO
-      const normalizedAmount = Math.abs(amount)
-      const description = row["Descrição"]?.trim() ?? ""
-      const bankRefId = row.Identificador?.trim() ?? ""
-      const fitId = `${BANK_CODE}:${bankRefId}`
-      const hash = this.createHash({
-        postedAt,
-        amount: normalizedAmount,
-        description,
-      })
+      csvStream
+        .on("error", (error) => reject(error))
+        .on("data", (row: NubankCsvRow) => {
+          const postedAt = this.toUtcDate(row.Data)
+          const amount = Number(row.Valor.replace(",", "."))
+          const direction =
+            amount >= 0
+              ? BankStatementDirection.INCOME
+              : BankStatementDirection.OUTGO
+          const normalizedAmount = Math.abs(amount)
+          const description = row["Descrição"]?.trim() ?? ""
+          const bankRefId = row.Identificador?.trim() ?? ""
+          const fitId = `${BANK_CODE}:${bankRefId}`
+          const hash = this.createHash({
+            postedAt,
+            amount: normalizedAmount,
+            description,
+          })
 
-      statements.push({
-        bank,
-        availabilityAccount,
-        bankRefId,
-        postedAt,
-        amount: normalizedAmount,
-        description,
-        direction,
-        fitId,
-        hash,
-        month,
-        year,
-        raw: row as unknown as Record<string, unknown>,
-      })
+          statements.push({
+            bank,
+            availabilityAccount,
+            bankRefId,
+            postedAt,
+            amount: normalizedAmount,
+            description,
+            direction,
+            fitId,
+            hash,
+            month,
+            year,
+            raw: row as unknown as Record<string, unknown>,
+          })
+        })
+        .on("end", () => resolve())
     })
-
-    csvStream.on("error", (error) => {
-      errors.push(error instanceof Error ? error : new Error(String(error)))
-    })
-
-    await once(csvStream, "end")
-
-    if (errors.length > 0) {
-      throw errors[0]
-    }
 
     return statements
   }
