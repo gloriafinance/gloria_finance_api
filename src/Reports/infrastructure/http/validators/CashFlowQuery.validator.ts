@@ -190,9 +190,23 @@ const normalizeCommonQuery = (
     }
   }
 
-  const availabilityAccountId = Array.isArray(query.availabilityAccountId)
-    ? query.availabilityAccountId.map(String)
-    : parseOptionalString(query.availabilityAccountId)
+  if (Array.isArray(query.availabilityAccountId)) {
+    return {
+      field: "availabilityAccountId",
+      message:
+        "availabilityAccountId debe ser una sola cuenta de disponibilidad.",
+      rule: "single_value",
+    }
+  }
+
+  const availabilityAccountId = parseOptionalString(query.availabilityAccountId)
+  if (!availabilityAccountId) {
+    return {
+      field: "availabilityAccountId",
+      message: "availabilityAccountId es obligatorio.",
+      rule: "required",
+    }
+  }
 
   return {
     churchId: parseOptionalString(query.churchId) ?? "",

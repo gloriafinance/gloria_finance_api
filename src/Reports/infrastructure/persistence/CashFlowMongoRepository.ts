@@ -22,9 +22,8 @@ const DEFAULT_PROJECTION_BUCKETS: Record<CashFlowGroupBy, number> = {
 
 type CashFlowNormalizedFilters = Omit<
   CashFlowFilters,
-  "availabilityAccountId" | "includeProjection" | "projectionBuckets"
+  "includeProjection" | "projectionBuckets"
 > & {
-  availabilityAccountIds?: string[]
   includeProjection: boolean
   projectionBuckets: number
 }
@@ -47,21 +46,6 @@ const getDateTruncUnit = (
 const roundAmount = (value: number): number => {
   const rounded = Math.round((Number(value) || 0) * 100) / 100
   return Object.is(rounded, -0) ? 0 : rounded
-}
-
-const normalizeStringArray = (
-  value?: string | string[]
-): string[] | undefined => {
-  if (value === undefined || value === null) {
-    return undefined
-  }
-
-  const items = (Array.isArray(value) ? value : [value])
-    .flatMap((entry) => String(entry).split(","))
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-
-  return items.length > 0 ? Array.from(new Set(items)) : undefined
 }
 
 const truncateDateToBucket = (date: Date, groupBy: CashFlowGroupBy): Date => {
@@ -238,9 +222,6 @@ export class CashFlowMongoRepository
   ): CashFlowNormalizedFilters {
     return {
       ...rawFilters,
-      availabilityAccountIds: normalizeStringArray(
-        rawFilters.availabilityAccountId
-      ),
       includeProjection: rawFilters.includeProjection === true,
       projectionBuckets:
         rawFilters.projectionBuckets && rawFilters.projectionBuckets > 0
@@ -630,11 +611,8 @@ export class CashFlowMongoRepository
       amount: { $type: "number" },
     }
 
-    if (filters.availabilityAccountIds?.length) {
-      match["availabilityAccount.availabilityAccountId"] = {
-        $in: filters.availabilityAccountIds,
-      }
-    }
+    match["availabilityAccount.availabilityAccountId"] =
+      filters.availabilityAccountId
 
     if (filters.costCenterId) {
       match["costCenter.costCenterId"] = filters.costCenterId

@@ -70,7 +70,7 @@ export interface CashFlowDirectResponse {
     startDate: string
     endDate: string
     groupBy: CashFlowGroupBy
-    availabilityAccountIds?: string[]
+    availabilityAccountId: string
     costCenterId?: string
     includeProjection: boolean
     projectionBuckets: number

@@ -41,11 +41,7 @@ export const mapCashFlowReportToResponse = (
     startDate: toIsoString(filters.startDate),
     endDate: toIsoString(filters.endDate),
     groupBy: filters.groupBy,
-    availabilityAccountIds: Array.isArray(filters.availabilityAccountId)
-      ? filters.availabilityAccountId
-      : filters.availabilityAccountId
-        ? [filters.availabilityAccountId]
-        : undefined,
+    availabilityAccountId: filters.availabilityAccountId,
     costCenterId: filters.costCenterId,
     includeProjection: filters.includeProjection === true,
     projectionBuckets:
