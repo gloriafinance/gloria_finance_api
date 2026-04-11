@@ -37,23 +37,22 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
   shouldQueueReminder(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date,
+    notificationTime: string
   ): boolean {
     const recurrencePattern = scheduleItem.getRecurrencePattern()
-    const timezoneName = this.resolveTimezone(
-      recurrencePattern.timezone,
-      churchTimezone
-    )
-    const localNow = dayjs(referenceDate ?? new Date()).tz(timezoneName)
+
+    const localNow = dayjs(referenceDate).tz(churchTimezone)
 
     if (recurrencePattern.dayOfWeek !== dayOfWeekByIndex[localNow.day()]) {
       return false
     }
 
+    const [hours, minutes] = notificationTime.split(":").map(Number)
     const reminderAt = localNow
       .startOf("day")
-      .hour(9)
-      .minute(0)
+      .hour(hours!)
+      .minute(minutes!)
       .second(0)
       .millisecond(0)
 
@@ -63,10 +62,10 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
 
     const startOfDay = localNow.startOf("day")
     const recurrenceStartDate = dayjs(recurrencePattern.startDate)
-      .tz(timezoneName)
+      .tz(churchTimezone)
       .startOf("day")
     const recurrenceEndDate = recurrencePattern.endDate
-      ? dayjs(recurrencePattern.endDate).tz(timezoneName).startOf("day")
+      ? dayjs(recurrencePattern.endDate).tz(churchTimezone).startOf("day")
       : null
 
     if (startOfDay.isBefore(recurrenceStartDate, "day")) {
@@ -81,20 +80,17 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
   }
 
   reminderDelayMs(
-    scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date,
+    notificationTime: string
   ): number {
-    const recurrencePattern = scheduleItem.getRecurrencePattern()
-    const timezoneName = this.resolveTimezone(
-      recurrencePattern.timezone,
-      churchTimezone
-    )
-    const localNow = dayjs(referenceDate ?? new Date()).tz(timezoneName)
+    const [hours, minutes] = notificationTime.split(":").map(Number)
+
+    const localNow = dayjs(referenceDate).tz(churchTimezone)
     const reminderAt = localNow
       .startOf("day")
-      .hour(9)
-      .minute(0)
+      .hour(hours!)
+      .minute(minutes!)
       .second(0)
       .millisecond(0)
 
@@ -104,20 +100,17 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
   formatScheduledDateTime(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date
   ): string {
     const recurrencePattern = scheduleItem.getRecurrencePattern()
-    const timezoneName = this.resolveTimezone(
-      recurrencePattern.timezone,
-      churchTimezone
-    )
+
     const startOfDay = dayjs(referenceDate ?? new Date())
-      .tz(timezoneName)
+      .tz(churchTimezone)
       .startOf("day")
     const [hours, minutes] = recurrencePattern.time.split(":").map(Number)
     const scheduledAt = startOfDay
-      .hour(hours)
-      .minute(minutes)
+      .hour(hours!)
+      .minute(minutes!)
       .second(0)
       .millisecond(0)
 
@@ -127,16 +120,12 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
   notificationDateKey(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date
   ): string {
     const recurrencePattern = scheduleItem.getRecurrencePattern()
-    const timezoneName = this.resolveTimezone(
-      recurrencePattern.timezone,
-      churchTimezone
-    )
 
     return dayjs(referenceDate ?? new Date())
-      .tz(timezoneName)
+      .tz(churchTimezone)
       .startOf("day")
       .format("YYYY-MM-DD")
   }
@@ -151,24 +140,11 @@ export class ScheduleReminderDayjsService implements IScheduleReminderService {
       return false
     }
 
-    const timezoneName = this.resolveTimezone(
-      recurrencePattern.timezone,
-      churchTimezone
-    )
-    const localNow = dayjs(referenceDate ?? new Date()).tz(timezoneName)
+    const localNow = dayjs(referenceDate ?? new Date()).tz(churchTimezone)
     const recurrenceEndDate = dayjs(recurrencePattern.endDate)
-      .tz(timezoneName)
+      .tz(churchTimezone)
       .startOf("day")
 
     return recurrenceEndDate.isBefore(localNow.startOf("day"), "day")
-  }
-
-  private resolveTimezone(
-    recurrenceTimezone?: string,
-    churchTimezone?: string
-  ): string {
-    return (
-      recurrenceTimezone?.trim() || churchTimezone?.trim() || DEFAULT_TIMEZONE
-    )
   }
 }

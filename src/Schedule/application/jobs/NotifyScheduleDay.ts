@@ -20,6 +20,7 @@ import {
   NotificationsTopic,
 } from "@/PushNotifications/domain"
 import type { ICacheService } from "@/Shared/domain"
+import { NotificationEventsAgent } from "@/Schedule/application/jobs/agents/NotificationEvents.agent.ts"
 
 export class NotifyScheduleDay implements IJob {
   private readonly logger = Logger(NotifyScheduleDay.name)
@@ -89,9 +90,11 @@ export class NotifyScheduleDay implements IJob {
       !this.scheduleReminderService.shouldQueueReminder(
         scheduleItem,
         church.getTimezone(),
-        referenceDate
+        referenceDate,
+        church.getNotificationTime()
       )
     ) {
+      this.logger.info(`It is not to remember the event`)
       return
     }
 
@@ -106,17 +109,21 @@ export class NotifyScheduleDay implements IJob {
       `Notifying schedule day for church ${church.getName()} event: ${scheduleItem.getTitle()}`
     )
 
+    const notificationData = await new NotificationEventsAgent().execute({
+      church_doctrinal_profile_text: church.getDoctrinalBases().join(". "),
+      lang: church.getLang(),
+      title: scheduleItem.getTitle(),
+      activityType: scheduleItem.getType(),
+      time: scheduleItem.getRecurrencePattern().time,
+    })
+
     // TODO it is notifying everyone, however the evaluation of the visibility field must be implemented
     this.queueService.dispatch<NotificationRequest>(
       QueueName.NotifyFCMJob,
       {
         churchId: church.getChurchId(),
-        title: "Schedule Day",
-        body: `${scheduleItem.getTitle()} at ${this.scheduleReminderService.formatScheduledDateTime(
-          scheduleItem,
-          church.getTimezone(),
-          referenceDate
-        )}`,
+        title: notificationData.title,
+        body: notificationData.body,
         data: {
           type: NotificationsTopic.EVENT_NEW,
           id: scheduleItem.getScheduleItemId(),
@@ -126,9 +133,9 @@ export class NotifyScheduleDay implements IJob {
       {
         jobId: `schedule-day:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`,
         delayMs: this.scheduleReminderService.reminderDelayMs(
-          scheduleItem,
           church.getTimezone(),
-          referenceDate
+          referenceDate,
+          church.getNotificationTime()
         ),
       }
     )

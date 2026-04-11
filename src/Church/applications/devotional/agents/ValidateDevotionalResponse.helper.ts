@@ -3,24 +3,7 @@ import {
   AIProviderErrorCode,
 } from "@/package/ai/errors/AIProviderError.ts"
 import type { DevotionalResponse } from "@/Church/domain"
-
-const readFirstString = (
-  source: Record<string, unknown>,
-  keys: string[]
-): string | null => {
-  for (const key of keys) {
-    const value = source[key]
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim()
-    }
-  }
-  return null
-}
-
-const compactText = (value: string): string =>
-  String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
+import { compactText, readFirstString } from "@/Shared/helpers"
 
 const limit = (value: string, max: number): string =>
   value.length > max ? value.slice(0, max).trim() : value

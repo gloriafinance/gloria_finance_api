@@ -20,7 +20,7 @@ export const ScheduleQueue = (): IListQueue[] => [
       CacheProviderService.getInstance(),
     ],
     scheduler: {
-      pattern: "0 12 * * *",
+      pattern: "0 6 * * *",
       tz: "UTC",
     },
   },

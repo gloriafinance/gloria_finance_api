@@ -4,19 +4,20 @@ export interface IScheduleReminderService {
   shouldQueueReminder(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date,
+    notificationTime: string
   ): boolean
 
   reminderDelayMs(
-    scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date,
+    notificationTime: string
   ): number
 
   formatScheduledDateTime(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date
   ): string
 
   notificationDateKey(
@@ -28,6 +29,6 @@ export interface IScheduleReminderService {
   isExpired(
     scheduleItem: ScheduleEvent,
     churchTimezone: string,
-    referenceDate?: Date
+    referenceDate: Date
   ): boolean
 }

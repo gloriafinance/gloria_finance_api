@@ -1,6 +1,6 @@
 import { type Schema, SchemaType } from "@google/generative-ai"
 import { AITextService } from "@/package/ai/service/AITextService.ts"
-import { validateDevotionalResponse } from "@/Church/infrastructure/http/validators/ValidateDevotionalResponse.helper.ts"
+import { validateDevotionalResponse } from "@/Church/applications/devotional/agents/ValidateDevotionalResponse.helper.ts"
 import { AIProviderError } from "@/package/ai/errors/AIProviderError.ts"
 
 export type PromptUserRequest = {
