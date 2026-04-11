@@ -8,6 +8,7 @@ import { buildUtcDateTime, StringToDate } from "@/Shared/helpers/date.ts"
 import type { CashFlowFilters, CashFlowGroupBy } from "@/Reports/domain"
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
+const ACCOUNT_TYPES = ["BANK", "CASH", "WALLET", "INVESTMENT"] as const
 
 const sendValidationError = (
   res: ServerResponse,
@@ -162,6 +163,19 @@ const normalizeCommonQuery = (
     }
   }
 
+  if (
+    query.method !== undefined &&
+    !ACCOUNT_TYPES.includes(
+      String(query.method).trim() as (typeof ACCOUNT_TYPES)[number]
+    )
+  ) {
+    return {
+      field: "method",
+      message: "method debe ser BANK, CASH, WALLET o INVESTMENT.",
+      rule: "in",
+    }
+  }
+
   const includeProjection =
     query.includeProjection === undefined
       ? false
@@ -190,29 +204,17 @@ const normalizeCommonQuery = (
     }
   }
 
-  if (Array.isArray(query.availabilityAccountId)) {
-    return {
-      field: "availabilityAccountId",
-      message:
-        "availabilityAccountId debe ser una sola cuenta de disponibilidad.",
-      rule: "single_value",
-    }
-  }
-
-  const availabilityAccountId = parseOptionalString(query.availabilityAccountId)
-  if (!availabilityAccountId) {
-    return {
-      field: "availabilityAccountId",
-      message: "availabilityAccountId es obligatorio.",
-      rule: "required",
-    }
-  }
+  const availabilityAccountId = Array.isArray(query.availabilityAccountId)
+    ? query.availabilityAccountId.map(String)
+    : parseOptionalString(query.availabilityAccountId)
 
   return {
     churchId: parseOptionalString(query.churchId) ?? "",
     startDate,
     endDate,
     groupBy: resolveGroupBy(startDate, endDate, query.groupBy),
+    symbol: parseOptionalString(query.symbol),
+    method: parseOptionalString(query.method),
     availabilityAccountId,
     costCenterId: parseOptionalString(query.costCenterId),
     includeProjection,

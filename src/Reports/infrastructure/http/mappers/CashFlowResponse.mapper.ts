@@ -5,26 +5,28 @@ import type {
   CashFlowFilters,
   CashFlowReportResult,
 } from "@/Reports/domain"
+import { getCashFlowReportCatalog } from "@/Reports/applications/localization/CashFlowReport.localization.ts"
 
 const toIsoString = (value: Date): string => new Date(value).toISOString()
-const PROJECTION_LABEL = "Proyección base (estimación por media móvil 3M)"
 
 const buildMessages = (
   report: CashFlowReportResult,
-  filters: CashFlowFilters
+  filters: CashFlowFilters,
+  lang?: string
 ): string[] => {
+  const messagesCatalog = getCashFlowReportCatalog(lang).messages
   const messages: string[] = []
 
   if (report.series.length === 0) {
-    messages.push("No hay datos para los filtros seleccionados.")
+    messages.push(messagesCatalog.noData)
   }
 
   if (filters.includeProjection && report.projection.status === "unavailable") {
-    messages.push("Proyección indisponible por histórico insuficiente.")
+    messages.push(messagesCatalog.projectionUnavailable)
   }
 
   if (filters.includeProjection && report.projection.status === "degraded") {
-    messages.push("Proyección calculada con menos de 3 meses de histórico.")
+    messages.push(messagesCatalog.projectionDegraded)
   }
 
   return messages
@@ -33,15 +35,22 @@ const buildMessages = (
 export const mapCashFlowReportToResponse = (
   report: CashFlowReportResult,
   filters: CashFlowFilters,
-  generatedAt: Date
+  generatedAt: Date,
+  lang?: string
 ): CashFlowDirectResponse => ({
-  reportName: "Flujo de Caja (Directo)",
+  reportName: getCashFlowReportCatalog(lang).reportName,
   generatedAt: toIsoString(generatedAt),
   filters: {
     startDate: toIsoString(filters.startDate),
     endDate: toIsoString(filters.endDate),
     groupBy: filters.groupBy,
-    availabilityAccountId: filters.availabilityAccountId,
+    symbol: filters.symbol,
+    method: filters.method,
+    availabilityAccountIds: Array.isArray(filters.availabilityAccountId)
+      ? filters.availabilityAccountId
+      : filters.availabilityAccountId
+        ? [filters.availabilityAccountId]
+        : undefined,
     costCenterId: filters.costCenterId,
     includeProjection: filters.includeProjection === true,
     projectionBuckets:
@@ -56,14 +65,14 @@ export const mapCashFlowReportToResponse = (
     runningBalance: row.runningBalance,
   })),
   projection: {
-    label: PROJECTION_LABEL,
+    label: getCashFlowReportCatalog(lang).projectionLabel,
     status: report.projection.status,
     message: !filters.includeProjection
       ? undefined
       : report.projection.status === "unavailable"
-        ? "Proyección indisponible por histórico insuficiente."
+        ? getCashFlowReportCatalog(lang).messages.projectionUnavailable
         : report.projection.status === "degraded"
-          ? "Proyección calculada con menos de 3 meses de histórico."
+          ? getCashFlowReportCatalog(lang).messages.projectionDegraded
           : undefined,
     buckets: report.projection.buckets.map((row) => ({
       period: toIsoString(row.period),
@@ -73,7 +82,7 @@ export const mapCashFlowReportToResponse = (
       projectedBalance: row.projectedBalance,
     })),
   },
-  messages: buildMessages(report, filters),
+  messages: buildMessages(report, filters, lang),
 })
 
 export const mapCashFlowBucketDetailsToResponse = (

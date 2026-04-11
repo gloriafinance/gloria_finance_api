@@ -5,7 +5,7 @@ import {
 } from "../../domain"
 import type { IFinancialRecordRepository } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter/CustomLogger"
-import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
+import { GeneratePDFAdapter } from "@/Shared/adapter/GeneratePDF.adapter"
 import type { IXLSExportAdapter, ReportFile } from "@/Shared/domain"
 import { PrepareFinanceRecordCriteria } from "./ListFilters"
 import type { IChurchRepository } from "@/Church/domain"
@@ -100,7 +100,7 @@ export class GenerateFinanceRecordReport {
   constructor(
     private readonly churchRepository: IChurchRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
-    private readonly pdfGenerator: PuppeteerAdapter,
+    private readonly pdfGenerator: GeneratePDFAdapter,
     private readonly excelExportAdapter: IXLSExportAdapter
   ) {}
 

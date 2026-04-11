@@ -6,7 +6,9 @@ export interface CashFlowFilters {
   startDate: Date
   endDate: Date
   groupBy: CashFlowGroupBy
-  availabilityAccountId: string
+  symbol?: string
+  method?: string
+  availabilityAccountId?: string | string[]
   costCenterId?: string
   includeProjection?: boolean
   projectionBuckets?: number

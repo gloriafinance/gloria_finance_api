@@ -207,6 +207,44 @@
     },
     "empty": "No se encontraron movimientos financieros para los filtros informados."
   },
+  "cash_flow_report": {
+    "title": "Flujo de Caja (Directo)",
+    "church_label": "Iglesia:",
+    "church_not_informed": "Congregación no informada",
+    "generated_at": "Generado en:",
+    "period_label": "Período:",
+    "group_by": "Agrupación:",
+    "account_types": "Tipos de cuenta:",
+    "primary_currency": "Moneda principal:",
+    "availability_accounts": "Cuentas de disponibilidad:",
+    "cost_center": "Centro de costo:",
+    "summary": {
+      "opening_balance": "Saldo inicial",
+      "entries": "Entradas",
+      "exits": "Salidas",
+      "net": "Neto",
+      "closing_balance": "Saldo final"
+    },
+    "realized_series_title": "Serie realizada",
+    "table": {
+      "period": "Período",
+      "entries": "Entradas",
+      "exits": "Salidas",
+      "net": "Neto",
+      "running_balance": "Saldo acumulado"
+    },
+    "projection": {
+      "title": "Proyección base (estimación por media móvil 3M)",
+      "status_label": "Estado:",
+      "entries": "Entradas proyectadas",
+      "exits": "Salidas proyectadas",
+      "net": "Neto proyectado",
+      "balance": "Saldo proyectado",
+      "disclaimer": "Esta proyección es una referencia simple basada en el comportamiento reciente. No considera eventos futuros, compromisos programados ni presupuesto.",
+      "empty": "Proyección no disponible."
+    },
+    "empty": "No hay datos para los filtros seleccionados."
+  },
   "inventory_report": {
     "title": "Inventario Patrimonial",
     "generated_at": "Generado en:",

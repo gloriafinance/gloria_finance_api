@@ -1,8 +1,12 @@
 <html lang="{{i18nLang}}">
   <head>
     <meta charset="UTF-8" />
-    <title>Flujo de Caja (Directo)</title>
+    <title>{{t "cash_flow_report.title"}}</title>
     <style>
+      :root {
+        color-scheme: light;
+      }
+
       body {
         font-family: Arial, sans-serif;
         margin: 24px;
@@ -98,49 +102,93 @@
     </style>
   </head>
   <body>
-    <h1>Flujo de Caja (Directo)</h1>
+    <h1>{{t "cash_flow_report.title"}}</h1>
 
     <div class="meta">
-      <p><strong>Iglesia:</strong>
-        {{#if church}}{{church}}{{else}}N/A{{/if}}</p>
-      <p><strong>Generado:</strong> {{formatDate generatedAt}}</p>
-      <p><strong>Período:</strong>
+      <p>
+        <strong>{{t "cash_flow_report.church_label"}}</strong>
+        {{#if church}}
+          {{church}}
+        {{else}}
+          {{t "cash_flow_report.church_not_informed"}}
+        {{/if}}
+      </p>
+      <p>
+        <strong>{{t "cash_flow_report.generated_at"}}</strong>
+        {{formatDate generatedAt}}
+      </p>
+      <p>
+        <strong>{{t "cash_flow_report.period_label"}}</strong>
         {{formatDate filters.startDate}}
         -
-        {{formatDate filters.endDate}}</p>
-      <p><strong>Agrupación:</strong> {{filters.groupBy}}</p>
-      {{#if filters.method}}
-        <p><strong>Método:</strong> {{filters.method}}</p>
+        {{formatDate filters.endDate}}
+      </p>
+      <p>
+        <strong>{{t "cash_flow_report.group_by"}}</strong>
+        {{filters.groupByLabel}}
+      </p>
+      {{#if filters.methodLabel}}
+        <p>
+          <strong>{{t "cash_flow_report.account_types"}}</strong>
+          {{filters.methodLabel}}
+        </p>
       {{/if}}
-      {{#if filters.financialConceptId}}
-        <p><strong>Concepto financiero:</strong>
-          {{filters.financialConceptId}}</p>
+      {{#if filters.symbol}}
+        <p>
+          <strong>{{t "cash_flow_report.primary_currency"}}</strong>
+          {{filters.symbol}}
+        </p>
+      {{/if}}
+      {{#if filters.availabilityAccountsLabel}}
+        <p>
+          <strong>{{t "cash_flow_report.availability_accounts"}}</strong>
+          {{filters.availabilityAccountsLabel}}
+        </p>
       {{/if}}
       {{#if filters.costCenterId}}
-        <p><strong>Centro de costo:</strong> {{filters.costCenterId}}</p>
+        <p>
+          <strong>{{t "cash_flow_report.cost_center"}}</strong>
+          {{filters.costCenterId}}
+        </p>
       {{/if}}
     </div>
 
     <div class="summary-grid">
       <div class="card">
-        <span class="label">Saldo inicial</span>
-        <span class="value">{{formatCurrency summary.openingBalance}}</span>
+        <span class="label">{{t
+            "cash_flow_report.summary.opening_balance"
+          }}</span>
+        <span class="value">{{formatCurrency
+            summary.openingBalance
+            filters.symbol
+          }}</span>
       </div>
       <div class="card">
-        <span class="label">Entradas</span>
-        <span class="value">{{formatCurrency summary.entries}}</span>
+        <span class="label">{{t "cash_flow_report.summary.entries"}}</span>
+        <span class="value">{{formatCurrency
+            summary.entries
+            filters.symbol
+          }}</span>
       </div>
       <div class="card">
-        <span class="label">Salidas</span>
-        <span class="value">{{formatCurrency summary.exits}}</span>
+        <span class="label">{{t "cash_flow_report.summary.exits"}}</span>
+        <span class="value">{{formatCurrency
+            summary.exits
+            filters.symbol
+          }}</span>
       </div>
       <div class="card">
-        <span class="label">Neto</span>
-        <span class="value">{{formatCurrency summary.net}}</span>
+        <span class="label">{{t "cash_flow_report.summary.net"}}</span>
+        <span class="value">{{formatCurrency summary.net filters.symbol}}</span>
       </div>
       <div class="card">
-        <span class="label">Saldo final</span>
-        <span class="value">{{formatCurrency summary.closingBalance}}</span>
+        <span class="label">{{t
+            "cash_flow_report.summary.closing_balance"
+          }}</span>
+        <span class="value">{{formatCurrency
+            summary.closingBalance
+            filters.symbol
+          }}</span>
       </div>
     </div>
 
@@ -152,15 +200,15 @@
       </div>
     {{/if}}
 
-    <h2>Serie realizada</h2>
+    <h2>{{t "cash_flow_report.realized_series_title"}}</h2>
     <table>
       <thead>
         <tr>
-          <th>Período</th>
-          <th class="number">Entradas</th>
-          <th class="number">Salidas</th>
-          <th class="number">Neto</th>
-          <th class="number">Saldo acumulado</th>
+          <th>{{t "cash_flow_report.table.period"}}</th>
+          <th class="number">{{t "cash_flow_report.table.entries"}}</th>
+          <th class="number">{{t "cash_flow_report.table.exits"}}</th>
+          <th class="number">{{t "cash_flow_report.table.net"}}</th>
+          <th class="number">{{t "cash_flow_report.table.running_balance"}}</th>
         </tr>
       </thead>
       <tbody>
@@ -168,59 +216,91 @@
           {{#each series}}
             <tr>
               <td>{{formatDate period}}</td>
-              <td class="number">{{formatCurrency entries}}</td>
-              <td class="number">{{formatCurrency exits}}</td>
-              <td class="number">{{formatCurrency net}}</td>
-              <td class="number">{{formatCurrency runningBalance}}</td>
+              <td class="number">{{formatCurrency
+                  entries
+                  @root.filters.symbol
+                }}</td>
+              <td class="number">{{formatCurrency
+                  exits
+                  @root.filters.symbol
+                }}</td>
+              <td class="number">{{formatCurrency
+                  net
+                  @root.filters.symbol
+                }}</td>
+              <td class="number">{{formatCurrency
+                  runningBalance
+                  @root.filters.symbol
+                }}</td>
             </tr>
           {{/each}}
         {{else}}
           <tr>
-            <td class="empty" colspan="5">No hay datos para los filtros
-              seleccionados.</td>
+            <td class="empty" colspan="5">{{t "cash_flow_report.empty"}}</td>
           </tr>
         {{/if}}
       </tbody>
     </table>
 
-    <div class="projection-box">
-      <h2>{{projection.label}}</h2>
-      <p>Estado: {{projection.status}}</p>
-      {{#if projection.message}}
-        <p>{{projection.message}}</p>
-      {{/if}}
-      <p>Esta proyección es una referencia simple basada en el comportamiento
-        reciente. No considera eventos futuros, compromisos programados ni
-        presupuesto.</p>
+    {{#if filters.includeProjection}}
+      <div class="projection-box">
+        <h2>{{t "cash_flow_report.projection.title"}}</h2>
+        <p>
+          <strong>{{t "cash_flow_report.projection.status_label"}}</strong>
+          {{projection.statusLabel}}
+        </p>
+        {{#if projection.message}}
+          <p>{{projection.message}}</p>
+        {{/if}}
+        <p>{{t "cash_flow_report.projection.disclaimer"}}</p>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th class="number">Entradas proyectadas</th>
-            <th class="number">Salidas proyectadas</th>
-            <th class="number">Neto proyectado</th>
-            <th class="number">Saldo proyectado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#if projection.buckets.length}}
-            {{#each projection.buckets}}
-              <tr>
-                <td>{{formatDate period}}</td>
-                <td class="number">{{formatCurrency projectedEntries}}</td>
-                <td class="number">{{formatCurrency projectedExits}}</td>
-                <td class="number">{{formatCurrency projectedNet}}</td>
-                <td class="number">{{formatCurrency projectedBalance}}</td>
-              </tr>
-            {{/each}}
-          {{else}}
+        <table>
+          <thead>
             <tr>
-              <td class="empty" colspan="5">Proyección indisponible.</td>
+              <th>{{t "cash_flow_report.table.period"}}</th>
+              <th class="number">{{t
+                  "cash_flow_report.projection.entries"
+                }}</th>
+              <th class="number">{{t "cash_flow_report.projection.exits"}}</th>
+              <th class="number">{{t "cash_flow_report.projection.net"}}</th>
+              <th class="number">{{t
+                  "cash_flow_report.projection.balance"
+                }}</th>
             </tr>
-          {{/if}}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {{#if projection.buckets.length}}
+              {{#each projection.buckets}}
+                <tr>
+                  <td>{{formatDate period}}</td>
+                  <td class="number">{{formatCurrency
+                      projectedEntries
+                      @root.filters.symbol
+                    }}</td>
+                  <td class="number">{{formatCurrency
+                      projectedExits
+                      @root.filters.symbol
+                    }}</td>
+                  <td class="number">{{formatCurrency
+                      projectedNet
+                      @root.filters.symbol
+                    }}</td>
+                  <td class="number">{{formatCurrency
+                      projectedBalance
+                      @root.filters.symbol
+                    }}</td>
+                </tr>
+              {{/each}}
+            {{else}}
+              <tr>
+                <td class="empty" colspan="5">{{t
+                    "cash_flow_report.projection.empty"
+                  }}</td>
+              </tr>
+            {{/if}}
+          </tbody>
+        </table>
+      </div>
+    {{/if}}
   </body>
 </html>

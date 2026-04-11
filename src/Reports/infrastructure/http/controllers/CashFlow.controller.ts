@@ -33,6 +33,7 @@ import {
   CashFlowQueryValidator,
 } from "@/Reports/infrastructure/http/validators/CashFlowQuery.validator.ts"
 import { ChurchMongoRepository } from "@/Church/infrastructure/persistence/ChurchMongoRepository.ts"
+import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository.ts"
 import { HandlebarsHTMLAdapter } from "@/Shared/adapter/HandlebarsHTML.adapter.ts"
 import { PuppeteerAdapter } from "@/Shared/adapter/GeneratePDF.adapter.ts"
 import { XLSExportAdapter } from "@/Shared/adapter/XLSExportAdapter.ts"
@@ -58,7 +59,9 @@ export class CashFlowController {
 
       res
         .status(HttpStatus.OK)
-        .send(mapCashFlowReportToResponse(data, filters, new Date()))
+        .send(
+          mapCashFlowReportToResponse(data, filters, new Date(), req.auth.lang)
+        )
     } catch (e) {
       domainResponse(e, res)
     }
@@ -101,6 +104,7 @@ export class CashFlowController {
     try {
       const file = await new GenerateCashFlowReportExport(
         ChurchMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
         CashFlowMongoRepository.getInstance(),
         new PuppeteerAdapter(
           new HandlebarsHTMLAdapter(),
