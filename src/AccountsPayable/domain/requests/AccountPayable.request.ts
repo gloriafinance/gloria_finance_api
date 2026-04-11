@@ -1,5 +1,5 @@
 import {
-  AccountPayableTaxMetadata,
+  type AccountPayableTaxMetadata,
   AccountPayableTaxStatus,
   TaxDocumentType,
 } from "@/AccountsPayable/domain"
