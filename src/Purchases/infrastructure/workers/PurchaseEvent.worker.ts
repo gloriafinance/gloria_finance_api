@@ -20,16 +20,20 @@ export class PurchaseEventWorker implements IJob {
   }
 
   private async processUpdate(args: PurchaseEvent) {
-    if (args.source === "accountPayablePaid") {
-      const purchase = await PurchaseMongoRepository.getInstance().one({
-        "accountPayable.accountPayableId": args.data.accountPayableId,
-      })
-
-      if (!purchase) {
-        return
-      }
-
-      purchase.setAccountPayable(args.data)
+    if (args.source !== "accountPayablePaid") {
+      return
     }
+
+    const purchase = await PurchaseMongoRepository.getInstance().one({
+      "accountPayable.accountPayableId": args.data.accountPayableId,
+    })
+
+    if (!purchase) {
+      return
+    }
+
+    purchase.setAccountPayable(args.data)
+
+    await PurchaseMongoRepository.getInstance().upsert(purchase)
   }
 }

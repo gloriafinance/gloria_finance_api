@@ -123,13 +123,7 @@ export class PurchaseController {
   ) {
     let request: any
     try {
-      request = {
-        ...body,
-        churchId: req.auth.churchId,
-        createdBy: req.auth.name,
-        symbol: req.auth.symbolFormatMoney,
-        invoice: "",
-      } as any
+      request = await this.preparePayload(body, req)
 
       await new RegisterCreditPurchases(
         new CreateAccountPayable(
