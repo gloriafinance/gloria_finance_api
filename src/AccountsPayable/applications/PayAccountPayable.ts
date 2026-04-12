@@ -24,7 +24,7 @@ import {
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import { FinancialConceptNotFound } from "@/FinanceConfig/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
-import type { IQueueService } from "@/package/queue/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 export class PayAccountPayable {
   private logger = Logger(PayAccountPayable.name)
@@ -42,10 +42,9 @@ export class PayAccountPayable {
 
     const unitOfWork = new UnitOfWork()
 
-    const accountPayable: AccountPayable | undefined =
-      await this.accountPayableRepository.one({
-        accountPayableId: req.accountPayableId,
-      })
+    const accountPayable = await this.accountPayableRepository.one({
+      accountPayableId: req.accountPayableId,
+    })
 
     if (!accountPayable) {
       this.logger.debug(`Account Payable not found`)
@@ -65,9 +64,8 @@ export class PayAccountPayable {
         this.availabilityAccountRepository
       ).execute(req.availabilityAccountId, accountPayable.getChurchId())
 
-    //TODO multi language support
     const concept = await this.financialConceptRepository.one({
-      name: "Contas a Pagar",
+      tag: "Accounts to Pay",
       churchId: accountPayable.getChurchId(),
     })
 
@@ -105,10 +103,24 @@ export class PayAccountPayable {
         status: FinancialRecordStatus.CLEARED,
         amount: req.amount.getValue(),
         financialConcept: concept,
-        description: `pagamento de conta a pagar: parcela: ${req.installmentIds.join(",")}`,
+        description: `pagamento de conta a pagar (${accountPayable.getDescription()}): parcela: ${req.installmentIds.join(",")}`,
         reference: {
           entityId: `${accountPayable.getAccountPayableId()} installments ${req.installmentIds.join(",")}`,
           type: "AccountPayable",
+        },
+      })
+
+      this.queueService.dispatch(QueueName.PurchasesEvent, {
+        event: "update",
+        source: "accountPayablePaid",
+        data: {
+          accountPayableId: accountPayable.getAccountPayableId(),
+          amountPaid: accountPayable.getAmountPaid(),
+          amountTotal: accountPayable.getAmountTotal(),
+          installments: {
+            installments: accountPayable.getNumberInstallments(),
+            installmentsPaid: accountPayable.getAmountFeesPaid(),
+          },
         },
       })
     })

@@ -1,6 +1,6 @@
 import { Purchase } from "../Purchase"
-import { Purchase as PurchaseModel } from "../models"
-import { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { Purchase as PurchaseModel } from "../models"
+import { Criteria, type Paginate } from "@abejarano/ts-mongodb-criteria"
 
 export interface IPurchaseRepository {
   upsert(purchase: Purchase): Promise<void>

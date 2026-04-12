@@ -1,4 +1,4 @@
-import { AccountType } from "../../../Financial/domain"
+import { AccountType } from "@/FinanceConfig/domain"
 
 export type Purchase = {
   purchaseId: string
@@ -22,4 +22,14 @@ export type Purchase = {
     costCenterId: string
     name: string
   }
+  accountPayable: {
+    accountPayableId: string
+    amountPaid: number
+    amountTotal: number
+    installments: {
+      installments: number
+      installmentsPaid: number
+    }
+  }
+  paymentType: "cash" | "credit"
 }
