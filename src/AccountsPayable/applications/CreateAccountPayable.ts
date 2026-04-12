@@ -1,25 +1,21 @@
 import { Logger } from "@/Shared/adapter"
 import {
   AccountPayable,
-  AccountPayableRequest,
-  IAccountPayableRepository,
-  ISupplierRepository,
+  type AccountPayableRequest,
+  type IAccountPayableRepository,
+  type ISupplierRepository,
 } from "@/AccountsPayable/domain"
 import { SupplierNotFound } from "@/AccountsPayable/domain/exceptions/SupplierNotFound"
-import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
-import { IQueueService } from "@/Shared/domain"
 
 export class CreateAccountPayable {
   private logger = Logger(CreateAccountPayable.name)
 
   constructor(
     private readonly accountPayableRepository: IAccountPayableRepository,
-    private readonly supplierRepository: ISupplierRepository,
-    private readonly financialConceptRepository: IFinancialConceptRepository,
-    private readonly queueService: IQueueService
+    private readonly supplierRepository: ISupplierRepository
   ) {}
 
-  async execute(args: AccountPayableRequest) {
+  async execute(args: AccountPayableRequest): Promise<AccountPayable> {
     this.logger.info(`Start Create Account Payable`, args)
 
     const supplier = await this.supplierRepository.one({
@@ -44,5 +40,7 @@ export class CreateAccountPayable {
     await this.accountPayableRepository.upsert(accountPayable)
 
     this.logger.info(`CreateAccountPayable finish`)
+
+    return accountPayable
   }
 }

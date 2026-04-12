@@ -1,6 +1,5 @@
 export type RecordPurchaseRequest = {
   costCenterId: string
-  bankId: string
   financialConceptId: string
   churchId: string
   purchaseDate: Date
@@ -14,6 +13,5 @@ export type RecordPurchaseRequest = {
     name: string
   }>
   availabilityAccountId: string
-  file?: any
   createdBy: string
 }

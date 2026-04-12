@@ -1,90 +1,46 @@
-import { Logger } from "@/Shared/adapter"
-import { IPurchaseRepository } from "../domain/interfaces"
-import { RecordPurchaseRequest } from "../domain/requests"
-import {
+import type { IPurchaseRepository } from "../domain/interfaces"
+import type { RecordPurchaseRequest } from "../domain/requests"
+import type {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import { DispatchCreateFinancialRecord } from "@/Financial/applications"
-import { Purchase } from "../domain"
-import { IQueueService } from "@/Shared/domain"
-import {
-  AccountType,
-  FinancialRecordSource,
-  FinancialRecordStatus,
-  FinancialRecordType,
-} from "@/Financial/domain"
-import {
-  FindAvailabilityAccountByAvailabilityAccountId,
-  FindCostCenterByCostCenterId,
-} from "@/FinanceConfig/applications"
+import type { IQueueService } from "@/package/queue/domain"
+import { BasePurchaseRecord } from "@/Purchases/applications/BasePurchaseRecord.ts"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
-export class RecordPurchase {
-  private logger = Logger(RecordPurchase.name)
-
+export class RecordPurchase extends BasePurchaseRecord {
   constructor(
-    private readonly purchaseRepository: IPurchaseRepository,
+    purchaseRepository: IPurchaseRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
-    private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
-    private readonly financialConcept: IFinancialConceptRepository,
-    private readonly queueService: IQueueService
-  ) {}
+    financialConfigurationRepository: IFinancialConfigurationRepository,
+    financialConcept: IFinancialConceptRepository,
+    queueService: IQueueService
+  ) {
+    super(
+      purchaseRepository,
+      financialConfigurationRepository,
+      queueService,
+      financialConcept
+    )
+  }
 
   async execute(request: RecordPurchaseRequest) {
-    this.logger.info(`RecordPurchase`, request)
-
     const account = await new FindAvailabilityAccountByAvailabilityAccountId(
       this.availabilityAccountRepository
-    ).execute(request.availabilityAccountId)
+    ).execute(request.availabilityAccountId!)
 
-    const costCenter = await new FindCostCenterByCostCenterId(
-      this.financialConfigurationRepository
-    ).execute(request.churchId, request.costCenterId)
+    const { purchase, costCenter } = await this.basicRecord({
+      ...request,
+      availabilityAccount: account,
+      paymentType: "cash",
+    })
 
-    const purchase = Purchase.create(
-      request.financialConceptId,
-      request.churchId,
-      new Date(request.purchaseDate),
-      Number(request.total),
-      Number(request.tax),
-      request.description,
-      request.invoice,
+    await this.generateFinancialRecord(
+      request,
       account,
       costCenter,
-      request.items,
-      request.createdBy
+      purchase.getPurchaseId()
     )
-
-    this.logger.info(`RecordPurchase saving purchase`, purchase)
-    await this.purchaseRepository.upsert(purchase)
-
-    const concept = await this.financialConcept.one({
-      financialConceptId: request.financialConceptId,
-    })
-
-    await new DispatchCreateFinancialRecord(this.queueService).execute({
-      financialConcept: concept,
-      churchId: request.churchId,
-      amount: request.total,
-      date: request.purchaseDate,
-      availabilityAccount: account,
-      costCenter: { ...costCenter.toPrimitives() },
-      voucher: request.invoice,
-      description: request.description,
-      createdBy: request.createdBy,
-      financialRecordType: FinancialRecordType.OUTGO,
-      source: FinancialRecordSource.AUTO,
-      status:
-        account.getType() !== AccountType.CASH
-          ? FinancialRecordStatus.CLEARED
-          : FinancialRecordStatus.RECONCILED,
-      reference: {
-        type: Purchase.name,
-        entityId: purchase.getPurchaseId(),
-      },
-    })
-
-    this.logger.info(`Purchase recorded`)
   }
 }

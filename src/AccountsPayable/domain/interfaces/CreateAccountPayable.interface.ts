@@ -1,8 +1,8 @@
-import { Installments } from "@/Shared/domain"
+import type { Installments } from "@/Shared/domain"
 import { SupplierType } from "../enums/SupplierType"
 import {
-  AccountPayableTaxInput,
-  AccountPayableTaxMetadata,
+  type AccountPayableTaxInput,
+  type AccountPayableTaxMetadata,
   TaxDocumentType,
 } from "@/AccountsPayable/domain"
 

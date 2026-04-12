@@ -1,7 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
   AccountPayable,
-  IAccountPayableRepository,
+  type IAccountPayableRepository,
 } from "@/AccountsPayable/domain"
 import { Collection } from "mongodb"
 
@@ -31,26 +31,4 @@ export class AccountsPayableMongoRepository
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)
   }
-
-  // async list(criteria: Criteria): Promise<Paginate<AccountPayable>> {
-  //   const result = await this.searchByCriteria<AccountPayable>(criteria)
-  //   return this.paginate<AccountPayable>(result)
-  // }
-
-  // async one(criteria: object): Promise<AccountPayable | undefined> {
-  //   const collection = await this.collection()
-  //
-  //   const result = await collection.findOne(criteria)
-  //
-  //   return result
-  //     ? AccountPayable.fromPrimitives({
-  //         ...result,
-  //         id: result._id.toString(),
-  //       })
-  //     : undefined
-  // }
-
-  // async upsert(accountPayable: AccountPayable): Promise<void> {
-  //   await this.persist(accountPayable.getId(), accountPayable)
-  // }
 }

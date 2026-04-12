@@ -1,11 +1,15 @@
-import { AmountValue, Installments, InstallmentsStatus } from "@/Shared/domain"
+import {
+  AmountValue,
+  type Installments,
+  InstallmentsStatus,
+} from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AccountPayableStatus } from "./enums/AccountPayableStatus"
 import { SupplierType } from "./enums/SupplierType"
-import { ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
+import { type ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import {
+import type {
   AccountPayableTax,
   AccountPayableTaxInput,
   AccountPayableTaxMetadata,
@@ -60,12 +64,12 @@ export class AccountPayable extends AggregateRoot {
 
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.accountPayableId = IdentifyEntity.get(`accountPayable`)
-    accountPayable.churchId = churchId
-    accountPayable.description = description
-    accountPayable.createdBy = createdBy
-    accountPayable.amountPaid = amountPaid
+    accountPayable.churchId = churchId!
+    accountPayable.description = description!
+    accountPayable.createdBy = createdBy!
+    accountPayable.amountPaid = amountPaid!
     accountPayable.status = AccountPayableStatus.PENDING
-    accountPayable.symbol = symbol
+    accountPayable.symbol = symbol!
 
     const normalizedInstallments = Array.isArray(installments)
       ? installments
@@ -146,20 +150,20 @@ export class AccountPayable extends AggregateRoot {
       forceExempt
     )
     accountPayable.taxDocument = {
-      type: taxDocument.type,
+      type: taxDocument!.type,
       number: taxDocument!.number,
-      date: new Date(taxDocument.date),
+      date: new Date(taxDocument!.date),
     }
 
     accountPayable.createdAt = DateBR()
     accountPayable.updatedAt = DateBR()
 
     accountPayable.supplier = {
-      supplierId: supplier.supplierId,
-      supplierType: supplier.supplierType,
-      supplierDNI: supplier.supplierDNI,
-      name: supplier.name,
-      phone: supplier.phone,
+      supplierId: supplier!.supplierId,
+      supplierType: supplier!.supplierType,
+      supplierDNI: supplier!.supplierDNI,
+      name: supplier!.name,
+      phone: supplier!.phone,
     }
 
     return accountPayable
@@ -169,7 +173,7 @@ export class AccountPayable extends AggregateRoot {
     const accountPayable: AccountPayable = new AccountPayable()
     accountPayable.id = params.id
     const persistedInstallments = Array.isArray(params.installments)
-      ? params.installments.map((installment) => ({
+      ? params.installments.map((installment: Installments) => ({
           ...installment,
           amount: Number(Number(installment.amount).toFixed(2)),
         }))
@@ -350,8 +354,20 @@ export class AccountPayable extends AggregateRoot {
     return this.id
   }
 
-  getInstallment(installmentId: string): Installments {
+  getInstallment(installmentId: string): Installments | undefined {
     return this.installments.find((i) => i.installmentId === installmentId)
+  }
+
+  getNumberInstallments() {
+    return this.installments.length
+  }
+
+  getAmountFeesPaid() {
+    const paid = this.installments.filter(
+      (i) => i.status === InstallmentsStatus.PAID
+    )
+
+    return paid.length
   }
 
   getAccountPayableId() {
@@ -392,6 +408,14 @@ export class AccountPayable extends AggregateRoot {
 
   getTaxAmountTotal(): number {
     return this.taxAmountTotal
+  }
+
+  getAmountTotal() {
+    return this.amountTotal
+  }
+
+  getAmountPaid() {
+    return this.amountPaid
   }
 
   getTaxMetadata(): AccountPayableTaxMetadata {

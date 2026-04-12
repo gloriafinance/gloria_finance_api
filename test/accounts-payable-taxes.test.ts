@@ -11,44 +11,24 @@ import {
   TaxDocumentType,
 } from "@/AccountsPayable/domain"
 import { CreateAccountPayable } from "@/AccountsPayable/applications"
-import type { Paginate } from "@abejarano/ts-mongodb-criteria"
+import type { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria"
 import { InvalidInstallmentsConfiguration } from "@/AccountsPayable/domain/exceptions/InvalidInstallmentsConfiguration"
 import { AmountValue } from "@/Shared/domain"
-import type { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
-import { FinancialConcept } from "@/Financial/domain"
-import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 type TestCase = {
   name: string
   run: () => void | Promise<void>
 }
 
-class QueueServiceMock implements IQueueService {
-  dispatch(queueName: QueueName, args: any): void {}
-}
-
-class FinancialConceptRepositoryMock implements IFinancialConceptRepository {
-  search(filter: object): Promise<FinancialConcept[]> {
-    return Promise.resolve([])
-  }
-
-  one(filter: object): Promise<FinancialConcept | undefined> {
-    return Promise.resolve(undefined)
-  }
-
-  upsert(financialConcept: FinancialConcept): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-}
 class AccountPayableRepositoryMock implements IAccountPayableRepository {
   public saved: AccountPayable | null = null
 
-  async upsert(accountPayable: AccountPayable): Promise<void> {
-    this.saved = accountPayable
+  one(criteria: object): Promise<AccountPayable | undefined> {
+    throw new Error("Method not implemented.")
   }
 
-  async one(): Promise<AccountPayable | null> {
-    return null
+  async upsert(accountPayable: AccountPayable): Promise<void> {
+    this.saved = accountPayable
   }
 
   async list(): Promise<Paginate<AccountPayable>> {
@@ -58,12 +38,14 @@ class AccountPayableRepositoryMock implements IAccountPayableRepository {
 
 class SupplierRepositoryMock implements ISupplierRepository {
   constructor(private readonly supplier: Supplier) {}
-
-  async upsert(): Promise<void> {
-    throw new Error("Method not implemented in mock.")
+  list<D>(
+    criteria: Criteria,
+    fieldsToExclude?: string[]
+  ): Promise<Paginate<D>> {
+    throw new Error("Method not implemented.")
   }
 
-  async list(): Promise<Paginate<Supplier>> {
+  async upsert(): Promise<void> {
     throw new Error("Method not implemented in mock.")
   }
 
@@ -164,14 +146,13 @@ async function testCreateAccountPayablePersistsTaxes(): Promise<void> {
   const accountPayableRepository = new AccountPayableRepositoryMock()
   const useCase = new CreateAccountPayable(
     accountPayableRepository,
-    supplierRepository,
-    new FinancialConceptRepositoryMock(),
-    new QueueServiceMock()
+    supplierRepository
   )
 
   const request: AccountPayableRequest = {
+    symbol: "R$",
     createdBy: "user-name",
-    taxDocument: { date: undefined, type: undefined },
+    taxDocument: { date: new Date(), type: TaxDocumentType.CONTRACT },
     supplierId: supplier.getSupplierId(),
     churchId: "church-002",
     description: "Construção do mezanino",
@@ -427,7 +408,7 @@ function testAccountPayableDefaultsToSubstitutionWhenOnlySubstitutedLines(): voi
   const taxes = account.getTaxes()
   assert.strictEqual(taxes.length, 1)
   assert.strictEqual(
-    taxes[0].status,
+    taxes[0]!.status,
     AccountPayableTaxStatus.SUBSTITUTION,
     "Substitution-only invoices should mark the tax line as substitution"
   )

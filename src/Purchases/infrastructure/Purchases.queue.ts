@@ -1,16 +1,10 @@
-import { DeletePurchasesJob } from "@/Purchases/applications"
-import { PurchaseMongoRepository } from "@/Purchases/infrastructure/persistence/PurchaseMongoRepository"
-import { StorageProviderService } from "@/Shared/infrastructure"
-import type { IListQueue } from "@/package/queue/domain"
+import { type IListQueue, QueueName } from "@/package/queue/domain"
+import { PurchaseEventWorker } from "./workers/PurchaseEvent.worker.ts"
 
 export const PurchasesQueue = (): IListQueue[] => [
   {
-    name: DeletePurchasesJob.name,
-    useClass: DeletePurchasesJob,
-    inject: [
-      PurchaseMongoRepository.getInstance(),
-      StorageProviderService.getInstance(),
-    ],
+    name: QueueName.PurchasesEvent,
+    useClass: PurchaseEventWorker,
     delay: 4,
   },
 ]

@@ -1,9 +1,10 @@
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
   Can,
   PermissionMiddleware,
   QueueService,
 } from "@/Shared/infrastructure"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -14,7 +15,6 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-import type { ServerResponse } from "bun-platform-kit"
 
 import CreateAccountPayableValidator from "../validators/CreateAccountPayable.validator"
 import PayAccountPayableValidator from "../validators/PayAccountPayable.validator"
@@ -62,9 +62,7 @@ export class AccountPayableController {
     try {
       await new CreateAccountPayable(
         AccountsPayableMongoRepository.getInstance(),
-        SupplierMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        QueueService.getInstance()
+        SupplierMongoRepository.getInstance()
       ).execute({
         ...body,
         churchId: req.auth.churchId,

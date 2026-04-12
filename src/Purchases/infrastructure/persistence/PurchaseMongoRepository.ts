@@ -1,10 +1,10 @@
 import { Purchase } from "../../domain"
-import { IPurchaseRepository } from "../../domain/interfaces"
-import { Purchase as PurchaseModel } from "../../domain/models"
+import type { IPurchaseRepository } from "../../domain/interfaces"
+import type { Purchase as PurchaseModel } from "../../domain/models"
 import {
   Criteria,
   MongoRepository,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 
@@ -35,9 +35,9 @@ export class PurchaseMongoRepository
     await collection.deleteMany({ purchaseId: { $in: purchaseIds } })
   }
 
-  list(criteria: Criteria): Promise<Paginate<PurchaseModel>>
+  override list(criteria: Criteria): Promise<Paginate<PurchaseModel>>
 
-  list(purchaseIds: string[]): Promise<Purchase[]>
+  override list(purchaseIds: string[]): Promise<Purchase[]>
   override async list(
     purchaseIds: string[] | Criteria
   ): Promise<Purchase[] | Paginate<PurchaseModel>> {

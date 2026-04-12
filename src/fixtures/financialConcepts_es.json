@@ -57,7 +57,8 @@
     "affectsResult": false,
     "affectsBalance": true,
     "isOperational": false,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Accounts to Pay"
   },
   {
     "name": "Ofrenda a Invitados",

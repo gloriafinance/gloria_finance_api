@@ -133,8 +133,10 @@ export class CancelFinancialRecord {
       financialRecord.getFinancialConcept().getType() === ConceptType.PURCHASE
     ) {
       this.unitOfWork.execPostCommit(() => {
-        this.queueService.dispatch(QueueName.DeletePurchasesJob, {
-          purchaseIds: [financialRecord.getReference()!.entityId],
+        this.queueService.dispatch(QueueName.PurchasesEvent, {
+          event: "delete",
+          source: "financialRegistrationCancelled",
+          data: { purchaseIds: [financialRecord.getReference()!.entityId] },
         })
       })
     }
