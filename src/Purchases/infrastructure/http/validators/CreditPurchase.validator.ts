@@ -6,12 +6,99 @@ import type {
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 
+const normalizeArrayField = (
+  payload: Record<string, any>,
+  fieldName: string
+): any[] => {
+  return Object.keys(payload)
+    .filter((key) => key.startsWith(`${fieldName}[`))
+    .reduce((acc, key) => {
+      const match = key.match(
+        new RegExp(`^${fieldName}\\[(\\d+)\\]\\[(\\w+)\\]$`)
+      )
+
+      if (match) {
+        const [_, index, field] = match
+        acc[index] = acc[index] || {}
+        acc[index][field] = payload[key]
+      }
+
+      return acc
+    }, [] as any[])
+}
+
+const normalizeObjectField = (
+  payload: Record<string, any>,
+  fieldName: string
+): Record<string, any> | undefined => {
+  const keys = Object.keys(payload).filter((key) =>
+    key.startsWith(`${fieldName}[`)
+  )
+
+  if (!keys.length) {
+    return undefined
+  }
+
+  return keys.reduce(
+    (acc, key) => {
+      const match = key.match(new RegExp(`^${fieldName}\\[(\\w+)\\]$`))
+
+      if (match) {
+        const [_, field] = match
+        acc[field] = payload[key]
+      }
+
+      return acc
+    },
+    {} as Record<string, any>
+  )
+}
+
 export default async (
   req: ServerRequest,
   res: ServerResponse,
   next: NextFunction
 ) => {
   const payload = req.body as any
+
+  if (!Array.isArray(payload.items)) {
+    const normalizedItems = normalizeArrayField(payload, "items")
+    if (normalizedItems.length) {
+      payload.items = normalizedItems
+    }
+  }
+
+  if (!Array.isArray(payload.installments)) {
+    const normalizedInstallments = normalizeArrayField(payload, "installments")
+    if (normalizedInstallments.length) {
+      payload.installments = normalizedInstallments
+    }
+  }
+
+  if (!Array.isArray(payload.taxes)) {
+    const normalizedTaxes = normalizeArrayField(payload, "taxes")
+    if (normalizedTaxes.length) {
+      payload.taxes = normalizedTaxes
+    }
+  }
+
+  if (!payload.taxDocument || Array.isArray(payload.taxDocument)) {
+    const normalizedTaxDocument = normalizeObjectField(payload, "taxDocument")
+    if (normalizedTaxDocument) {
+      payload.taxDocument = normalizedTaxDocument
+    }
+  }
+
+  if (!payload.taxMetadata || Array.isArray(payload.taxMetadata)) {
+    const normalizedTaxMetadata = normalizeObjectField(payload, "taxMetadata")
+    if (normalizedTaxMetadata) {
+      payload.taxMetadata = normalizedTaxMetadata
+    }
+  }
+
+  if (typeof payload.taxMetadata?.taxExempt === "string") {
+    payload.taxMetadata.taxExempt = payload.taxMetadata.taxExempt === "true"
+  }
 
   if (payload.taxes === null) {
     payload.taxes = []
@@ -87,6 +174,12 @@ export default async (
   if (!matched) {
     return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }
+
+  req.body["items"] = payload.items
+  req.body["installments"] = payload.installments
+  req.body["taxes"] = payload.taxes
+  req.body["taxDocument"] = payload.taxDocument
+  req.body["taxMetadata"] = payload.taxMetadata
 
   next()
 }

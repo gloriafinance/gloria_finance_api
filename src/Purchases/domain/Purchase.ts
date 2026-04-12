@@ -119,7 +119,7 @@ export class Purchase extends AggregateRoot {
     p.costCenter = plainData.costCenter
     p.createdAt = plainData.createdAt || plainData.purchaseDate
     p.createdBy = plainData.createdBy || ""
-    p.paymentType = plainData.paymentType || "cash"
+    p.paymentType = plainData?.paymentType || "cash"
     p.accountPayable = plainData.accountPayable
 
     return p
