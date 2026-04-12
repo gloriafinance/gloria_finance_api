@@ -1,9 +1,18 @@
-import { Logger } from "../../../../Shared/adapter"
-import { HttpStatus } from "../../../../Shared/domain"
+import { Logger } from "@/Shared/adapter"
+import { HttpStatus } from "@/Shared/domain"
 import { Validator } from "node-input-validator"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
 
-export default async (req, res, next) => {
-  const payload = req.body
+export default async (
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) => {
+  const payload = req.body as any
   const logger = Logger("PurchaseValidator")
 
   logger.info(`Validating purchase`, payload)

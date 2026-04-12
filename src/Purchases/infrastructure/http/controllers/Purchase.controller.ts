@@ -49,6 +49,7 @@ import {
   AccountsPayableMongoRepository,
   SupplierMongoRepository,
 } from "@/AccountsPayable/infrastructure/persistence"
+import CreditPurchaseValidator from "@/Purchases/infrastructure/http/validators/CreditPurchase.validator.ts"
 
 type RecordPurchasePayload = Omit<
   RecordPurchaseRequest,
@@ -90,7 +91,11 @@ export class PurchaseController {
   }
 
   @Post("/credit")
-  @Use([PermissionMiddleware, Can("purchases", "manage")])
+  @Use([
+    PermissionMiddleware,
+    Can("purchases", "manage"),
+    CreditPurchaseValidator,
+  ])
   async creditPurchases(
     @Body()
     body: RecordPurchasePayload & {
