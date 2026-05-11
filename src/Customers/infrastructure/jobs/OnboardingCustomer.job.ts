@@ -1,18 +1,15 @@
-import { IJob, IQueueService, QueueName } from "@/package/queue/domain"
+import { type IJob, type IQueueService, QueueName, } from "@/package/queue/domain"
 import { CreateOrUpdateChurch } from "@/Church/applications"
-import { ChurchStatus, IChurchRepository } from "@/Church/domain"
+import { ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { Customer } from "@/Customers/domain/Customer"
 import { Logger } from "@/Shared/adapter"
-import { ICustomerRepository } from "@/Customers/domain/interfaces/CustomerRepository.interface"
-import {
-  CustomerStatus,
-  OnboardingStatus,
-} from "@/Customers/domain/enums/CustomerStatus.enum"
+import { type ICustomerRepository } from "@/Customers/domain/interfaces/CustomerRepository.interface"
+import { CustomerStatus, OnboardingStatus, } from "@/Customers/domain/enums/CustomerStatus.enum"
 import { GenerateFinancialMonths } from "@/ConsolidatedFinancial/applications"
-import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
-import { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
+import type { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { FirstLoadFinancialConcepts } from "@/FinanceConfig/applications"
-import { BootstrapPermissionsRequest } from "@/SecuritySystem/applications/rbac/Jobs/BootstrapPermissions.job"
+import type { BootstrapPermissionsRequest } from "@/SecuritySystem/applications/rbac/Jobs/BootstrapPermissions.job"
 
 export type OnboardingCustomerRequest = {
   customer: Customer
