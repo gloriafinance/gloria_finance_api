@@ -2,16 +2,16 @@ import { Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
   type FilterAccountReceivableRequest,
-  IAccountsReceivableRepository,
+  type IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import {
   Criteria,
   Filters,
   Operator,
-  OrCondition,
+  type OrCondition,
   Order,
   OrderTypes,
-  Paginate,
+  type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 
 export class ListAccountReceivable {
@@ -71,6 +71,16 @@ export class ListAccountReceivable {
           ["field", "status"],
           ["operator", Operator.EQUAL],
           ["value", request.status],
+        ])
+      )
+    }
+
+    if (request.type) {
+      filters.push(
+        new Map([
+          ["field", "type"],
+          ["operator", Operator.EQUAL],
+          ["value", request.type],
         ])
       )
     }

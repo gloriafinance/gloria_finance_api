@@ -1,10 +1,17 @@
-import { type IJob, type IQueueService, QueueName, } from "@/package/queue/domain"
+import {
+  type IJob,
+  type IQueueService,
+  QueueName,
+} from "@/package/queue/domain"
 import { CreateOrUpdateChurch } from "@/Church/applications"
 import { ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { Customer } from "@/Customers/domain/Customer"
 import { Logger } from "@/Shared/adapter"
 import { type ICustomerRepository } from "@/Customers/domain/interfaces/CustomerRepository.interface"
-import { CustomerStatus, OnboardingStatus, } from "@/Customers/domain/enums/CustomerStatus.enum"
+import {
+  CustomerStatus,
+  OnboardingStatus,
+} from "@/Customers/domain/enums/CustomerStatus.enum"
 import { GenerateFinancialMonths } from "@/ConsolidatedFinancial/applications"
 import type { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"

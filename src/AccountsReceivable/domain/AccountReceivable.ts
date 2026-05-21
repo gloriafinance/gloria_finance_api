@@ -114,7 +114,7 @@ export class AccountReceivable extends AggregateRoot {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.id = params.id
     accountReceivable.installments = (params.installments ?? []).map(
-      (installment) => ({
+      (installment: Installments) => ({
         ...installment,
         dueDate: installment?.dueDate
           ? new Date(installment.dueDate)
