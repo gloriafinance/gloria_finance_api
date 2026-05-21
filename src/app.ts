@@ -14,6 +14,7 @@ import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
 import { BunHostAdapter } from "@/Shared/adapter/BunHostAdapter"
 import { RateLimitModule } from "@/Shared/infrastructure/modules/RateLimitModule"
+import { MongoDBService } from "@/bootstrap/MongoDB.service.ts"
 
 export const APP_DIR = __dirname
 
@@ -50,7 +51,7 @@ server.addModules([
   controllersModule(),
 ])
 
-server.addServices([new FactoryService()])
+server.addServices([new FactoryService(), new MongoDBService()])
 
 server.getApp().set?.("trustProxy", ["127.0.0.1/8"])
 StartQueueService({
