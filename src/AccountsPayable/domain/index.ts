@@ -22,3 +22,5 @@ export * from "./exceptions/InvalidInstallmentsConfiguration"
 export type * from "./types/AccountPayableTax.type"
 export * from "./exceptions/AccountPayableChurchMismatch.exception"
 export * from "./exceptions/InstallmentNotFound.exception"
+
+export * from "./types/AccountPayablesDashboard.type.ts"

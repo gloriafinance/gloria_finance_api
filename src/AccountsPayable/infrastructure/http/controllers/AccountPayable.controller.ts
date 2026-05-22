@@ -37,6 +37,7 @@ import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   AllSupplier,
   CreateAccountPayable,
+  DashboardDataAccountPayable,
   ListAccountsPayable,
   PayAccountPayable,
   RegisterSuppliers,
@@ -184,6 +185,26 @@ export class AccountPayableController {
           await new AllSupplier(SupplierMongoRepository.getInstance()).execute(
             req.auth.churchId
           )
+        )
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Cache("dashboard-account-payable", 600)
+  @Get("/dashboard-data")
+  @Use([PermissionMiddleware])
+  async dashboardAccountPayable(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      res
+        .status(HttpStatus.OK)
+        .send(
+          await new DashboardDataAccountPayable(
+            AccountsPayableMongoRepository.getInstance()
+          ).execute(req.auth.churchId)
         )
     } catch (e) {
       domainResponse(e, res)
