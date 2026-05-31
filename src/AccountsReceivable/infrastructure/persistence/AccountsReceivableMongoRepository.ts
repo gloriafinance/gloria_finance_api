@@ -1,9 +1,10 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
   AccountReceivable,
+  type AccountReceivableDashboardType,
   AccountReceivableType,
   AccountsReceivableStatus,
-  IAccountsReceivableRepository,
+  type IAccountsReceivableRepository,
 } from "../../domain"
 import { Collection } from "mongodb"
 import { InstallmentsStatus } from "@/Shared/domain"
@@ -166,6 +167,83 @@ export class AccountsReceivableMongoRepository
     }
   }
 
+  async dashboardAccountReceivable(
+    churchId: string
+  ): Promise<AccountReceivableDashboardType | null> {
+    const collection = await this.collection()
+
+    const aggregationPipeline = [
+      {
+        $match: {
+          churchId,
+          type: "LOAN",
+        },
+      },
+      {
+        $facet: {
+          loans: [
+            {
+              $sort: {
+                createdAt: -1,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                accountReceivableId: 1,
+                debtorName: "$debtor.name",
+                description: 1,
+                amountTotal: 1,
+                amountPaid: 1,
+                amountPending: 1,
+                status: 1,
+                symbol: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          summary: [
+            {
+              $group: {
+                _id: null,
+                total: {
+                  $sum: {
+                    $abs: {
+                      $ifNull: ["$amountPending", 0],
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                total: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          loans: 1,
+          total: {
+            $ifNull: [
+              {
+                $arrayElemAt: ["$summary.total", 0],
+              },
+              0,
+            ],
+          },
+        },
+      },
+    ]
+
+    return await collection
+      .aggregate<AccountReceivableDashboardType>(aggregationPipeline)
+      .next()
+  }
+
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex({ accountReceivableId: 1 }, { unique: true })
     await collection.createIndex(
@@ -186,6 +264,17 @@ export class AccountsReceivableMongoRepository
         "installments.paymentDate": 1,
       },
       { background: true, name: "idx_receivable_installment_paid_date" }
+    )
+
+    await collection.createIndex(
+      {
+        churchId: 1,
+        type: 1,
+        createdAt: -1,
+      },
+      {
+        name: "idx_accounts_receivable_church_type_createdAt",
+      }
     )
   }
 }

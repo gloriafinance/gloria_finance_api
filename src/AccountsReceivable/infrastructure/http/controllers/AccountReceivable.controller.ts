@@ -24,6 +24,7 @@ import {
 } from "@/Church/infrastructure"
 import {
   CreateAccountReceivable,
+  DashboardDataAccountReceive,
   ListAccountReceivable,
   PayAccountReceivable,
 } from "@/AccountsReceivable/applications"
@@ -54,6 +55,7 @@ import {
   FinancialRecordStatus,
 } from "@/Financial/domain"
 import { DateBR } from "@/Shared/helpers"
+import { Cache } from "@/Shared/decorators"
 
 @Controller("/api/v1/account-receivable")
 export class AccountReceivableController {
@@ -204,6 +206,26 @@ export class AccountReceivableController {
       res
         .status(HttpStatus.OK)
         .json({ message: "Account receivable paid successfully" })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Cache("dashboard-account-receivable", 600)
+  @Get("/dashboard-data")
+  @Use([PermissionMiddleware])
+  async dashboardAccountReceivable(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      res
+        .status(HttpStatus.OK)
+        .send(
+          await new DashboardDataAccountReceive(
+            AccountsReceivableMongoRepository.getInstance()
+          ).execute(req.auth.churchId)
+        )
     } catch (e) {
       domainResponse(e, res)
     }
