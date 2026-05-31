@@ -37,14 +37,14 @@ export class DevotionalPlanService {
 
     const timezone = church.getTimezone()
 
-    const expectedWeekStartDate =
-      this.devotionalDateService.getWeekStartDateForTimezone(timezone)
+    // const expectedWeekStartDate =
+    //   this.devotionalDateService.getWeekStartDateForTimezone(timezone)
 
-    if (weekStartDate !== expectedWeekStartDate) {
-      throw new DevotionalPlanException(
-        `Only current week can be configured. Expected weekStartDate ${expectedWeekStartDate}`
-      )
-    }
+    // if (weekStartDate !== expectedWeekStartDate) {
+    //   throw new DevotionalPlanException(
+    //     `Only current week can be configured. Expected weekStartDate ${expectedWeekStartDate}`
+    //   )
+    // }
 
     const whatsappConnected = church.isWhatsappConnected()
     const pushEnabled = Boolean(request.channels?.pushEnabled ?? true)
