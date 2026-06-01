@@ -13,7 +13,7 @@ paths:
   /api/v1/church/member:
     post:
       summary: Cria um membro
-      description: Registra um novo membro e dispara o job de criação de usuário. Se o status não for informado, o padrão administrativo é APPROVED.
+      description: Registra um novo membro. Se o status não for informado, o padrão administrativo é APPROVED. Para membros APPROVED, dispara o job de criação de usuário; para INACTIVE, não dispara.
       tags: [ Church Members ]
       requestBody:
         required: true

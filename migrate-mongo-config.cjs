@@ -35,8 +35,8 @@ const config = {
   // if the file should be run.  Requires that scripts are coded to be run multiple times.
   useFileHash: false,
 
-  // Don't change this, unless you know what you're doing
-  moduleSystem: "esm",
+  // Aligned with existing migrations which all use CommonJS (module.exports).
+  moduleSystem: "commonjs",
 }
 
 module.exports = config
