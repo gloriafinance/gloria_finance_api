@@ -403,7 +403,9 @@ export class DevotionalDeliveryService {
     audience: DevotionalAudience
   ) {
     this.logger.info(`Resolving audience`)
-    const members = await this.memberRepository.all(churchId, { status: "APPROVED" })
+    const members = await this.memberRepository.all(churchId, {
+      status: "APPROVED",
+    })
 
     if (audience === DevotionalAudience.ALL) {
       return members

@@ -103,7 +103,10 @@ export class Member extends AggregateRoot {
 
     m.id = plainData.id
 
-    if (!plainData.status || !Object.values(MemberStatus).includes(plainData.status)) {
+    if (
+      !plainData.status ||
+      !Object.values(MemberStatus).includes(plainData.status)
+    ) {
       throw new InvalidMemberStatus()
     }
     m.status = plainData.status as MemberStatus

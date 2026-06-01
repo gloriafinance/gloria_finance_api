@@ -50,6 +50,44 @@ module.exports = {
         { name: "idx_members_church_status_created", background: true }
       )
     }
+
+    // 7. Backfill embedded contribution member snapshots
+    //    Old OnlineContributions.toPrimitives() emitted the full Member aggregate
+    //    with nested member.church.{churchId,name}. The new ContributionMemberSnapshot
+    //    expects flat member.{churchId,churchName}. Migrate old snapshots idempotently
+    //    so that UpdateContributionStatus does not pass undefined as churchId.
+    const contributions = db.collection("contributions")
+    await contributions.updateMany(
+      {
+        "member.church.churchId": { $exists: true },
+        "member.churchId": { $exists: false },
+      },
+      [
+        {
+          $set: {
+            "member.churchId": "$member.church.churchId",
+            "member.churchName": { $ifNull: ["$member.church.name", ""] },
+          },
+        },
+        {
+          $unset: [
+            "member.church",
+            "member.email",
+            "member.phone",
+            "member.createdAt",
+            "member.dni",
+            "member.conversionDate",
+            "member.baptismDate",
+            "member.birthdate",
+            "member.isMinister",
+            "member.isTreasurer",
+            "member.settings",
+            "member.active",
+            "member.status",
+          ],
+        },
+      ]
+    )
   },
 
   /**
