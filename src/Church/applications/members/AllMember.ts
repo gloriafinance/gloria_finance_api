@@ -1,4 +1,4 @@
-import { IMemberRepository } from "@/Church/domain"
+import { IMemberRepository, MemberStatus } from "@/Church/domain"
 import { Logger } from "@/Shared/adapter"
 
 export class AllMember {
@@ -9,6 +9,8 @@ export class AllMember {
   async execute(churchId: string): Promise<any> {
     this.logger.info(`search all members churchId ${churchId}`)
 
-    return await this.memberRepository.all(churchId)
+    return await this.memberRepository.all(churchId, {
+      status: MemberStatus.APPROVED,
+    })
   }
 }

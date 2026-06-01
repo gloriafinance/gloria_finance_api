@@ -73,7 +73,7 @@ export class NotifyFCMJob implements IJob {
 
   private async notifyAllMembers(args: NotificationRequest): Promise<void> {
     const members = await this.memberRepository.all(args.churchId, {
-      active: true,
+      status: "APPROVED",
     })
 
     await this.notifyMembers({ ...args, members })

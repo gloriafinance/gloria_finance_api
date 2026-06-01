@@ -24,7 +24,7 @@ export const CreateMemberValidator = async (
     isTreasurer: "required|boolean",
     churchId: "required",
     birthdate: "required|dateFormat:YYYY-MM-DD",
-    active: "required|boolean",
+    status: "sometimes|in:APPROVED,INACTIVE",
   }
 
   const v = new Validator(payload, rules)

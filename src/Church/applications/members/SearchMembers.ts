@@ -1,5 +1,5 @@
-import { IMemberRepository } from "../../domain"
-import { MemberPaginateRequest } from "@/Church/domain"
+import { type IMemberRepository, MemberStatus } from "../../domain"
+import { type MemberPaginateRequest } from "@/Church/domain"
 import {
   Criteria,
   Filters,
@@ -43,6 +43,14 @@ export class SearchMembers {
         ])
       )
     }
+
+    filters.push(
+      new Map([
+        ["field", "status"],
+        ["operator", Operator.IN],
+        ["value", [MemberStatus.APPROVED, MemberStatus.INACTIVE]],
+      ])
+    )
 
     return new Criteria(
       Filters.fromValues(filters),

@@ -1,7 +1,8 @@
-import type {
-  CreateMemberRequest,
-  IChurchRepository,
-  IMemberRepository,
+import {
+  type CreateMemberRequest,
+  type IChurchRepository,
+  type IMemberRepository,
+  MemberStatus,
 } from "../../domain"
 import { Church, ChurchNotFound, Member, MemberExist } from "../../domain"
 import { Logger } from "@/Shared/adapter"
@@ -38,17 +39,23 @@ export class CreateMember {
       settings: request.settings,
     })
 
-    if (!request.active) {
-      member.disable()
+    if (request.status === MemberStatus.INACTIVE) {
+      member.inactivate()
     }
+    // else: Member.create defaults to APPROVED; PENDING_REVIEW is not accepted via admin POST
 
     await this.memberRepository.upsert(member)
 
-    this.queueService.dispatch(QueueName.CreateUserForMemberJob, member)
-
-    this.logger.info(
-      `Queue dispatched for create user for member ${JSON.stringify(member)}`
-    )
+    if (member.getStatus() === MemberStatus.INACTIVE) {
+      this.logger.info(
+        `Member ${member.getMemberId()} created as INACTIVE; skipping user creation job`
+      )
+    } else {
+      this.queueService.dispatch(QueueName.CreateUserForMemberJob, member)
+      this.logger.info(
+        `Queue dispatched for create user for member ${member.getMemberId()}`
+      )
+    }
   }
 
   private async getChurch(churchId: string): Promise<Church> {

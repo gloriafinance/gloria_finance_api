@@ -20,6 +20,7 @@ export type { IDevotionalCommentRepository } from "./interfaces/DevotionalCommen
 export { ChurchNotFound } from "./exceptions/ChurchNotFound.exception"
 export { MemberNotFound } from "./exceptions/MemberNotFound.exception"
 export { MemberExist } from "./exceptions/MemberExist.exception"
+export { InvalidMemberStatus } from "./exceptions/InvalidMemberStatus.exception"
 export { MinisterNotFound } from "./exceptions/MinisterNotFound.exception"
 export { WhatsappCredentialAlreadyAssigned } from "./exceptions/WhatsappCredentialAlreadyAssigned.exception"
 export { WhatsappCredentialsNotConfigured } from "./exceptions/WhatsappCredentialsNotConfigured.exception"
@@ -47,6 +48,7 @@ export type { CreateDevotionalCommentRequest } from "./requests/CreateDevotional
 export type { UpdateDevotionalCommentRequest } from "./requests/UpdateDevotionalComment.request"
 
 export { ChurchStatus } from "./enums/ChurchStatus.enum"
+export { MemberStatus } from "./enums/MemberStatus.enum"
 export { MinisterType } from "./enums/MinisterType.enum"
 export {
   DevotionalAudience,

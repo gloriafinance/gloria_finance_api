@@ -96,8 +96,8 @@ export class DevotionalDeliveryService {
     this.logger.info(`notify the pastor to review the devotional`)
 
     const pastor = await this.memberRepository.one({
-      churchId: church.getChurchId(),
-      active: true,
+      "church.churchId": church.getChurchId(),
+      status: "APPROVED",
       isMinister: true,
     })
 
@@ -403,7 +403,9 @@ export class DevotionalDeliveryService {
     audience: DevotionalAudience
   ) {
     this.logger.info(`Resolving audience`)
-    const members = await this.memberRepository.all(churchId, { active: true })
+    const members = await this.memberRepository.all(churchId, {
+      status: "APPROVED",
+    })
 
     if (audience === DevotionalAudience.ALL) {
       return members
@@ -423,7 +425,7 @@ export class DevotionalDeliveryService {
     }
 
     // Gender is not explicitly modeled in current Member aggregate.
-    // Until that profile data is available, fallback to all active members.
+    // Until that profile data is available, fallback to all approved members.
     return members
   }
 

@@ -6,6 +6,7 @@ import {
   IChurchRepository,
   IMemberRepository,
   MemberExist,
+  MemberStatus,
 } from "@/Church/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 
@@ -40,7 +41,6 @@ const validRequest = (
   isTreasurer: false,
   churchId: "church-1",
   birthdate: new Date(),
-  active: true,
   ...overrides,
 })
 
@@ -82,24 +82,56 @@ describe("CreateMember", () => {
     )
   })
 
-  it("creates member, persists and dispatches queue", async () => {
-    memberRepository.one.mockResolvedValue(undefined)
-    churchRepository.findById.mockResolvedValue(createChurch())
+  it("creates member without status defaults to APPROVED and dispatches queue", async () => {
+    memberRepository.one.mockResolvedValue(null as any)
+    churchRepository.one.mockResolvedValue(createChurch())
 
     const useCase = new CreateMember(
       memberRepository,
       churchRepository,
       queueService
     )
-    await useCase.execute(validRequest({ active: false }))
+    await useCase.execute(validRequest())
 
     expect(memberRepository.upsert).toHaveBeenCalledTimes(1)
-    const member = memberRepository.upsert.mock.calls[0][0]
-    expect(member.toPrimitives().active).toBe(false)
+    const member = memberRepository.upsert.mock.calls[0]![0]
+    expect(member.toPrimitives().status).toBe(MemberStatus.APPROVED)
 
     expect(queueService.dispatch).toHaveBeenCalledWith(
       QueueName.CreateUserForMemberJob,
       member
     )
+  })
+
+  it("creates member with INACTIVE status and skips user creation job", async () => {
+    memberRepository.one.mockResolvedValue(null as any)
+    churchRepository.one.mockResolvedValue(createChurch())
+
+    const useCase = new CreateMember(
+      memberRepository,
+      churchRepository,
+      queueService
+    )
+    await useCase.execute(validRequest({ status: MemberStatus.INACTIVE }))
+
+    expect(memberRepository.upsert).toHaveBeenCalledTimes(1)
+    const member = memberRepository.upsert.mock.calls[0]![0]
+    expect(member.toPrimitives().status).toBe(MemberStatus.INACTIVE)
+
+    expect(queueService.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("does not dispatch user job for INACTIVE members", async () => {
+    memberRepository.one.mockResolvedValue(null as any)
+    churchRepository.one.mockResolvedValue(createChurch())
+
+    const useCase = new CreateMember(
+      memberRepository,
+      churchRepository,
+      queueService
+    )
+    await useCase.execute(validRequest({ status: MemberStatus.INACTIVE }))
+
+    expect(queueService.dispatch).not.toHaveBeenCalled()
   })
 })
