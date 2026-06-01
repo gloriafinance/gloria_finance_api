@@ -13,4 +13,6 @@ export interface IChurchRepository extends IRepository<Church> {
   ): Promise<[boolean, Church | undefined]>
 
   withoutAssignedMinister(): Promise<Church[]>
+
+  getOrCreateMemberRegistrationToken(churchId: string): Promise<string>
 }

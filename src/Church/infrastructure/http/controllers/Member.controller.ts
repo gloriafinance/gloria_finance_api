@@ -8,6 +8,7 @@ import {
   AllMember,
   CreateMember,
   FindMemberById,
+  GetOrCreateMemberRegistrationLink,
   SearchMembers,
   UpdateMember,
 } from "../../../applications"
@@ -75,6 +76,23 @@ export class MemberController {
       ).execute(req.auth.churchId!)
 
       res.status(HttpStatus.OK).send(members)
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/registration-link")
+  @Use([PermissionMiddleware, Can("members", "registration_link")])
+  async registrationLink(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await new GetOrCreateMemberRegistrationLink(
+        ChurchMongoRepository.getInstance()
+      ).execute(req.auth.churchId!)
+
+      res.status(HttpStatus.OK).send(result)
     } catch (e) {
       domainResponse(e, res)
     }
