@@ -7,30 +7,39 @@ module.exports = {
   async up(db, client) {
     const collection = db.collection("members")
 
-    // 1. Migrate existing active field to status
+    // 1. active === false -> INACTIVE
     await collection.updateMany(
       { active: false },
       { $set: { status: "INACTIVE" }, $unset: { active: "" } }
     )
 
+    // 2. active === true -> APPROVED
     await collection.updateMany(
-      { $or: [{ active: true }, { active: { $exists: false } }] },
+      { active: true },
       { $set: { status: "APPROVED" }, $unset: { active: "" } }
     )
 
-    // 2. Ensure no documents lack status (idempotency guard)
+    // 3. Missing active and missing status -> APPROVED
+    //    Restricted to documents that also lack status so a retry does not
+    //    overwrite established INACTIVE or PENDING_REVIEW values.
+    await collection.updateMany(
+      { active: { $exists: false }, status: { $exists: false } },
+      { $set: { status: "APPROVED" } }
+    )
+
+    // 4. Ensure no documents lack status (final idempotency guard)
     await collection.updateMany(
       { status: { $exists: false } },
       { $set: { status: "APPROVED" } }
     )
 
-    // 3. Remove active from all documents (idempotency)
+    // 5. Remove active from all documents (idempotency)
     await collection.updateMany(
       { active: { $exists: true } },
       { $unset: { active: "" } }
     )
 
-    // 4. Create named index
+    // 6. Create named index
     const indexes = await collection.indexes()
     const hasIndex = indexes.some(
       (idx) => idx.name === "idx_members_church_status_created"
