@@ -93,7 +93,7 @@ export class UpdateContributionStatus {
         availabilityAccountId: contribution
           .getAvailabilityAccount()
           .getAvailabilityAccountId(),
-        churchId: contribution.getMember().getChurch().churchId,
+        churchId: contribution.getMember().getChurchId(),
         amount: AmountValue.create(contribution.getAmount()),
         voucher: contribution.getBankTransferReceipt(),
         concept: concept.getName(),

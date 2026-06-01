@@ -13,7 +13,7 @@ paths:
   /api/v1/church/member:
     post:
       summary: Cria um membro
-      description: Registra um novo membro e dispara o job de criação de usuário.
+      description: Registra um novo membro e dispara o job de criação de usuário. Se o status não for informado, o padrão administrativo é APPROVED.
       tags: [ Church Members ]
       requestBody:
         required: true
@@ -43,7 +43,7 @@ paths:
                 $ref: '#/components/schemas/Member'
     put:
       summary: Atualiza um membro
-      description: Atualiza campos do membro; o único campo obrigatório é o `memberId`.
+      description: Atualiza campos do membro; o único campo obrigatório é o `memberId`. O status pode ser APPROVED ou INACTIVE.
       tags: [ Church Members ]
       parameters:
         - $ref: '#/components/parameters/MemberId'
@@ -62,7 +62,8 @@ paths:
                 $ref: '#/components/schemas/MessageResponse'
   /api/v1/church/member/list:
     get:
-      summary: Lista membros (paginado)
+      summary: Lista membros administrativos (paginado)
+      description: Retorna membros com status APPROVED ou INACTIVE para gestão administrativa. Não inclui PENDING_REVIEW.
       tags: [ Church Members ]
       parameters:
         - in: query
@@ -109,7 +110,8 @@ paths:
                 required: [ count, results ]
   /api/v1/church/member/all:
     get:
-      summary: Lista todos os membros por igreja
+      summary: Lista todos os membros operacionais por igreja
+      description: Retorna apenas membros com status APPROVED. Usado para alimentar selects operativos (contas a receber, centros de custo, patrimônio).
       tags: [ Church Members ]
       responses:
         '200':
@@ -166,6 +168,16 @@ components:
         - notifyChurchEvents
         - notifyStatusContributions
         - lang
+    MemberStatus:
+      type: string
+      enum:
+        - PENDING_REVIEW
+        - APPROVED
+        - INACTIVE
+      description: |
+        PENDING_REVIEW: registrado, pendente de aprovação.
+        APPROVED: aprovado e operacionalmente ativo.
+        INACTIVE: aprovado previamente, atualmente inativo.
     Member:
       type: object
       properties:
@@ -206,8 +218,8 @@ components:
           type: boolean
         settings:
           $ref: '#/components/schemas/MemberSettings'
-        active:
-          type: boolean
+        status:
+          $ref: '#/components/schemas/MemberStatus'
       required:
         - memberId
         - church
@@ -221,7 +233,7 @@ components:
         - isMinister
         - isTreasurer
         - settings
-        - active
+        - status
     CreateMemberPayload:
       type: object
       properties:
@@ -248,8 +260,9 @@ components:
         birthdate:
           type: string
           example: '2000-01-01'
-        active:
-          type: boolean
+        status:
+          $ref: '#/components/schemas/MemberStatus'
+          description: Opcional. Se não informado, assume APPROVED. Administrativo aceita apenas APPROVED ou INACTIVE.
         settings:
           $ref: '#/components/schemas/MemberSettings'
       required:
@@ -261,7 +274,6 @@ components:
         - isTreasurer
         - churchId
         - birthdate
-        - active
     UpdateMemberPayload:
       type: object
       properties:
@@ -286,8 +298,8 @@ components:
         birthdate:
           type: string
           example: '2000-01-01'
-        active:
-          type: boolean
+        status:
+          $ref: '#/components/schemas/MemberStatus'
+          description: Opcional. Administrativo aceita apenas APPROVED ou INACTIVE.
         settings:
           $ref: '#/components/schemas/MemberSettings'
-

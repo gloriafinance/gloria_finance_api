@@ -1,7 +1,8 @@
-import type {
-  CreateMemberRequest,
-  IChurchRepository,
-  IMemberRepository,
+import {
+  type CreateMemberRequest,
+  type IChurchRepository,
+  type IMemberRepository,
+  MemberStatus,
 } from "../../domain"
 import { Church, ChurchNotFound, Member, MemberExist } from "../../domain"
 import { Logger } from "@/Shared/adapter"
@@ -38,9 +39,10 @@ export class CreateMember {
       settings: request.settings,
     })
 
-    if (!request.active) {
-      member.disable()
+    if (request.status === MemberStatus.INACTIVE) {
+      member.inactivate()
     }
+    // else: Member.create defaults to APPROVED; PENDING_REVIEW is not accepted via admin POST
 
     await this.memberRepository.upsert(member)
 

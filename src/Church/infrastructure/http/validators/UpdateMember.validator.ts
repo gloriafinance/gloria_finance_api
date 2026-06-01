@@ -26,7 +26,7 @@ export const UpdateMemberValidator = async (
     baptismDate: "sometimes|dateFormat:YYYY-MM-DD",
     birthdate: "sometimes|dateFormat:YYYY-MM-DD",
     isTreasurer: "sometimes|boolean",
-    active: "sometimes|boolean",
+    status: "sometimes|in:APPROVED,INACTIVE",
   }
 
   const v = new Validator(payload, rules)

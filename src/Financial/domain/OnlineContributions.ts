@@ -1,16 +1,16 @@
 import { OnlineContributionsStatus } from "./enums/OnlineContributionsStatus.enum"
 import { IdentifyEntity } from "@/Shared/adapter"
-import { Member } from "@/Church/domain"
 import { AvailabilityAccount, FinancialConcept } from "@/FinanceConfig/domain"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AmountValue } from "@/Shared/domain"
+import { ContributionMemberSnapshot } from "./ContributionMemberSnapshot"
 
 export class OnlineContributions extends AggregateRoot {
   private id?: string
   private churchId: string
-  private member: Member
+  private member: ContributionMemberSnapshot
   private contributionId: string
   private status: OnlineContributionsStatus
   private financialConcept: FinancialConcept
@@ -25,7 +25,11 @@ export class OnlineContributions extends AggregateRoot {
 
   static create(
     amount: AmountValue,
-    member: Member,
+    member: {
+      getMemberId(): string
+      getName(): string
+      getChurch(): { churchId: string; name: string }
+    },
     financialConcept: FinancialConcept,
     bankTransferReceipt: string,
     observation: string = "",
@@ -37,7 +41,7 @@ export class OnlineContributions extends AggregateRoot {
     }
   ): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
-    contributions.member = member
+    contributions.member = ContributionMemberSnapshot.fromMember(member)
     contributions.churchId = member.getChurch().churchId
     contributions.contributionId = IdentifyEntity.get(`contribution`)
     contributions.bankTransferReceipt = bankTransferReceipt
@@ -63,7 +67,7 @@ export class OnlineContributions extends AggregateRoot {
   static override fromPrimitives(plainData: any): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.id = plainData.id
-    contributions.member = Member.fromPrimitives(plainData.member)
+    contributions.member = ContributionMemberSnapshot.fromPrimitives(plainData.member)
     contributions.contributionId = plainData.contributionId
     contributions.status = plainData.status
     contributions.amount = plainData.amount
@@ -108,7 +112,7 @@ export class OnlineContributions extends AggregateRoot {
     return this.createdAt
   }
 
-  getMember(): Member {
+  getMember(): ContributionMemberSnapshot {
     return this.member
   }
 
@@ -139,7 +143,7 @@ export class OnlineContributions extends AggregateRoot {
   toPrimitives() {
     return {
       contributionId: this.contributionId,
-      member: this.member,
+      member: this.member.toPrimitives(),
       status: this.status,
       amount: this.amount,
       createdAt: this.createdAt,

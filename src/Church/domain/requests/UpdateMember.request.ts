@@ -1,4 +1,5 @@
 import { MemberSettings } from "@/Church/domain"
+import { MemberStatus } from "../enums/MemberStatus.enum"
 
 export type UpdateMemberRequest = {
   memberId: string
@@ -10,6 +11,6 @@ export type UpdateMemberRequest = {
   baptismDate?: Date
   isTreasurer?: boolean
   birthdate?: Date
-  active?: boolean
+  status?: MemberStatus
   settings?: MemberSettings
 }

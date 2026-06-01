@@ -2,6 +2,7 @@ import {
   IMemberRepository,
   Member,
   MemberNotFound,
+  MemberStatus,
   UpdateMemberRequest,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
@@ -35,9 +36,12 @@ export class UpdateMember {
       member.isTreasurer = request.isTreasurer
     }
 
-    if (typeof request.active === "boolean") {
-      if (request.active) member.enable()
-      else member.disable()
+    if (request.status) {
+      if (request.status === MemberStatus.APPROVED) {
+        member.approve()
+      } else if (request.status === MemberStatus.INACTIVE) {
+        member.inactivate()
+      }
     }
 
     if (request.settings) {

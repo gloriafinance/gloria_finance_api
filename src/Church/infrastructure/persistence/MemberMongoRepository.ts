@@ -70,5 +70,9 @@ export class MemberMongoRepository
     await collection.createIndex({ "church.churchId": 1 })
     await collection.createIndex({ memberId: 1 })
     await collection.createIndex({ dni: 1 }, { unique: true })
+    await collection.createIndex(
+      { "church.churchId": 1, status: 1, createdAt: -1 },
+      { name: "idx_members_church_status_created", background: true }
+    )
   }
 }

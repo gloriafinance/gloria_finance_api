@@ -3,6 +3,8 @@ import { Church } from "./Church"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { MemberSettings } from "@/Church/domain"
+import { MemberStatus } from "./enums/MemberStatus.enum"
+import { InvalidMemberStatus } from "./exceptions/InvalidMemberStatus.exception"
 
 export class Member extends AggregateRoot {
   public isTreasurer: boolean
@@ -21,7 +23,7 @@ export class Member extends AggregateRoot {
     churchId: string
     name: string
   }
-  private active: boolean
+  private status: MemberStatus
   private settings: MemberSettings
 
   static create(params: {
@@ -66,7 +68,7 @@ export class Member extends AggregateRoot {
     m.memberId = IdentifyEntity.get(`member`)
     m.isTreasurer = isTreasurer
     m.isMinister = isMinister
-    m.active = true
+    m.status = MemberStatus.APPROVED
 
     if (!settings) {
       m.settings = {
@@ -100,7 +102,12 @@ export class Member extends AggregateRoot {
     m.church = plainData.church
 
     m.id = plainData.id
-    m.active = plainData.active
+
+    if (!plainData.status || !Object.values(MemberStatus).includes(plainData.status)) {
+      throw new InvalidMemberStatus()
+    }
+    m.status = plainData.status as MemberStatus
+
     m.settings = plainData.settings
       ? plainData.settings
       : {
@@ -174,12 +181,24 @@ export class Member extends AggregateRoot {
     this.name = name
   }
 
-  disable() {
-    this.active = false
+  getStatus(): MemberStatus {
+    return this.status
   }
 
-  enable() {
-    this.active = true
+  setStatus(status: MemberStatus) {
+    this.status = status
+  }
+
+  approve() {
+    this.status = MemberStatus.APPROVED
+  }
+
+  markAsPendingReview() {
+    this.status = MemberStatus.PENDING_REVIEW
+  }
+
+  inactivate() {
+    this.status = MemberStatus.INACTIVE
   }
 
   getSettings() {
@@ -205,7 +224,7 @@ export class Member extends AggregateRoot {
       isMinister: this.isMinister,
       isTreasurer: this.isTreasurer,
       settings: this.settings,
-      active: this.active,
+      status: this.status,
     }
   }
 }

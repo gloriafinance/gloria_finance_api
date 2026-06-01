@@ -1,4 +1,5 @@
 import { MemberSettings } from "@/Church/domain"
+import { MemberStatus } from "../enums/MemberStatus.enum"
 
 export type CreateMemberRequest = {
   name: string
@@ -10,6 +11,6 @@ export type CreateMemberRequest = {
   isTreasurer: boolean
   churchId: string
   birthdate: Date
-  active: boolean
+  status?: MemberStatus
   settings?: MemberSettings
 }
