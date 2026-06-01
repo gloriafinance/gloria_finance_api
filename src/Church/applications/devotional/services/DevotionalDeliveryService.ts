@@ -96,7 +96,7 @@ export class DevotionalDeliveryService {
     this.logger.info(`notify the pastor to review the devotional`)
 
     const pastor = await this.memberRepository.one({
-      churchId: church.getChurchId(),
+      "church.churchId": church.getChurchId(),
       status: "APPROVED",
       isMinister: true,
     })

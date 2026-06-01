@@ -46,11 +46,16 @@ export class CreateMember {
 
     await this.memberRepository.upsert(member)
 
-    this.queueService.dispatch(QueueName.CreateUserForMemberJob, member)
-
-    this.logger.info(
-      `Queue dispatched for create user for member ${JSON.stringify(member)}`
-    )
+    if (member.getStatus() === MemberStatus.INACTIVE) {
+      this.logger.info(
+        `Member ${member.getMemberId()} created as INACTIVE; skipping user creation job`
+      )
+    } else {
+      this.queueService.dispatch(QueueName.CreateUserForMemberJob, member)
+      this.logger.info(
+        `Queue dispatched for create user for member ${member.getMemberId()}`
+      )
+    }
   }
 
   private async getChurch(churchId: string): Promise<Church> {

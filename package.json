@@ -8,7 +8,7 @@
     "test": "bunx jest --forceExit --runInBand --detectOpenHandles",
     "start:prod": "bun src/app.ts",
     "cli": "bun src/cli.ts",
-    "migrate": "set -a && . ./.env && set +a && ts-mongo migrate:up",
+    "migrate": "set -a && . ./.env && set +a && migrate-mongo up",
     "format": "prettier --write \"src/**/*.{ts,hbs}\" ",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "copy-static-assets": "bun src/copyStaticAssets.ts"

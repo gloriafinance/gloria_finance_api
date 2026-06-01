@@ -19,11 +19,16 @@ export class ContributionMemberSnapshot {
   }
 
   static fromPrimitives(plainData: any): ContributionMemberSnapshot {
+    if (!plainData.memberId || !plainData.name || !plainData.churchId) {
+      throw new Error(
+        `ContributionMemberSnapshot.fromPrimitives missing required fields: got memberId=${plainData.memberId}, name=${plainData.name}, churchId=${plainData.churchId}`
+      )
+    }
     const snapshot = new ContributionMemberSnapshot()
     snapshot.memberId = plainData.memberId
     snapshot.name = plainData.name
     snapshot.churchId = plainData.churchId
-    snapshot.churchName = plainData.churchName
+    snapshot.churchName = plainData.churchName ?? ""
     return snapshot
   }
 

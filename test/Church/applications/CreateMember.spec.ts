@@ -103,7 +103,7 @@ describe("CreateMember", () => {
     )
   })
 
-  it("creates member with INACTIVE status", async () => {
+  it("creates member with INACTIVE status and skips user creation job", async () => {
     memberRepository.one.mockResolvedValue(null as any)
     churchRepository.one.mockResolvedValue(createChurch())
 
@@ -118,10 +118,20 @@ describe("CreateMember", () => {
     const member = memberRepository.upsert.mock.calls[0]![0]
     expect(member.toPrimitives().status).toBe(MemberStatus.INACTIVE)
 
-    // TODO: future PENDING_REVIEW flow must NOT dispatch CreateUserForMemberJob before approval
-    expect(queueService.dispatch).toHaveBeenCalledWith(
-      QueueName.CreateUserForMemberJob,
-      member
+    expect(queueService.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("does not dispatch user job for INACTIVE members", async () => {
+    memberRepository.one.mockResolvedValue(null as any)
+    churchRepository.one.mockResolvedValue(createChurch())
+
+    const useCase = new CreateMember(
+      memberRepository,
+      churchRepository,
+      queueService
     )
+    await useCase.execute(validRequest({ status: MemberStatus.INACTIVE }))
+
+    expect(queueService.dispatch).not.toHaveBeenCalled()
   })
 })

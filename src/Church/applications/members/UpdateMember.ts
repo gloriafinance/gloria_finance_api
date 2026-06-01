@@ -1,5 +1,6 @@
 import {
   IMemberRepository,
+  InvalidMemberStatus,
   Member,
   MemberNotFound,
   MemberStatus,
@@ -41,6 +42,8 @@ export class UpdateMember {
         member.approve()
       } else if (request.status === MemberStatus.INACTIVE) {
         member.inactivate()
+      } else if (request.status === MemberStatus.PENDING_REVIEW) {
+        throw new InvalidMemberStatus()
       }
     }
 

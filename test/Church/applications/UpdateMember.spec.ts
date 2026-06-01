@@ -1,5 +1,5 @@
 import { UpdateMember } from "@/Church/applications"
-import { IMemberRepository, Member, MemberNotFound, MemberStatus } from "@/Church/domain"
+import { IMemberRepository, InvalidMemberStatus, Member, MemberNotFound, MemberStatus } from "@/Church/domain"
 
 const createMember = (): Member =>
   Member.fromPrimitives({
@@ -64,6 +64,16 @@ describe("UpdateMember", () => {
     const primitives = persisted.toPrimitives()
     expect(primitives.status).toBe(MemberStatus.INACTIVE)
     expect(primitives.email).toBe("new@x.com")
+  })
+
+  it("rejects PENDING_REVIEW status in administrative update", async () => {
+    const member = createMember()
+    memberRepository.one.mockResolvedValue(member)
+
+    const useCase = new UpdateMember(memberRepository)
+    await expect(
+      useCase.execute({ memberId: "member-1", status: MemberStatus.PENDING_REVIEW })
+    ).rejects.toBeInstanceOf(InvalidMemberStatus)
   })
 })
 

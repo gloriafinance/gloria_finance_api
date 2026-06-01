@@ -1,3 +1,5 @@
+const VALID_STATUSES = ["PENDING_REVIEW", "APPROVED", "INACTIVE"]
+
 module.exports = {
   /**
    * @param db {import('mongodb').Db}
@@ -7,39 +9,32 @@ module.exports = {
   async up(db, client) {
     const collection = db.collection("members")
 
-    // 1. active === false -> INACTIVE
+    // 1. active === false and status is missing or invalid -> INACTIVE
     await collection.updateMany(
-      { active: false },
+      { active: false, status: { $nin: VALID_STATUSES } },
       { $set: { status: "INACTIVE" }, $unset: { active: "" } }
     )
 
-    // 2. active === true -> APPROVED
+    // 2. active === true (or missing) and status is missing or invalid -> APPROVED
+    //    Covers active:true, active absent, or any active value other than false.
     await collection.updateMany(
-      { active: true },
+      { active: { $ne: false }, status: { $nin: VALID_STATUSES } },
       { $set: { status: "APPROVED" }, $unset: { active: "" } }
     )
 
-    // 3. Missing active and missing status -> APPROVED
-    //    Restricted to documents that also lack status so a retry does not
-    //    overwrite established INACTIVE or PENDING_REVIEW values.
+    // 3. Clean up active on documents that already have a valid status
     await collection.updateMany(
-      { active: { $exists: false }, status: { $exists: false } },
-      { $set: { status: "APPROVED" } }
+      { status: { $in: VALID_STATUSES }, active: { $exists: true } },
+      { $unset: { active: "" } }
     )
 
-    // 4. Ensure no documents lack status (final idempotency guard)
+    // 4. Final guard: any document still lacking status -> APPROVED
     await collection.updateMany(
       { status: { $exists: false } },
       { $set: { status: "APPROVED" } }
     )
 
-    // 5. Remove active from all documents (idempotency)
-    await collection.updateMany(
-      { active: { $exists: true } },
-      { $unset: { active: "" } }
-    )
-
-    // 6. Create named index
+    // 5. Create named index
     const indexes = await collection.indexes()
     const hasIndex = indexes.some(
       (idx) => idx.name === "idx_members_church_status_created"
@@ -51,11 +46,11 @@ module.exports = {
       )
     }
 
-    // 7. Backfill embedded contribution member snapshots
+    // 6. Backfill embedded contribution member snapshots (additive only)
     //    Old OnlineContributions.toPrimitives() emitted the full Member aggregate
     //    with nested member.church.{churchId,name}. The new ContributionMemberSnapshot
-    //    expects flat member.{churchId,churchName}. Migrate old snapshots idempotently
-    //    so that UpdateContributionStatus does not pass undefined as churchId.
+    //    expects flat member.{churchId,churchName}. Add the flat fields idempotently
+    //    without removing historical fields so rollback remains safe.
     const contributions = db.collection("contributions")
     await contributions.updateMany(
       {
@@ -68,23 +63,6 @@ module.exports = {
             "member.churchId": "$member.church.churchId",
             "member.churchName": { $ifNull: ["$member.church.name", ""] },
           },
-        },
-        {
-          $unset: [
-            "member.church",
-            "member.email",
-            "member.phone",
-            "member.createdAt",
-            "member.dni",
-            "member.conversionDate",
-            "member.baptismDate",
-            "member.birthdate",
-            "member.isMinister",
-            "member.isTreasurer",
-            "member.settings",
-            "member.active",
-            "member.status",
-          ],
         },
       ]
     )
