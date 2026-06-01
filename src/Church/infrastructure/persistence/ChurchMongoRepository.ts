@@ -1,6 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Church, type IChurchRepository } from "../../domain"
 import { Collection } from "mongodb"
+import { randomBytes } from "crypto"
 
 export class ChurchMongoRepository
   extends MongoRepository<Church>
@@ -78,6 +79,38 @@ export class ChurchMongoRepository
     )
   }
 
+  async getOrCreateMemberRegistrationToken(churchId: string): Promise<string> {
+    const collection = await this.collection()
+    const token = `mreg_${randomBytes(32).toString("hex")}`
+
+    const result = await collection.findOneAndUpdate(
+      { churchId, "memberRegistration.token": { $exists: false } },
+      {
+        $set: {
+          "memberRegistration.token": token,
+          "memberRegistration.createdAt": new Date(),
+        },
+      },
+      { returnDocument: "after" }
+    )
+
+    if (result?.memberRegistration?.token) {
+      return result.memberRegistration.token as string
+    }
+
+    const existing = await collection.findOne(
+      { churchId },
+      { projection: { "memberRegistration.token": 1 } }
+    )
+    if (existing?.memberRegistration?.token) {
+      return existing.memberRegistration.token as string
+    }
+
+    throw new Error(
+      `Unable to resolve member registration token for church ${churchId}`
+    )
+  }
+
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex(
       { wabaId: 1 },
@@ -95,6 +128,17 @@ export class ChurchMongoRepository
         unique: true,
         partialFilterExpression: {
           phoneNumberId: { $type: "string" },
+        },
+      }
+    )
+
+    await collection.createIndex(
+      { "memberRegistration.token": 1 },
+      {
+        unique: true,
+        name: "idx_church_member_registration_token",
+        partialFilterExpression: {
+          "memberRegistration.token": { $exists: true, $type: "string" },
         },
       }
     )

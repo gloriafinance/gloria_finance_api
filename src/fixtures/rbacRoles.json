@@ -7,6 +7,7 @@
       "church:upsert",
       "church:search",
       "members:manage",
+      "members:registration_link",
       "ministers:manage",
       "accounts_payable:suppliers_manage",
       "accounts_payable:manage",
@@ -64,6 +65,7 @@
       "financial_records:read",
       "financial_records:reports",
       "members:manage",
+      "members:registration_link",
       "patrimony:read_assets",
       "patrimony:list_assets",
       "purchases:read",
@@ -81,6 +83,7 @@
     "description": "Gerencia operações financeiras e bancárias da igreja",
     "permissions": [
       "church:search",
+      "members:registration_link",
       "accounts_payable:suppliers_manage",
       "accounts_payable:manage",
       "accounts_payable:read",

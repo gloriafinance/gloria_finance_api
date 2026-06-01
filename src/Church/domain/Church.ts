@@ -32,6 +32,7 @@ export class Church extends AggregateRoot {
   private logoUrl?: string
   private doctrinalBases: ChurchDoctrinalBase[] = []
   private notificationTime: string
+  private memberRegistration?: { token: string; createdAt: Date }
 
   static create(params: {
     name: string
@@ -136,6 +137,12 @@ export class Church extends AggregateRoot {
     c.logoUrl = plainData.logoUrl
     c.doctrinalBases = Church.normalizeDoctrinalBases(plainData.doctrinalBases)
     c.notificationTime = plainData.notificationTime ?? "15:30"
+    if (plainData.memberRegistration) {
+      c.memberRegistration = {
+        token: plainData.memberRegistration.token,
+        createdAt: new Date(plainData.memberRegistration.createdAt),
+      }
+    }
 
     return c
   }
@@ -375,6 +382,15 @@ export class Church extends AggregateRoot {
       logoUrl: this.logoUrl,
       doctrinalBases: this.doctrinalBases,
       notificationTime: this.notificationTime,
+      memberRegistration: this.memberRegistration,
     }
+  }
+
+  getMemberRegistrationToken(): string | undefined {
+    return this.memberRegistration?.token
+  }
+
+  setMemberRegistration(token: string, createdAt: Date) {
+    this.memberRegistration = { token, createdAt }
   }
 }

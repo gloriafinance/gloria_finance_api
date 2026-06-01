@@ -21,6 +21,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "members:registration_link",
+    "module": "members",
+    "action": "registration_link",
+    "description": "Obter link de autoregistro de membros",
+    "isSystem": true
+  },
+  {
     "permissionId": "ministers:manage",
     "module": "ministers",
     "action": "manage",

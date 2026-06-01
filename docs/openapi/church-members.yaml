@@ -122,6 +122,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Member'
+  /api/v1/church/member/registration-link:
+    get:
+      summary: Obtém ou cria o link de autoregistro de membros
+      description: Retorna o token persistido da igreja e o caminho público relativo. Se o token ainda não existir, gera uma única vez.
+      tags: [ Church Members ]
+      responses:
+        '200':
+          description: Link de autoregistro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberRegistrationLinkResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -142,6 +154,22 @@ components:
         message:
           type: string
       required: [ message ]
+    MemberRegistrationLinkResponse:
+      type: object
+      properties:
+        churchId:
+          type: string
+        churchName:
+          type: string
+        token:
+          type: string
+        registrationPath:
+          type: string
+      required:
+        - churchId
+        - churchName
+        - token
+        - registrationPath
     MemberSettings:
       type: object
       properties:
