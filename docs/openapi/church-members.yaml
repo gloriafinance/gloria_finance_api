@@ -125,7 +125,7 @@ paths:
   /api/v1/church/member/registration-link:
     get:
       summary: Obtém ou cria o link de autoregistro de membros
-      description: Retorna o token persistido da igreja e o caminho público relativo. Se o token ainda não existir, gera uma única vez.
+      description: Retorna o token persistido da igreja e o caminho público relativo (`registrationPath`). O caminho deve ser resolvido contra o domínio público da aplicação (`https://app.gloriafinance.com.br`) para formar o link absoluto de autoregistro. Se o token ainda não existir, gera uma única vez.
       tags: [ Church Members ]
       responses:
         '200':
