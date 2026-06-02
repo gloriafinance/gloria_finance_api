@@ -4,7 +4,10 @@ import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { MemberSettings } from "@/Church/domain"
 import { MemberStatus } from "./enums/MemberStatus.enum"
+import { MemberGender } from "./enums/MemberGender.enum"
 import { InvalidMemberStatus } from "./exceptions/InvalidMemberStatus.exception"
+import type { MemberAddress } from "./type/MemberAddress.type"
+import type { LgpdConsent } from "./type/LgpdConsent.type"
 
 export class Member extends AggregateRoot {
   public isTreasurer: boolean
@@ -25,6 +28,10 @@ export class Member extends AggregateRoot {
   }
   private status: MemberStatus
   private settings: MemberSettings
+  private profilePhoto?: string
+  private gender?: MemberGender
+  private address?: MemberAddress
+  private lgpdConsent?: LgpdConsent
 
   static create(params: {
     name: string
@@ -38,6 +45,11 @@ export class Member extends AggregateRoot {
     isMinister: boolean
     settings?: MemberSettings
     baptismDate?: Date
+    status?: MemberStatus
+    profilePhoto?: string
+    gender?: MemberGender
+    address?: MemberAddress
+    lgpdConsent?: LgpdConsent
   }): Member {
     const {
       name,
@@ -51,6 +63,11 @@ export class Member extends AggregateRoot {
       isMinister,
       settings,
       baptismDate,
+      status,
+      profilePhoto,
+      gender,
+      address,
+      lgpdConsent,
     } = params
 
     const m: Member = new Member()
@@ -68,7 +85,7 @@ export class Member extends AggregateRoot {
     m.memberId = IdentifyEntity.get(`member`)
     m.isTreasurer = isTreasurer
     m.isMinister = isMinister
-    m.status = MemberStatus.APPROVED
+    m.status = status ?? MemberStatus.APPROVED
 
     if (!settings) {
       m.settings = {
@@ -81,6 +98,11 @@ export class Member extends AggregateRoot {
     } else {
       m.settings = settings
     }
+
+    m.profilePhoto = profilePhoto
+    m.gender = gender
+    m.address = address
+    m.lgpdConsent = lgpdConsent
 
     return m
   }
@@ -120,6 +142,11 @@ export class Member extends AggregateRoot {
           whatsappOptIn: false,
           lang: "pt-BR",
         }
+
+    m.profilePhoto = plainData.profilePhoto
+    m.gender = plainData.gender ? (plainData.gender as MemberGender) : undefined
+    m.address = plainData.address
+    m.lgpdConsent = plainData.lgpdConsent
 
     return m
   }
@@ -212,6 +239,38 @@ export class Member extends AggregateRoot {
     return this.birthdate
   }
 
+  getProfilePhoto(): string | undefined {
+    return this.profilePhoto
+  }
+
+  setProfilePhoto(profilePhoto: string) {
+    this.profilePhoto = profilePhoto
+  }
+
+  getGender(): MemberGender | undefined {
+    return this.gender
+  }
+
+  setGender(gender: MemberGender) {
+    this.gender = gender
+  }
+
+  getAddress(): MemberAddress | undefined {
+    return this.address
+  }
+
+  setAddress(address: MemberAddress) {
+    this.address = address
+  }
+
+  getLgpdConsent(): LgpdConsent | undefined {
+    return this.lgpdConsent
+  }
+
+  setLgpdConsent(lgpdConsent: LgpdConsent) {
+    this.lgpdConsent = lgpdConsent
+  }
+
   toPrimitives(): any {
     return {
       memberId: this.memberId,
@@ -228,6 +287,10 @@ export class Member extends AggregateRoot {
       isTreasurer: this.isTreasurer,
       settings: this.settings,
       status: this.status,
+      profilePhoto: this.profilePhoto,
+      gender: this.gender,
+      address: this.address,
+      lgpdConsent: this.lgpdConsent,
     }
   }
 }
