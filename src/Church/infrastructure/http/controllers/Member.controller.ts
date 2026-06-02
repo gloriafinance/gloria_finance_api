@@ -113,7 +113,7 @@ export class MemberController {
         churchId: req.auth.churchId!,
       })
 
-      res.status(HttpStatus.OK).send(member)
+      res.status(HttpStatus.OK).send(await this.mapMemberResponse(member))
     } catch (e) {
       domainResponse(e, res)
     }
@@ -166,7 +166,7 @@ export class MemberController {
         churchId: req.auth.churchId!,
       })
 
-      res.status(HttpStatus.OK).send(member)
+      res.status(HttpStatus.OK).send(await this.mapMemberResponse(member))
     } catch (e) {
       domainResponse(e, res)
     }
@@ -268,5 +268,20 @@ export class MemberController {
     } catch (e) {
       domainResponse(e, res)
     }
+  }
+
+  private async mapMemberResponse(member: any) {
+    const response = {
+      id: member.getId?.(),
+      ...member.toPrimitives(),
+    }
+
+    if (response.profilePhoto) {
+      response.profilePhoto = await StorageProviderService.getInstance()
+        .downloadFile(response.profilePhoto)
+        .catch(() => response.profilePhoto)
+    }
+
+    return response
   }
 }
