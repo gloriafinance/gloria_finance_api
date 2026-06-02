@@ -4,6 +4,7 @@ import { DevotionalController } from "./Devotional.controller"
 import { IntegrationsController } from "./Integrations.controller"
 import { MemberController } from "./Member.controller"
 import { MinisterController } from "./Minister.controller"
+import { PublicMemberRegistrationController } from "./PublicMemberRegistration.controller"
 
 export const churchControllers = () => [
   ChurchController,
@@ -12,4 +13,5 @@ export const churchControllers = () => [
   MemberController,
   DevotionalController,
   DevotionalCommunityController,
+  PublicMemberRegistrationController,
 ]

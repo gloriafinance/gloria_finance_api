@@ -19,6 +19,8 @@ export { FindMemberById } from "./members/FindMemberById"
 export { SearchMembers } from "./members/SearchMembers"
 export { AllMember } from "./members/AllMember"
 export { GetOrCreateMemberRegistrationLink } from "./members/GetOrCreateMemberRegistrationLink"
+export { RegisterMemberByToken } from "./members/RegisterMemberByToken"
+export { GetPublicChurchByToken } from "./members/GetPublicChurchByToken"
 
 export { AssignChurch } from "./ministers/AssignChurch"
 export { RemoveMinister } from "./ministers/RemoveMinister"
