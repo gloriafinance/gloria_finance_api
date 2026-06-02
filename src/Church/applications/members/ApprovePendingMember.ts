@@ -1,5 +1,6 @@
 import {
   type IMemberRepository,
+  MemberMissingUserCredentials,
   MemberNotFound,
   MemberNotPendingReview,
   MemberStatus,
@@ -34,6 +35,10 @@ export class ApprovePendingMember {
 
     if (member.getStatus() !== MemberStatus.PENDING_REVIEW) {
       throw new MemberNotPendingReview()
+    }
+
+    if (!member.getEmail().trim() || !member.getDni().trim()) {
+      throw new MemberMissingUserCredentials()
     }
 
     member.approve()

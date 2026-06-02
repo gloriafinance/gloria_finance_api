@@ -11,33 +11,21 @@ export class FindMemberById {
 
   constructor(private readonly memberRepository: IMemberRepository) {}
 
-  async execute(
-    params:
-      | string
-      | {
-          memberId?: string
-          churchId?: string
-        }
-  ): Promise<Member> {
-    const memberId = typeof params === "string" ? params : params.memberId
-    const churchId = typeof params === "string" ? undefined : params.churchId
+  async execute(params: {
+    memberId?: string
+    churchId?: string
+  }): Promise<Member> {
+    this.logger.info(`search member by id: ${params.memberId}`)
 
-    this.logger.info(`search member by id: ${memberId}`)
-
-    if (!memberId) {
-      this.logger.error(`Member ID is required`)
+    if (!params.memberId || !params.churchId) {
+      this.logger.error(`Member ID and church ID are required`)
       throw new MemberNotFound()
     }
 
-    const filter =
-      churchId != null
-        ? {
-            memberId,
-            "church.churchId": churchId,
-          }
-        : { memberId }
-
-    const member = await this.memberRepository.one(filter)
+    const member = await this.memberRepository.one({
+      memberId: params.memberId,
+      "church.churchId": params.churchId,
+    })
 
     if (!member) {
       this.logger.error(`Member not found`)

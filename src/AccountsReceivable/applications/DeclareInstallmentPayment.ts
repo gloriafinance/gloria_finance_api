@@ -27,9 +27,10 @@ export class DeclareInstallmentPayment {
   async execute(request: DeclareInstallmentPaymentRequest): Promise<void> {
     this.logger.info(`Start DeclareInstallmentPayment`, request)
 
-    const member = await new FindMemberById(this.memberRepository).execute(
-      request.memberId
-    )
+    const member = await new FindMemberById(this.memberRepository).execute({
+      memberId: request.memberId,
+      churchId: request.churchId,
+    })
 
     const account = await this.accountReceivableRepository.one({
       accountReceivableId: request.accountReceivableId,

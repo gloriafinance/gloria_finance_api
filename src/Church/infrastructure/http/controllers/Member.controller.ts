@@ -277,9 +277,10 @@ export class MemberController {
     }
 
     if (response.profilePhoto) {
-      response.profilePhoto = await StorageProviderService.getInstance()
-        .downloadFile(response.profilePhoto)
-        .catch(() => response.profilePhoto)
+      response.profilePhoto =
+        await StorageProviderService.getInstance().downloadFile(
+          response.profilePhoto
+        )
     }
 
     return response

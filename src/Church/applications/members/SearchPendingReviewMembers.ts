@@ -35,7 +35,7 @@ export class SearchPendingReviewMembers {
 
     return new Criteria(
       Filters.fromValues(filters),
-      Order.fromValues("members.createdAt", OrderTypes.DESC),
+      Order.fromValues("createdAt", OrderTypes.DESC),
       Number(request.perPage),
       Number(request.page)
     )

@@ -32,7 +32,10 @@ export class NotificationController {
 
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(req.auth.memberId)
+      ).execute({
+        memberId: req.auth.memberId,
+        churchId: req.auth.churchId,
+      })
 
       const settings = member.getSettings()
       member.setSettings({

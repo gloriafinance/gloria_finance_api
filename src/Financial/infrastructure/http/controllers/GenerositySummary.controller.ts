@@ -32,7 +32,10 @@ export class GenerositySummaryController {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(req.auth?.memberId)
+      ).execute({
+        memberId: req.auth?.memberId,
+        churchId: req.auth?.churchId,
+      })
 
       const authContext = req.auth as Record<string, any>
       const timeZone =

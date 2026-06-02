@@ -71,7 +71,10 @@ export class ContributionMemberController {
 
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(request.memberId)
+      ).execute({
+        memberId: request.memberId,
+        churchId: req.auth.churchId,
+      })
 
       let financialConcept: FinancialConcept | undefined
       if (payload.contributionType === MemberContributionType.TITHE) {
