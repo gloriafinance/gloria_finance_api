@@ -1,6 +1,5 @@
-import type { IMemberRepository } from "@/Church/domain"
+import { MemberNotFound, type IMemberRepository } from "@/Church/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import { FindMemberById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
 import {
   type NotificationRequest,
@@ -20,9 +19,14 @@ export class NotifyPaymentCommitment {
     this.logger.info(`Queueing notification for member `, account.getDebtor())
 
     try {
-      const member = await new FindMemberById(this.memberRepository).execute(
-        account.getDebtor().debtorDNI
-      )
+      const member = await this.memberRepository.one({
+        dni: account.getDebtor().debtorDNI,
+        "church.churchId": account.getChurchId(),
+      })
+
+      if (!member) {
+        throw new MemberNotFound()
+      }
 
       let title: string
 
@@ -42,7 +46,7 @@ export class NotifyPaymentCommitment {
 
       this.queueService.dispatch<NotificationRequest>(QueueName.NotifyFCMJob, {
         churchId: account.getChurchId(),
-        memberId: [account.getDebtor().debtorDNI],
+        memberId: [member.getMemberId()],
         title: title,
         body: account.getDescription(),
         data: {
@@ -58,7 +62,7 @@ export class NotifyPaymentCommitment {
       return
     } catch (e: any) {
       this.logger.error(
-        `Error finding member with ID ${account.getDebtor().debtorDNI}: `,
+        `Error finding member with DNI ${account.getDebtor().debtorDNI}: `,
         e
       )
       return

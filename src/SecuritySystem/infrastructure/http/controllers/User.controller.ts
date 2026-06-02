@@ -350,7 +350,10 @@ export class UserController {
     if (!user.isSuperUser) {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(user.getMemberId())
+      ).execute({
+        memberId: user.getMemberId(),
+        churchId: user.getChurchId(),
+      })
 
       church = {
         ...church,

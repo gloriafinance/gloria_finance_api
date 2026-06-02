@@ -5,10 +5,14 @@ import type {
 } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
+  ApprovePendingMember,
   AllMember,
   CreateMember,
+  FindPendingReviewMemberById,
   FindMemberById,
   GetOrCreateMemberRegistrationLink,
+  RejectPendingMember,
+  SearchPendingReviewMembers,
   SearchMembers,
   UpdateMember,
 } from "../../../applications"
@@ -22,8 +26,10 @@ import { Cache } from "@/Shared/decorators"
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -37,6 +43,7 @@ import {
   Can,
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
+import { StorageProviderService } from "@/Shared/infrastructure"
 import {
   CreateMemberValidator,
   UpdateMemberValidator,
@@ -53,14 +60,60 @@ export class MemberController {
   @Use([PermissionMiddleware, Can("members", "manage")])
   async list(
     @Query() memberRequest: MemberPaginateRequest,
+    @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
     try {
       const members = await new SearchMembers(
         MemberMongoRepository.getInstance()
-      ).execute(memberRequest)
+      ).execute({
+        ...memberRequest,
+        churchId: req.auth.churchId!,
+      })
 
       res.status(HttpStatus.OK).send(members)
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/pending-review")
+  @Use([PermissionMiddleware, Can("members", "manage")])
+  async listPendingReview(
+    @Query() memberRequest: MemberPaginateRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const members = await new SearchPendingReviewMembers(
+        MemberMongoRepository.getInstance()
+      ).execute({
+        ...memberRequest,
+        churchId: req.auth.churchId!,
+      })
+
+      res.status(HttpStatus.OK).send(members)
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Get("/pending-review/:memberId")
+  @Use([PermissionMiddleware, Can("members", "manage")])
+  async findPendingReviewById(
+    @Param("memberId") memberId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const member = await new FindPendingReviewMemberById(
+        MemberMongoRepository.getInstance()
+      ).execute({
+        memberId,
+        churchId: req.auth.churchId!,
+      })
+
+      res.status(HttpStatus.OK).send(await this.mapMemberResponse(member))
     } catch (e) {
       domainResponse(e, res)
     }
@@ -100,13 +153,68 @@ export class MemberController {
 
   @Get("/:memberId")
   @Use([PermissionMiddleware, Can("members", "manage")])
-  async findById(@Param("memberId") memberId: string, res: ServerResponse) {
+  async findById(
+    @Param("memberId") memberId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
       const member = await new FindMemberById(
         MemberMongoRepository.getInstance()
-      ).execute(memberId)
+      ).execute({
+        memberId,
+        churchId: req.auth.churchId!,
+      })
 
-      res.status(HttpStatus.OK).send(member)
+      res.status(HttpStatus.OK).send(await this.mapMemberResponse(member))
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Patch("/:memberId/approve")
+  @Use([PermissionMiddleware, Can("members", "manage")])
+  async approve(
+    @Param("memberId") memberId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new ApprovePendingMember(
+        MemberMongoRepository.getInstance(),
+        QueueService.getInstance()
+      ).execute({
+        memberId,
+        churchId: req.auth.churchId!,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "MEMBER_APPROVED",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Delete("/:memberId/reject")
+  @Use([PermissionMiddleware, Can("members", "manage")])
+  async reject(
+    @Param("memberId") memberId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new RejectPendingMember(
+        MemberMongoRepository.getInstance(),
+        StorageProviderService.getInstance()
+      ).execute({
+        memberId,
+        churchId: req.auth.churchId!,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "MEMBER_REJECTED",
+      })
     } catch (e) {
       domainResponse(e, res)
     }
@@ -160,5 +268,21 @@ export class MemberController {
     } catch (e) {
       domainResponse(e, res)
     }
+  }
+
+  private async mapMemberResponse(member: any) {
+    const response = {
+      id: member.getId?.(),
+      ...member.toPrimitives(),
+    }
+
+    if (response.profilePhoto) {
+      response.profilePhoto =
+        await StorageProviderService.getInstance().downloadFile(
+          response.profilePhoto
+        )
+    }
+
+    return response
   }
 }

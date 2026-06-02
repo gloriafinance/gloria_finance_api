@@ -1,11 +1,11 @@
 openapi: 3.0.1
 info:
   title: Church Finance API - Church Members
-  version: '1.0'
+  version: "1.0"
 servers:
   - url: http://localhost:5200
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 tags:
   - name: Church Members
     description: Gestão de membros (cadastro e atualização)
@@ -14,57 +14,83 @@ paths:
     post:
       summary: Cria um membro
       description: Registra um novo membro. Se o status não for informado, o padrão administrativo é APPROVED. Para membros APPROVED, dispara o job de criação de usuário; para INACTIVE, não dispara.
-      tags: [ Church Members ]
+      tags: [Church Members]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateMemberPayload'
+              $ref: "#/components/schemas/CreateMemberPayload"
       responses:
-        '201':
+        "201":
           description: Membro criado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: "#/components/schemas/MessageResponse"
   /api/v1/church/member/{memberId}:
     get:
       summary: Busca um membro por id
-      tags: [ Church Members ]
+      tags: [Church Members]
       parameters:
-        - $ref: '#/components/parameters/MemberId'
+        - $ref: "#/components/parameters/MemberId"
       responses:
-        '200':
+        "200":
           description: Membro encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
+                $ref: "#/components/schemas/Member"
     put:
       summary: Atualiza um membro
       description: Atualiza campos do membro; o único campo obrigatório é o `memberId`. O status pode ser APPROVED ou INACTIVE.
-      tags: [ Church Members ]
+      tags: [Church Members]
       parameters:
-        - $ref: '#/components/parameters/MemberId'
+        - $ref: "#/components/parameters/MemberId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateMemberPayload'
+              $ref: "#/components/schemas/UpdateMemberPayload"
       responses:
-        '200':
+        "200":
           description: Membro atualizado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: "#/components/schemas/MessageResponse"
+  /api/v1/church/member/{memberId}/approve:
+    patch:
+      summary: Aprova um membro pendente
+      tags: [Church Members]
+      parameters:
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Membro aprovado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+  /api/v1/church/member/{memberId}/reject:
+    delete:
+      summary: Rejeita um membro pendente
+      tags: [Church Members]
+      parameters:
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Membro rejeitado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
   /api/v1/church/member/list:
     get:
       summary: Lista membros administrativos (paginado)
       description: Retorna membros com status APPROVED ou INACTIVE para gestão administrativa. Não inclui PENDING_REVIEW.
-      tags: [ Church Members ]
+      tags: [Church Members]
       parameters:
         - in: query
           name: page
@@ -89,7 +115,7 @@ paths:
             type: string
             nullable: true
       responses:
-        '200':
+        "200":
           description: Página de membros
           content:
             application/json:
@@ -106,34 +132,85 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Member'
-                required: [ count, results ]
+                      $ref: "#/components/schemas/Member"
+                required: [count, results]
+  /api/v1/church/member/pending-review:
+    get:
+      summary: Lista membros pendentes de revisão
+      description: Retorna apenas membros com status PENDING_REVIEW da igreja autenticada.
+      tags: [Church Members]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        "200":
+          description: Página de membros pendentes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  nextPag:
+                    oneOf:
+                      - type: integer
+                      - type: string
+                    nullable: true
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Member"
+                required: [count, results]
+  /api/v1/church/member/pending-review/{memberId}:
+    get:
+      summary: Busca um membro pendente de revisão por id
+      tags: [Church Members]
+      parameters:
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Membro pendente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
   /api/v1/church/member/all:
     get:
       summary: Lista todos os membros operacionais por igreja
       description: Retorna apenas membros com status APPROVED. Usado para alimentar selects operativos (contas a receber, centros de custo, patrimônio).
-      tags: [ Church Members ]
+      tags: [Church Members]
       responses:
-        '200':
+        "200":
           description: Lista de membros
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Member'
+                  $ref: "#/components/schemas/Member"
   /api/v1/church/member/registration-link:
     get:
       summary: Obtém ou cria o link de autoregistro de membros
       description: Retorna o token persistido da igreja e o caminho público relativo (`registrationPath`). O caminho deve ser resolvido contra o domínio público da aplicação (`https://app.gloriafinance.com.br`) para formar o link absoluto de autoregistro. Se o token ainda não existir, gera uma única vez.
-      tags: [ Church Members ]
+      tags: [Church Members]
       responses:
-        '200':
+        "200":
           description: Link de autoregistro
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MemberRegistrationLinkResponse'
+                $ref: "#/components/schemas/MemberRegistrationLinkResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -153,7 +230,7 @@ components:
       properties:
         message:
           type: string
-      required: [ message ]
+      required: [message]
     MemberRegistrationLinkResponse:
       type: object
       properties:
@@ -181,7 +258,7 @@ components:
           type: boolean
         platform:
           type: string
-          enum: [ android, ios, web ]
+          enum: [android, ios, web]
           nullable: true
         deviceId:
           type: string
@@ -218,7 +295,7 @@ components:
               type: string
             name:
               type: string
-          required: [ churchId, name ]
+          required: [churchId, name]
         name:
           type: string
         email:
@@ -245,9 +322,9 @@ components:
         isTreasurer:
           type: boolean
         settings:
-          $ref: '#/components/schemas/MemberSettings'
+          $ref: "#/components/schemas/MemberSettings"
         status:
-          $ref: '#/components/schemas/MemberStatus'
+          $ref: "#/components/schemas/MemberStatus"
       required:
         - memberId
         - church
@@ -276,23 +353,23 @@ components:
           type: string
         conversionDate:
           type: string
-          example: '2025-01-01'
+          example: "2025-01-01"
         baptismDate:
           type: string
           nullable: true
-          example: '2025-01-01'
+          example: "2025-01-01"
         isTreasurer:
           type: boolean
         churchId:
           type: string
         birthdate:
           type: string
-          example: '2000-01-01'
+          example: "2000-01-01"
         status:
-          $ref: '#/components/schemas/MemberStatus'
+          $ref: "#/components/schemas/MemberStatus"
           description: Opcional. Se não informado, assume APPROVED. Administrativo aceita apenas APPROVED ou INACTIVE.
         settings:
-          $ref: '#/components/schemas/MemberSettings'
+          $ref: "#/components/schemas/MemberSettings"
       required:
         - name
         - email
@@ -316,18 +393,18 @@ components:
           type: string
         conversionDate:
           type: string
-          example: '2025-01-01'
+          example: "2025-01-01"
         baptismDate:
           type: string
           nullable: true
-          example: '2025-01-01'
+          example: "2025-01-01"
         isTreasurer:
           type: boolean
         birthdate:
           type: string
-          example: '2000-01-01'
+          example: "2000-01-01"
         status:
-          $ref: '#/components/schemas/MemberStatus'
+          $ref: "#/components/schemas/MemberStatus"
           description: Opcional. Administrativo aceita apenas APPROVED ou INACTIVE.
         settings:
-          $ref: '#/components/schemas/MemberSettings'
+          $ref: "#/components/schemas/MemberSettings"

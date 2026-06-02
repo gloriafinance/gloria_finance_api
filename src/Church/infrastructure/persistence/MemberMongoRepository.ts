@@ -49,6 +49,11 @@ export class MemberMongoRepository
     )
   }
 
+  async deleteByMemberId(memberId: string): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({ memberId })
+  }
+
   async all(churchId: string, filter?: object): Promise<Member[]> {
     const collection = await this.collection()
 
