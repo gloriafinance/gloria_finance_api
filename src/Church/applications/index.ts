@@ -25,6 +25,7 @@ export { GetPublicChurchByToken } from "./members/GetPublicChurchByToken"
 export { FindPendingReviewMemberById } from "./members/FindPendingReviewMemberById"
 export { ApprovePendingMember } from "./members/ApprovePendingMember"
 export { RejectPendingMember } from "./members/RejectPendingMember"
+export { UpdateMemberProfilePhoto } from "./members/UpdateMemberProfilePhoto"
 
 export { AssignChurch } from "./ministers/AssignChurch"
 export { RemoveMinister } from "./ministers/RemoveMinister"
