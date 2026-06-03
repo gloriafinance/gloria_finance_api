@@ -49,22 +49,8 @@ describe("UpdateMemberProfilePhotoValidator", () => {
     expect(next).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(HttpStatus.UNPROCESSABLE_ENTITY)
     expect(res.send).toHaveBeenCalledWith({
-      profilePhoto: {
-        message: "The profile photo field is mandatory.",
-        rule: "required",
-      },
-      "profilePhoto.name": {
-        message: "The profilePhoto.name field is mandatory.",
-        rule: "required",
-      },
-      "profilePhoto.size": {
-        message: "The profilePhoto.size field is mandatory.",
-        rule: "required",
-      },
-      "profilePhoto.type": {
-        message: "The profilePhoto.type field is mandatory.",
-        rule: "required",
-      },
+      code: "PROFILE_PHOTO_REQUIRED",
+      message: "Profile photo is required",
     })
   })
 
@@ -85,12 +71,10 @@ describe("UpdateMemberProfilePhotoValidator", () => {
     await UpdateMemberProfilePhotoValidator(req, res as any, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(HttpStatus.UNPROCESSABLE_ENTITY)
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     expect(res.send).toHaveBeenCalledWith({
-      "profilePhoto.type": {
-        message: "The selected profilePhoto.type is invalid.",
-        rule: "in",
-      },
+      code: "INVALID_PROFILE_PHOTO",
+      message: "Invalid photo format. Allowed: jpeg, png, webp",
     })
   })
 
@@ -111,12 +95,14 @@ describe("UpdateMemberProfilePhotoValidator", () => {
     await UpdateMemberProfilePhotoValidator(req, res as any, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(HttpStatus.UNPROCESSABLE_ENTITY)
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.PAYLOAD_TOO_LARGE)
     expect(res.send).toHaveBeenCalledWith({
+      code: "PROFILE_PHOTO_TOO_LARGE",
       profilePhoto: {
         message: "Profile photo must be at most 3 MB",
         rule: "max",
       },
+      message: "Profile photo must be at most 3 MB",
     })
   })
 })

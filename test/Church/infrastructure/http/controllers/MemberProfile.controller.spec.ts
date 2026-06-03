@@ -86,7 +86,8 @@ describe("MemberProfileController", () => {
       id: "member-db-id",
       memberId: "member-1",
       name: "John Doe",
-      profilePhoto: "https://cdn.example.com/profile.jpg",
+      profilePhoto: "2025/6/profile.jpg",
+      profilePhotoUrl: "https://cdn.example.com/profile.jpg",
     })
   })
 
@@ -108,7 +109,8 @@ describe("MemberProfileController", () => {
 
   it("updates only the authenticated member photo", async () => {
     updateProfilePhotoExecuteMock.mockResolvedValue({
-      profilePhoto: "https://cdn.example.com/new-profile.jpg",
+      profilePhoto: "2026/6/new-profile.jpg",
+      profilePhotoUrl: "https://cdn.example.com/new-profile.jpg",
     })
 
     const controller = new MemberProfileController()
@@ -144,7 +146,8 @@ describe("MemberProfileController", () => {
     expect(res.status).toHaveBeenCalledWith(HttpStatus.OK)
     expect(res.send).toHaveBeenCalledWith({
       message: "MEMBER_PROFILE_PHOTO_UPDATED",
-      profilePhoto: "https://cdn.example.com/new-profile.jpg",
+      profilePhoto: "2026/6/new-profile.jpg",
+      profilePhotoUrl: "https://cdn.example.com/new-profile.jpg",
     })
   })
 })

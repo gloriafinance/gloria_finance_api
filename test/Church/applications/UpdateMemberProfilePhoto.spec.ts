@@ -104,7 +104,8 @@ describe("UpdateMemberProfilePhoto", () => {
     expect(storage.deleteFile).toHaveBeenCalledWith("2025/5/old-photo.jpg")
     expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.jpg")
     expect(result).toEqual({
-      profilePhoto: "https://cdn.example.com/new-photo.jpg",
+      profilePhoto: "2026/6/new-photo.jpg",
+      profilePhotoUrl: "https://cdn.example.com/new-photo.jpg",
     })
   })
 

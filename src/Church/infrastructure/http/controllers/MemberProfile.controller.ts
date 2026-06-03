@@ -71,6 +71,7 @@ export class MemberProfileController {
       res.status(HttpStatus.OK).send({
         message: "MEMBER_PROFILE_PHOTO_UPDATED",
         profilePhoto: result.profilePhoto,
+        profilePhotoUrl: result.profilePhotoUrl,
       })
     } catch (e) {
       domainResponse(e, res)
@@ -84,7 +85,7 @@ export class MemberProfileController {
     }
 
     if (response.profilePhoto) {
-      response.profilePhoto =
+      response.profilePhotoUrl =
         await StorageProviderService.getInstance().downloadFile(
           response.profilePhoto
         )

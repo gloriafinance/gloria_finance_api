@@ -18,6 +18,7 @@ export type UpdateMemberProfilePhotoRequest = {
 
 export type UpdateMemberProfilePhotoResult = {
   profilePhoto: string
+  profilePhotoUrl: string
 }
 
 export class UpdateMemberProfilePhoto {
@@ -69,10 +70,11 @@ export class UpdateMemberProfilePhoto {
       })
     }
 
-    const profilePhoto = await this.storage.downloadFile(uploadedPath)
+    const profilePhotoUrl = await this.storage.downloadFile(uploadedPath)
 
     return {
-      profilePhoto,
+      profilePhoto: uploadedPath,
+      profilePhotoUrl,
     }
   }
 

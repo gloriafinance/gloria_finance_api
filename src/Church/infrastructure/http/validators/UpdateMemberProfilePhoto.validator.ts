@@ -22,6 +22,13 @@ export const UpdateMemberProfilePhotoValidator = async (
     profilePhoto,
   }
 
+  if (!profilePhoto) {
+    return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
+      code: "PROFILE_PHOTO_REQUIRED",
+      message: "Profile photo is required",
+    })
+  }
+
   logger.info("Validating member profile photo payload", {
     hasFile: Boolean(profilePhoto),
     fileName: profilePhoto?.name,
@@ -39,15 +46,27 @@ export const UpdateMemberProfilePhotoValidator = async (
   const matched = await validator.check()
 
   if (!matched) {
-    return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
+    if (validator.errors["profilePhoto.type"]) {
+      return res.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).send({
+        code: "INVALID_PROFILE_PHOTO",
+        message: "Invalid photo format. Allowed: jpeg, png, webp",
+      })
+    }
+
+    return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
+      code: "PROFILE_PHOTO_INVALID",
+      message: "Profile photo is invalid",
+    })
   }
 
   if ((profilePhoto?.size ?? 0) > maxSize) {
-    return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
+    return res.status(HttpStatus.PAYLOAD_TOO_LARGE).send({
+      code: "PROFILE_PHOTO_TOO_LARGE",
       profilePhoto: {
         message: "Profile photo must be at most 3 MB",
         rule: "max",
       },
+      message: "Profile photo must be at most 3 MB",
     })
   }
 
