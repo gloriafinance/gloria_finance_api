@@ -85,10 +85,14 @@ export class MemberProfileController {
     }
 
     if (response.profilePhoto) {
-      response.profilePhotoUrl =
-        await StorageProviderService.getInstance().downloadFile(
-          response.profilePhoto
-        )
+      try {
+        response.profilePhotoUrl =
+          await StorageProviderService.getInstance().downloadFile(
+            response.profilePhoto
+          )
+      } catch {
+        response.profilePhotoUrl = null
+      }
     }
 
     return response

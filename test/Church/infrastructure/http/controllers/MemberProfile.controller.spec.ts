@@ -91,6 +91,32 @@ describe("MemberProfileController", () => {
     })
   })
 
+  it("keeps the profile response even when the storage URL cannot be resolved", async () => {
+    findMemberExecuteMock.mockResolvedValue({
+      getId: () => "member-db-id",
+      toPrimitives: () => ({
+        memberId: "member-1",
+        name: "John Doe",
+        profilePhoto: "2025/6/profile.jpg",
+      }),
+    })
+    downloadFileMock.mockRejectedValue(new Error("storage unavailable"))
+
+    const controller = new MemberProfileController()
+    const res = buildRes()
+
+    await controller.profile(buildReq(), res as any)
+
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.OK)
+    expect(res.send).toHaveBeenCalledWith({
+      id: "member-db-id",
+      memberId: "member-1",
+      name: "John Doe",
+      profilePhoto: "2025/6/profile.jpg",
+      profilePhotoUrl: null,
+    })
+  })
+
   it("returns forbidden when the token does not carry member scope", async () => {
     const controller = new MemberProfileController()
     const res = buildRes()
