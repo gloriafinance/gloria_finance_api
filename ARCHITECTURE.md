@@ -357,6 +357,15 @@ export class ChurchController {
 }
 ```
 
+**Validation Rules:**
+
+- ✅ All request payload validation must live in `src/**/infrastructure/http/validators/`
+- ✅ Use `node-input-validator` for HTTP input validation in validators
+- ✅ Controllers should remain thin and only orchestrate the validated request into a use case
+- ❌ Do not place inline payload validation inside controllers when a validator can express it
+- ❌ Do not duplicate the same validation rule across controller and validator
+- ✅ Keep controller-only checks limited to request-scoped context, auth scope, or multipart presence when the validator cannot access that context
+
 **Controller Registration:**
 
 ```typescript
