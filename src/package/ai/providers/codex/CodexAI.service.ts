@@ -1,6 +1,10 @@
 import { Logger } from "@/Shared/adapter"
 import type { Schema } from "@google/generative-ai"
-import type { AIExecutionResult, AIRepairInvalidResponseInput, IProxyIAService, } from "@/package/ai/ai.interface"
+import type {
+  AIExecutionResult,
+  AIRepairInvalidResponseInput,
+  IProxyIAService,
+} from "@/package/ai/ai.interface"
 import { normalizeStructuredSchema } from "@/package/ai/helpers/NormalizeStructuredSchema.helper"
 import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
 import { findAIProviderByService } from "@/package/ai/helpers/AIProviderConfig.helper"
@@ -10,9 +14,7 @@ import { parseCodexResponse } from "@/package/ai/providers/codex/helpers/ParseCo
 import { buildCodexRepairPrompt } from "@/package/ai/providers/codex/helpers/BuildCodexRepairPrompt.helper"
 import { maskCodexSecret } from "@/package/ai/providers/codex/helpers/MaskCodexSecret.helper"
 import { extractCodexAccountId } from "@/package/ai/providers/codex/helpers/ExtractCodexAccountId.helper"
-import {
-  normalizeCodexCompletedResponse
-} from "@/package/ai/providers/codex/helpers/NormalizeCodexCompletedResponse.helper"
+import { normalizeCodexCompletedResponse } from "@/package/ai/providers/codex/helpers/NormalizeCodexCompletedResponse.helper"
 
 type CodexProviderResponse = {
   error?: {
