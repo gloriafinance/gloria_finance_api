@@ -20,7 +20,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@abejarano/ts-mongodb-criteria": "^1.8.3",
+    "@abejarano/ts-mongodb-criteria": "^1.8.6",
     "@axiomhq/pino": "^1.4.0",
     "@bull-board/api": "^6.16.2",
     "@bull-board/bun": "^6.16.2",

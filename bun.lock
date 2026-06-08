@@ -5,7 +5,7 @@
     "": {
       "name": "church_financial_api",
       "dependencies": {
-        "@abejarano/ts-mongodb-criteria": "^1.8.3",
+        "@abejarano/ts-mongodb-criteria": "^1.8.6",
         "@axiomhq/pino": "^1.4.0",
         "@bull-board/api": "^6.16.2",
         "@bull-board/bun": "^6.16.2",
@@ -47,7 +47,7 @@
     },
   },
   "packages": {
-    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.8.3", "", { "dependencies": { "migrate-mongo": "14.0.7" }, "peerDependencies": { "mongodb": ">=6" }, "bin": { "ts-mongo": "dist/cjs/bin/cli.js" } }, "sha512-T9O8dto134qLJZccaFYAXAYyfELOIduNFwXJojgS66fJz5BBLQxo/DJvZO+LqukZJXd56/+D/MJQZ0+GfQiklA=="],
+    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.8.6", "", { "dependencies": { "migrate-mongo": "14.0.7" }, "peerDependencies": { "mongodb": ">=6" }, "bin": { "ts-mongo": "dist/cjs/bin/cli.js" } }, "sha512-rDT8uMS1KCVMbaFBFdKVgnzxx/j5pvWJVrFO92AilzLYsBjKcBnl/jYX3fLrSYmLZ6hGbPkK/k0bUShDpwsB5w=="],
 
     "@axiomhq/js": ["@axiomhq/js@1.4.0", "", { "dependencies": { "fetch-retry": "^6.0.0" } }, "sha512-wC5x1ud/QJMstrjpicATkyY8+ZVWEl4WlXMtA5EZf7hkj0+b191yv4yynLxLEfr/MveXora9m6CWdJq4DsbcAg=="],
 

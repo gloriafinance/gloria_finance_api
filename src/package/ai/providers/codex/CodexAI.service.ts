@@ -1,10 +1,6 @@
 import { Logger } from "@/Shared/adapter"
 import type { Schema } from "@google/generative-ai"
-import type {
-  AIExecutionResult,
-  AIRepairInvalidResponseInput,
-  IProxyIAService,
-} from "@/package/ai/ai.interface"
+import type { AIExecutionResult, AIRepairInvalidResponseInput, IProxyIAService, } from "@/package/ai/ai.interface"
 import { normalizeStructuredSchema } from "@/package/ai/helpers/NormalizeStructuredSchema.helper"
 import { buildAIProviderError } from "@/package/ai/helpers/BuildAIProviderError.helper"
 import { findAIProviderByService } from "@/package/ai/helpers/AIProviderConfig.helper"
@@ -14,6 +10,9 @@ import { parseCodexResponse } from "@/package/ai/providers/codex/helpers/ParseCo
 import { buildCodexRepairPrompt } from "@/package/ai/providers/codex/helpers/BuildCodexRepairPrompt.helper"
 import { maskCodexSecret } from "@/package/ai/providers/codex/helpers/MaskCodexSecret.helper"
 import { extractCodexAccountId } from "@/package/ai/providers/codex/helpers/ExtractCodexAccountId.helper"
+import {
+  normalizeCodexCompletedResponse
+} from "@/package/ai/providers/codex/helpers/NormalizeCodexCompletedResponse.helper"
 
 type CodexProviderResponse = {
   error?: {
@@ -267,6 +266,7 @@ export class CodexAIService implements IProxyIAService {
 
     const decoder = new TextDecoder()
     let buffer = ""
+    const streamedOutputItems: Record<string, unknown>[] = []
 
     try {
       while (true) {
@@ -301,6 +301,14 @@ export class CodexAIService implements IProxyIAService {
             )
           }
 
+          if (type === "response.output_item.done") {
+            const item = event.item
+            if (item && typeof item === "object") {
+              streamedOutputItems.push(item as Record<string, unknown>)
+            }
+            continue
+          }
+
           if (type === "response.failed") {
             const responseError =
               event.response &&
@@ -326,9 +334,15 @@ export class CodexAIService implements IProxyIAService {
             type === "response.completed" ||
             type === "response.incomplete"
           ) {
-            return event.response && typeof event.response === "object"
-              ? (event.response as CodexProviderResponse)
-              : {}
+            const completedResponse =
+              event.response && typeof event.response === "object"
+                ? (event.response as CodexProviderResponse)
+                : {}
+
+            return normalizeCodexCompletedResponse(
+              completedResponse,
+              streamedOutputItems
+            )
           }
         }
       }
@@ -339,6 +353,12 @@ export class CodexAIService implements IProxyIAService {
       try {
         reader.releaseLock()
       } catch {}
+    }
+
+    if (streamedOutputItems.length > 0) {
+      return {
+        output: streamedOutputItems,
+      }
     }
 
     throw new Error("Codex ChatGPT backend returned no completed response")
