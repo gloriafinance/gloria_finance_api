@@ -5,42 +5,62 @@ import {
   type IScheduleReminderService,
   RecurrenceType,
   ScheduleEvent,
+  ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
   type IScheduleItemRepository,
 } from "@/Schedule/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import { type Paginate } from "@abejarano/ts-mongodb-criteria"
+import { type Criteria, type Paginate } from "@abejarano/ts-mongodb-criteria"
 import type { ICacheService } from "@/Shared/domain"
 
 class InMemoryChurchRepository implements IChurchRepository {
   constructor(private readonly churches: Church[]) {}
 
-  async all(): Promise<Church[]> {
+  async all(_filter: object): Promise<Church[]> {
     return this.churches
+  }
+
+  async findById(_churchId: string): Promise<Church | undefined> {
+    throw new Error("Method not implemented.")
   }
 
   async upsert(): Promise<void> {
     throw new Error("Method not implemented.")
   }
 
-  async one(): Promise<Church | undefined> {
+  async one(_filter: object): Promise<Church | null> {
     throw new Error("Method not implemented.")
   }
 
-  async list(): Promise<Paginate<Church>> {
+  async list<D>(
+    _criteria: Criteria,
+    _fieldsToExclude?: string[]
+  ): Promise<Paginate<D>> {
     throw new Error("Method not implemented.")
   }
 
-  async listByDistrictId(): Promise<Church[]> {
+  async delete(_filter: object): Promise<void> {
     throw new Error("Method not implemented.")
   }
 
-  async hasAnAssignedMinister(): Promise<[boolean, Church | undefined]> {
+  async listByDistrictId(_districtId: string): Promise<Church[]> {
+    throw new Error("Method not implemented.")
+  }
+
+  async hasAnAssignedMinister(
+    _churchId: string
+  ): Promise<[boolean, Church | undefined]> {
     throw new Error("Method not implemented.")
   }
 
   async withoutAssignedMinister(): Promise<Church[]> {
+    throw new Error("Method not implemented.")
+  }
+
+  async getOrCreateMemberRegistrationToken(
+    _churchId: string
+  ): Promise<string> {
     throw new Error("Method not implemented.")
   }
 }
@@ -61,11 +81,18 @@ class InMemoryScheduleRepository implements IScheduleItemRepository {
     this.items.push(scheduleItem)
   }
 
-  async one(): Promise<ScheduleEvent | undefined> {
+  async one(_filter: object): Promise<ScheduleEvent | null> {
     throw new Error("Method not implemented.")
   }
 
-  async list(): Promise<Paginate<ScheduleEvent>> {
+  async list<D>(
+    _criteria: Criteria,
+    _fieldsToExclude?: string[]
+  ): Promise<Paginate<D>> {
+    throw new Error("Method not implemented.")
+  }
+
+  async delete(_filter: object): Promise<void> {
     throw new Error("Method not implemented.")
   }
 
@@ -80,7 +107,7 @@ class InMemoryScheduleRepository implements IScheduleItemRepository {
 
       if (
         filters?.isActive !== undefined &&
-        item.getIsActive() !== filters.isActive
+        (item.getStatus() === ScheduleEventStatus.ACTIVE) !== filters.isActive
       ) {
         return false
       }
@@ -212,6 +239,49 @@ describe("NotifyScheduleDay", () => {
       "schedule-day:queued:church-1:event-1:2026-03-15",
       true,
       172800
+    )
+  })
+
+  it("uses the schedule recurrence timezone instead of the church timezone when deciding reminders", async () => {
+    const churchRepository = new InMemoryChurchRepository([
+      buildChurch("America/New_York"),
+    ])
+    const scheduleRepository = new InMemoryScheduleRepository([
+      buildScheduleEvent("America/Sao_Paulo"),
+    ])
+
+    const job = new NotifyScheduleDay(
+      churchRepository,
+      scheduleRepository,
+      queueService,
+      scheduleReminderService,
+      cacheService
+    )
+
+    await job.handle({
+      referenceDate: "2026-03-18T11:59:00.000Z",
+    })
+
+    expect(scheduleReminderService.shouldQueueReminder).toHaveBeenCalledWith(
+      expect.anything(),
+      "America/Sao_Paulo",
+      expect.any(Date),
+      "15:30"
+    )
+    expect(scheduleReminderService.notificationDateKey).toHaveBeenCalledWith(
+      expect.anything(),
+      "America/Sao_Paulo",
+      expect.any(Date)
+    )
+    expect(scheduleReminderService.reminderDelayMs).toHaveBeenCalledWith(
+      "America/Sao_Paulo",
+      expect.any(Date),
+      "15:30"
+    )
+    expect(scheduleReminderService.isExpired).toHaveBeenCalledWith(
+      expect.anything(),
+      "America/Sao_Paulo",
+      expect.any(Date)
     )
   })
 

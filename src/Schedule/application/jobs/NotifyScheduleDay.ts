@@ -67,7 +67,6 @@ export class NotifyScheduleDay implements IJob {
 
     await this.finalizedEvents(
       church.getChurchId(),
-      church.getTimezone(),
       scheduleItems,
       referenceDate
     )
@@ -78,10 +77,11 @@ export class NotifyScheduleDay implements IJob {
     scheduleItem: ScheduleEvent,
     referenceDate: Date
   ): Promise<void> {
+    const scheduleTimezone = scheduleItem.getRecurrencePattern().timezone
     const notificationDateKey =
       this.scheduleReminderService.notificationDateKey(
         scheduleItem,
-        church.getTimezone(),
+        scheduleTimezone,
         referenceDate
       )
     const schedulingLockKey = `schedule-day:queued:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`
@@ -89,7 +89,7 @@ export class NotifyScheduleDay implements IJob {
     if (
       !this.scheduleReminderService.shouldQueueReminder(
         scheduleItem,
-        church.getTimezone(),
+        scheduleTimezone,
         referenceDate,
         church.getNotificationTime()
       )
@@ -133,7 +133,7 @@ export class NotifyScheduleDay implements IJob {
       {
         jobId: `schedule-day:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`,
         delayMs: this.scheduleReminderService.reminderDelayMs(
-          church.getTimezone(),
+          scheduleTimezone,
           referenceDate,
           church.getNotificationTime()
         ),
@@ -144,7 +144,6 @@ export class NotifyScheduleDay implements IJob {
 
   private async finalizedEvents(
     churchId: string,
-    churchTimezone: string,
     scheduleItems: Awaited<
       ReturnType<IScheduleItemRepository["findManyByChurch"]>
     >,
@@ -152,10 +151,11 @@ export class NotifyScheduleDay implements IJob {
   ): Promise<void> {
     await Promise.all(
       scheduleItems.map(async (scheduleItem) => {
+        const scheduleTimezone = scheduleItem.getRecurrencePattern().timezone
         if (
           !this.scheduleReminderService.isExpired(
             scheduleItem,
-            churchTimezone,
+            scheduleTimezone,
             referenceDate
           )
         ) {
