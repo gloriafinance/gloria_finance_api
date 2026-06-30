@@ -1,3 +1,4 @@
+import type { ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -8,7 +9,6 @@ import {
   Res,
   Use,
 } from "bun-platform-kit"
-import type { ServerResponse } from "bun-platform-kit"
 
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { HttpStatus } from "@/Shared/domain"
@@ -31,12 +31,12 @@ import {
   UserMongoRepository,
 } from "@/SecuritySystem/infrastructure"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
-  Can,
   CacheProviderService,
+  Can,
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/rbac")
 export class RbacController {
@@ -215,6 +215,8 @@ export class RbacController {
         churchId: auth.churchId,
         userId,
       })
+
+      console.log(permissions)
 
       res.status(HttpStatus.OK).send({
         data: permissions,

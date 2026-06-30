@@ -24,13 +24,11 @@ import {
   ListContributions,
   RegisterContributionsOnline,
 } from "@/Financial/applications"
-import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
 import type {
   ContributionRequest,
   FilterContributionsRequest,
 } from "@/Financial/domain"
 import {
-  AvailabilityAccountNotFound,
   FinancialConcept,
   MemberContributionType,
   OnlineContributions,
@@ -78,22 +76,10 @@ export class ContributionMemberController {
 
       let financialConcept: FinancialConcept | undefined
       if (payload.contributionType === MemberContributionType.TITHE) {
-        let name: string
-        switch (member.getSettings().lang) {
-          case "en":
-            name = "Member Tithes"
-            break
-          case "es":
-            name = "Diezmos de Miembros"
-            break
-          default:
-            name = "Dízimos de Membros"
-        }
-
         financialConcept =
           (await FinancialConceptMongoRepository.getInstance().one({
             churchId: member.getChurch().churchId,
-            name,
+            tag: "Tithes",
           }))!
       }
 
@@ -110,15 +96,6 @@ export class ContributionMemberController {
           }))!
       }
 
-      const availabilityAccount =
-        await AvailabilityAccountMongoRepository.getInstance().one({
-          availabilityAccountId: request.availabilityAccountId,
-        })
-
-      if (!availabilityAccount) {
-        throw new AvailabilityAccountNotFound()
-      }
-
       await new RegisterContributionsOnline(
         OnlineContributionsMongoRepository.getInstance(),
         StorageProviderService.getInstance(),
@@ -130,9 +107,8 @@ export class ContributionMemberController {
           paidAt: request.paidAt,
           bankTransferReceipt: request.bankTransferReceipt,
         },
-        availabilityAccount,
         member,
-        financialConcept
+        financialConcept!
       )
 
       res.status(HttpStatus.CREATED).send({

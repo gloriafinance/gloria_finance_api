@@ -18,28 +18,39 @@ export class OnlineContributions extends AggregateRoot {
   private bankTransferReceipt: string
   private observation: string
   private createdAt: Date
-  private availabilityAccount: AvailabilityAccount
+  private availabilityAccount?: AvailabilityAccount
   private accountReceivableId?: string
   private installmentId?: string
   private paidAt: Date
 
-  static create(
-    amount: AmountValue,
+  static create(params: {
+    amount: AmountValue
     member: {
       getMemberId(): string
       getName(): string
       getChurch(): { churchId: string; name: string }
-    },
-    financialConcept: FinancialConcept,
-    bankTransferReceipt: string,
-    observation: string = "",
-    availabilityAccount: AvailabilityAccount,
-    paidAt: Date,
+    }
+    financialConcept: FinancialConcept
+    bankTransferReceipt: string
+    observation?: string
+    availabilityAccount?: AvailabilityAccount
+    paidAt: Date
     reference?: {
       accountReceivableId?: string
       installmentId?: string
     }
-  ): OnlineContributions {
+  }): OnlineContributions {
+    const {
+      member,
+      availabilityAccount,
+      amount,
+      financialConcept,
+      bankTransferReceipt,
+      observation,
+      paidAt,
+      reference,
+    } = params
+
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.member = ContributionMemberSnapshot.fromMember(member)
     contributions.churchId = member.getChurch().churchId
@@ -57,7 +68,7 @@ export class OnlineContributions extends AggregateRoot {
       throw new FinancialConceptDisable()
     }
 
-    contributions.observation = observation
+    contributions.observation = observation ?? ""
     contributions.accountReceivableId = reference?.accountReceivableId
     contributions.installmentId = reference?.installmentId
 
@@ -80,14 +91,18 @@ export class OnlineContributions extends AggregateRoot {
       plainData.financialConcept
     )
     contributions.observation = plainData.observation
-    contributions.availabilityAccount = AvailabilityAccount.fromPrimitives(
-      plainData.availabilityAccount
-    )
+    contributions.availabilityAccount = plainData.availabilityAccount
+      ? AvailabilityAccount.fromPrimitives(plainData.availabilityAccount)
+      : undefined
     contributions.accountReceivableId = plainData.accountReceivableId
     contributions.installmentId = plainData.installmentId
     contributions.paidAt = new Date(plainData.paidAt)
 
     return contributions
+  }
+
+  setAvailabilityAccount(account: AvailabilityAccount) {
+    this.availabilityAccount = account
   }
 
   updateStatus(status: OnlineContributionsStatus) {
@@ -118,7 +133,7 @@ export class OnlineContributions extends AggregateRoot {
     return this.member
   }
 
-  getAvailabilityAccount(): AvailabilityAccount {
+  getAvailabilityAccount(): AvailabilityAccount | undefined {
     return this.availabilityAccount
   }
 

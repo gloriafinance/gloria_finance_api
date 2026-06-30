@@ -10,15 +10,15 @@ servers:
   - url: http://localhost:5200
     description: Desarrollo local
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 paths:
   /api/v1/me/contribution:
     post:
       summary: Registra una contribución en línea del miembro autenticado
       description: El miembro envía el comprobante (opcional) y la solicitud queda pendiente de verificación.
-      tags: [ Member Contributions ]
+      tags: [Member Contributions]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -27,7 +27,6 @@ paths:
               type: object
               required:
                 - amount
-                - availabilityAccountId
                 - contributionType
                 - paidAt
               properties:
@@ -35,12 +34,9 @@ paths:
                   type: number
                   format: float
                   example: 120.5
-                availabilityAccountId:
-                  type: string
-                  description: Cuenta de disponibilidad donde se registrará el ingreso.
                 contributionType:
                   type: string
-                  enum: [ TITHE, OFFERING ]
+                  enum: [TITHE, OFFERING]
                   description: |
                     - `TITHE`: el backend busca automáticamente el concepto "Dízimos de Membros" para la iglesia.
                     - `OFFERING`: requiere `financialConceptId`.
@@ -77,15 +73,15 @@ paths:
           description: Validación fallida.
     get:
       summary: Lista contribuciones en línea declaradas por el miembro autenticado
-      tags: [ Member Contributions ]
+      tags: [Member Contributions]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: query
           name: status
           schema:
             type: string
-            enum: [ PENDING_VERIFICATION, PROCESSED, REJECTED ]
+            enum: [PENDING_VERIFICATION, PROCESSED, REJECTED]
           description: Filtra por estado de verificación.
         - in: query
           name: financialConceptId
@@ -126,13 +122,13 @@ paths:
   /api/v1/account-receivable/member/commitments:
     get:
       summary: Lista compromisos de contribución del miembro
-      tags: [ Accounts Receivable ]
+      tags: [Accounts Receivable]
       parameters:
         - in: query
           name: status
           schema:
             type: string
-            enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
+            enum: [PENDING, PAID, PENDING_ACCEPTANCE, DENIED]
           description: Filtra por estado de la cuenta por cobrar.
         - in: query
           name: page
@@ -167,7 +163,7 @@ paths:
   /api/v1/account-receivable/member/payment-declaration:
     post:
       summary: Declara un pago digital de una cuota de compromiso (crea OnlineContribution)
-      tags: [ Accounts Receivable ]
+      tags: [Accounts Receivable]
       requestBody:
         required: true
         content:
@@ -209,11 +205,32 @@ paths:
         "422":
           description: Validación fallida.
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
   /api/v1/finance/contribution/{contributionId}/status/{status}:
     patch:
       summary: Actualiza el estado de una contribución en línea
-      tags: [ Financial ]
+      tags: [Financial]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - contributionId
+                - status
+                - availabilityAccountId
+              properties:
+                contributionId:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - PENDING_VERIFICATION
+                    - PROCESSED
+                    - REJECTED
+                availabilityAccountId:
+                  type: string
       parameters:
         - in: path
           name: contributionId
@@ -235,11 +252,11 @@ paths:
         "404":
           description: Contribución no encontrada.
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
   /api/v1/account-receivable/pay:
     post:
       summary: Aplica un pago a una o varias cuotas de cuenta por cobrar
-      tags: [ Accounts Receivable ]
+      tags: [Accounts Receivable]
       requestBody:
         required: true
         content:
@@ -273,7 +290,7 @@ paths:
         "422":
           description: Validación fallida.
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
 components:
   securitySchemes:
     bearerAuth:
@@ -303,7 +320,7 @@ components:
           nullable: true
         status:
           type: string
-          enum: [ PENDING, IN_REVIEW, PAID, PARTIAL_PAYMENT ]
+          enum: [PENDING, IN_REVIEW, PAID, PARTIAL_PAYMENT]
     AccountReceivable:
       type: object
       properties:
@@ -321,7 +338,7 @@ components:
           type: number
         status:
           type: string
-          enum: [ PENDING, PAID, PENDING_ACCEPTANCE, DENIED ]
+          enum: [PENDING, PAID, PENDING_ACCEPTANCE, DENIED]
         installments:
           type: array
           items:
@@ -331,7 +348,7 @@ components:
           properties:
             debtorType:
               type: string
-              enum: [ MEMBER, GROUP, EXTERNAL ]
+              enum: [MEMBER, GROUP, EXTERNAL]
             debtorDNI:
               type: string
             name:
@@ -352,7 +369,7 @@ components:
           format: float
         status:
           type: string
-          enum: [ PENDING_VERIFICATION, PROCESSED, REJECTED ]
+          enum: [PENDING_VERIFICATION, PROCESSED, REJECTED]
         createdAt:
           type: string
           format: date-time
@@ -364,7 +381,7 @@ components:
           nullable: true
         type:
           type: string
-          enum: [ TITHE, OFFERING ]
+          enum: [TITHE, OFFERING]
         availabilityAccount:
           type: object
           properties:

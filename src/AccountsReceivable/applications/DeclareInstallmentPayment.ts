@@ -3,13 +3,13 @@ import {
   AccountReceivableNotFound,
   DebtorType,
   type DeclareInstallmentPaymentRequest,
-  IAccountsReceivableRepository,
+  type IAccountsReceivableRepository,
   InstallmentNotFound,
 } from "@/AccountsReceivable/domain"
 import { RegisterContributionsOnline } from "@/Financial/applications"
 import { AmountValue } from "@/Shared/domain"
-import { IMemberRepository } from "@/Church/domain"
-import { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
+import type { IMemberRepository } from "@/Church/domain"
+import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { FindMemberById } from "@/Church/applications"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import { DateBR } from "@/Shared/helpers"
@@ -65,8 +65,9 @@ export class DeclareInstallmentPayment {
         observation: `Pagamento de compromisso ${account.getAccountReceivableId()} - parcela ${installment.installmentId}`,
         accountReceivableId: account.getAccountReceivableId(),
         installmentId: installment.installmentId,
+        availabilityAccount,
       },
-      availabilityAccount,
+
       member,
       account.getFinancialConcept()
     )
