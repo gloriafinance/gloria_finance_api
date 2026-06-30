@@ -91,9 +91,9 @@ export class OnlineContributions extends AggregateRoot {
       plainData.financialConcept
     )
     contributions.observation = plainData.observation
-    contributions.availabilityAccount = AvailabilityAccount.fromPrimitives(
-      plainData.availabilityAccount
-    )
+    contributions.availabilityAccount = plainData.availabilityAccount
+      ? AvailabilityAccount.fromPrimitives(plainData.availabilityAccount)
+      : undefined
     contributions.accountReceivableId = plainData.accountReceivableId
     contributions.installmentId = plainData.installmentId
     contributions.paidAt = new Date(plainData.paidAt)
@@ -133,8 +133,8 @@ export class OnlineContributions extends AggregateRoot {
     return this.member
   }
 
-  getAvailabilityAccount(): AvailabilityAccount {
-    return this.availabilityAccount!
+  getAvailabilityAccount(): AvailabilityAccount | undefined {
+    return this.availabilityAccount
   }
 
   getAccountReceivableId(): string | undefined {

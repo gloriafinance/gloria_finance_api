@@ -62,7 +62,9 @@ export class ContributionController {
         OnlineContributionsMongoRepository.getInstance()
       ).execute(filter)
 
-      res.status(HttpStatus.OK).send(await MemberContributionsDTO(list))
+      res
+        .status(HttpStatus.OK)
+        .send(await MemberContributionsDTO(list, req.auth.symbolFormatMoney))
     } catch (e) {
       domainResponse(e, res)
     }

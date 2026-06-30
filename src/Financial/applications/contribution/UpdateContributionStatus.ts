@@ -34,8 +34,10 @@ export class UpdateContributionStatus {
     status: OnlineContributionsStatus
     createdBy: string
     symbol: string
+    availabilityAccountId: string
   }): Promise<void> {
-    const { contributionId, status, createdBy, symbol } = params
+    const { contributionId, status, createdBy, symbol, availabilityAccountId } =
+      params
 
     this.logger.info(
       `UpdateContributionStatus contributionId: ${contributionId}, status: ${status}`
@@ -49,6 +51,20 @@ export class UpdateContributionStatus {
       throw new ContributionNotFound()
     }
 
+    if (status === OnlineContributionsStatus.PROCESSED) {
+      const availabilityAccount = await this.availabilityAccountRepository.one({
+        availabilityAccountId,
+      })
+
+      if (!availabilityAccount) {
+        throw new Error(
+          `Availability account ${availabilityAccountId} not found`
+        )
+      }
+
+      contribution.setAvailabilityAccount(availabilityAccount)
+    }
+
     contribution.updateStatus(status)
     await this.contributionRepository.upsert(contribution)
 
@@ -58,12 +74,19 @@ export class UpdateContributionStatus {
       return
     }
 
-    const concept = contribution.getFinancialConcept()
-
     if (
       contribution.getAccountReceivableId() &&
       contribution.getInstallmentId()
     ) {
+      const concept = contribution.getFinancialConcept()
+      const availabilityAccount = contribution.getAvailabilityAccount()
+
+      if (!availabilityAccount) {
+        throw new Error(
+          `Contribution ${contributionId} does not have an availability account`
+        )
+      }
+
       await new PayAccountReceivable(
         this.financialConceptRepository,
         this.availabilityAccountRepository,
@@ -74,9 +97,7 @@ export class UpdateContributionStatus {
         installmentId: contribution.getInstallmentId()!,
         installmentIds: [contribution.getInstallmentId()!],
         financialTransactionId: contribution.getBankTransferReceipt(),
-        availabilityAccountId: contribution
-          .getAvailabilityAccount()
-          .getAvailabilityAccountId(),
+        availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
         churchId: contribution.getMember().getChurchId(),
         amount: AmountValue.create(contribution.getAmount()),
         voucher: contribution.getBankTransferReceipt(),
@@ -88,6 +109,15 @@ export class UpdateContributionStatus {
       return
     }
 
+    const concept = contribution.getFinancialConcept()
+    const availabilityAccount = contribution.getAvailabilityAccount()
+
+    if (!availabilityAccount) {
+      throw new Error(
+        `Contribution ${contributionId} does not have an availability account`
+      )
+    }
+
     await new DispatchCreateFinancialRecord(this.queueService).execute({
       financialConcept: concept,
       amount: contribution.getAmount(),
@@ -97,7 +127,7 @@ export class UpdateContributionStatus {
       financialRecordType: FinancialRecordType.INCOME,
       source: FinancialRecordSource.AUTO,
       status: FinancialRecordStatus.CLEARED,
-      availabilityAccount: contribution.getAvailabilityAccount(),
+      availabilityAccount,
       voucher: contribution.getBankTransferReceipt(),
       description: `${concept.getName()}: ${contribution.getMember().getName()}`,
     })

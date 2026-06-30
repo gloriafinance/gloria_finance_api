@@ -1,16 +1,24 @@
 import { Validator } from "node-input-validator"
 import { HttpStatus } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
 
-export default async (req, res, next) => {
-  const payload = req.body
+export default async (
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) => {
+  const payload = req.body as any
   const logger = Logger("ContributionValidator")
 
   logger.info(`Validando contribucion`, payload)
 
   const rule = {
     amount: "required|numeric",
-    availabilityAccountId: "required|string",
     financialConceptId: "string",
     contributionType: "required|string|in:OFFERING,TITHE",
     paidAt: "required|date",
