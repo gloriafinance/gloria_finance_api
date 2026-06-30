@@ -1,12 +1,10 @@
 import {
-  ConceptType,
   ContributionNotFound,
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
   OnlineContributions,
   OnlineContributionsStatus,
-  TypeOperationMoney,
 } from "../../domain"
 import type {
   IFinancialConceptRepository,
@@ -14,10 +12,7 @@ import type {
 } from "../../domain/interfaces"
 import { Logger } from "@/Shared/adapter"
 import { AmountValue } from "@/Shared/domain"
-import {
-  DispatchCreateFinancialRecord,
-  DispatchUpdateAvailabilityAccountBalance,
-} from "@/Financial/applications"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { PayAccountReceivable } from "@/AccountsReceivable/applications"
 import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import type { IAccountsReceivableRepository } from "@/AccountsReceivable/domain"
@@ -64,17 +59,6 @@ export class UpdateContributionStatus {
     }
 
     const concept = contribution.getFinancialConcept()
-    const operationType =
-      concept.getType() === ConceptType.INCOME
-        ? TypeOperationMoney.MONEY_IN
-        : TypeOperationMoney.MONEY_OUT
-
-    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
-      availabilityAccount: contribution.getAvailabilityAccount(),
-      operationType,
-      concept: concept.getName(),
-      amount: contribution.getAmount(),
-    })
 
     if (
       contribution.getAccountReceivableId() &&
