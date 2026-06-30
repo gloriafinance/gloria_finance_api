@@ -38,51 +38,56 @@ export class OnboardingCustomerJob implements IJob {
   ) {}
 
   async handle(args: OnboardingCustomerRequest): Promise<any> {
-    this.logger.info(`  started`, args)
+    try {
+      this.logger.info(`  started`, args)
 
-    const { church: churchData } = args
+      const { church: churchData } = args
 
-    const customer = Customer.fromPrimitives(args.customer)
+      const customer = Customer.fromPrimitives(args.customer)
 
-    const church = await new CreateOrUpdateChurch(
-      this.churchRepository
-    ).execute({
-      ...customer.getAddress(),
-      name: customer.getName(),
-      status: ChurchStatus.ACTIVE,
-      registerNumber: churchData.registerNumber,
-      openingDate: churchData.openingDate,
-      symbolFormatMoney: churchData.symbol,
-      lang: customer.getLang(),
-    })
+      const church = await new CreateOrUpdateChurch(
+        this.churchRepository
+      ).execute({
+        ...customer.getAddress(),
+        name: customer.getName(),
+        status: ChurchStatus.ACTIVE,
+        registerNumber: churchData.registerNumber,
+        openingDate: churchData.openingDate,
+        symbolFormatMoney: churchData.symbol,
+        lang: customer.getLang(),
+      })
 
-    customer.setStatus(CustomerStatus.ACTIVE)
-    customer.setOnboardingStatus(OnboardingStatus.COMPLETED)
-    customer.setTenantId(church.getChurchId())
+      customer.setStatus(CustomerStatus.ACTIVE)
+      customer.setOnboardingStatus(OnboardingStatus.COMPLETED)
+      customer.setTenantId(church.getChurchId())
 
-    await this.customerRepository.upsert(customer)
+      await this.customerRepository.upsert(customer)
 
-    await new FirstLoadFinancialConcepts(
-      this.financialConceptRepository,
-      this.churchRepository
-    ).execute({ churchId: church.getChurchId(), lang: customer.getLang() })
+      await new FirstLoadFinancialConcepts(
+        this.financialConceptRepository,
+        this.churchRepository
+      ).execute({ churchId: church.getChurchId(), lang: customer.getLang() })
 
-    await new GenerateFinancialMonths(this.financialYearRepository).execute({
-      churchId: church.getChurchId(),
-      year: new Date().getFullYear(),
-    })
-
-    this.queueService.dispatch<BootstrapPermissionsRequest>(
-      QueueName.BootstrapPermissionsJob,
-      {
+      await new GenerateFinancialMonths(this.financialYearRepository).execute({
         churchId: church.getChurchId(),
-        roles: ["ADMIN"],
-        user: {
-          isSuperUser: true,
-          name: customer.getName(),
-          email: customer.getEmail(),
-        },
-      }
-    )
+        year: new Date().getFullYear(),
+      })
+
+      this.queueService.dispatch<BootstrapPermissionsRequest>(
+        QueueName.BootstrapPermissionsJob,
+        {
+          churchId: church.getChurchId(),
+          roles: ["ADMIN"],
+          user: {
+            isSuperUser: true,
+            name: customer.getName(),
+            email: customer.getEmail(),
+          },
+        }
+      )
+    } catch (e) {
+      this.logger.error(JSON.stringify(e))
+      throw e
+    }
   }
 }

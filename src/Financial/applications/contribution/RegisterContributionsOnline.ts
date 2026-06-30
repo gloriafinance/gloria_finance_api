@@ -28,8 +28,9 @@ export class RegisterContributionsOnline {
       bankTransferReceipt: any
       installmentId?: string
       accountReceivableId?: string
+      availabilityAccount?: AvailabilityAccount
     },
-    availabilityAccount: AvailabilityAccount,
+
     member: Member,
     financialConcept: FinancialConcept
   ) {
@@ -44,6 +45,7 @@ export class RegisterContributionsOnline {
       installmentId,
       observation,
       amount,
+      availabilityAccount,
     } = params
     const date = DateBR()
 
@@ -60,19 +62,19 @@ export class RegisterContributionsOnline {
 
     const voucherPath = (voucher as string) || ""
 
-    const contribution: OnlineContributions = OnlineContributions.create(
-      AmountValue.create(amount),
+    const contribution: OnlineContributions = OnlineContributions.create({
+      amount: AmountValue.create(amount),
       member,
       financialConcept,
-      voucherPath,
+      bankTransferReceipt: voucherPath,
       observation,
       availabilityAccount,
-      StringToDate(paidAt),
-      {
+      paidAt: StringToDate(paidAt),
+      reference: {
         accountReceivableId: accountReceivableId,
         installmentId: installmentId,
-      }
-    )
+      },
+    })
 
     await this.contributionRepository.upsert(contribution)
   }

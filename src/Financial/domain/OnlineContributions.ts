@@ -18,28 +18,39 @@ export class OnlineContributions extends AggregateRoot {
   private bankTransferReceipt: string
   private observation: string
   private createdAt: Date
-  private availabilityAccount: AvailabilityAccount
+  private availabilityAccount?: AvailabilityAccount
   private accountReceivableId?: string
   private installmentId?: string
   private paidAt: Date
 
-  static create(
-    amount: AmountValue,
+  static create(params: {
+    amount: AmountValue
     member: {
       getMemberId(): string
       getName(): string
       getChurch(): { churchId: string; name: string }
-    },
-    financialConcept: FinancialConcept,
-    bankTransferReceipt: string,
-    observation: string = "",
-    availabilityAccount: AvailabilityAccount,
-    paidAt: Date,
+    }
+    financialConcept: FinancialConcept
+    bankTransferReceipt: string
+    observation?: string
+    availabilityAccount?: AvailabilityAccount
+    paidAt: Date
     reference?: {
       accountReceivableId?: string
       installmentId?: string
     }
-  ): OnlineContributions {
+  }): OnlineContributions {
+    const {
+      member,
+      availabilityAccount,
+      amount,
+      financialConcept,
+      bankTransferReceipt,
+      observation,
+      paidAt,
+      reference,
+    } = params
+
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.member = ContributionMemberSnapshot.fromMember(member)
     contributions.churchId = member.getChurch().churchId
@@ -57,7 +68,7 @@ export class OnlineContributions extends AggregateRoot {
       throw new FinancialConceptDisable()
     }
 
-    contributions.observation = observation
+    contributions.observation = observation ?? ""
     contributions.accountReceivableId = reference?.accountReceivableId
     contributions.installmentId = reference?.installmentId
 
@@ -90,6 +101,10 @@ export class OnlineContributions extends AggregateRoot {
     return contributions
   }
 
+  setAvailabilityAccount(account: AvailabilityAccount) {
+    this.availabilityAccount = account
+  }
+
   updateStatus(status: OnlineContributionsStatus) {
     this.status = status
   }
@@ -119,7 +134,7 @@ export class OnlineContributions extends AggregateRoot {
   }
 
   getAvailabilityAccount(): AvailabilityAccount {
-    return this.availabilityAccount
+    return this.availabilityAccount!
   }
 
   getAccountReceivableId(): string | undefined {

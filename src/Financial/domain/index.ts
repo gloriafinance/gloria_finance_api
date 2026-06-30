@@ -32,7 +32,10 @@ export { AccountType } from "../../FinanceConfig/domain/enums/AccountType.enum"
 export { CostCenterCategory } from "../../FinanceConfig/domain/enums/CostCenterCategory.enum"
 export * from "./enums/FinancialRecordType.enum"
 
-export type { ContributionRequest } from "./requests/Contribution.request"
+export type {
+  ContributionRequest,
+  ContributionChangeStatusRequest,
+} from "./requests/Contribution.request"
 export type { FilterContributionsRequest } from "./requests/FilterContributions.request"
 export type { CostCenterRequest } from "../../FinanceConfig/domain/requests/CostCenter.request"
 export * from "./requests/FinancialRecord.request"

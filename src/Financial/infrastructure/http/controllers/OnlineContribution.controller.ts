@@ -1,5 +1,8 @@
-import type { FilterContributionsRequest } from "../../../domain"
-import { OnlineContributions, OnlineContributionsStatus } from "../../../domain"
+import type {
+  ContributionChangeStatusRequest,
+  FilterContributionsRequest,
+} from "../../../domain"
+import { OnlineContributions } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   ListContributions,
@@ -20,15 +23,15 @@ import {
 import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 import { Logger } from "@/Shared/adapter"
 import { type Paginate } from "@abejarano/ts-mongodb-criteria"
-import type { ServerResponse } from "bun-platform-kit"
 import {
+  Body,
   Controller,
   Get,
-  Param,
   Patch,
   Query,
   Req,
   Res,
+  type ServerResponse,
   Use,
 } from "bun-platform-kit"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
@@ -65,11 +68,11 @@ export class ContributionController {
     }
   }
 
-  @Patch("/:contributionId/status/:status")
+  @Patch("/")
   @Use([PermissionMiddleware, Can("financial_records", "adm_contributions")])
   async updateContributionStatusController(
-    @Param()
-    params: { contributionId: string; status: OnlineContributionsStatus },
+    @Body()
+    params: ContributionChangeStatusRequest,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
