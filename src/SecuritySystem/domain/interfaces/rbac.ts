@@ -45,4 +45,6 @@ export interface IUserAssignmentRepository {
   findByUser(churchId: string, userId: string): Promise<UserAssignment | null>
 
   findUserIdsByRole(churchId: string, roleId: string): Promise<string[]>
+
+  deleteByUser(churchId: string, userId: string): Promise<void>
 }

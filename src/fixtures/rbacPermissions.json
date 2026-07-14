@@ -28,6 +28,13 @@
     "isSystem": true
   },
   {
+    "permissionId": "members:delete",
+    "module": "members",
+    "action": "delete",
+    "description": "Eliminar membros de la iglesia y sus usuarios vinculados",
+    "isSystem": true
+  },
+  {
     "permissionId": "ministers:manage",
     "module": "ministers",
     "action": "manage",

@@ -26,6 +26,7 @@ export { FindPendingReviewMemberById } from "./members/FindPendingReviewMemberBy
 export { ApprovePendingMember } from "./members/ApprovePendingMember"
 export { RejectPendingMember } from "./members/RejectPendingMember"
 export { UpdateMemberProfilePhoto } from "./members/UpdateMemberProfilePhoto"
+export { DeleteMember } from "./members/DeleteMember"
 
 export { AssignChurch } from "./ministers/AssignChurch"
 export { RemoveMinister } from "./ministers/RemoveMinister"

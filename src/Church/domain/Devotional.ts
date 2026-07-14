@@ -342,7 +342,7 @@ export class Devotional extends AggregateRoot {
     if (!this.versions.length) {
       return 0
     }
-    return this.versions[this.versions.length - 1].versionNumber
+    return this.versions[this.versions.length - 1]!.versionNumber
   }
 
   getId(): string | undefined {

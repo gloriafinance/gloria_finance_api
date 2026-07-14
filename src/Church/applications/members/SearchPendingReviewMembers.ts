@@ -20,18 +20,23 @@ export class SearchPendingReviewMembers {
   }
 
   private prepareCriteria(request: MemberPaginateRequest): Criteria {
-    const filters = [
-      new Map([
-        ["field", "church.churchId"],
-        ["operator", Operator.EQUAL],
-        ["value", request.churchId],
-      ]),
+    const filters: Map<string, string>[] = [
       new Map([
         ["field", "status"],
         ["operator", Operator.EQUAL],
         ["value", MemberStatus.PENDING_REVIEW],
       ]),
     ]
+
+    if (request.churchId) {
+      filters.push(
+        new Map([
+          ["field", "church.churchId"],
+          ["operator", Operator.EQUAL],
+          ["value", request.churchId],
+        ])
+      )
+    }
 
     return new Criteria(
       Filters.fromValues(filters),

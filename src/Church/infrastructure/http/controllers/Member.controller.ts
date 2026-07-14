@@ -4,22 +4,29 @@ import type {
   UpdateMemberRequest,
 } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import {
-  ApprovePendingMember,
-  AllMember,
-  CreateMember,
-  FindPendingReviewMemberById,
-  FindMemberById,
-  GetOrCreateMemberRegistrationLink,
-  RejectPendingMember,
-  SearchPendingReviewMembers,
-  SearchMembers,
-  UpdateMember,
-} from "../../../applications"
+import { ApprovePendingMember } from "../../../applications/members/ApprovePendingMember"
+import { AllMember } from "../../../applications/members/AllMember"
+import { CreateMember } from "../../../applications/members/CreateMember"
+import { DeleteMember } from "../../../applications/members/DeleteMember"
+import { FindMemberById } from "../../../applications/members/FindMemberById"
+import { FindPendingReviewMemberById } from "../../../applications/members/FindPendingReviewMemberById"
+import { GetOrCreateMemberRegistrationLink } from "../../../applications/members/GetOrCreateMemberRegistrationLink"
+import { RejectPendingMember } from "../../../applications/members/RejectPendingMember"
+import { SearchMembers } from "../../../applications/members/SearchMembers"
+import { SearchPendingReviewMembers } from "../../../applications/members/SearchPendingReviewMembers"
+import { UpdateMember } from "../../../applications/members/UpdateMember"
 import {
   ChurchMongoRepository,
   MemberMongoRepository,
 } from "@/Church/infrastructure"
+import {
+  PermissionMongoRepository,
+  RolePermissionMongoRepository,
+  UserAssignmentMongoRepository,
+  UserMongoRepository,
+} from "@/SecuritySystem/infrastructure"
+import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 import { HttpStatus } from "@/Shared/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
 import { Cache } from "@/Shared/decorators"
@@ -214,6 +221,39 @@ export class MemberController {
 
       res.status(HttpStatus.OK).send({
         message: "MEMBER_REJECTED",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Delete("/:memberId")
+  @Use([PermissionMiddleware, Can("members", "delete")])
+  async delete(
+    @Param("memberId") memberId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new DeleteMember(
+        MemberMongoRepository.getInstance(),
+        UserMongoRepository.getInstance(),
+        UserAssignmentMongoRepository.getInstance(),
+        StorageProviderService.getInstance(),
+        AuthorizationService.getInstance(
+          UserAssignmentMongoRepository.getInstance(),
+          RolePermissionMongoRepository.getInstance(),
+          PermissionMongoRepository.getInstance(),
+          CacheProviderService.getInstance()
+        )
+      ).execute({
+        memberId,
+        churchId: req.auth.churchId!,
+        authenticatedUserId: req.auth.userId!,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "MEMBER_DELETED",
       })
     } catch (e) {
       domainResponse(e, res)

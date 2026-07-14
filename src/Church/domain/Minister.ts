@@ -13,7 +13,7 @@ export class Minister extends AggregateRoot {
   private createdAt: Date
   private dni: string
   private ministerType: MinisterType
-  private churchId: string
+  private churchId?: string
 
   static create(
     name: string,

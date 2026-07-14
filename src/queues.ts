@@ -20,6 +20,7 @@ import { ReportQueue } from "@/Reports/infrastructure/http/jobs"
 import { ChurchQueue } from "@/Church/infrastructure/Church.queue"
 import { ScheduleQueue } from "@/Schedule/infrastructure/jobs/Schedule.job.ts"
 import { MemberMongoRepository } from "@/Church/infrastructure"
+import { QueueService } from "@/package/queue/infrastructure/QueueService"
 
 export const Queues = (): IListQueue[] => [
   ...BankingQueue({
@@ -36,7 +37,12 @@ export const Queues = (): IListQueue[] => [
   {
     name: CreateUserForMemberJob.name,
     useClass: CreateUserForMemberJob,
-    inject: [UserMongoRepository.getInstance(), new PasswordAdapter()],
+    inject: [
+      UserMongoRepository.getInstance(),
+      new PasswordAdapter(),
+      MemberMongoRepository.getInstance(),
+      QueueService.getInstance(),
+    ],
   },
 
   {

@@ -60,6 +60,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
+    delete:
+      summary: Exclui um membro
+      description: |
+        Remove o membro de forma segura:
+        - Exclui a foto de perfil do storage (falhas são logadas, mas não bloqueiam a exclusão).
+        - Remove o documento da coleção `members`.
+        - Remove o usuário vinculado em `bk_users` e sua atribuição de papéis em `user_assignments`.
+        - Invalida o cache RBAC do usuário removido.
+        - Não remove `role_permissions`.
+        Requer a permissão `members:delete`. O `churchId` é obtido exclusivamente do token. Um usuário autenticado não pode excluir o próprio membro vinculado.
+      tags: [Church Members]
+      parameters:
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Membro excluído
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Erro de domínio (membro inexistente, membro de outra igreja ou tentativa de autobloqueio)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Acesso negado (permissão `members:delete` necessária)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/church/member/{memberId}/approve:
     patch:
       summary: Aprova um membro pendente
@@ -231,6 +263,16 @@ components:
         message:
           type: string
       required: [message]
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Código do erro de domínio
+        message:
+          type: string
+          description: Mensagem descritiva do erro
+      required: [code, message]
     MemberRegistrationLinkResponse:
       type: object
       properties:

@@ -18,7 +18,7 @@ export class UpdateMember {
       throw new MemberNotFound()
     }
 
-    const member: Member = await this.memberRepository.one({
+    const member = await this.memberRepository.one({
       memberId: request.memberId,
     })
 
