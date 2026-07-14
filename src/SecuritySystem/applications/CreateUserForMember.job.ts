@@ -1,4 +1,4 @@
-import { Member } from "@/Church/domain"
+import { type IMemberRepository, Member } from "@/Church/domain"
 import {
   type IJob,
   type IQueueService,
@@ -16,6 +16,7 @@ export class CreateUserForMemberJob implements IJob {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly passwordAdapter: IPasswordAdapter,
+    private readonly memberRepository: IMemberRepository,
     private readonly queueService: IQueueService
   ) {}
 
@@ -24,6 +25,18 @@ export class CreateUserForMemberJob implements IJob {
       `User creation request for member: ${JSON.stringify(args)}`
     )
     const member = Member.fromPrimitives(args)
+
+    const memberStillExists = await this.memberRepository.one({
+      memberId: member.getMemberId(),
+      "church.churchId": member.getChurch().churchId,
+    })
+
+    if (!memberStillExists) {
+      this.logger.info(
+        `Member ${member.getMemberId()} was deleted before user creation; skipping`
+      )
+      return
+    }
 
     const userExist: User | undefined = await this.userRepository.findByEmail(
       member.getEmail()
