@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as supertest from "supertest"
 import * as jwt from "jsonwebtoken"
 import * as express from "express"
@@ -44,7 +45,9 @@ class InMemoryPermissionRepository implements IPermissionRepository {
     this.permissions.set(permission.getPermissionId(), permission)
   }
 
-  async list(): Promise<Permission[]> {
+  async list(): Promise<Permission[]>
+  async list<D>(_criteria: Criteria): Promise<Paginate<D>>
+  async list(): Promise<Permission[] | Paginate<Permission>> {
     return Array.from(this.permissions.values())
   }
 }
@@ -72,7 +75,9 @@ class InMemoryRoleRepository implements IRoleRepository {
     this.roles.set(this.key(primitive.churchId, primitive.roleId), role)
   }
 
-  async list(churchId: string): Promise<Role[]> {
+  async list(churchId: string): Promise<Role[]>
+  async list<D>(_criteria: Criteria): Promise<Paginate<D>>
+  async list(churchId: string | Criteria): Promise<Role[] | Paginate<Role>> {
     return Array.from(this.roles.values()).filter(
       (role) => role.toPrimitives().churchId === churchId
     )
@@ -153,6 +158,8 @@ class InMemoryUserAssignmentRepository implements IUserAssignmentRepository {
     }
     return result
   }
+
+  async deleteByUser(_churchId: string, _userId: string): Promise<void> {}
 
   private key(churchId: string, userId: string) {
     return `${churchId}:${userId}`

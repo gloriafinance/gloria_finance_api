@@ -41,6 +41,22 @@ export class UserMongoRepository
     return User.fromPrimitives({ ...result, id: result._id.toString() })
   }
 
+  async findByMemberIdAndChurchId(
+    memberId: string,
+    churchId: string
+  ): Promise<User | undefined> {
+    const collection = await this.collection()
+    const result = await collection.findOne({ memberId, churchId })
+    if (!result) return undefined
+
+    return User.fromPrimitives({ ...result, id: result._id.toString() })
+  }
+
+  async deleteByUserId(userId: string): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({ userId })
+  }
+
   async updatePassword(user: User): Promise<void> {
     const collection = await this.collection()
 

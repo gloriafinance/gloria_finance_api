@@ -20,17 +20,32 @@ class InMemoryUserRepository implements IUserRepository {
     this.users.set(user.getUserId(), user)
   }
 
-  async list(_payload: Criteria): Promise<Paginate<User>> {
+  async list<D>(_payload: Criteria): Promise<Paginate<D>> {
     return {
       count: this.users.size,
       nextPag: null,
-      results: Array.from(this.users.values()),
+      results: Array.from(this.users.values()) as D[],
     }
   }
 
   async updatePassword(user: User): Promise<void> {
     this.users.set(user.getUserId(), user)
   }
+
+  async findByMemberIdAndChurchId(
+    _memberId: string,
+    _churchId: string
+  ): Promise<User | undefined> {
+    return undefined
+  }
+
+  async deleteByUserId(_userId: string): Promise<void> {}
+
+  async one(_filter: object): Promise<User | null> {
+    return null
+  }
+
+  async delete(_filter: object): Promise<void> {}
 }
 
 const buildUser = () =>

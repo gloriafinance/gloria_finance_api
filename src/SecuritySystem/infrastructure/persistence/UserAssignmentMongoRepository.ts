@@ -73,6 +73,11 @@ export class UserAssignmentMongoRepository
     return documents.map((document) => document.userId)
   }
 
+  async deleteByUser(churchId: string, userId: string): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({ churchId, userId })
+  }
+
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)
   }

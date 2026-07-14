@@ -54,6 +54,10 @@ export class DevotionalComment extends AggregateRoot {
     return comment
   }
 
+  getId(): string | undefined {
+    return this.id
+  }
+
   getCommentId(): string {
     return this.commentId
   }

@@ -45,7 +45,7 @@ export class SearchMembers {
     }
 
     filters.push(
-      new Map([
+      new Map<string, string | MemberStatus[]>([
         ["field", "status"],
         ["operator", Operator.IN],
         ["value", [MemberStatus.APPROVED, MemberStatus.INACTIVE]],

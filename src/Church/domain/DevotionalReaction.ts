@@ -49,6 +49,10 @@ export class DevotionalReaction extends AggregateRoot {
     return reaction
   }
 
+  getId(): string | undefined {
+    return this.id
+  }
+
   changeReactionType(reactionType: DevotionalReactionType) {
     this.reactionType = reactionType
     this.updatedAt = DateBR()

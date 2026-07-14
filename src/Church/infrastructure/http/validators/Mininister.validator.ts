@@ -2,7 +2,7 @@ import { HttpStatus } from "../../../../Shared/domain"
 import { Validator } from "node-input-validator"
 import { Logger } from "../../../../Shared/adapter"
 
-export default async (req, res) => {
+export default async (req: any, res: any) => {
   const payload = req.body
   const logger = Logger("MinisterValidator")
 
