@@ -1,17 +1,19 @@
 import { Logger } from "@/Shared/adapter"
-import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain"
-import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces/FinancialRecordRepository.interface"
-import type { IBankStatementRepository } from "@/Banking/domain/interfaces/BankStatementRepository.interface"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
-import { AvailabilityAccountHasMovements } from "@/Financial/domain"
+import type {
+  IAvailabilityAccountBankStatementChecker,
+  IAvailabilityAccountFinancialMovementChecker,
+  IAvailabilityAccountRepository,
+} from "@/FinanceConfig/domain"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "./FindAvailabilityAccountByAvailabilityAccountId"
+import { AvailabilityAccountHasMovements } from "@/FinanceConfig/domain"
 
 export class DeleteAvailabilityAccount {
   private logger = Logger(DeleteAvailabilityAccount.name)
 
   constructor(
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
-    private readonly financialRecordRepository: IFinancialRecordRepository,
-    private readonly bankStatementRepository: IBankStatementRepository
+    private readonly financialMovementChecker: IAvailabilityAccountFinancialMovementChecker,
+    private readonly bankStatementChecker: IAvailabilityAccountBankStatementChecker
   ) {}
 
   async execute(request: {
@@ -25,25 +27,23 @@ export class DeleteAvailabilityAccount {
         this.availabilityAccountRepository
       ).execute(request.availabilityAccountId, request.churchId)
 
-    const financialMovement = await this.financialRecordRepository.one({
-      churchId: request.churchId,
-      "availabilityAccount.availabilityAccountId":
-        availabilityAccount.getAvailabilityAccountId(),
-    })
+    const hasFinancialMovements = await this.financialMovementChecker.exists(
+      availabilityAccount.getAvailabilityAccountId(),
+      request.churchId
+    )
 
-    if (financialMovement) {
+    if (hasFinancialMovements) {
       throw new AvailabilityAccountHasMovements(
         availabilityAccount.getAvailabilityAccountId()
       )
     }
 
-    const bankStatement = await this.bankStatementRepository.one({
-      churchId: request.churchId,
-      "availabilityAccount.availabilityAccountId":
-        availabilityAccount.getAvailabilityAccountId(),
-    })
+    const hasBankStatements = await this.bankStatementChecker.exists(
+      availabilityAccount.getAvailabilityAccountId(),
+      request.churchId
+    )
 
-    if (bankStatement) {
+    if (hasBankStatements) {
       throw new AvailabilityAccountHasMovements(
         availabilityAccount.getAvailabilityAccountId()
       )

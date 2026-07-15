@@ -1,7 +1,6 @@
 export { ContributionNotFound } from "./exceptions/ContributionNotFound.exception"
 export { AvailabilityAccountNotFound } from "./exceptions/AvailabilityAccountNotFound.exception"
 export { AvailabilityAccountChurchMismatch } from "./exceptions/AvailabilityAccountChurchMismatch.exception"
-export { AvailabilityAccountHasMovements } from "./exceptions/AvailabilityAccountHasMovements.exception"
 
 export { CostCenter } from "../../FinanceConfig/domain/CostCenter"
 export * from "./FinanceRecord"

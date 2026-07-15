@@ -10,6 +10,8 @@ export type * from "./requests/FinancialConcept.request"
 export type * from "./interfaces/FinancialConceptRepository.interface"
 export type * from "./interfaces/FinancialConfigurationRepository.interface"
 export type * from "./interfaces/AvailabilityAccountRepository.interface"
+export type * from "./interfaces/AvailabilityAccountFinancialMovementChecker.interface"
+export type * from "./interfaces/AvailabilityAccountBankStatementChecker.interface"
 
 export * from "./enums/AccountType.enum"
 export * from "./enums/CostCenterCategory.enum"
@@ -17,3 +19,4 @@ export * from "./enums/ConcepType.enum"
 
 export * from "./exceptions/FinancialConceptNotFound.exception"
 export * from "./exceptions/NotPossibleUpdateConcept.exception"
+export * from "./exceptions/AvailabilityAccountHasMovements.exception"

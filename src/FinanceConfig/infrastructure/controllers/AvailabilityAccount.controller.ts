@@ -6,9 +6,10 @@ import type { AvailabilityAccountRequest } from "@/FinanceConfig/domain"
 import type { UpdateAvailabilityAccountRequest } from "@/FinanceConfig/domain"
 import { AccountType } from "@/FinanceConfig/domain"
 import {
-  CreateOrUpdateAvailabilityAccount,
+  CreateAvailabilityAccount,
   DeleteAvailabilityAccount,
   SearchAvailabilityAccountByChurchId,
+  UpdateAvailabilityAccount,
 } from "@/FinanceConfig/applications"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 import { BankStatementMongoRepository } from "@/Banking/infrastructure/persistence"
@@ -45,6 +46,17 @@ export class AvailabilityAccountController {
     @Res() res: ServerResponse
   ) {
     try {
+      if (request.availabilityAccountId) {
+        res.status(HttpStatus.BAD_REQUEST).send({
+          availabilityAccountId: {
+            message:
+              "The availabilityAccountId field is not allowed on create.",
+            rule: "prohibited",
+          },
+        })
+        return
+      }
+
       if (
         (request.accountType === AccountType.BANK ||
           request.accountType === AccountType.WALLET) &&
@@ -69,19 +81,19 @@ export class AvailabilityAccountController {
         //TODO implement search wallet
       }
 
-      await new CreateOrUpdateAvailabilityAccount(
+      await new CreateAvailabilityAccount(
         AvailabilityAccountMongoRepository.getInstance()
-      ).execute({ ...request, churchId: req.auth.churchId })
+      ).execute({
+        churchId: req.auth.churchId,
+        accountName: request.accountName,
+        active: request.active,
+        accountType: request.accountType,
+        symbol: request.symbol,
+        source: request.source,
+      })
 
-      if (!request.availabilityAccountId) {
-        res.status(HttpStatus.CREATED).send({
-          message: "Registered availability account",
-        })
-        return
-      }
-
-      res.status(HttpStatus.OK).send({
-        message: "Updated availability account",
+      res.status(HttpStatus.CREATED).send({
+        message: "Registered availability account",
       })
     } catch (e) {
       domainResponse(e, res)
@@ -101,7 +113,7 @@ export class AvailabilityAccountController {
     @Res() res: ServerResponse
   ) {
     try {
-      await new CreateOrUpdateAvailabilityAccount(
+      await new UpdateAvailabilityAccount(
         AvailabilityAccountMongoRepository.getInstance()
       ).execute({
         availabilityAccountId,
@@ -131,8 +143,28 @@ export class AvailabilityAccountController {
     try {
       await new DeleteAvailabilityAccount(
         AvailabilityAccountMongoRepository.getInstance(),
-        FinanceRecordMongoRepository.getInstance(),
-        BankStatementMongoRepository.getInstance()
+        {
+          exists: async (accountId: string, churchId: string) => {
+            const financialMovement =
+              await FinanceRecordMongoRepository.getInstance().one({
+                churchId,
+                "availabilityAccount.availabilityAccountId": accountId,
+              })
+
+            return financialMovement !== undefined
+          },
+        },
+        {
+          exists: async (accountId: string, churchId: string) => {
+            const bankStatement =
+              await BankStatementMongoRepository.getInstance().one({
+                churchId,
+                "availabilityAccount.availabilityAccountId": accountId,
+              })
+
+            return bankStatement !== undefined
+          },
+        }
       ).execute({
         availabilityAccountId,
         churchId: req.auth.churchId,

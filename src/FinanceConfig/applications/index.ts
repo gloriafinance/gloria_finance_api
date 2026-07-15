@@ -4,7 +4,8 @@ export * from "./financialConcept/FindFinancialConceptsByChurchIdAndTypeConcept"
 export * from "./financialConcept/FirstLoadFinancialConcepts"
 
 export * from "./availabilityAccount/FindAvailabilityAccountByAvailabilityAccountId"
-export * from "./availabilityAccount/CreateOrUpdateAvailabilityAccount"
+export * from "./availabilityAccount/CreateAvailabilityAccount"
+export * from "./availabilityAccount/UpdateAvailabilityAccount"
 export * from "./availabilityAccount/DeleteAvailabilityAccount"
 export * from "./availabilityAccount/SearchAvailabilityAccountByChurchId"
 
