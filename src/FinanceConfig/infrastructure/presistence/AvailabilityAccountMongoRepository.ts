@@ -47,6 +47,13 @@ export class AvailabilityAccountMongoRepository
     )
   }
 
+  async deleteByAvailabilityAccountId(
+    availabilityAccountId: string
+  ): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({ availabilityAccountId })
+  }
+
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex({ availabilityAccountId: 1 }, { unique: true })
   }

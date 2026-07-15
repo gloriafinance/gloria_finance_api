@@ -8,4 +8,5 @@ import {
 export interface IAvailabilityAccountRepository extends IRepository<AvailabilityAccount> {
   list(filter: object): Promise<AvailabilityAccount[]>
   list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
+  deleteByAvailabilityAccountId(availabilityAccountId: string): Promise<void>
 }
