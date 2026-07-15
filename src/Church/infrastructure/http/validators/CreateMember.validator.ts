@@ -20,7 +20,7 @@ export const CreateMemberValidator = async (
     phone: "required",
     dni: "required",
     conversionDate: "required|dateFormat:YYYY-MM-DD",
-    baptismDate: "sometimes|dateFormat:YYYY-MM-DD",
+    baptismDate: "dateFormat:YYYY-MM-DD",
     isTreasurer: "required|boolean",
     churchId: "required",
     birthdate: "required|dateFormat:YYYY-MM-DD",

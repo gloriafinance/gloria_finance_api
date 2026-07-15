@@ -1,4 +1,4 @@
-import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
+import { type IAvailabilityAccountRepository } from "@/FinanceConfig/domain"
 import {
   AvailabilityAccount,
   AvailabilityAccountChurchMismatch,

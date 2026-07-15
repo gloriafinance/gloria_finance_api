@@ -1,7 +1,10 @@
-import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
-import { AvailabilityAccount } from "../../../Financial/domain"
-import type { AvailabilityAccountRequest } from "../../../Financial/domain"
+import type { AvailabilityAccountRequest } from "@/FinanceConfig/domain"
+import {
+  AvailabilityAccount,
+  type IAvailabilityAccountRepository,
+} from "@/FinanceConfig/domain"
 import { Logger } from "@/Shared/adapter"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class CreateOrUpdateAvailabilityAccount {
   private logger = Logger(CreateOrUpdateAvailabilityAccount.name)
@@ -22,10 +25,10 @@ export class CreateOrUpdateAvailabilityAccount {
       return
     }
 
-    const availabilityAccount: AvailabilityAccount =
-      await this.availabilityAccountRepository.one({
-        availabilityAccountId: requestAvailabilityAccount.availabilityAccountId,
-      })
+    const availabilityAccount =
+      await new FindAvailabilityAccountByAvailabilityAccountId(
+        this.availabilityAccountRepository
+      ).execute(requestAvailabilityAccount.availabilityAccountId)
 
     availabilityAccount.setAccountName(requestAvailabilityAccount.accountName)
 
