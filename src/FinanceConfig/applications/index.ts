@@ -5,6 +5,7 @@ export * from "./financialConcept/FirstLoadFinancialConcepts"
 
 export * from "./availabilityAccount/FindAvailabilityAccountByAvailabilityAccountId"
 export * from "./availabilityAccount/CreateOrUpdateAvailabilityAccount"
+export * from "./availabilityAccount/DeleteAvailabilityAccount"
 export * from "./availabilityAccount/SearchAvailabilityAccountByChurchId"
 
 export * from "./costCenter/FindCostCenterByCostCenterId"

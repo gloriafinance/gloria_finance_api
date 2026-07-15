@@ -1,4 +1,7 @@
-import type { AvailabilityAccountRequest } from "@/FinanceConfig/domain"
+import type {
+  AvailabilityAccountRequest,
+  UpdateAvailabilityAccountRequest,
+} from "@/FinanceConfig/domain"
 import {
   AvailabilityAccount,
   type IAvailabilityAccountRepository,
@@ -13,14 +16,28 @@ export class CreateOrUpdateAvailabilityAccount {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository
   ) {}
 
-  async execute(requestAvailabilityAccount: AvailabilityAccountRequest) {
+  async execute(
+    requestAvailabilityAccount:
+      | AvailabilityAccountRequest
+      | UpdateAvailabilityAccountRequest
+  ): Promise<void> {
     this.logger.info(
       `Creating or updating availability account`,
       requestAvailabilityAccount
     )
 
-    if (!requestAvailabilityAccount.availabilityAccountId) {
-      await this.registerAvailabilityAccount(requestAvailabilityAccount)
+    const availabilityAccountId =
+      requestAvailabilityAccount.availabilityAccountId
+
+    if (!availabilityAccountId) {
+      await this.registerAvailabilityAccount({
+        churchId: requestAvailabilityAccount.churchId,
+        accountName: requestAvailabilityAccount.accountName,
+        active: requestAvailabilityAccount.active,
+        accountType: requestAvailabilityAccount.accountType,
+        symbol: requestAvailabilityAccount.symbol,
+        source: requestAvailabilityAccount.source,
+      })
       this.logger.info(`Finished creating availability account`)
       return
     }
@@ -28,7 +45,7 @@ export class CreateOrUpdateAvailabilityAccount {
     const availabilityAccount =
       await new FindAvailabilityAccountByAvailabilityAccountId(
         this.availabilityAccountRepository
-      ).execute(requestAvailabilityAccount.availabilityAccountId)
+      ).execute(availabilityAccountId, requestAvailabilityAccount.churchId)
 
     availabilityAccount.setAccountName(requestAvailabilityAccount.accountName)
 
@@ -40,7 +57,15 @@ export class CreateOrUpdateAvailabilityAccount {
   }
 
   private async registerAvailabilityAccount(
-    requestAvailabilityAccount: AvailabilityAccountRequest
+    requestAvailabilityAccount: Pick<
+      AvailabilityAccountRequest,
+      | "churchId"
+      | "accountName"
+      | "active"
+      | "accountType"
+      | "symbol"
+      | "source"
+    >
   ): Promise<void> {
     const availabilityAccount = AvailabilityAccount.create(
       requestAvailabilityAccount.churchId,

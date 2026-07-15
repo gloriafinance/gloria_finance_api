@@ -3,6 +3,7 @@ export * from "./AvailabilityAccount"
 export * from "./FinancialConcept"
 
 export type * from "./requests/AvailabilityAccount.request"
+export type * from "./requests/UpdateAvailabilityAccount.request"
 export type * from "./requests/CostCenter.request"
 export type * from "./requests/FinancialConcept.request"
 

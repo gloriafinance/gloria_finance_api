@@ -3,18 +3,24 @@ import domainResponse from "@/Shared/helpers/domainResponse"
 import { FinBankByBankId } from "@/Banking/applications"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
 import type { AvailabilityAccountRequest } from "@/FinanceConfig/domain"
+import type { UpdateAvailabilityAccountRequest } from "@/FinanceConfig/domain"
 import { AccountType } from "@/FinanceConfig/domain"
 import {
   CreateOrUpdateAvailabilityAccount,
+  DeleteAvailabilityAccount,
   SearchAvailabilityAccountByChurchId,
 } from "@/FinanceConfig/applications"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
+import { BankStatementMongoRepository } from "@/Banking/infrastructure/persistence"
+import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence"
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
+  Put,
   Req,
   Res,
   type ServerResponse,
@@ -23,6 +29,7 @@ import {
 import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 import AvailabilityAccountValidator from "@/Financial/infrastructure/http/validators/AvailabilityAccount.validator"
+import AvailabilityAccountUpdateValidator from "@/Financial/infrastructure/http/validators/AvailabilityAccountUpdate.validator"
 
 @Controller("/api/v1/finance/configuration/availability-account")
 export class AvailabilityAccountController {
@@ -75,6 +82,64 @@ export class AvailabilityAccountController {
 
       res.status(HttpStatus.OK).send({
         message: "Updated availability account",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Put("/:availabilityAccountId")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_configuration", "availability_accounts"),
+    AvailabilityAccountUpdateValidator,
+  ])
+  async updateAvailabilityAccount(
+    @Param("availabilityAccountId") availabilityAccountId: string,
+    @Body() request: UpdateAvailabilityAccountRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new CreateOrUpdateAvailabilityAccount(
+        AvailabilityAccountMongoRepository.getInstance()
+      ).execute({
+        availabilityAccountId,
+        churchId: req.auth.churchId,
+        accountName: request.accountName,
+        active: request.active,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "Updated availability account",
+      })
+    } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Delete("/:availabilityAccountId")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_configuration", "availability_accounts"),
+  ])
+  async deleteAvailabilityAccount(
+    @Param("availabilityAccountId") availabilityAccountId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new DeleteAvailabilityAccount(
+        AvailabilityAccountMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        BankStatementMongoRepository.getInstance()
+      ).execute({
+        availabilityAccountId,
+        churchId: req.auth.churchId,
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "Deleted availability account",
       })
     } catch (e) {
       domainResponse(e, res)
