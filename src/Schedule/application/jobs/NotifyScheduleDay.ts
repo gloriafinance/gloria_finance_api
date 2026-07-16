@@ -131,7 +131,7 @@ export class NotifyScheduleDay implements IJob {
         },
       },
       {
-        jobId: `schedule-day:${church.getChurchId()}:${scheduleItem.getScheduleItemId()}:${notificationDateKey}`,
+        jobId: `schedule-day-${church.getChurchId()}-${scheduleItem.getScheduleItemId()}-${notificationDateKey}`,
         delayMs: this.scheduleReminderService.reminderDelayMs(
           scheduleTimezone,
           referenceDate,

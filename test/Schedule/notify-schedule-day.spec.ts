@@ -1,3 +1,15 @@
+jest.mock(
+  "@/Schedule/application/jobs/agents/NotificationEvents.agent.ts",
+  () => ({
+    NotificationEventsAgent: jest.fn().mockImplementation(() => ({
+      execute: jest.fn().mockResolvedValue({
+        title: "Schedule Day",
+        body: "Culto de adoração e louvor at 3/15/2026, 6:00 PM",
+      }),
+    })),
+  })
+)
+
 import { Church, ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { NotifyScheduleDay } from "@/Schedule/application/jobs/NotifyScheduleDay"
 import {
@@ -232,7 +244,7 @@ describe("NotifyScheduleDay", () => {
       }),
       expect.objectContaining({
         delayMs: 15_000,
-        jobId: "schedule-day:church-1:event-1:2026-03-15",
+        jobId: "schedule-day-church-1-event-1-2026-03-15",
       })
     )
     expect(cacheService.set).toHaveBeenCalledWith(
