@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "references": {
+    "architecture": "ARCHITECTURE.md",
+    "readme": "README.md",
+    "database": "DATABASE.md",
+    "financial-record": "docs/financial-record.md",
+    "cxp-flow": "docs/Flow_CxP_FinancialRecords.md",
+    "bank-reconciliation": "docs/bank-statement-reconciliation.md",
+    "system-features": "docs/system_features.md",
+    "financial-concepts": "docs/financial_concepts_structure.md",
+    "accounts-payable": "docs/accounts-payable-payloads.md",
+    "patrimony-assets": "docs/patrimony-assets-postman.md"
+  }
+}
