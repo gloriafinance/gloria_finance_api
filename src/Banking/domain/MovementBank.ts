@@ -38,7 +38,7 @@ export class MovementBank extends AggregateRoot {
     return movementBank
   }
 
-  static override fromPrimitives(plainData: any): MovementBank {
+  static fromPrimitives(plainData: any): MovementBank {
     const movementBank: MovementBank = new MovementBank()
     movementBank.amount = plainData.amount
     movementBank.impact = plainData.impact

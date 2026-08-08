@@ -66,7 +66,7 @@ export class FinancialConcept extends AggregateRoot {
     return concept
   }
 
-  static override fromPrimitives(plainData: any): FinancialConcept {
+  static fromPrimitives(plainData: any): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
     concept.id = plainData.id
     concept.financialConceptId = plainData.financialConceptId

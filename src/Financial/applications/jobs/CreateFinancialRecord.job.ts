@@ -12,7 +12,6 @@ import {
   FinancialRecordStatus,
   TypeOperationMoney,
 } from "@/Financial/domain"
-import { UnitOfWork } from "@/Shared/helpers"
 import {
   DispatchUpdateAvailabilityAccountBalance,
   DispatchUpdateCostCenterMaster,
@@ -22,16 +21,13 @@ import type { IJob, IQueueService } from "@/package/queue/domain"
 
 export class CreateFinancialRecordJob implements IJob {
   private logger = Logger(CreateFinancialRecordJob.name)
-  private unitOfWork: UnitOfWork
 
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly store: IStorageService,
     private readonly queueService: IQueueService
-  ) {
-    this.unitOfWork = new UnitOfWork()
-  }
+  ) {}
 
   async handle(args: FinancialRecordCreateQueue): Promise<void> {
     this.logger.info(`CreateFinancialRecord`, {
@@ -52,16 +48,7 @@ export class CreateFinancialRecordJob implements IJob {
 
     const voucher = args.voucher
 
-    if (voucher) {
-      this.unitOfWork.registerRollbackActions(async () => {
-        await this.store.deleteFile(voucher)
-      })
-    }
-
     try {
-      this.postCommitAvailabilityAccountBalance(args)
-      this.postCommitCostCenter(args)
-
       const financialRecord = FinanceRecord.create({
         financialConcept: args.financialConcept,
         churchId: args.churchId,
@@ -79,26 +66,23 @@ export class CreateFinancialRecordJob implements IJob {
       })
       await this.financialRecordRepository.upsert(financialRecord)
 
-      this.unitOfWork.registerRollbackActions(async () => {
-        await this.financialRecordRepository.deleteByFinancialRecordId(
-          financialRecord.getFinancialRecordId()
-        )
-      })
-
-      await this.unitOfWork.commit()
       this.logger.info(`CreateFinancialRecord committed`, {
         jobName: CreateFinancialRecordJob.name,
         churchId: args.churchId,
         financialRecordId: financialRecord.getFinancialRecordId(),
       })
+
+      this.dispatchUpdateAvailabilityAccountBalance(args)
+      this.dispatchUpdateCostCenter(args)
     } catch (e: any) {
       this.logger.error(`Error in create financial record process`, e)
-      await this.unitOfWork.rollback()
+
+      if (voucher) await this.store.deleteFile(voucher)
       throw e
     }
   }
 
-  private postCommitCostCenter(args: FinancialRecordCreateQueue) {
+  private dispatchUpdateCostCenter(args: FinancialRecordCreateQueue) {
     if (!args.costCenter) {
       return
     }
@@ -111,23 +95,21 @@ export class CreateFinancialRecordJob implements IJob {
       args.costCenter = CostCenter.fromPrimitives(args.costCenter)
     }
 
-    this.unitOfWork.execPostCommit(async () => {
-      new DispatchUpdateCostCenterMaster(this.queueService).execute({
-        churchId: args.churchId,
-        amount: args.amount,
-        costCenterId: args.costCenter!.getCostCenterId(),
-        availabilityAccount: {
-          availabilityAccountId:
-            args.availabilityAccount.getAvailabilityAccountId(),
-          accountName: args.availabilityAccount.getAccountName(),
-          accountType: args.availabilityAccount.getType(),
-          symbol: args.availabilityAccount.getSymbol(),
-        },
-      })
+    new DispatchUpdateCostCenterMaster(this.queueService).execute({
+      churchId: args.churchId,
+      amount: args.amount,
+      costCenterId: args.costCenter!.getCostCenterId(),
+      availabilityAccount: {
+        availabilityAccountId:
+          args.availabilityAccount.getAvailabilityAccountId(),
+        accountName: args.availabilityAccount.getAccountName(),
+        accountType: args.availabilityAccount.getType(),
+        symbol: args.availabilityAccount.getSymbol(),
+      },
     })
   }
 
-  private postCommitAvailabilityAccountBalance(
+  private dispatchUpdateAvailabilityAccountBalance(
     args: FinancialRecordCreateQueue
   ) {
     if (!args.availabilityAccount) {
@@ -138,22 +120,20 @@ export class CreateFinancialRecordJob implements IJob {
       return
     }
 
-    this.unitOfWork.execPostCommit(async () => {
-      const financialConcept =
-        typeof args.financialConcept === "object"
-          ? FinancialConcept.fromPrimitives(args.financialConcept)
-          : args.financialConcept
+    const financialConcept =
+      typeof args.financialConcept === "object"
+        ? FinancialConcept.fromPrimitives(args.financialConcept)
+        : args.financialConcept
 
-      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
-        availabilityAccount: args.availabilityAccount,
-        amount: args.amount,
-        concept: financialConcept.getName(),
-        operationType:
-          financialConcept.getType() === ConceptType.INCOME
-            ? TypeOperationMoney.MONEY_IN
-            : TypeOperationMoney.MONEY_OUT,
-        createdAt: args.date,
-      })
+    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+      availabilityAccount: args.availabilityAccount,
+      amount: args.amount,
+      concept: financialConcept.getName(),
+      operationType:
+        financialConcept.getType() === ConceptType.INCOME
+          ? TypeOperationMoney.MONEY_IN
+          : TypeOperationMoney.MONEY_OUT,
+      createdAt: args.date,
     })
   }
 

@@ -114,7 +114,7 @@ export class FinanceRecord extends AggregateRoot {
     return financialRecord
   }
 
-  static override fromPrimitives(plainData: any): FinanceRecord {
+  static fromPrimitives(plainData: any): FinanceRecord {
     const financialRecord: FinanceRecord = new FinanceRecord()
     financialRecord.id = plainData?.id
     financialRecord.financialRecordId = plainData.financialRecordId
@@ -155,10 +155,6 @@ export class FinanceRecord extends AggregateRoot {
         : StringToDate(plainData.reconciledAt)
 
     return financialRecord
-  }
-
-  getId(): string {
-    return this.id!
   }
 
   getFinancialRecordId(): string {

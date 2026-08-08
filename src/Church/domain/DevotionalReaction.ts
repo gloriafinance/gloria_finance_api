@@ -33,7 +33,7 @@ export class DevotionalReaction extends AggregateRoot {
     return reaction
   }
 
-  static override fromPrimitives(payload: any): DevotionalReaction {
+  static fromPrimitives(payload: any): DevotionalReaction {
     const reaction = new DevotionalReaction()
     reaction.id = payload.id
     reaction.churchId = payload.churchId

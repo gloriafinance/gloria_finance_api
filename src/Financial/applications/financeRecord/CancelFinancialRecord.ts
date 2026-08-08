@@ -11,19 +11,31 @@ import {
   TypeOperationMoney,
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
-import { DateBR, UnitOfWork } from "@/Shared/helpers"
+import { DateBR } from "@/Shared/helpers"
 import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { GenericException } from "@/Shared/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import {
-  DispatchUpdateAvailabilityAccountBalance,
-  DispatchUpdateCostCenterMaster,
-} from "@/Financial/applications"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
+import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinancialRecord"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
+
+type CancellationSideEffects = {
+  availabilityAccount: AvailabilityAccount
+  amount: number
+  concept: string
+  operationType: TypeOperationMoney
+  createdAt: Date
+  purchaseId?: string
+  costCenterId?: string
+  costCenterAvailabilityAccount?: ReturnType<
+    FinanceRecord["getAvailabilityAccount"]
+  >
+}
 
 /**
  * Este caso de uso se encarga de anular un registro financiero.
@@ -31,16 +43,13 @@ import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/Up
  */
 export class CancelFinancialRecord {
   private logger = Logger(CancelFinancialRecord.name)
-  private unitOfWork: UnitOfWork
 
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly queueService: IQueueService
-  ) {
-    this.unitOfWork = new UnitOfWork()
-  }
+  ) {}
 
   async execute(params: {
     financialRecordId: string
@@ -51,47 +60,58 @@ export class CancelFinancialRecord {
 
     const { financialRecordId, churchId, createdBy } = params
 
-    const financialRecordSnapshot = await this.financialRecordRepository.one({
-      financialRecordId,
-      churchId,
-    })
-
-    if (!financialRecordSnapshot) {
-      this.logger.error(`Movement not found`, params)
-      throw new FinancialMovementNotFound()
-    }
-
-    const date = financialRecordSnapshot.getDate()
-
-    await new FinancialMonthValidator(this.financialYearRepository).validate({
-      churchId: financialRecordSnapshot.getChurchId(),
-      month: date.getUTCMonth() + 1,
-      year: date.getFullYear(),
-    })
-
-    this.unitOfWork.registerRollbackActions(async () => {
-      await this.financialRecordRepository.upsert(financialRecordSnapshot)
-    })
-
     try {
-      switch (financialRecordSnapshot.getType()) {
-        case FinancialRecordType.OUTGO:
-          await this.cancelOutgoRecord(financialRecordSnapshot, createdBy)
-          break
-        case FinancialRecordType.INCOME:
-          await this.cancelIncomeRecord(financialRecordSnapshot, createdBy)
-          break
-        default:
-          this.logger.error(
-            `Unsupported FinancialRecordType for cancellation: ${financialRecordSnapshot.getType()}`,
-            { financialRecordId, type: financialRecordSnapshot.getType() }
+      const cancellationSideEffects = await MongoTransaction.run(
+        async (transaction) => {
+          const financialRecord = await this.financialRecordRepository.one(
+            {
+              financialRecordId,
+              churchId,
+            },
+            transaction
           )
-          throw new GenericException(
-            `Cannot cancel financial record of type ${financialRecordSnapshot.getType()}`
-          )
-      }
 
-      await this.unitOfWork.commit()
+          if (!financialRecord) {
+            this.logger.error(`Movement not found`, params)
+            throw new FinancialMovementNotFound()
+          }
+
+          const date = financialRecord.getDate()
+
+          await new FinancialMonthValidator(
+            this.financialYearRepository
+          ).validate({
+            churchId: financialRecord.getChurchId(),
+            month: date.getUTCMonth() + 1,
+            year: date.getFullYear(),
+          })
+
+          switch (financialRecord.getType()) {
+            case FinancialRecordType.OUTGO:
+              return await this.cancelOutgoRecord(
+                financialRecord,
+                createdBy,
+                transaction
+              )
+            case FinancialRecordType.INCOME:
+              return await this.cancelRecord({
+                financialRecord,
+                createdBy,
+                transaction,
+              })
+            default:
+              this.logger.error(
+                `Unsupported FinancialRecordType for cancellation: ${financialRecord.getType()}`,
+                { financialRecordId, type: financialRecord.getType() }
+              )
+              throw new GenericException(
+                `Cannot cancel financial record of type ${financialRecord.getType()}`
+              )
+          }
+        }
+      )
+
+      this.dispatchCancellationSideEffects(cancellationSideEffects)
       this.logger.info(`Financial record reversed successfully`)
     } catch (e) {
       if (e instanceof GenericException) {
@@ -99,70 +119,84 @@ export class CancelFinancialRecord {
       }
 
       this.logger.error(`Error reversing financial record:`, e as any)
-      await this.unitOfWork.rollback()
+
       throw e
+    }
+  }
+
+  private dispatchCancellationSideEffects(
+    sideEffects: CancellationSideEffects
+  ) {
+    new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+      availabilityAccount: sideEffects.availabilityAccount,
+      amount: sideEffects.amount,
+      concept: sideEffects.concept,
+      operationType: sideEffects.operationType,
+      createdAt: sideEffects.createdAt,
+    })
+
+    if (sideEffects.costCenterId && sideEffects.costCenterAvailabilityAccount) {
+      new DispatchUpdateCostCenterMaster(this.queueService).execute({
+        churchId: sideEffects.availabilityAccount.getChurchId(),
+        amount: sideEffects.amount,
+        costCenterId: sideEffects.costCenterId,
+        operation: "subtract",
+        availabilityAccount: sideEffects.costCenterAvailabilityAccount,
+      })
+    }
+
+    if (sideEffects.purchaseId) {
+      this.queueService.dispatch(QueueName.PurchasesEvent, {
+        event: "delete",
+        source: "financialRegistrationCancelled",
+        data: { purchaseIds: [sideEffects.purchaseId] },
+      })
     }
   }
 
   private async cancelOutgoRecord(
     financialRecord: FinanceRecord,
-    createdBy: string
-  ) {
+    createdBy: string,
+    transaction: MongoTransaction
+  ): Promise<CancellationSideEffects> {
     this.logger.info(`Canceling outgo record`)
 
-    await this.cancelRecord({
+    const sideEffects = await this.cancelRecord({
       financialRecord,
       createdBy,
-      availabilityOperation: TypeOperationMoney.MONEY_IN,
+      transaction,
     })
 
     const costCenterId = financialRecord.getCostCenterId()
+
     if (costCenterId) {
-      this.unitOfWork.execPostCommit(() => {
-        new DispatchUpdateCostCenterMaster(this.queueService).execute({
-          costCenterId: costCenterId,
-          amount: financialRecord.getAmount(),
-          churchId: financialRecord.getChurchId(),
-          operation: "subtract",
-          availabilityAccount: financialRecord.getAvailabilityAccount(),
-        })
-      })
+      sideEffects.costCenterId = costCenterId
+      sideEffects.costCenterAvailabilityAccount =
+        financialRecord.getAvailabilityAccount()
     }
 
     if (
       financialRecord.getFinancialConcept().getType() === ConceptType.PURCHASE
     ) {
-      this.unitOfWork.execPostCommit(() => {
-        this.queueService.dispatch(QueueName.PurchasesEvent, {
-          event: "delete",
-          source: "financialRegistrationCancelled",
-          data: { purchaseIds: [financialRecord.getReference()!.entityId] },
-        })
-      })
+      sideEffects.purchaseId = financialRecord.getReference()!.entityId
     }
-  }
 
-  private async cancelIncomeRecord(
-    financialRecord: FinanceRecord,
-    createdBy: string
-  ) {
-    await this.cancelRecord({
-      financialRecord,
-      createdBy,
-      availabilityOperation: TypeOperationMoney.MONEY_OUT,
-    })
+    return sideEffects
   }
 
   private async cancelRecord(params: {
     financialRecord: FinanceRecord
     createdBy: string
-    availabilityOperation: TypeOperationMoney
-  }) {
-    const { financialRecord, createdBy, availabilityOperation } = params
+    transaction: MongoTransaction
+  }): Promise<CancellationSideEffects> {
+    const { financialRecord, createdBy, transaction } = params
 
-    const availabilityAccount = (await this.availabilityAccountRepository.one({
-      availabilityAccountId: financialRecord.getAvailabilityAccountId(),
-    }))!
+    const availabilityAccount = (await this.availabilityAccountRepository.one(
+      {
+        availabilityAccountId: financialRecord.getAvailabilityAccountId(),
+      },
+      transaction
+    ))!
 
     const cancellationDate = DateBR()
     cancellationDate.setUTCHours(0, 0, 0, 0)
@@ -181,7 +215,7 @@ export class CancelFinancialRecord {
         source: FinancialRecordSource.MANUAL,
         createdBy,
       },
-      operation: availabilityOperation,
+      transaction,
     })
 
     await new UpdateFinancialRecord(
@@ -199,41 +233,36 @@ export class CancelFinancialRecord {
       },
       {
         validateFinancialMonth: false,
-        deferSideEffect: (sideEffect) =>
-          this.unitOfWork.execPostCommit(sideEffect),
-      }
+      },
+      transaction
     )
+
+    return {
+      availabilityAccount,
+      amount: Math.abs(financialRecord.getAmount()),
+      concept: `Reversão do movimento ${financialRecord.getFinancialRecordId()}`,
+      operationType:
+        financialRecord.getFinancialConcept().getType() === ConceptType.INCOME
+          ? TypeOperationMoney.MONEY_OUT
+          : TypeOperationMoney.MONEY_IN,
+      createdAt: cancellationDate,
+    }
   }
 
   private async financeRecordReversal(params: {
     availabilityAccount: AvailabilityAccount
     financeRecordReversal: CreateFinanceRecord
-    operation: TypeOperationMoney
+    transaction: MongoTransaction
   }) {
     this.logger.info(`Reversing financial record`, params)
-    const { availabilityAccount, financeRecordReversal, operation } = params
+    const { financeRecordReversal, transaction } = params
 
     const financialRecordReversalAggregate = FinanceRecord.create(
       financeRecordReversal
     )
     await this.financialRecordRepository.upsert(
-      financialRecordReversalAggregate
+      financialRecordReversalAggregate,
+      transaction
     )
-
-    this.unitOfWork.registerRollbackActions(async () => {
-      await this.financialRecordRepository.deleteByFinancialRecordId(
-        financialRecordReversalAggregate.getFinancialRecordId()
-      )
-    })
-
-    this.unitOfWork.execPostCommit(() => {
-      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
-        availabilityAccount: availabilityAccount,
-        amount: Math.abs(financeRecordReversal.amount),
-        concept: financeRecordReversal.description!,
-        operationType: operation,
-        createdAt: financeRecordReversal.date,
-      })
-    })
   }
 }

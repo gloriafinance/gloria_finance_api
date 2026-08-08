@@ -43,7 +43,7 @@ export class Supplier extends AggregateRoot {
     return supplier
   }
 
-  static override fromPrimitives(params: any): Supplier {
+  static fromPrimitives(params: any): Supplier {
     const supplier: Supplier = new Supplier()
     supplier.churchId = params.churchId
     supplier.supplierId = params.supplierId

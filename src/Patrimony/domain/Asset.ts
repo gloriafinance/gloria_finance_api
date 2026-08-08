@@ -129,7 +129,7 @@ export class Asset extends AggregateRoot {
     return asset
   }
 
-  static override fromPrimitives(plainData: AssetPrimitives): Asset {
+  static fromPrimitives(plainData: AssetPrimitives): Asset {
     const asset = new Asset()
 
     asset.id = plainData.id

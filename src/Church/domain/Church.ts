@@ -108,7 +108,7 @@ export class Church extends AggregateRoot {
     return c
   }
 
-  static override fromPrimitives(plainData: any): Church {
+  static fromPrimitives(plainData: any): Church {
     const c: Church = new Church()
 
     c.id = plainData.id

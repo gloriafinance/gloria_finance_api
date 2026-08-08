@@ -3,19 +3,16 @@ import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IChurchRepository } from "@/Church/domain"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import {
-  ConceptType,
   FinanceRecord,
   FinancialConcept,
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
-  INTERNAL_TRANSFER_CONCEPT_NAME,
   INTERNAL_TRANSFER_CONCEPT_TAG,
   INTERNAL_TRANSFER_REFERENCE_DESTINATION,
   INTERNAL_TRANSFER_REFERENCE_SOURCE,
-  StatementCategory,
-  TypeOperationMoney,
   type InternalTransferRequest,
+  TypeOperationMoney,
 } from "@/Financial/domain"
 import type {
   IAvailabilityAccountRepository,
@@ -23,15 +20,13 @@ import type {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
-import { Logger } from "@/Shared/adapter"
+import { IdentifyEntity, Logger } from "@/Shared/adapter"
 import { GenericException } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
-import { UnitOfWork } from "@/Shared/helpers"
-import { IdentifyEntity } from "@/Shared/adapter"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 export class CreateInternalTransfer {
   private logger = Logger(CreateInternalTransfer.name)
-  private unitOfWork: UnitOfWork
 
   constructor(
     private readonly financialYearRepository: IFinancialYearRepository,
@@ -40,9 +35,7 @@ export class CreateInternalTransfer {
     private readonly financialConceptRepository: IFinancialConceptRepository,
     private readonly churchRepository: IChurchRepository,
     private readonly queueService: IQueueService
-  ) {
-    this.unitOfWork = new UnitOfWork()
-  }
+  ) {}
 
   async execute(params: InternalTransferRequest): Promise<{
     transferId: string
@@ -133,54 +126,39 @@ export class CreateInternalTransfer {
     })
 
     try {
-      await this.financialRecordRepository.upsert(sourceRecord)
-      await this.financialRecordRepository.upsert(destinationRecord)
-
-      this.unitOfWork.registerRollbackActions(async () => {
-        await this.financialRecordRepository.deleteByFinancialRecordId(
-          sourceRecord.getFinancialRecordId()
+      const response = await MongoTransaction.run(async (transaction) => {
+        await this.financialRecordRepository.upsert(sourceRecord, transaction)
+        await this.financialRecordRepository.upsert(
+          destinationRecord,
+          transaction
         )
+
+        return {
+          transferId,
+          sourceFinancialRecordId: sourceRecord.getFinancialRecordId(),
+          destinationFinancialRecordId:
+            destinationRecord.getFinancialRecordId(),
+        }
       })
 
-      this.unitOfWork.registerRollbackActions(async () => {
-        await this.financialRecordRepository.deleteByFinancialRecordId(
-          destinationRecord.getFinancialRecordId()
-        )
+      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+        availabilityAccount: sourceAccount,
+        amount,
+        concept: transferConcept.getName(),
+        operationType: TypeOperationMoney.MONEY_OUT,
+        createdAt: transferDate,
       })
 
-      this.unitOfWork.execPostCommit(() => {
-        new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute(
-          {
-            availabilityAccount: sourceAccount,
-            amount,
-            concept: transferConcept.getName(),
-            operationType: TypeOperationMoney.MONEY_OUT,
-            createdAt: transferDate,
-          }
-        )
+      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+        availabilityAccount: destinationAccount,
+        amount,
+        concept: transferConcept.getName(),
+        operationType: TypeOperationMoney.MONEY_IN,
+        createdAt: transferDate,
       })
 
-      this.unitOfWork.execPostCommit(() => {
-        new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute(
-          {
-            availabilityAccount: destinationAccount,
-            amount,
-            concept: transferConcept.getName(),
-            operationType: TypeOperationMoney.MONEY_IN,
-            createdAt: transferDate,
-          }
-        )
-      })
-
-      await this.unitOfWork.commit()
-
-      return {
-        transferId,
-        sourceFinancialRecordId: sourceRecord.getFinancialRecordId(),
-        destinationFinancialRecordId: destinationRecord.getFinancialRecordId(),
-      }
+      return response
     } catch (error) {
-      await this.unitOfWork.rollback()
       throw error
     }
   }
@@ -193,42 +171,12 @@ export class CreateInternalTransfer {
       tag: INTERNAL_TRANSFER_CONCEPT_TAG,
     })
 
-    if (byTag) {
-      return byTag
+    if (!byTag) {
+      throw new GenericException(
+        "Internal transfer concept is not created, contact the system administrator"
+      )
     }
 
-    const byName = await this.financialConceptRepository.one({
-      churchId,
-      name: INTERNAL_TRANSFER_CONCEPT_NAME,
-    })
-
-    if (byName) {
-      return byName
-    }
-
-    const church = await this.churchRepository.one({ churchId })
-    if (!church) {
-      throw new GenericException("Church not found")
-    }
-
-    const concept = FinancialConcept.create(
-      INTERNAL_TRANSFER_CONCEPT_NAME,
-      "Internal transfer between availability accounts",
-      true,
-      ConceptType.OUTGO,
-      StatementCategory.OTHER,
-      church,
-      {
-        affectsCashFlow: false,
-        affectsResult: false,
-        affectsBalance: true,
-        isOperational: false,
-      },
-      INTERNAL_TRANSFER_CONCEPT_TAG,
-      true
-    )
-
-    await this.financialConceptRepository.upsert(concept)
-    return concept
+    return byTag
   }
 }

@@ -44,7 +44,7 @@ export class User extends AggregateRoot {
     return u
   }
 
-  static override fromPrimitives(data: any): User {
+  static fromPrimitives(data: any): User {
     const u: User = new User()
     u.email = data.email
     u.createdAt = data.createdAt

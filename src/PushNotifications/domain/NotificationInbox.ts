@@ -29,7 +29,7 @@ export class NotificationInbox extends AggregateRoot {
     return notification
   }
 
-  static override fromPrimitives(params: any): NotificationInbox {
+  static fromPrimitives(params: any): NotificationInbox {
     const notification = new NotificationInbox()
     notification.id = params.id
     notification.memberId = params.memberId

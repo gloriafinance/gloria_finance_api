@@ -110,7 +110,7 @@ export class AccountReceivable extends AggregateRoot {
     return accountReceivable
   }
 
-  static override fromPrimitives(params: any): AccountReceivable {
+  static fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
     accountReceivable.id = params.id
     accountReceivable.installments = (params.installments ?? []).map(

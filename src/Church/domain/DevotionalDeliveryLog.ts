@@ -21,7 +21,7 @@ export class DevotionalDeliveryLog extends AggregateRoot {
     return log
   }
 
-  static override fromPrimitives(raw: any): DevotionalDeliveryLog {
+  static fromPrimitives(raw: any): DevotionalDeliveryLog {
     const log = new DevotionalDeliveryLog()
     log.id = raw.id
     log.devotionalDeliveryLogId = raw.devotionalDeliveryLogId

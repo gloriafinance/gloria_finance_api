@@ -107,7 +107,7 @@ export class Member extends AggregateRoot {
     return m
   }
 
-  static override fromPrimitives(plainData: any): Member {
+  static fromPrimitives(plainData: any): Member {
     const m: Member = new Member()
     m.memberId = plainData.memberId
     m.name = plainData.name

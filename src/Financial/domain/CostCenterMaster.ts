@@ -37,7 +37,7 @@ export class CostCenterMaster extends AggregateRoot {
     return costCenterMaster
   }
 
-  static override fromPrimitives(plainData: any) {
+  static fromPrimitives(plainData: any) {
     const costCenterMaster = new CostCenterMaster()
 
     costCenterMaster.id = plainData.id

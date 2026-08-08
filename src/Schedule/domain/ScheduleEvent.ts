@@ -83,7 +83,7 @@ export class ScheduleEvent extends AggregateRoot {
     return scheduleItem
   }
 
-  static override fromPrimitives(plainData: any): ScheduleEvent {
+  static fromPrimitives(plainData: any): ScheduleEvent {
     const scheduleItem = new ScheduleEvent()
     scheduleItem.id = plainData.id
     scheduleItem.scheduleEventId =

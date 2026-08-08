@@ -1,4 +1,4 @@
-import { Installments, InstallmentsStatus } from "@/Shared/domain"
+import { type Installments, InstallmentsStatus } from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 
 export const PayInstallment = (
@@ -9,17 +9,19 @@ export const PayInstallment = (
   if (installment.status === InstallmentsStatus.PAID) {
     installment.paymentDate = installment.paymentDate ?? DateBR()
     logger.debug(`Installment ${installment.installmentId} already paid`)
-    return
+    return 0
   }
 
   logger.info(
-    `Installment ${installment.installmentId} is was ${installment.status.toLowerCase()} payment`
+    `Installment ${installment.installmentId} is was ${installment.status!.toLowerCase()} payment`
   )
 
-  const amountToCompare =
+  let amountToCompare =
     installment.status === InstallmentsStatus.PENDING
       ? installment.amount
       : installment.amountPending
+
+  if (!amountToCompare) amountToCompare = 0
 
   installment.status =
     amountTransferred >= amountToCompare

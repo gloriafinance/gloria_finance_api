@@ -71,7 +71,7 @@ export class DevotionalWeeklyPlan extends AggregateRoot {
     return plan
   }
 
-  static override fromPrimitives(payload: any): DevotionalWeeklyPlan {
+  static fromPrimitives(payload: any): DevotionalWeeklyPlan {
     const plan = new DevotionalWeeklyPlan()
     plan.id = payload.id
     plan.devotionalWeeklyPlanId = payload.devotionalWeeklyPlanId

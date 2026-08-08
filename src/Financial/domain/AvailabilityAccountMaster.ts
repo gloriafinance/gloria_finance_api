@@ -42,7 +42,7 @@ export class AvailabilityAccountMaster extends AggregateRoot {
     return availabilityAccountMaster
   }
 
-  static override fromPrimitives(plainData: any) {
+  static fromPrimitives(plainData: any) {
     const availabilityAccountMaster = new AvailabilityAccountMaster()
 
     availabilityAccountMaster.id = plainData.id

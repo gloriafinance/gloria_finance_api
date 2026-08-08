@@ -5,6 +5,7 @@ import {
   AvailabilityAccountNotFound,
 } from "../../../Financial/domain"
 import { Logger } from "@/Shared/adapter"
+import type { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {
   private logger = Logger("FindAvailabilityAccountByAvailabilityAccountId")
@@ -15,14 +16,18 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
 
   async execute(
     availabilityAccountId: string,
-    churchId?: string
+    churchId?: string,
+    transaction?: MongoTransaction
   ): Promise<AvailabilityAccount> {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`
     )
-    const account = await this.availabilityAccountRepository.one({
-      availabilityAccountId,
-    })
+    const account = await this.availabilityAccountRepository.one(
+      {
+        availabilityAccountId,
+      },
+      transaction
+    )
 
     if (!account) {
       this.logger.info(`Availability account not found`)

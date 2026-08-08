@@ -33,7 +33,7 @@ export class UserAssignment extends AggregateRoot {
     return assignment
   }
 
-  static override fromPrimitives(data: any): UserAssignment {
+  static fromPrimitives(data: any): UserAssignment {
     const assignment = new UserAssignment()
     assignment.id = data.id
     assignment.churchId = data.churchId

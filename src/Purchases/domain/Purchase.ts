@@ -100,7 +100,7 @@ export class Purchase extends AggregateRoot {
     return p
   }
 
-  static override fromPrimitives(plainData: any): Purchase {
+  static fromPrimitives(plainData: any): Purchase {
     const p: Purchase = new Purchase()
 
     p.purchaseId = plainData.purchaseId

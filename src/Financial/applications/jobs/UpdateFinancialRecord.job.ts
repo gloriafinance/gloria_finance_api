@@ -4,9 +4,10 @@ import type {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { Logger } from "@/Shared/adapter"
-import { type UpdateStatusFinancialRecordQueue } from "@/Financial/domain"
+
 import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinancialRecord"
 import type { IJob, IQueueService } from "@/package/queue/domain"
+import type { UpdateStatusFinancialRecordQueue } from "@/Financial/applications"
 
 export class UpdateFinancialRecordJob implements IJob {
   private logger = Logger(UpdateFinancialRecordJob.name)

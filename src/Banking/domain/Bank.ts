@@ -1,5 +1,5 @@
 import { Church } from "@/Church/domain"
-import { IdentifyEntity, Urn } from "@/Shared/adapter"
+import { Urn } from "@/Shared/adapter"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { TypeBankAccount } from "@/Banking/domain"
 
@@ -40,7 +40,7 @@ export class Bank extends AggregateRoot {
     return bank
   }
 
-  static override fromPrimitives(plainData: any): Bank {
+  static fromPrimitives(plainData: any): Bank {
     const bank: Bank = new Bank()
     bank.id = plainData.id
     bank.accountType = plainData.accountType

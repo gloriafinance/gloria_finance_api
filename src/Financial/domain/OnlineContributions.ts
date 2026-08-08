@@ -75,7 +75,7 @@ export class OnlineContributions extends AggregateRoot {
     return contributions
   }
 
-  static override fromPrimitives(plainData: any): OnlineContributions {
+  static fromPrimitives(plainData: any): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
     contributions.id = plainData.id
     contributions.member = ContributionMemberSnapshot.fromPrimitives(

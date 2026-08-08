@@ -36,7 +36,7 @@ export class DevotionalComment extends AggregateRoot {
     return comment
   }
 
-  static override fromPrimitives(payload: any): DevotionalComment {
+  static fromPrimitives(payload: any): DevotionalComment {
     const comment = new DevotionalComment()
     comment.id = payload.id
     comment.commentId = payload.commentId
