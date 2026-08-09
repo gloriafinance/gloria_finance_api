@@ -10,7 +10,6 @@ export type PermissionPrimitives = {
 }
 
 export class Permission extends AggregateRoot {
-  private id?: string
   private permissionId: string
   private module: string
   private action: string
@@ -34,17 +33,12 @@ export class Permission extends AggregateRoot {
 
   static fromPrimitives(data: any): Permission {
     const permission = new Permission()
-    permission.id = data.id
     permission.permissionId = data.permissionId
     permission.module = data.module
     permission.action = data.action
     permission.description = data.description
     permission.isSystem = data.isSystem
     return permission
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getPermissionId(): string {

@@ -4,7 +4,6 @@ import { AvailabilityAccount } from "@/FinanceConfig/domain"
 import { DateBR } from "@/Shared/helpers"
 
 export class AvailabilityAccountMaster extends AggregateRoot {
-  private id?: string
   private churchId: string
   private availabilityAccount: {
     availabilityAccountId: string
@@ -45,7 +44,6 @@ export class AvailabilityAccountMaster extends AggregateRoot {
   static fromPrimitives(plainData: any) {
     const availabilityAccountMaster = new AvailabilityAccountMaster()
 
-    availabilityAccountMaster.id = plainData.id
     availabilityAccountMaster.month = plainData.month
     availabilityAccountMaster.year = plainData.year
     availabilityAccountMaster.totalOutput = plainData.totalOutput
@@ -57,10 +55,6 @@ export class AvailabilityAccountMaster extends AggregateRoot {
     availabilityAccountMaster.churchId = plainData.churchId
 
     return availabilityAccountMaster
-  }
-
-  getId(): string {
-    return this.id!
   }
 
   getAvailabilityAccountMasterId(): string {

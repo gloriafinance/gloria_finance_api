@@ -6,7 +6,6 @@ import {
 } from "@/Church/domain"
 
 export class DevotionalReaction extends AggregateRoot {
-  private id?: string
   private churchId: string
   private devotionalId: string
   private memberId: string
@@ -35,7 +34,6 @@ export class DevotionalReaction extends AggregateRoot {
 
   static fromPrimitives(payload: any): DevotionalReaction {
     const reaction = new DevotionalReaction()
-    reaction.id = payload.id
     reaction.churchId = payload.churchId
     reaction.devotionalId = payload.devotionalId
     reaction.memberId = payload.memberId
@@ -47,10 +45,6 @@ export class DevotionalReaction extends AggregateRoot {
       ? new Date(payload.updatedAt)
       : DateBR()
     return reaction
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   changeReactionType(reactionType: DevotionalReactionType) {

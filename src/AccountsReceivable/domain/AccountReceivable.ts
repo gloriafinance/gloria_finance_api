@@ -26,7 +26,6 @@ type Debtor = {
 export class AccountReceivable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
-  private id?: string
   private type: AccountReceivableType
   private debtor: Debtor
   private accountReceivableId: string
@@ -112,7 +111,6 @@ export class AccountReceivable extends AggregateRoot {
 
   static fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
-    accountReceivable.id = params.id
     accountReceivable.installments = (params.installments ?? []).map(
       (installment: Installments) => ({
         ...installment,
@@ -143,10 +141,6 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.symbol = params.symbol || "R$"
 
     return accountReceivable
-  }
-
-  getId(): string {
-    return this.id!
   }
 
   getAccountReceivableId(): string {

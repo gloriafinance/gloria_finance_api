@@ -6,7 +6,6 @@ import type { UserPolicies } from "./types/user-policies.type"
 export class User extends AggregateRoot {
   isActive: boolean
   isSuperUser: boolean
-  private id?: string
   private userId: string
   private email: string
   private name: string
@@ -49,7 +48,6 @@ export class User extends AggregateRoot {
     u.email = data.email
     u.createdAt = data.createdAt
     u.isActive = data.isActive
-    u.id = data.id
     u.password = data.password
     u.userId = data.userId
     u.name = data.name
@@ -69,10 +67,6 @@ export class User extends AggregateRoot {
 
   getChurchId(): string {
     return this.churchId
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getName(): string {

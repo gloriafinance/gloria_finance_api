@@ -11,6 +11,10 @@ import {
   TypeOperationMoney,
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
+import {
+  DatabaseTransaction,
+  type DatabaseTransactionContext,
+} from "@/Shared/adapter/DatabaseTransaction.adapter"
 import { DateBR } from "@/Shared/helpers"
 import type {
   IAvailabilityAccountRepository,
@@ -22,7 +26,6 @@ import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
 import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinancialRecord"
-import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 type CancellationSideEffects = {
   availabilityAccount: AvailabilityAccount
@@ -61,7 +64,7 @@ export class CancelFinancialRecord {
     const { financialRecordId, churchId, createdBy } = params
 
     try {
-      const cancellationSideEffects = await MongoTransaction.run(
+      const cancellationSideEffects = await DatabaseTransaction.run(
         async (transaction) => {
           const financialRecord = await this.financialRecordRepository.one(
             {
@@ -114,11 +117,10 @@ export class CancelFinancialRecord {
       this.dispatchCancellationSideEffects(cancellationSideEffects)
       this.logger.info(`Financial record reversed successfully`)
     } catch (e) {
+      this.logger.error(`Error reversing financial record:`, e as any)
       if (e instanceof GenericException) {
         throw e
       }
-
-      this.logger.error(`Error reversing financial record:`, e as any)
 
       throw e
     }
@@ -157,7 +159,7 @@ export class CancelFinancialRecord {
   private async cancelOutgoRecord(
     financialRecord: FinanceRecord,
     createdBy: string,
-    transaction: MongoTransaction
+    transaction: DatabaseTransactionContext
   ): Promise<CancellationSideEffects> {
     this.logger.info(`Canceling outgo record`)
 
@@ -187,7 +189,7 @@ export class CancelFinancialRecord {
   private async cancelRecord(params: {
     financialRecord: FinanceRecord
     createdBy: string
-    transaction: MongoTransaction
+    transaction: DatabaseTransactionContext
   }): Promise<CancellationSideEffects> {
     const { financialRecord, createdBy, transaction } = params
 
@@ -204,6 +206,7 @@ export class CancelFinancialRecord {
     await this.financeRecordReversal({
       availabilityAccount,
       financeRecordReversal: {
+        financialConcept: financialRecord.getFinancialConcept(),
         churchId: financialRecord.getChurchId(),
         amount: financialRecord.getAmount(),
         date: cancellationDate,
@@ -252,7 +255,7 @@ export class CancelFinancialRecord {
   private async financeRecordReversal(params: {
     availabilityAccount: AvailabilityAccount
     financeRecordReversal: CreateFinanceRecord
-    transaction: MongoTransaction
+    transaction: DatabaseTransactionContext
   }) {
     this.logger.info(`Reversing financial record`, params)
     const { financeRecordReversal, transaction } = params

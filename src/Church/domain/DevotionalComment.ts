@@ -4,7 +4,6 @@ import { DateBR } from "@/Shared/helpers"
 import type { DevotionalCommentPrimitives } from "@/Church/domain"
 
 export class DevotionalComment extends AggregateRoot {
-  private id?: string
   private commentId: string
   private churchId: string
   private devotionalId: string
@@ -38,7 +37,6 @@ export class DevotionalComment extends AggregateRoot {
 
   static fromPrimitives(payload: any): DevotionalComment {
     const comment = new DevotionalComment()
-    comment.id = payload.id
     comment.commentId = payload.commentId
     comment.churchId = payload.churchId
     comment.devotionalId = payload.devotionalId
@@ -52,10 +50,6 @@ export class DevotionalComment extends AggregateRoot {
       ? new Date(payload.updatedAt)
       : DateBR()
     return comment
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getCommentId(): string {

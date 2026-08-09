@@ -10,7 +10,6 @@ export type UserAssignmentPrimitives = {
 }
 
 export class UserAssignment extends AggregateRoot {
-  private id?: string
   private churchId: string
   private userId: string
   private roles: string[]
@@ -35,16 +34,11 @@ export class UserAssignment extends AggregateRoot {
 
   static fromPrimitives(data: any): UserAssignment {
     const assignment = new UserAssignment()
-    assignment.id = data.id
     assignment.churchId = data.churchId
     assignment.userId = data.userId
     assignment.roles = data.roles
     assignment.updatedAt = data.updatedAt
     return assignment
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getRoles(): string[] {
@@ -61,7 +55,6 @@ export class UserAssignment extends AggregateRoot {
 
   toPrimitives(): UserAssignmentPrimitives {
     return {
-      id: this.id,
       churchId: this.churchId,
       userId: this.userId,
       roles: this.roles,

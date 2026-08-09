@@ -4,7 +4,6 @@ import MasterBalanceIdentifier from "../applications/helpers/MasterBalanceIdenti
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class CostCenterMaster extends AggregateRoot {
-  private id?: string
   private costCenterMasterId: string | undefined
   private costCenter: {
     costCenterId: string
@@ -40,7 +39,6 @@ export class CostCenterMaster extends AggregateRoot {
   static fromPrimitives(plainData: any) {
     const costCenterMaster = new CostCenterMaster()
 
-    costCenterMaster.id = plainData.id
     costCenterMaster.month = plainData.month
     costCenterMaster.year = plainData.year
     costCenterMaster.total = plainData.total
@@ -60,10 +58,6 @@ export class CostCenterMaster extends AggregateRoot {
     }
 
     this.lastMove = DateBR()
-  }
-
-  getId(): string {
-    return this.id!
   }
 
   getTotal(): number {

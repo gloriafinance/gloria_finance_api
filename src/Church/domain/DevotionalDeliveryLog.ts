@@ -4,7 +4,6 @@ import { DateBR } from "@/Shared/helpers"
 import type { DevotionalDeliveryLogPrimitives } from "@/Church/domain"
 
 export class DevotionalDeliveryLog extends AggregateRoot {
-  private id?: string
   private devotionalDeliveryLogId: string
   private payload: DevotionalDeliveryLogPrimitives
 
@@ -23,7 +22,6 @@ export class DevotionalDeliveryLog extends AggregateRoot {
 
   static fromPrimitives(raw: any): DevotionalDeliveryLog {
     const log = new DevotionalDeliveryLog()
-    log.id = raw.id
     log.devotionalDeliveryLogId = raw.devotionalDeliveryLogId
     log.payload = {
       devotionalDeliveryLogId: raw.devotionalDeliveryLogId,
@@ -43,10 +41,6 @@ export class DevotionalDeliveryLog extends AggregateRoot {
       contentSnapshot: raw.contentSnapshot,
     }
     return log
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getPayload(): DevotionalDeliveryLogPrimitives {

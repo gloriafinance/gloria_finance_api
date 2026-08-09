@@ -2,7 +2,6 @@ import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { NotificationsTopic } from "@/PushNotifications/domain"
 
 export class NotificationInbox extends AggregateRoot {
-  private id?: string
   private memberId: string
   private type: NotificationsTopic
   private body: string
@@ -31,7 +30,6 @@ export class NotificationInbox extends AggregateRoot {
 
   static fromPrimitives(params: any): NotificationInbox {
     const notification = new NotificationInbox()
-    notification.id = params.id
     notification.memberId = params.memberId
     notification.type = params.type
     notification.body = params.body
@@ -41,10 +39,6 @@ export class NotificationInbox extends AggregateRoot {
     notification.createdAt = new Date(params.createdAt)
 
     return notification
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   toPrimitives(): any {

@@ -36,7 +36,6 @@ export type AssetPrimitives = {
 }
 
 export class Asset extends AggregateRoot {
-  private id?: string
   private assetId: string
   private code: string
   private name: string
@@ -132,7 +131,6 @@ export class Asset extends AggregateRoot {
   static fromPrimitives(plainData: AssetPrimitives): Asset {
     const asset = new Asset()
 
-    asset.id = plainData.id
     asset.assetId = plainData.assetId
     asset.code = plainData.code
     asset.name = plainData.name
@@ -168,10 +166,6 @@ export class Asset extends AggregateRoot {
     asset.updatedAt = new Date(plainData.updatedAt)
 
     return asset
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getAssetId(): string {

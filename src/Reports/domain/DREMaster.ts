@@ -3,7 +3,6 @@ import { type DREStructure } from "./types/DREStructure.type"
 import { type DREResponse } from "@/Reports/domain/responses/DRE.response"
 
 export class DREMaster extends AggregateRoot {
-  private id?: string
   private dreMasterId: string
   private churchId: string
   private month: number
@@ -27,7 +26,6 @@ export class DREMaster extends AggregateRoot {
 
   static fromPrimitives(primitives: any): DREMaster {
     const dreMaster = new DREMaster()
-    dreMaster.id = primitives.id
     dreMaster.dreMasterId = primitives.dreMasterId
     dreMaster.churchId = primitives.churchId
     dreMaster.month = primitives.month
@@ -38,10 +36,6 @@ export class DREMaster extends AggregateRoot {
     }
 
     return dreMaster
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   toResponseAPI(): DREResponse {

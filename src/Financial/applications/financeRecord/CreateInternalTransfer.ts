@@ -20,10 +20,9 @@ import type {
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
-import { IdentifyEntity, Logger } from "@/Shared/adapter"
+import { DatabaseTransaction, IdentifyEntity, Logger } from "@/Shared/adapter"
 import { GenericException } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
-import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 export class CreateInternalTransfer {
   private logger = Logger(CreateInternalTransfer.name)
@@ -126,7 +125,7 @@ export class CreateInternalTransfer {
     })
 
     try {
-      const response = await MongoTransaction.run(async (transaction) => {
+      const response = await DatabaseTransaction.run(async (transaction) => {
         await this.financialRecordRepository.upsert(sourceRecord, transaction)
         await this.financialRecordRepository.upsert(
           destinationRecord,

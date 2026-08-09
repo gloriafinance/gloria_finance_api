@@ -8,7 +8,6 @@ import {
 } from "@/Customers/domain/enums/CustomerStatus.enum"
 
 export class Customer extends AggregateRoot {
-  private id?: string
   private customerId: string
   private representative: {
     name: string
@@ -51,7 +50,6 @@ export class Customer extends AggregateRoot {
 
   static fromPrimitives(data: any): Customer {
     const customer = new Customer()
-    customer.id = data.id
     customer.customerId = data.customerId
     customer.representative = data.representative
     customer.name = data.name
@@ -62,10 +60,6 @@ export class Customer extends AggregateRoot {
     customer.lang = data.lang
 
     return customer
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getCustomerId(): string {

@@ -4,7 +4,6 @@ import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 export class AvailabilityAccount extends AggregateRoot {
-  private id?: string
   private churchId: string
   private availabilityAccountId: string
   private accountName: string
@@ -48,15 +47,10 @@ export class AvailabilityAccount extends AggregateRoot {
     account.accountType = plainData.accountType
     account.lastMove = plainData.lastMove
     account.createdAt = plainData.createdAt
-    account.id = plainData._id
     account.source = plainData.source
     account.symbol = plainData.symbol
 
     return account
-  }
-
-  override getId(): string {
-    return this.id!
   }
 
   getSource() {

@@ -12,7 +12,6 @@ import type { LgpdConsent } from "./type/LgpdConsent.type"
 export class Member extends AggregateRoot {
   public isTreasurer: boolean
   public isMinister: boolean
-  private id?: string
   private memberId: string
   private name: string
   private email: string
@@ -123,8 +122,6 @@ export class Member extends AggregateRoot {
 
     m.church = plainData.church
 
-    m.id = plainData.id
-
     if (
       !plainData.status ||
       !Object.values(MemberStatus).includes(plainData.status)
@@ -149,10 +146,6 @@ export class Member extends AggregateRoot {
     m.lgpdConsent = plainData.lgpdConsent
 
     return m
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getPhone() {

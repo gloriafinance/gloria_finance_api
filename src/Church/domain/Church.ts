@@ -7,7 +7,6 @@ import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import type { ChurchDoctrinalBase } from "./type/ChurchDoctrinalBase.type"
 
 export class Church extends AggregateRoot {
-  private id?: string
   private churchId: string
   private name: string
   private city: string
@@ -111,7 +110,6 @@ export class Church extends AggregateRoot {
   static fromPrimitives(plainData: any): Church {
     const c: Church = new Church()
 
-    c.id = plainData.id
     c.churchId = plainData.churchId
     c.name = plainData.name
     c.city = plainData.city
@@ -220,10 +218,6 @@ export class Church extends AggregateRoot {
 
   setStatus(status: ChurchStatus) {
     this.status = status
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   // setRegion(region: Region) {

@@ -3,6 +3,7 @@ import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
+import type { DatabaseTransactionContext } from "@/Shared/adapter"
 import { Logger } from "@/Shared/adapter"
 import {
   ConceptType,
@@ -15,7 +16,6 @@ import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applicatio
 import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 import type { IQueueService } from "@/package/queue/domain"
 import type { UpdateStatusFinancialRecordQueue } from "@/Financial/applications"
-import type { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 type SideEffect = () => Promise<void> | void
 
@@ -36,7 +36,7 @@ export class UpdateFinancialRecord {
   async execute(
     args: UpdateStatusFinancialRecordQueue,
     options?: UpdateFinancialRecordOptions,
-    transaction?: MongoTransaction
+    transaction?: DatabaseTransactionContext
   ): Promise<void> {
     this.logger.info(`UpdateFinancialRecord execute`, {
       ...args,
@@ -47,6 +47,9 @@ export class UpdateFinancialRecord {
     })
 
     const financialRecord = FinanceRecord.fromPrimitives(args.financialRecord)
+    if (args.financialRecord.id) {
+      financialRecord.assignId(String(args.financialRecord.id))
+    }
     const previousStatus = financialRecord.getStatus()
 
     if (options?.validateFinancialMonth !== false) {
@@ -80,7 +83,7 @@ export class UpdateFinancialRecord {
   private async dispatchRealizationSideEffects(
     financialRecord: FinanceRecord,
     previousStatus?: FinancialRecordStatus,
-    transaction?: MongoTransaction
+    transaction?: DatabaseTransactionContext
   ) {
     if (!this.isRealizedStatus(financialRecord.getStatus())) {
       return

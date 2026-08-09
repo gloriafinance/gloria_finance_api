@@ -1,4 +1,4 @@
-import { Logger } from "@/Shared/adapter"
+import { DatabaseTransaction, Logger } from "@/Shared/adapter"
 import {
   AccountReceivable,
   AccountReceivableType,
@@ -20,7 +20,6 @@ import {
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR } from "@/Shared/helpers"
 import type { IQueueService } from "@/package/queue/domain"
-import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
 
@@ -38,7 +37,7 @@ export class PayAccountReceivable {
     this.logger.info(`Start Pay Account Receivable`, req)
 
     try {
-      const eventData = await MongoTransaction.run(async (transaction) => {
+      const eventData = await DatabaseTransaction.run(async (transaction) => {
         const accountReceivable: AccountReceivable | null =
           await this.accountReceivableRepository.one(
             {
@@ -131,7 +130,7 @@ export class PayAccountReceivable {
   private async financialConcept(accountReceivable: AccountReceivable) {
     if (accountReceivable.getType() === AccountReceivableType.LOAN) {
       return (await this.financialConceptRepository.one({
-        tag: "COLLECT_LOANDS",
+        tag: "COLLECT_LOANS",
         churchId: accountReceivable.getChurchId(),
       }))!
     }

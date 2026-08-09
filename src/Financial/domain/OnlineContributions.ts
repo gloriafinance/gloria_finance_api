@@ -8,7 +8,6 @@ import { AmountValue } from "@/Shared/domain"
 import { ContributionMemberSnapshot } from "./ContributionMemberSnapshot"
 
 export class OnlineContributions extends AggregateRoot {
-  private id?: string
   private churchId: string
   private member: ContributionMemberSnapshot
   private contributionId: string
@@ -77,7 +76,6 @@ export class OnlineContributions extends AggregateRoot {
 
   static fromPrimitives(plainData: any): OnlineContributions {
     const contributions: OnlineContributions = new OnlineContributions()
-    contributions.id = plainData.id
     contributions.member = ContributionMemberSnapshot.fromPrimitives(
       plainData.member
     )
@@ -111,10 +109,6 @@ export class OnlineContributions extends AggregateRoot {
 
   getChurchId() {
     return this.churchId
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getAmount() {

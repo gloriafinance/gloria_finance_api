@@ -4,8 +4,8 @@ import {
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
 } from "../../../Financial/domain"
+import type { DatabaseTransactionContext } from "@/Shared/adapter"
 import { Logger } from "@/Shared/adapter"
-import type { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {
   private logger = Logger("FindAvailabilityAccountByAvailabilityAccountId")
@@ -17,7 +17,7 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
   async execute(
     availabilityAccountId: string,
     churchId?: string,
-    transaction?: MongoTransaction
+    transaction?: DatabaseTransactionContext
   ): Promise<AvailabilityAccount> {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`

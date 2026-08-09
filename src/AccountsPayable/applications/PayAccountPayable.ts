@@ -1,4 +1,4 @@
-import { Logger } from "@/Shared/adapter"
+import { DatabaseTransaction, Logger } from "@/Shared/adapter"
 import {
   AccountPayable,
   AccountPayableNotFound,
@@ -20,7 +20,6 @@ import {
   FinancialConceptNotFound,
 } from "@/FinanceConfig/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
 import { DateBR } from "@/Shared/helpers"
@@ -46,7 +45,7 @@ export class PayAccountPayable {
     this.logger.info(`Start Pay Account Payable`, req)
 
     try {
-      const eventData = await MongoTransaction.run(async (transaction) => {
+      const eventData = await DatabaseTransaction.run(async (transaction) => {
         const accountPayable = await this.accountPayableRepository.one({
           accountPayableId: req.accountPayableId,
         })

@@ -21,7 +21,6 @@ import { TaxDocumentType } from "@/AccountsPayable/domain/enums/TaxDocumentType.
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
-  private id?: string
   private supplier: {
     supplierId: string
     supplierType: SupplierType
@@ -171,7 +170,6 @@ export class AccountPayable extends AggregateRoot {
 
   static fromPrimitives(params: any): AccountPayable {
     const accountPayable: AccountPayable = new AccountPayable()
-    accountPayable.id = params.id
     const persistedInstallments = Array.isArray(params.installments)
       ? params.installments.map((installment: Installments) => ({
           ...installment,
