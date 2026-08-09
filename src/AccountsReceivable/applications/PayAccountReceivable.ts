@@ -19,6 +19,7 @@ import {
 } from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
 import { DateBR } from "@/Shared/helpers"
+import { PaymentAmountExceedsPending } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
@@ -69,6 +70,10 @@ export class PayAccountReceivable {
           }
 
           amountPay = PayInstallment(installment, amountPay, this.logger)
+        }
+
+        if (amountPay > 0) {
+          throw new PaymentAmountExceedsPending()
         }
 
         accountReceivable.updateAmount(req.amount)

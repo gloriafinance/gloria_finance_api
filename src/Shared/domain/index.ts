@@ -4,6 +4,7 @@ export type { Installments } from "./types/Installments.type"
 export { DomainException } from "./exceptions/domain-exception"
 export { GenericException } from "./exceptions/generic-exception"
 export { InvalidArgumentError } from "./exceptions/invalid-argument-error"
+export { PaymentAmountExceedsPending } from "./exceptions/PaymentAmountExceedsPending.exception"
 
 export { StringValue } from "./value-object/StringValue"
 export { AmountValue } from "./value-object/AmountValue"

@@ -11,7 +11,7 @@ import type {
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import { AmountValue } from "@/Shared/domain"
+import { AmountValue, PaymentAmountExceedsPending } from "@/Shared/domain"
 import { PayInstallment } from "@/Shared/applications"
 import {
   AvailabilityAccount,
@@ -85,6 +85,10 @@ export class PayAccountPayable {
             throw new InstallmentNotFound(installmentId)
           }
           amountPay = PayInstallment(installment, amountPay, this.logger)
+        }
+
+        if (amountPay > 0) {
+          throw new PaymentAmountExceedsPending()
         }
 
         accountPayable.updateAmount(req.amount)

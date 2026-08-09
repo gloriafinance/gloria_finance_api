@@ -9,6 +9,7 @@ import {
   AmountValue,
   type Installments,
   InstallmentsStatus,
+  PaymentAmountExceedsPending,
 } from "@/Shared/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
@@ -192,6 +193,10 @@ export class AccountReceivable extends AggregateRoot {
   }
 
   updateAmount(amountPaid: AmountValue) {
+    if (amountPaid.getValue() > this.amountPending) {
+      throw new PaymentAmountExceedsPending()
+    }
+
     this.amountPaid += amountPaid.getValue()
     this.amountPending -= amountPaid.getValue()
 

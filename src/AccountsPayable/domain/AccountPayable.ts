@@ -2,6 +2,7 @@ import {
   AmountValue,
   type Installments,
   InstallmentsStatus,
+  PaymentAmountExceedsPending,
 } from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
@@ -369,6 +370,10 @@ export class AccountPayable extends AggregateRoot {
   }
 
   updateAmount(amountPaid: AmountValue) {
+    if (amountPaid.getValue() > this.amountPending) {
+      throw new PaymentAmountExceedsPending()
+    }
+
     this.amountPaid += amountPaid.getValue()
     this.amountPending -= amountPaid.getValue()
 
