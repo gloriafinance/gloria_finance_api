@@ -158,7 +158,6 @@ export class Church extends AggregateRoot {
             : undefined,
         }
       : undefined
-
     if (plainData.memberRegistration) {
       c.memberRegistration = {
         token: plainData.memberRegistration.token,
@@ -248,6 +247,10 @@ export class Church extends AggregateRoot {
     return this.id
   }
 
+  // setRegion(region: Region) {
+  //   this.region = region;
+  // }
+
   getChurchId(): string {
     return this.churchId
   }
@@ -315,8 +318,8 @@ export class Church extends AggregateRoot {
   isWhatsappConnected(): boolean {
     return Boolean(
       this.wabaId?.trim() &&
-        this.phoneNumberId?.trim() &&
-        this.accessTokenSecretId?.trim()
+      this.phoneNumberId?.trim() &&
+      this.accessTokenSecretId?.trim()
     )
   }
 
@@ -358,6 +361,14 @@ export class Church extends AggregateRoot {
     return this.ministerId
   }
 
+  // getRegion(): Region {
+  //   return this.region;
+  // }
+
+  // removeMinister() {
+  //   this.ministerId = undefined
+  // }
+
   getAddress(): string {
     return `${this.address}, ${this.street}, ${this.number}, ${this.postalCode}, ${this.city}`
   }
@@ -382,12 +393,12 @@ export class Church extends AggregateRoot {
     if (draft.city !== undefined) this.city = draft.city
 
     const current = this.bankingOnboarding ?? {}
-    const consent =
-      draft.consentAccepted === true
-        ? { acceptedAt: DateBR(), acceptedByUserId }
-        : draft.consentAccepted === false
-          ? undefined
-          : current.consent
+    let consent = current.consent
+    if (draft.consentAccepted === true) {
+      consent = { acceptedAt: DateBR(), acceptedByUserId }
+    } else if (draft.consentAccepted === false) {
+      consent = undefined
+    }
 
     this.bankingOnboarding = {
       ...current,
@@ -431,6 +442,7 @@ export class Church extends AggregateRoot {
       registerNumber: this.registerNumber,
       email: this.email,
       openingDate: this.openingDate,
+      //region: this.region.toPrimitives(),
       createdAt: this.createdAt,
       ministerId: this.ministerId ?? null,
       status: this.status,
