@@ -17,6 +17,7 @@ export type * from "./interfaces/BankRepository.interface"
 export type * from "./interfaces/MovementBankRepository.interface"
 export type * from "./interfaces/BankStatementRepository.interface"
 export type * from "./interfaces/BankStatementParser.interface"
+export type * from "./interfaces/ChurchBankingClient.interface"
 
 export * from "./Bank"
 export * from "./MovementBank"
