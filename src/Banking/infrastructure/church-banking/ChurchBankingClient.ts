@@ -22,10 +22,7 @@ type EncryptionKey = {
 }
 
 export class ChurchBankingClientError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string
-  ) {
+  constructor(readonly status: number, readonly code: string) {
     super(`church-banking request failed with ${status} (${code})`)
     this.name = "ChurchBankingClientError"
   }
@@ -61,7 +58,11 @@ export class ChurchBankingClient implements IChurchBankingClient {
       bodyHash,
       scope: [command.scope],
     })
-      .setProtectedHeader({ alg: "ES256", kid: signing.keyId, typ: "JWT" })
+      .setProtectedHeader({
+        alg: "ES256",
+        kid: signing.keyId,
+        typ: "JWT",
+      })
       .setIssuer(config.issuer)
       .setAudience("CHURCH_BANKING")
       .setSubject(config.clientCode)
