@@ -3,6 +3,7 @@ import Handlebars from "handlebars"
 import * as fs from "fs"
 import * as path from "node:path"
 import { Logger } from "@/Shared/adapter/CustomLogger"
+import { APP_DIR } from "@/app.ts"
 
 const handlebars =
   (Handlebars as unknown as { default?: typeof Handlebars }).default ||

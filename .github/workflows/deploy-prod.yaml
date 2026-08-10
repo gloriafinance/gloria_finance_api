@@ -34,31 +34,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy Server two
-        run: |
-          echo "$SSH_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP_SERVER_TWO "          
-          cd gloria_finance_api          
-
-          git fetch origin
-          git reset --hard origin/main
-          git pull
-
-          rm -rf node_modules
-          rm -rf dist
-
-          ~/.bun/bin/bun install --frozen-lockfile
-
-          ~/.bun/bin/bun migrate
-          sudo systemctl restart church_api.service
-
-          "
+      #      - name: Deploy Server two
+      #        run: |
+      #          echo "$SSH_KEY" > private_key && chmod 600 private_key
+      #          ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP_SERVER_TWO "
+      #          cd gloria_finance_api
+      #
+      #          git fetch origin
+      #          git reset --hard origin/main
+      #          git pull
+      #
+      #          rm -rf node_modules
+      #          rm -rf dist
+      #
+      #          ~/.bun/bin/bun install --frozen-lockfile
+      #
+      #          ~/.bun/bin/bun migrate
+      #          sudo systemctl restart church_api.service
+      #
+      #          "
 
       - name: Deploy Server one
         run: |
           echo "$SSH_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP "          
-          cd church_finance_api          
+          cd /opt/gloria_finance_api          
 
           git fetch origin
           git reset --hard origin/main
@@ -70,7 +70,7 @@ jobs:
           ~/.bun/bin/bun install --frozen-lockfile
           
           ~/.bun/bin/bun migrate
-          sudo systemctl restart church_api.service
+          sudo systemctl restart gloriafinance_api.service
 
           "
     
@@ -79,6 +79,6 @@ jobs:
     env:
       SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
       PUBLIC_IP: ${{ secrets.GCP_PUBLIC_IP }}
-      PUBLIC_IP_SERVER_TWO: ${{ secrets.GCP_PUBLIC_IP_SERVER_TWO }}
+      #PUBLIC_IP_SERVER_TWO: ${{ secrets.GCP_PUBLIC_IP_SERVER_TWO }}
       GCE_USERNAME: ${{ secrets.GCP_USERNAME }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}

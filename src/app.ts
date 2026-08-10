@@ -1,5 +1,6 @@
 import "reflect-metadata"
 import {
+  BunAdapter,
   BunKitServer,
   CorsModule,
   FileUploadModule,
@@ -12,14 +13,14 @@ import { controllersModule } from "./bootstrap"
 import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
-import { BunHostAdapter } from "@/Shared/adapter/BunHostAdapter"
 import { RateLimitModule } from "@/Shared/infrastructure/modules/RateLimitModule"
 import { MongoDBService } from "@/bootstrap/MongoDB.service.ts"
 
 export const APP_DIR = __dirname
 
 const server = new BunKitServer(Number(process.env.APP_PORT || 8080), {
-  adapter: new BunHostAdapter(),
+  adapter: new BunAdapter(),
+  hostname: process.env.NODE_ENV === "production" ? "127.0.0.1" : "0.0.0.0",
 })
 
 server.addModules([
