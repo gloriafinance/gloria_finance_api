@@ -58,11 +58,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
       bodyHash,
       scope: [command.scope],
     })
-      .setProtectedHeader({
-        alg: "ES256",
-        kid: signing.keyId,
-        typ: "JWT",
-      })
+      .setProtectedHeader({ alg: "ES256", kid: signing.keyId, typ: "JWT" })
       .setIssuer(config.issuer)
       .setAudience("CHURCH_BANKING")
       .setSubject(config.clientCode)
