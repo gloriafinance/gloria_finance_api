@@ -1,9 +1,5 @@
-import { FinancialMonth, IFinancialYearRepository } from "../../domain"
-import {
-  Criteria,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { FinancialMonth, type IFinancialYearRepository } from "../../domain"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 
 export class FinancialYearMongoRepository
@@ -28,38 +24,11 @@ export class FinancialYearMongoRepository
     return "financial_months"
   }
 
-  async one(filter: object): Promise<FinancialMonth | undefined> {
-    const collection = await this.collection()
-    const result = await collection.findOne(filter)
-
-    if (!result) {
-      return undefined
-    }
-
-    return FinancialMonth.fromPrimitives({
-      id: result._id.toString(),
-      ...result,
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex({
+      month: 1,
+      year: 1,
+      churchId: 1,
     })
-  }
-
-  list(criteria: Criteria): Promise<Paginate<FinancialMonth>>
-  list(filter: object): Promise<FinancialMonth[]>
-
-  override async list(
-    filter: Criteria | object
-  ): Promise<FinancialMonth[] | Paginate<FinancialMonth>> {
-    const collection = await this.collection()
-    const results = await collection.find(filter).sort({ month: 1 }).toArray()
-
-    return results.map((result) =>
-      FinancialMonth.fromPrimitives({
-        id: result._id.toString(),
-        ...result,
-      })
-    )
-  }
-
-  protected ensureIndexes(collection: Collection): Promise<void> {
-    return Promise.resolve(undefined)
   }
 }
