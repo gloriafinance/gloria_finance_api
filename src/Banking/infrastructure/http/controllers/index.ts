@@ -1,9 +1,9 @@
 import { BankController } from "./Bank.controller"
 import { BankStatementController } from "./BankStatement.controller"
-import { ChurchBankingJwksController } from "./ChurchBankingJwks.controller"
+import { AuthJwksController } from "./AuthJwks.controller"
 
 export const bankControllers = () => [
   BankController,
   BankStatementController,
-  ChurchBankingJwksController,
+  AuthJwksController,
 ]
