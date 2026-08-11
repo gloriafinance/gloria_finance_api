@@ -56,23 +56,45 @@ jobs:
 
       - name: Deploy Server one
         run: |
-          echo "$SSH_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key $GCE_USERNAME@$PUBLIC_IP "          
-          cd /opt/gloria_finance_api          
-
-          git fetch origin
-          git reset --hard origin/main
-          git pull
-
-          rm -rf node_modules
-          rm -rf dist
-
-          ~/.bun/bin/bun install --frozen-lockfile
+          echo "$SSH_KEY" > private_key
+          chmod 600 private_key
           
-          ~/.bun/bin/bun migrate
-          sudo systemctl restart gloriafinance_api.service
-
-          "
+          ssh -o StrictHostKeyChecking=no \
+              -i private_key \
+              "$GCE_USERNAME@$PUBLIC_IP" '
+          
+            set -e
+          
+            echo "===== UPDATE REPOSITORY ====="
+            sudo -u gloria -H git -C /opt/gloria_finance_api fetch origin
+            sudo -u gloria -H git -C /opt/gloria_finance_api reset --hard origin/main
+          
+            echo "===== CLEAN ====="
+            sudo -u gloria -H rm -rf /opt/gloria_finance_api/node_modules
+            sudo -u gloria -H rm -rf /opt/gloria_finance_api/dist
+          
+            echo "===== INSTALL ====="
+            sudo -u gloria -H env \
+            PATH=/home/gloria/bin:/usr/local/bin:/usr/bin:/bin \
+            bash -c "
+            cd /opt/gloria_finance_api &&
+            /usr/local/bin/bun install --frozen-lockfile
+            "
+          
+            echo "===== MIGRATE ====="
+            sudo -u gloria -H env \
+            PATH=/home/gloria/bin:/usr/local/bin:/usr/bin:/bin \
+            bash -c "
+            cd /opt/gloria_finance_api &&
+            /usr/local/bin/bun migrate
+            "
+          
+            echo "===== RESTART ====="
+            sudo systemctl restart gloriafinance_api.service
+          
+            echo "===== STATUS ====="
+            sudo systemctl is-active gloriafinance_api.service
+          '
     
     
 

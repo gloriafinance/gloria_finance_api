@@ -5,7 +5,6 @@ import { MinisterType } from "./enums/MinisterType.enum"
 import { DateBR } from "@/Shared/helpers"
 
 export class Minister extends AggregateRoot {
-  private id?: string
   private ministerId: string
   private name: string
   private email: string
@@ -34,9 +33,8 @@ export class Minister extends AggregateRoot {
     return m
   }
 
-  static override fromPrimitives(plainData: any): Minister {
+  static fromPrimitives(plainData: any): Minister {
     const m: Minister = new Minister()
-    m.id = plainData.id
     m.name = plainData.name
     m.email = plainData.email
     m.phone = plainData.phone
@@ -59,10 +57,6 @@ export class Minister extends AggregateRoot {
 
   setName(name: string) {
     this.name = name
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getMinisterId(): string {

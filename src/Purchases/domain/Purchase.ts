@@ -8,7 +8,6 @@ import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 
 export class Purchase extends AggregateRoot {
-  private id?: string
   private purchaseId: string
   private churchId: string
   private purchaseDate: Date
@@ -100,11 +99,10 @@ export class Purchase extends AggregateRoot {
     return p
   }
 
-  static override fromPrimitives(plainData: any): Purchase {
+  static fromPrimitives(plainData: any): Purchase {
     const p: Purchase = new Purchase()
 
     p.purchaseId = plainData.purchaseId
-    p.id = plainData.id
     p.churchId = plainData.churchId
     p.purchaseDate = plainData.purchaseDate
     p.total = plainData.total
@@ -123,10 +121,6 @@ export class Purchase extends AggregateRoot {
     p.accountPayable = plainData.accountPayable
 
     return p
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getPurchaseId() {

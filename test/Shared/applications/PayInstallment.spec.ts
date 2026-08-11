@@ -15,6 +15,7 @@ describe("PayInstallment", () => {
     const installment = {
       installmentId: "inst-1",
       amount: 100,
+      amountPaid: 0,
       amountPending: 100,
       status: InstallmentsStatus.PENDING,
       dueDate: new Date(),
@@ -22,8 +23,8 @@ describe("PayInstallment", () => {
 
     const remaining = PayInstallment(installment, 40, logger)
 
-    expect(remaining).toBe(-60)
-    //expect(installment.amountPaid).toBe(40)
+    expect(remaining).toBe(0)
+    expect(installment.amountPaid).toBe(40)
     expect(installment.amountPending).toBe(60)
     expect(installment.status).toBe(InstallmentsStatus.PARTIAL)
   })
@@ -58,7 +59,7 @@ describe("PayInstallment", () => {
 
     const remaining = PayInstallment(installment, 50, logger)
 
-    expect(remaining).toBe(undefined)
+    expect(remaining).toBe(50)
     expect(installment.amountPaid).toBe(100)
     expect(installment.amountPending).toBe(0)
     expect(installment.status).toBe(InstallmentsStatus.PAID)

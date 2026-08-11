@@ -8,7 +8,6 @@ import {
 import { DateBR } from "@/Shared/helpers"
 
 export class MovementBank extends AggregateRoot {
-  private id?: string
   private movementBankId: string
   private amount: number
   private impact: OperationImpactType
@@ -38,7 +37,7 @@ export class MovementBank extends AggregateRoot {
     return movementBank
   }
 
-  static override fromPrimitives(plainData: any): MovementBank {
+  static fromPrimitives(plainData: any): MovementBank {
     const movementBank: MovementBank = new MovementBank()
     movementBank.amount = plainData.amount
     movementBank.impact = plainData.impact
@@ -49,10 +48,6 @@ export class MovementBank extends AggregateRoot {
     movementBank.churchId = plainData.churchId
     movementBank.createdAt = plainData.createdAt
     return movementBank
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getBankId(): string {

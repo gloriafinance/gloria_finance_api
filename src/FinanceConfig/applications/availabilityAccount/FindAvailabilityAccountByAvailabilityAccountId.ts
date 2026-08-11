@@ -4,6 +4,7 @@ import {
   AvailabilityAccountChurchMismatch,
   AvailabilityAccountNotFound,
 } from "../../../Financial/domain"
+import type { DatabaseTransactionContext } from "@/Shared/adapter"
 import { Logger } from "@/Shared/adapter"
 
 export class FindAvailabilityAccountByAvailabilityAccountId {
@@ -15,14 +16,18 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
 
   async execute(
     availabilityAccountId: string,
-    churchId?: string
+    churchId?: string,
+    transaction?: DatabaseTransactionContext
   ): Promise<AvailabilityAccount> {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${availabilityAccountId}`
     )
-    const account = await this.availabilityAccountRepository.one({
-      availabilityAccountId,
-    })
+    const account = await this.availabilityAccountRepository.one(
+      {
+        availabilityAccountId,
+      },
+      transaction
+    )
 
     if (!account) {
       this.logger.info(`Availability account not found`)

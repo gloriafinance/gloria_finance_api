@@ -3,7 +3,6 @@ import { SupplierType } from "@/AccountsPayable/domain/enums/SupplierType"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 
 export class Supplier extends AggregateRoot {
-  private id?: string
   private churchId: string
   private supplierId: string
   private type: SupplierType
@@ -43,7 +42,7 @@ export class Supplier extends AggregateRoot {
     return supplier
   }
 
-  static override fromPrimitives(params: any): Supplier {
+  static fromPrimitives(params: any): Supplier {
     const supplier: Supplier = new Supplier()
     supplier.churchId = params.churchId
     supplier.supplierId = params.supplierId
@@ -79,10 +78,6 @@ export class Supplier extends AggregateRoot {
 
   getPhone(): string {
     return this.phone
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   toPrimitives() {

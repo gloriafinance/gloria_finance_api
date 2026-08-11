@@ -9,6 +9,7 @@ import {
   AmountValue,
   type Installments,
   InstallmentsStatus,
+  PaymentAmountExceedsPending,
 } from "@/Shared/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
@@ -26,7 +27,6 @@ type Debtor = {
 export class AccountReceivable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
-  private id?: string
   private type: AccountReceivableType
   private debtor: Debtor
   private accountReceivableId: string
@@ -110,9 +110,8 @@ export class AccountReceivable extends AggregateRoot {
     return accountReceivable
   }
 
-  static override fromPrimitives(params: any): AccountReceivable {
+  static fromPrimitives(params: any): AccountReceivable {
     const accountReceivable: AccountReceivable = new AccountReceivable()
-    accountReceivable.id = params.id
     accountReceivable.installments = (params.installments ?? []).map(
       (installment: Installments) => ({
         ...installment,
@@ -143,10 +142,6 @@ export class AccountReceivable extends AggregateRoot {
     accountReceivable.symbol = params.symbol || "R$"
 
     return accountReceivable
-  }
-
-  getId(): string {
-    return this.id!
   }
 
   getAccountReceivableId(): string {
@@ -198,6 +193,10 @@ export class AccountReceivable extends AggregateRoot {
   }
 
   updateAmount(amountPaid: AmountValue) {
+    if (amountPaid.getValue() > this.amountPending) {
+      throw new PaymentAmountExceedsPending()
+    }
+
     this.amountPaid += amountPaid.getValue()
     this.amountPending -= amountPaid.getValue()
 

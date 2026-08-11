@@ -6,7 +6,6 @@ import { BankStatementStatus } from "./enums/BankStatementStatus.enum"
 import { IntermediateBankStatement } from "./types/IntermediateBankStatement.type"
 
 export class BankStatement extends AggregateRoot {
-  private id?: string
   private bankStatementId: string
   private churchId: string
   private bank: {
@@ -58,9 +57,8 @@ export class BankStatement extends AggregateRoot {
     return statement
   }
 
-  static override fromPrimitives(primitives: any): BankStatement {
+  static fromPrimitives(primitives: any): BankStatement {
     const statement = new BankStatement()
-    statement.id = primitives.id
     statement.bankStatementId = primitives.bankStatementId
     statement.churchId = primitives.churchId
     statement.bank = primitives.bank
@@ -80,10 +78,6 @@ export class BankStatement extends AggregateRoot {
     statement.updatedAt = primitives.updatedAt
     statement.raw = primitives.raw
     return statement
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getAvailabilityAccount() {

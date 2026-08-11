@@ -22,7 +22,6 @@ type UpdateDetailsParams = {
 }
 
 export class ScheduleEvent extends AggregateRoot {
-  private id?: string
   private scheduleEventId: string
   private churchId: string
   private type: ScheduleEventType
@@ -83,9 +82,8 @@ export class ScheduleEvent extends AggregateRoot {
     return scheduleItem
   }
 
-  static override fromPrimitives(plainData: any): ScheduleEvent {
+  static fromPrimitives(plainData: any): ScheduleEvent {
     const scheduleItem = new ScheduleEvent()
-    scheduleItem.id = plainData.id
     scheduleItem.scheduleEventId =
       plainData.scheduleEventId ?? plainData.scheduleItemId
     scheduleItem.churchId = plainData.churchId
@@ -122,10 +120,6 @@ export class ScheduleEvent extends AggregateRoot {
           ? StringToDate(recurrencePattern.endDate)
           : (recurrencePattern.endDate ?? undefined),
     }
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   updateDetails(params: UpdateDetailsParams): void {

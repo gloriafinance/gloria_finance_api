@@ -1,5 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { ISupplierRepository, Supplier } from "@/AccountsPayable/domain"
+import { type ISupplierRepository, Supplier } from "@/AccountsPayable/domain"
 import { Collection } from "mongodb"
 
 export class SupplierMongoRepository
@@ -36,28 +36,6 @@ export class SupplierMongoRepository
       })
     )
   }
-
-  // async upsert(supplier: Supplier): Promise<void> {
-  //   await this.persist(supplier.getId(), supplier)
-  // }
-  //
-  // async list(criteria: Criteria): Promise<Paginate<Supplier | undefined>> {
-  //   const result = await this.searchByCriteria<Supplier>(criteria)
-  //   return this.paginate<Supplier>(result)
-  // }
-  //
-  // async one(filter: object): Promise<Supplier | null> {
-  //   const collection = await this.collection()
-  //
-  //   const result = await collection.findOne(filter)
-  //
-  //   return result
-  //     ? Supplier.fromPrimitives({
-  //         ...result,
-  //         id: result._id.toString(),
-  //       })
-  //     : undefined
-  // }
 
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)

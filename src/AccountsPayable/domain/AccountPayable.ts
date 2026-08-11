@@ -2,6 +2,7 @@ import {
   AmountValue,
   type Installments,
   InstallmentsStatus,
+  PaymentAmountExceedsPending,
 } from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
@@ -21,7 +22,6 @@ import { TaxDocumentType } from "@/AccountsPayable/domain/enums/TaxDocumentType.
 export class AccountPayable extends AggregateRoot {
   protected amountTotal: number
   protected amountPaid: number
-  private id?: string
   private supplier: {
     supplierId: string
     supplierType: SupplierType
@@ -169,9 +169,8 @@ export class AccountPayable extends AggregateRoot {
     return accountPayable
   }
 
-  static override fromPrimitives(params: any): AccountPayable {
+  static fromPrimitives(params: any): AccountPayable {
     const accountPayable: AccountPayable = new AccountPayable()
-    accountPayable.id = params.id
     const persistedInstallments = Array.isArray(params.installments)
       ? params.installments.map((installment: Installments) => ({
           ...installment,
@@ -350,10 +349,6 @@ export class AccountPayable extends AggregateRoot {
     }
   }
 
-  getId(): string | undefined {
-    return this.id
-  }
-
   getInstallment(installmentId: string): Installments | undefined {
     return this.installments.find((i) => i.installmentId === installmentId)
   }
@@ -375,6 +370,10 @@ export class AccountPayable extends AggregateRoot {
   }
 
   updateAmount(amountPaid: AmountValue) {
+    if (amountPaid.getValue() > this.amountPending) {
+      throw new PaymentAmountExceedsPending()
+    }
+
     this.amountPaid += amountPaid.getValue()
     this.amountPending -= amountPaid.getValue()
 

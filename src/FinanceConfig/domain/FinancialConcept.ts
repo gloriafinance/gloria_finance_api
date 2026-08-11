@@ -17,7 +17,6 @@ export type FinancialConceptImpactOverrides =
 
 export class FinancialConcept extends AggregateRoot {
   isSystem: boolean = false
-  private id?: string
   private financialConceptId: string
   private name: string
   private description: string
@@ -66,9 +65,8 @@ export class FinancialConcept extends AggregateRoot {
     return concept
   }
 
-  static override fromPrimitives(plainData: any): FinancialConcept {
+  static fromPrimitives(plainData: any): FinancialConcept {
     const concept: FinancialConcept = new FinancialConcept()
-    concept.id = plainData.id
     concept.financialConceptId = plainData.financialConceptId
     concept.name = plainData.name
     concept.description = plainData.description
@@ -90,10 +88,6 @@ export class FinancialConcept extends AggregateRoot {
 
   getFinancialConceptId(): string {
     return this.financialConceptId
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   isDisable(): boolean {

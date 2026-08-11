@@ -1,4 +1,4 @@
-import { Logger } from "@/Shared/adapter"
+import { DatabaseTransaction, Logger } from "@/Shared/adapter"
 import {
   AccountPayable,
   AccountPayableNotFound,
@@ -11,20 +11,24 @@ import type {
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
 } from "@/Financial/domain/interfaces"
-import { AmountValue } from "@/Shared/domain"
-import { DispatchCreateFinancialRecord } from "@/Financial/applications"
+import { AmountValue, PaymentAmountExceedsPending } from "@/Shared/domain"
 import { PayInstallment } from "@/Shared/applications"
-import { DateBR, UnitOfWork } from "@/Shared/helpers"
 import {
+  AvailabilityAccount,
   CostCenter,
+  FinancialConcept,
+  FinancialConceptNotFound,
+} from "@/FinanceConfig/domain"
+import { type IQueueService, QueueName } from "@/package/queue/domain"
+import { DispatchCreateFinancialRecord } from "@/Financial/applications"
+import { StorageProviderService } from "@/Shared/infrastructure"
+import { DateBR } from "@/Shared/helpers"
+import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
-import { FinancialConceptNotFound } from "@/FinanceConfig/domain"
-import { StorageProviderService } from "@/Shared/infrastructure"
-import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 export class PayAccountPayable {
   private logger = Logger(PayAccountPayable.name)
@@ -40,40 +44,84 @@ export class PayAccountPayable {
   async execute(req: PayAccountPayableRequest & { amount: AmountValue }) {
     this.logger.info(`Start Pay Account Payable`, req)
 
-    const unitOfWork = new UnitOfWork()
+    try {
+      const eventData = await DatabaseTransaction.run(async (transaction) => {
+        const accountPayable = await this.accountPayableRepository.one({
+          accountPayableId: req.accountPayableId,
+        })
 
-    const accountPayable = await this.accountPayableRepository.one({
-      accountPayableId: req.accountPayableId,
-    })
+        if (!accountPayable) {
+          this.logger.debug(`Account Payable not found`)
+          throw new AccountPayableNotFound()
+        }
 
-    if (!accountPayable) {
-      this.logger.debug(`Account Payable not found`)
-      throw new AccountPayableNotFound()
+        const concept = await this.financialConceptRepository.one(
+          {
+            tag: "Accounts to Pay",
+            churchId: accountPayable.getChurchId(),
+          },
+          transaction
+        )
+
+        if (!concept) {
+          this.logger.debug(`Financial Concept 'Contas a Pagar' not found`)
+          throw new FinancialConceptNotFound()
+        }
+
+        const availabilityAccount =
+          await new FindAvailabilityAccountByAvailabilityAccountId(
+            this.availabilityAccountRepository
+          ).execute(
+            req.availabilityAccountId,
+            accountPayable.getChurchId(),
+            transaction
+          )
+        let amountPay = req.amount.getValue()
+
+        for (const installmentId of req.installmentIds) {
+          const installment = accountPayable.getInstallment(installmentId)
+          if (!installment) {
+            this.logger.debug(`Installment ${installmentId} not found`)
+            throw new InstallmentNotFound(installmentId)
+          }
+          amountPay = PayInstallment(installment, amountPay, this.logger)
+        }
+
+        if (amountPay > 0) {
+          throw new PaymentAmountExceedsPending()
+        }
+
+        accountPayable.updateAmount(req.amount)
+        await this.accountPayableRepository.upsert(accountPayable, transaction)
+
+        this.logger.info(
+          `Account Payable ${req.accountPayableId} updated, amount pending ${accountPayable.getAmountPending()} 
+        status ${accountPayable.getStatus()}`
+        )
+
+        return { availabilityAccount, accountPayable, concept }
+      })
+
+      await this.events(
+        req,
+        eventData.availabilityAccount,
+        eventData.accountPayable,
+        eventData.concept
+      )
+
+      this.logger.info(`Finished Pay Account Payable`)
+    } catch (error: any) {
+      this.logger.error(`Error paying Account Payable`, error)
+      throw error
     }
+  }
 
-    const accountPayableSnapshot = AccountPayable.fromPrimitives({
-      ...accountPayable.toPrimitives(),
-      id: accountPayable.getId(),
-    })
-    unitOfWork.registerRollbackActions(async () => {
-      await this.accountPayableRepository.upsert(accountPayableSnapshot)
-    })
-
-    const availabilityAccount =
-      await new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(req.availabilityAccountId, accountPayable.getChurchId())
-
-    const concept = await this.financialConceptRepository.one({
-      tag: "Accounts to Pay",
-      churchId: accountPayable.getChurchId(),
-    })
-
-    if (!concept) {
-      this.logger.debug(`Financial Concept 'Contas a Pagar' not found`)
-      throw new FinancialConceptNotFound()
-    }
-
+  private async events(
+    req: PayAccountPayableRequest & { amount: AmountValue },
+    availabilityAccount: AvailabilityAccount,
+    accountPayable: AccountPayable,
+    concept: FinancialConcept
+  ) {
     let costCenter: CostCenter | undefined
     if (req.costCenterId) {
       costCenter =
@@ -83,74 +131,42 @@ export class PayAccountPayable {
         )
     }
 
-    unitOfWork.execPostCommit(async () => {
-      let voucher = undefined
-      if (req.file) {
-        voucher = await StorageProviderService.getInstance().uploadFile(
-          req.file
-        )
-      }
+    let voucher = undefined
+    if (req.file) {
+      voucher = await StorageProviderService.getInstance().uploadFile(req.file)
+    }
 
-      await new DispatchCreateFinancialRecord(this.queueService).execute({
-        churchId: accountPayable.getChurchId(),
-        costCenter: { ...costCenter?.toPrimitives() },
-        voucher,
-        date: DateBR(),
-        createdBy: req.createdBy,
-        availabilityAccount,
-        financialRecordType: FinancialRecordType.OUTGO,
-        source: FinancialRecordSource.AUTO,
-        status: FinancialRecordStatus.CLEARED,
-        amount: req.amount.getValue(),
-        financialConcept: concept,
-        description: `pagamento de conta a pagar (${accountPayable.getDescription()}): parcela: ${req.installmentIds.join(",")}`,
-        reference: {
-          entityId: `${accountPayable.getAccountPayableId()} installments ${req.installmentIds.join(",")}`,
-          type: "AccountPayable",
-        },
-      })
-
-      this.queueService.dispatch(QueueName.PurchasesEvent, {
-        event: "update",
-        source: "accountPayablePaid",
-        data: {
-          accountPayableId: accountPayable.getAccountPayableId(),
-          amountPaid: accountPayable.getAmountPaid(),
-          amountTotal: accountPayable.getAmountTotal(),
-          installments: {
-            installments: accountPayable.getNumberInstallments(),
-            installmentsPaid: accountPayable.getAmountFeesPaid(),
-          },
-        },
-      })
+    await new DispatchCreateFinancialRecord(this.queueService).execute({
+      churchId: accountPayable.getChurchId(),
+      costCenter: { ...costCenter?.toPrimitives() },
+      voucher,
+      date: DateBR(),
+      createdBy: req.createdBy,
+      availabilityAccount,
+      financialRecordType: FinancialRecordType.OUTGO,
+      source: FinancialRecordSource.AUTO,
+      status: FinancialRecordStatus.CLEARED,
+      amount: req.amount.getValue(),
+      financialConcept: concept,
+      description: `pagamento de conta a pagar (${accountPayable.getDescription()}): parcela: ${req.installmentIds.join(",")}`,
+      reference: {
+        entityId: `${accountPayable.getAccountPayableId()} installments ${req.installmentIds.join(",")}`,
+        type: "AccountPayable",
+      },
     })
 
-    try {
-      let amountPay = req.amount.getValue()
-
-      for (const installmentId of req.installmentIds) {
-        const installment = accountPayable.getInstallment(installmentId)
-        if (!installment) {
-          this.logger.debug(`Installment ${installmentId} not found`)
-          throw new InstallmentNotFound(installmentId)
-        }
-        amountPay = PayInstallment(installment, amountPay, this.logger)
-      }
-
-      accountPayable.updateAmount(req.amount)
-      await this.accountPayableRepository.upsert(accountPayable)
-
-      this.logger.info(
-        `Account Payable ${req.accountPayableId} updated, amount pending ${accountPayable.getAmountPending()} 
-        status ${accountPayable.getStatus()}`
-      )
-
-      await unitOfWork.commit()
-
-      this.logger.info(`Finished Pay Account Payable`)
-    } catch (error: any) {
-      this.logger.error(`Error paying Account Payable`, error)
-      await unitOfWork.rollback()
-    }
+    this.queueService.dispatch(QueueName.PurchasesEvent, {
+      event: "update",
+      source: "accountPayablePaid",
+      data: {
+        accountPayableId: accountPayable.getAccountPayableId(),
+        amountPaid: accountPayable.getAmountPaid(),
+        amountTotal: accountPayable.getAmountTotal(),
+        installments: {
+          installments: accountPayable.getNumberInstallments(),
+          installmentsPaid: accountPayable.getAmountFeesPaid(),
+        },
+      },
+    })
   }
 }

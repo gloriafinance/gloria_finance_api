@@ -3,23 +3,23 @@ import type {
   IAvailabilityAccountRepository,
   IFinancialRecordRepository,
 } from "@/Financial/domain/interfaces"
+import type { DatabaseTransactionContext } from "@/Shared/adapter"
 import { Logger } from "@/Shared/adapter"
 import {
   ConceptType,
   FinanceRecord,
   FinancialRecordStatus,
   TypeOperationMoney,
-  type UpdateStatusFinancialRecordQueue,
 } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications/dispatchers/DispatchUpdateAvailabilityAccountBalance"
 import { DispatchUpdateCostCenterMaster } from "@/Financial/applications/dispatchers/DispatchUpdateCostCenterMaster"
 import type { IQueueService } from "@/package/queue/domain"
+import type { UpdateStatusFinancialRecordQueue } from "@/Financial/applications"
 
 type SideEffect = () => Promise<void> | void
 
 export type UpdateFinancialRecordOptions = {
-  deferSideEffect?: (sideEffect: SideEffect) => void
   validateFinancialMonth?: boolean
 }
 
@@ -35,7 +35,8 @@ export class UpdateFinancialRecord {
 
   async execute(
     args: UpdateStatusFinancialRecordQueue,
-    options?: UpdateFinancialRecordOptions
+    options?: UpdateFinancialRecordOptions,
+    transaction?: DatabaseTransactionContext
   ): Promise<void> {
     this.logger.info(`UpdateFinancialRecord execute`, {
       ...args,
@@ -46,6 +47,9 @@ export class UpdateFinancialRecord {
     })
 
     const financialRecord = FinanceRecord.fromPrimitives(args.financialRecord)
+    if (args.financialRecord.id) {
+      financialRecord.assignId(String(args.financialRecord.id))
+    }
     const previousStatus = financialRecord.getStatus()
 
     if (options?.validateFinancialMonth !== false) {
@@ -61,7 +65,7 @@ export class UpdateFinancialRecord {
     financialRecord.setStatus(args.status)
     financialRecord.update()
 
-    await this.financialRecordRepository.upsert(financialRecord)
+    await this.financialRecordRepository.upsert(financialRecord, transaction)
 
     this.logger.info(`UpdateFinancialRecord committed`, {
       churchId: financialRecord.getChurchId(),
@@ -72,14 +76,14 @@ export class UpdateFinancialRecord {
     await this.dispatchRealizationSideEffects(
       financialRecord,
       previousStatus,
-      options?.deferSideEffect
+      transaction
     )
   }
 
   private async dispatchRealizationSideEffects(
     financialRecord: FinanceRecord,
     previousStatus?: FinancialRecordStatus,
-    deferSideEffect?: (sideEffect: SideEffect) => void
+    transaction?: DatabaseTransactionContext
   ) {
     if (!this.isRealizedStatus(financialRecord.getStatus())) {
       return
@@ -91,43 +95,36 @@ export class UpdateFinancialRecord {
 
     const availabilityAccountSnapshot = financialRecord.getAvailabilityAccount()
 
-    const availabilityAccount = await this.availabilityAccountRepository.one({
-      availabilityAccountId: availabilityAccountSnapshot.availabilityAccountId,
-    })
+    const availabilityAccount = await this.availabilityAccountRepository.one(
+      {
+        availabilityAccountId:
+          availabilityAccountSnapshot.availabilityAccountId,
+      },
+      transaction
+    )
 
     if (availabilityAccount) {
-      await this.runOrDefer(
-        () =>
-          new DispatchUpdateAvailabilityAccountBalance(
-            this.queueService
-          ).execute({
-            availabilityAccount,
-            amount: Math.abs(financialRecord.getAmount()),
-            concept: financialRecord.getFinancialConcept().getName(),
-            operationType:
-              financialRecord.getFinancialConcept().getType() ===
-              ConceptType.INCOME
-                ? TypeOperationMoney.MONEY_IN
-                : TypeOperationMoney.MONEY_OUT,
-            createdAt: financialRecord.getDate(),
-          }),
-        deferSideEffect
-      )
+      new DispatchUpdateAvailabilityAccountBalance(this.queueService).execute({
+        availabilityAccount,
+        amount: Math.abs(financialRecord.getAmount()),
+        concept: financialRecord.getFinancialConcept().getName(),
+        operationType:
+          financialRecord.getFinancialConcept().getType() === ConceptType.INCOME
+            ? TypeOperationMoney.MONEY_IN
+            : TypeOperationMoney.MONEY_OUT,
+        createdAt: financialRecord.getDate(),
+      })
     }
 
     const costCenter = financialRecord.getCostCenter()
 
     if (costCenter) {
-      await this.runOrDefer(
-        () =>
-          new DispatchUpdateCostCenterMaster(this.queueService).execute({
-            churchId: financialRecord.getChurchId(),
-            amount: Math.abs(financialRecord.getAmount()),
-            costCenterId: costCenter.costCenterId,
-            availabilityAccount: availabilityAccountSnapshot,
-          }),
-        deferSideEffect
-      )
+      new DispatchUpdateCostCenterMaster(this.queueService).execute({
+        churchId: financialRecord.getChurchId(),
+        amount: Math.abs(financialRecord.getAmount()),
+        costCenterId: costCenter.costCenterId,
+        availabilityAccount: availabilityAccountSnapshot,
+      })
     }
   }
 
@@ -138,17 +135,5 @@ export class UpdateFinancialRecord {
       status === FinancialRecordStatus.CLEARED ||
       status === FinancialRecordStatus.RECONCILED
     )
-  }
-
-  private async runOrDefer(
-    sideEffect: SideEffect,
-    deferSideEffect?: (sideEffect: SideEffect) => void
-  ) {
-    if (deferSideEffect) {
-      deferSideEffect(sideEffect)
-      return
-    }
-
-    await sideEffect()
   }
 }

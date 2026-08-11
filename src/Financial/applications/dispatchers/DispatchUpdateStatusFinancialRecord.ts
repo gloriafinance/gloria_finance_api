@@ -2,7 +2,7 @@ import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter"
 import { FinancialRecordStatus } from "@/Financial/domain"
 
-type UpdateStatusFinancialRecordQueue = {
+export type UpdateStatusFinancialRecordQueue = {
   financialRecord: any
   status: FinancialRecordStatus
 }

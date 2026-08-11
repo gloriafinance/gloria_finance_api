@@ -2,7 +2,6 @@ import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 
 export class FinancialMonth extends AggregateRoot {
-  private id?: string
   private financialMonthId: string
   private month: number
   private year: number
@@ -22,9 +21,8 @@ export class FinancialMonth extends AggregateRoot {
     return financialMonths
   }
 
-  static override fromPrimitives(plainData: any): FinancialMonth {
+  static fromPrimitives(plainData: any): FinancialMonth {
     const financialMonths: FinancialMonth = new FinancialMonth()
-    financialMonths.id = plainData.id
     financialMonths.month = plainData.month
     financialMonths.year = plainData.year
     financialMonths.closed = plainData.closed
@@ -46,10 +44,6 @@ export class FinancialMonth extends AggregateRoot {
 
   open(): void {
     this.closed = false
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   toPrimitives() {

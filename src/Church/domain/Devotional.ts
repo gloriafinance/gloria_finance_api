@@ -14,7 +14,6 @@ import {
 } from "@/Church/domain"
 
 export class Devotional extends AggregateRoot {
-  private id?: string
   private devotionalId: string
   private churchId: string
   private devotionalWeeklyPlanId: string
@@ -84,9 +83,8 @@ export class Devotional extends AggregateRoot {
     return devotional
   }
 
-  static override fromPrimitives(payload: any): Devotional {
+  static fromPrimitives(payload: any): Devotional {
     const devotional = new Devotional()
-    devotional.id = payload.id
     devotional.devotionalId = payload.devotionalId
     devotional.churchId = payload.churchId
     devotional.devotionalWeeklyPlanId = payload.devotionalWeeklyPlanId
@@ -343,10 +341,6 @@ export class Devotional extends AggregateRoot {
       return 0
     }
     return this.versions[this.versions.length - 1]!.versionNumber
-  }
-
-  getId(): string | undefined {
-    return this.id
   }
 
   getDevotionalId(): string {

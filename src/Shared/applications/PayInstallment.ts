@@ -1,4 +1,4 @@
-import { Installments, InstallmentsStatus } from "@/Shared/domain"
+import { type Installments, InstallmentsStatus } from "@/Shared/domain"
 import { DateBR } from "@/Shared/helpers"
 
 export const PayInstallment = (
@@ -9,39 +9,27 @@ export const PayInstallment = (
   if (installment.status === InstallmentsStatus.PAID) {
     installment.paymentDate = installment.paymentDate ?? DateBR()
     logger.debug(`Installment ${installment.installmentId} already paid`)
-    return
+    return amountTransferred
   }
 
   logger.info(
-    `Installment ${installment.installmentId} is was ${installment.status.toLowerCase()} payment`
+    `Installment ${installment.installmentId} is was ${installment.status!.toLowerCase()} payment`
   )
 
-  const amountToCompare =
-    installment.status === InstallmentsStatus.PENDING
-      ? installment.amount
-      : installment.amountPending
+  const amountPending = installment.amountPending ?? installment.amount
+  const amountPaid = installment.amountPaid ?? 0
+  const amountApplied = Math.min(amountTransferred, amountPending)
 
   installment.status =
-    amountTransferred >= amountToCompare
+    amountApplied === amountPending
       ? InstallmentsStatus.PAID
       : InstallmentsStatus.PARTIAL
 
   installment.paymentDate = DateBR()
-
-  const amountPending = installment.amountPending ?? installment.amount
-
-  const newAmountPending = amountPending - amountTransferred
-
-  if (newAmountPending < 0) {
-    installment.amountPending = 0
-    installment.amountPaid = installment.amount
-  } else {
-    installment.amountPending = newAmountPending
-    installment.amountPaid =
-      amountTransferred + (installment.amountPending || 0)
-  }
+  installment.amountPending = amountPending - amountApplied
+  installment.amountPaid = amountPaid + amountApplied
 
   logger.info(`Installment ${installment.installmentId} updated`, installment)
 
-  return amountTransferred - amountPending
+  return amountTransferred - amountApplied
 }

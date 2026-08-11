@@ -30,6 +30,7 @@ import {
   IQueueService,
   IStorageService,
 } from "@/Shared/domain"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 
 type AccountPayablePrimitives = ReturnType<AccountPayable["toPrimitives"]> & {
   id?: string
@@ -271,5 +272,22 @@ describe("PayAccountPayable", () => {
 
     await expect(useCase.execute(request)).resolves.toBeUndefined()
     expect(accountPayableRepository.upsert).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not dispatch events when the transaction cannot commit", async () => {
+    const commitError = new Error("transaction commit failed")
+    const transactionRun = jest
+      .spyOn(MongoTransaction, "run")
+      .mockImplementation(async (callback) => {
+        await callback({} as MongoTransaction)
+        throw commitError
+      })
+
+    accountPayableRepository.one.mockResolvedValueOnce(createAccountPayable())
+
+    await expect(useCase.execute(createRequest())).rejects.toThrow(commitError)
+
+    expect(queueService.dispatch).not.toHaveBeenCalled()
+    transactionRun.mockRestore()
   })
 })
