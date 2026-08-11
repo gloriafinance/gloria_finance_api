@@ -32,7 +32,7 @@
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.81.2",
-    "bun-platform-kit": "^1.1.1",
+    "bun-platform-kit": "^1.2.0",
     "dayjs": "^1.11.21",
     "firebase-admin": "^13.10.0",
     "ioredis": "^5.11.1",
