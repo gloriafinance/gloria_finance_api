@@ -1,9 +1,7 @@
 import { AssetStatus } from "../enums/AssetStatus.enum"
 
 export type AssetDisposalStatus =
-  | AssetStatus.DONATED
-  | AssetStatus.SOLD
-  | AssetStatus.LOST
+  AssetStatus.DONATED | AssetStatus.SOLD | AssetStatus.LOST
 
 export type DisposeAssetRequest = {
   assetId: string

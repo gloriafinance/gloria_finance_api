@@ -433,6 +433,12 @@ All list queries return a `Paginate<T>` object:
 
 ---
 
+## Skills
+
+Load the `develop-backend` skill when performing backend engineering tasks. Use the skill tool: `skill(name="develop-backend")`
+
+---
+
 ## References
 
 -   **@abejarano/ts-mongodb-criteria**: [GitHub Repository](https://github.com/abejarano/ts-mongo-criteria)

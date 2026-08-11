@@ -901,8 +901,7 @@ ${this.buildReportSpecificPrompt(params.analysisTarget)}
     const total = this.num(totals?.total)
     const byAccount = new Map<string, number>()
     let largestEntry:
-      | { amount: number; date: string; account: string }
-      | undefined
+      { amount: number; date: string; account: string } | undefined
 
     for (const record of records) {
       const amount = this.num(record.amount)

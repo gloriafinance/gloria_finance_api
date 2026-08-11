@@ -55,8 +55,7 @@ export class PublicMemberRegistrationController {
       const body = req.body ?? {}
       const files = req.files?.profilePhoto
       const profilePhoto = (Array.isArray(files) ? files[0] : files) as
-        | BunMultipartFile
-        | undefined
+        BunMultipartFile | undefined
 
       if (!profilePhoto) {
         return res.status(HttpStatus.BAD_REQUEST).send({

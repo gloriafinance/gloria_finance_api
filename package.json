@@ -11,7 +11,8 @@
     "migrate": "set -a && . ./.env && set +a && ts-mongo migrate:up",
     "format": "prettier --write \"src/**/*.{ts,hbs}\" ",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "copy-static-assets": "bun src/copyStaticAssets.ts"
+    "copy-static-assets": "bun src/copyStaticAssets.ts",
+    "jwt:create": "bun run scripts/setup-signing-private-jwt.ts"
   },
   "author": "angel bejarano / angel.bejarano@jaspesoft.com",
   "repository": {

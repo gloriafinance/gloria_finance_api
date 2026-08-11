@@ -15,8 +15,7 @@ export const UpdateMemberProfilePhotoValidator = async (
 ): Promise<void> => {
   const files = (req as any).files?.profilePhoto
   const profilePhoto = (Array.isArray(files) ? files[0] : files) as
-    | { name?: string; type?: string; size?: number }
-    | undefined
+    { name?: string; type?: string; size?: number } | undefined
 
   const payload = {
     profilePhoto,

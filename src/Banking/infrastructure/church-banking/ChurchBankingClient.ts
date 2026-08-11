@@ -22,7 +22,10 @@ type EncryptionKey = {
 }
 
 export class ChurchBankingClientError extends Error {
-  constructor(readonly status: number, readonly code: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string
+  ) {
     super(`church-banking request failed with ${status} (${code})`)
     this.name = "ChurchBankingClientError"
   }
@@ -108,7 +111,9 @@ export class ChurchBankingClient implements IChurchBankingClient {
 
   private assertPath(path: string) {
     if (!path.startsWith("/") || path.startsWith("//")) {
-      throw new Error("church-banking command path must be an absolute API path")
+      throw new Error(
+        "church-banking command path must be an absolute API path"
+      )
     }
   }
 
