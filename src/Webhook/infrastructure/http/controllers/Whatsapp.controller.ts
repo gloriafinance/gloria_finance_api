@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Query,
   Res,
   type ServerResponse,
@@ -27,5 +28,16 @@ export class WhatsappController {
     const challenge = query["hub.challenge"]
 
     res.status(200).send(challenge)
+  }
+
+  @Put("/test")
+  async test(
+    @Body() body: any,
+    @Res() res: ServerResponse,
+    @Query() query: any
+  ) {
+    this.logger.info("Webhook test.", { ...query, ...body })
+
+    res.status(200).send({ message: "ok" })
   }
 }
