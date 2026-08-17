@@ -1,9 +1,9 @@
-import { Logger } from "@/Shared/adapter"
 import {
-  IScheduleItemRepository,
+  type IScheduleItemRepository,
   ScheduleEvent,
   ScheduleItemNotFoundException,
 } from "@/Schedule/domain"
+import { Logger } from "@/Shared/adapter"
 
 export class GetScheduleItem {
   private readonly logger = Logger(GetScheduleItem.name)

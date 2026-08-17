@@ -1,5 +1,5 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import { DateBR, StringToDate } from "@/Shared/helpers"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 
 import {
   type LocationDTO,
@@ -22,7 +22,7 @@ type UpdateDetailsParams = {
 }
 
 export class ScheduleEvent extends AggregateRoot {
-  private scheduleEventId: string
+  private scheduleItemId: string
   private churchId: string
   private type: ScheduleEventType
   private title: string
@@ -62,7 +62,7 @@ export class ScheduleEvent extends AggregateRoot {
     const title = params.title?.trim()
 
     const scheduleItem = new ScheduleEvent()
-    scheduleItem.scheduleEventId = IdentifyEntity.get("schedule")
+    scheduleItem.scheduleItemId = IdentifyEntity.get("schedule")
     scheduleItem.churchId = params.churchId
     scheduleItem.type = params.type
     scheduleItem.title = title
@@ -84,8 +84,7 @@ export class ScheduleEvent extends AggregateRoot {
 
   static fromPrimitives(plainData: any): ScheduleEvent {
     const scheduleItem = new ScheduleEvent()
-    scheduleItem.scheduleEventId =
-      plainData.scheduleEventId ?? plainData.scheduleItemId
+    scheduleItem.scheduleItemId = plainData.scheduleItemId
     scheduleItem.churchId = plainData.churchId
     scheduleItem.type = plainData.type
     scheduleItem.title = plainData.title
@@ -158,7 +157,7 @@ export class ScheduleEvent extends AggregateRoot {
   }
 
   getScheduleItemId(): string {
-    return this.scheduleEventId
+    return this.scheduleItemId
   }
 
   getChurchId(): string {
@@ -223,7 +222,7 @@ export class ScheduleEvent extends AggregateRoot {
 
   toPrimitives() {
     return {
-      scheduleItemId: this.scheduleEventId,
+      scheduleItemId: this.scheduleItemId,
       churchId: this.churchId,
       type: this.type,
       title: this.title,
