@@ -1,5 +1,5 @@
-import { IFinancialConceptRepository } from "@/Financial/domain/interfaces"
-import { Church, ChurchNotFound, IChurchRepository } from "@/Church/domain"
+import { type IFinancialConceptRepository } from "@/Financial/domain/interfaces"
+import { Church, ChurchNotFound, type IChurchRepository } from "@/Church/domain"
 import {
   FinancialConcept,
   type FinancialConceptRequest,

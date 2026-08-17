@@ -158,8 +158,8 @@ export class ListWeeklyScheduleOccurrences {
     const [hours, minutes] = startTime.split(":").map(Number)
     const startDateTime = occurrenceDate
       .tz(timezoneName)
-      .hour(hours)
-      .minute(minutes)
+      .hour(hours!)
+      .minute(minutes!)
       .second(0)
       .millisecond(0)
     const endDateTime = startDateTime.add(durationMinutes, "minute")

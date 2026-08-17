@@ -71,8 +71,8 @@ export class ListScheduleItemsConfig {
     return new Criteria(
       Filters.fromValues(filters),
       Order.fromValues("createdAt", OrderTypes.DESC),
-      Number(request.perPage),
-      Number(request.page)
+      Number(request.perPage ?? 10),
+      Number(request.page ?? 1)
     )
   }
 }

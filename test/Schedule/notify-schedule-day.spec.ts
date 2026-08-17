@@ -14,20 +14,31 @@ import { Church, ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { NotifyScheduleDay } from "@/Schedule/application/jobs/NotifyScheduleDay"
 import {
   DayOfWeek,
+  type IScheduleItemRepository,
   type IScheduleReminderService,
   RecurrenceType,
   ScheduleEvent,
   ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
-  type IScheduleItemRepository,
 } from "@/Schedule/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
-import { type Criteria, type Paginate } from "@abejarano/ts-mongodb-criteria"
+import {
+  type Criteria,
+  MongoTransaction,
+  Order,
+  type Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import type { ICacheService } from "@/Shared/domain"
 
 class InMemoryChurchRepository implements IChurchRepository {
   constructor(private readonly churches: Church[]) {}
+  many(
+    filter: object,
+    options?: { transaction?: MongoTransaction; sort?: Order }
+  ): Promise<Church[]> {
+    throw new Error("Method not implemented.")
+  }
 
   async all(_filter: object): Promise<Church[]> {
     return this.churches
@@ -70,15 +81,19 @@ class InMemoryChurchRepository implements IChurchRepository {
     throw new Error("Method not implemented.")
   }
 
-  async getOrCreateMemberRegistrationToken(
-    _churchId: string
-  ): Promise<string> {
+  async getOrCreateMemberRegistrationToken(_churchId: string): Promise<string> {
     throw new Error("Method not implemented.")
   }
 }
 
 class InMemoryScheduleRepository implements IScheduleItemRepository {
   constructor(private readonly items: ScheduleEvent[]) {}
+  many(
+    filter: object,
+    options?: { transaction?: MongoTransaction; sort?: Order }
+  ): Promise<ScheduleEvent[]> {
+    throw new Error("Method not implemented.")
+  }
 
   async upsert(scheduleItem: ScheduleEvent): Promise<void> {
     const index = this.items.findIndex(
@@ -126,10 +141,6 @@ class InMemoryScheduleRepository implements IScheduleItemRepository {
 
       return true
     })
-  }
-
-  async findTodayByChurch(): Promise<ScheduleEvent | undefined> {
-    throw new Error("Method not implemented.")
   }
 
   async deactivatePreviousDayEvents(): Promise<number> {

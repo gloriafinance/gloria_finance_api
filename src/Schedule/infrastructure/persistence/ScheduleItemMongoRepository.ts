@@ -76,55 +76,6 @@ export class ScheduleItemMongoRepository
     )
   }
 
-  async findTodayByChurch(
-    churchId: string
-  ): Promise<ScheduleEvent | undefined> {
-    const now = dayjs().tz(SCHEDULE_TIMEZONE)
-    const dayOfWeek = dayOfWeekByIndex[now.day()]
-    const startOfDay = now.startOf("day").toDate()
-    const endOfDay = now.endOf("day").toDate()
-
-    const collection = await this.collection()
-    const result = await collection.findOne(
-      {
-        churchId,
-        status: ScheduleEventStatus.ACTIVE,
-        "recurrencePattern.dayOfWeek": dayOfWeek,
-        "recurrencePattern.startDate": {
-          $lte: endOfDay,
-        },
-        $or: [
-          {
-            "recurrencePattern.endDate": {
-              $exists: false,
-            },
-          },
-          {
-            "recurrencePattern.endDate": null,
-          },
-          {
-            "recurrencePattern.endDate": {
-              $gte: startOfDay,
-            },
-          },
-        ],
-      },
-      {
-        sort: {
-          "recurrencePattern.time": 1,
-          createdAt: 1,
-        },
-      }
-    )
-
-    if (!result) return undefined
-
-    return ScheduleEvent.fromPrimitives({
-      id: result._id.toString(),
-      ...result,
-    })
-  }
-
   async deactivatePreviousDayEvents(): Promise<number> {
     const now = dayjs().tz(SCHEDULE_TIMEZONE)
     const startOfYesterday = now.subtract(1, "day").startOf("day").toDate()
