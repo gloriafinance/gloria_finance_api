@@ -1,0 +1,176 @@
+import { createHash, randomUUID } from "node:crypto"
+import {
+  CompactEncrypt,
+  SignJWT,
+  importJWK,
+  type JWK,
+  type KeyLike,
+} from "jose"
+import type {
+  ChurchBankingCommand,
+  IChurchBankingClient,
+} from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
+import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provider"
+
+const TOKEN_LIFETIME_SECONDS = 120
+const JWKS_CACHE_MS = 5 * 60 * 1000
+
+type EncryptionKey = {
+  key: KeyLike
+  kid: string
+  expiresAt: number
+}
+
+export class ChurchBankingClientError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string
+  ) {
+    super(`church-banking request failed with ${status} (${code})`)
+    this.name = "ChurchBankingClientError"
+  }
+}
+
+export class ChurchBankingClient implements IChurchBankingClient {
+  private encryptionKey?: EncryptionKey
+
+  async execute<TPayload, TResponse>(
+    command: ChurchBankingCommand<TPayload>
+  ): Promise<TResponse> {
+    const config = this.config()
+    this.assertPath(command.path)
+
+    const encryption = await this.getEncryptionKey(config.baseUrl)
+    const plaintext = new TextEncoder().encode(JSON.stringify(command.payload))
+    const jwe = await new CompactEncrypt(plaintext)
+      .setProtectedHeader({
+        alg: "ECDH-ES",
+        enc: "A256GCM",
+        kid: encryption.kid,
+      })
+      .encrypt(encryption.key)
+
+    const body = JSON.stringify({ jwe })
+    const bodyHash = createHash("sha256").update(body).digest("base64url")
+    const signing = await churchBankingSigningKeyProvider.get()
+    const now = Math.floor(Date.now() / 1000)
+
+    const token = await new SignJWT({
+      method: "POST",
+      path: command.path,
+      bodyHash,
+      scope: [command.scope],
+    })
+      .setProtectedHeader({ alg: "ES256", kid: signing.keyId, typ: "JWT" })
+      .setIssuer(config.issuer)
+      .setAudience("CHURCH_BANKING")
+      .setSubject(config.clientCode)
+      .setJti(randomUUID())
+      .setIssuedAt(now)
+      .setExpirationTime(now + TOKEN_LIFETIME_SECONDS)
+      .sign(signing.privateKey)
+
+    const response = await fetch(`${config.baseUrl}${command.path}`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body,
+    })
+
+    const responseBody = await this.readJson(response)
+    if (!response.ok) {
+      const code =
+        typeof responseBody === "object" &&
+        responseBody !== null &&
+        "code" in responseBody &&
+        typeof responseBody.code === "string"
+          ? responseBody.code
+          : "CHURCH_BANKING_REQUEST_FAILED"
+      throw new ChurchBankingClientError(response.status, code)
+    }
+
+    return responseBody as TResponse
+  }
+
+  private config() {
+    const baseUrl = process.env.CHURCH_BANKING_BASE_URL?.replace(/\/$/, "")
+    const issuer = process.env.CHURCH_BANKING_CLIENT_ISSUER
+    const clientCode = process.env.CHURCH_BANKING_CLIENT_CODE
+
+    if (!baseUrl || !issuer || !clientCode) {
+      throw new Error(
+        "CHURCH_BANKING_BASE_URL, CHURCH_BANKING_CLIENT_ISSUER and CHURCH_BANKING_CLIENT_CODE are required"
+      )
+    }
+
+    return { baseUrl, issuer, clientCode }
+  }
+
+  private assertPath(path: string) {
+    if (!path.startsWith("/") || path.startsWith("//")) {
+      throw new Error(
+        "church-banking command path must be an absolute API path"
+      )
+    }
+  }
+
+  private async getEncryptionKey(baseUrl: string): Promise<EncryptionKey> {
+    if (this.encryptionKey && this.encryptionKey.expiresAt > Date.now()) {
+      return this.encryptionKey
+    }
+
+    const response = await fetch(`${baseUrl}/.well-known/jwks.json`, {
+      headers: { accept: "application/json" },
+    })
+    if (!response.ok) {
+      throw new ChurchBankingClientError(
+        response.status,
+        "CHURCH_BANKING_JWKS_UNAVAILABLE"
+      )
+    }
+
+    const body = (await response.json()) as { keys?: JWK[] }
+    const jwk = body.keys?.find(
+      (candidate) =>
+        candidate.kty === "EC" &&
+        candidate.crv === "P-256" &&
+        candidate.alg === "ECDH-ES" &&
+        candidate.use === "enc" &&
+        typeof candidate.kid === "string" &&
+        candidate.kid !== ""
+    )
+
+    if (!jwk || typeof jwk.kid !== "string") {
+      throw new ChurchBankingClientError(
+        503,
+        "CHURCH_BANKING_ENCRYPTION_KEY_UNAVAILABLE"
+      )
+    }
+
+    const key = (await importJWK(jwk, "ECDH-ES")) as KeyLike
+    this.encryptionKey = {
+      key,
+      kid: jwk.kid,
+      expiresAt: Date.now() + JWKS_CACHE_MS,
+    }
+
+    return this.encryptionKey
+  }
+
+  private async readJson(response: Response): Promise<unknown> {
+    const text = await response.text()
+    if (text === "") return undefined
+
+    try {
+      return JSON.parse(text)
+    } catch {
+      throw new ChurchBankingClientError(
+        response.status,
+        "CHURCH_BANKING_INVALID_RESPONSE"
+      )
+    }
+  }
+}
