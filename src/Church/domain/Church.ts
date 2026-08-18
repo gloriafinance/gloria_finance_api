@@ -5,6 +5,10 @@ import { Minister } from "./Minister"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
 import type { ChurchDoctrinalBase } from "./type/ChurchDoctrinalBase.type"
+import type {
+  ChurchBankingOnboarding,
+  ChurchBankingOnboardingDraft,
+} from "./type/ChurchBankingOnboarding.type"
 
 export class Church extends AggregateRoot {
   private churchId: string
@@ -32,6 +36,7 @@ export class Church extends AggregateRoot {
   private doctrinalBases: ChurchDoctrinalBase[] = []
   private notificationTime: string
   private memberRegistration?: { token: string; createdAt: Date }
+  private bankingOnboarding?: ChurchBankingOnboarding
 
   static create(params: {
     name: string
@@ -135,6 +140,22 @@ export class Church extends AggregateRoot {
     c.logoUrl = plainData.logoUrl
     c.doctrinalBases = Church.normalizeDoctrinalBases(plainData.doctrinalBases)
     c.notificationTime = plainData.notificationTime ?? "15:30"
+    c.bankingOnboarding = plainData.bankingOnboarding
+      ? {
+          ...plainData.bankingOnboarding,
+          consent: plainData.bankingOnboarding.consent
+            ? {
+                ...plainData.bankingOnboarding.consent,
+                acceptedAt: new Date(
+                  plainData.bankingOnboarding.consent.acceptedAt
+                ),
+              }
+            : undefined,
+          updatedAt: plainData.bankingOnboarding.updatedAt
+            ? new Date(plainData.bankingOnboarding.updatedAt)
+            : undefined,
+        }
+      : undefined
     if (plainData.memberRegistration) {
       c.memberRegistration = {
         token: plainData.memberRegistration.token,
@@ -350,6 +371,59 @@ export class Church extends AggregateRoot {
     return this.notificationTime
   }
 
+  updateBankingOnboardingDraft(
+    draft: ChurchBankingOnboardingDraft,
+    acceptedByUserId: string
+  ) {
+    if (draft.name !== undefined) this.name = draft.name
+    if (draft.registerNumber !== undefined) {
+      this.registerNumber = draft.registerNumber
+    }
+    if (draft.email !== undefined) this.email = draft.email
+    if (draft.postalCode !== undefined) this.postalCode = draft.postalCode
+    if (draft.address !== undefined) this.address = draft.address
+    if (draft.street !== undefined) this.street = draft.street
+    if (draft.number !== undefined) this.number = draft.number
+    if (draft.city !== undefined) this.city = draft.city
+
+    const current = this.bankingOnboarding ?? {}
+    let consent = current.consent
+    if (draft.consentAccepted === true) {
+      consent = { acceptedAt: DateBR(), acceptedByUserId }
+    } else if (draft.consentAccepted === false) {
+      consent = undefined
+    }
+
+    this.bankingOnboarding = {
+      ...current,
+      holderType: draft.holderType ?? current.holderType,
+      mobilePhone: draft.mobilePhone ?? current.mobilePhone,
+      neighborhood: draft.neighborhood ?? current.neighborhood,
+      state: draft.state ?? current.state,
+      companyType: draft.companyType ?? current.companyType,
+      incomeValue: draft.incomeValue ?? current.incomeValue,
+      responsible: draft.responsible ?? current.responsible,
+      consent,
+      updatedAt: DateBR(),
+    }
+  }
+
+  getBankingOnboardingDraft() {
+    return {
+      churchId: this.churchId,
+      name: this.name,
+      registerNumber: this.registerNumber,
+      email: this.email,
+      postalCode: this.postalCode,
+      address: this.address,
+      street: this.street,
+      number: this.number,
+      city: this.city,
+      ...this.bankingOnboarding,
+      consentAccepted: Boolean(this.bankingOnboarding?.consent),
+    }
+  }
+
   toPrimitives(): any {
     return {
       churchId: this.churchId,
@@ -377,6 +451,7 @@ export class Church extends AggregateRoot {
       doctrinalBases: this.doctrinalBases,
       notificationTime: this.notificationTime,
       memberRegistration: this.memberRegistration,
+      bankingOnboarding: this.bankingOnboarding,
     }
   }
 
