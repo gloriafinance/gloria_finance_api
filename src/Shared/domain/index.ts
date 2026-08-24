@@ -3,6 +3,7 @@ export type { Installments } from "./types/Installments.type"
 
 export { DomainException } from "./exceptions/domain-exception"
 export { GenericException } from "./exceptions/generic-exception"
+export { InvalidProfilePhotoContent } from "./exceptions/InvalidProfilePhotoContent.exception"
 export { InvalidArgumentError } from "./exceptions/invalid-argument-error"
 export { PaymentAmountExceedsPending } from "./exceptions/PaymentAmountExceedsPending.exception"
 

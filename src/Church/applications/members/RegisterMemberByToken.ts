@@ -132,6 +132,8 @@ export class RegisterMemberByToken {
       throw error
     }
 
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
+
     this.logger.info(`Pending member created: ${member.getMemberId()}`)
 
     return { message: "MEMBER_REGISTRATION_RECEIVED" }
@@ -183,10 +185,23 @@ export class RegisterMemberByToken {
       throw error
     }
 
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
+
     if (previousPhotoPath && previousPhotoPath !== photoPath) {
       await this.storage.deleteFile(previousPhotoPath).catch(() => undefined)
     }
 
     this.logger.info(`Pending member updated: ${member.getMemberId()}`)
+  }
+
+  private async deleteStagedPhoto(stagedProfilePhotoPath: string) {
+    await this.storage
+      .deleteFile(stagedProfilePhotoPath)
+      .catch((error: any) => {
+        this.logger.error("Unable to delete staged member profile photo", {
+          stagedProfilePhotoPath,
+          message: error?.message ?? "Unknown error",
+        })
+      })
   }
 }

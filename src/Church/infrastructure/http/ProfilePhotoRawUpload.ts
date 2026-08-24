@@ -1,6 +1,6 @@
 import { Readable, Transform, type TransformCallback } from "node:stream"
 import type { IStorageService } from "@/Shared/domain"
-import { HttpStatus } from "@/Shared/domain"
+import { HttpStatus, InvalidProfilePhotoContent } from "@/Shared/domain"
 import type { ServerResponse } from "bun-platform-kit"
 
 const maxBytes = 25 * 1024 * 1024
@@ -66,10 +66,13 @@ export const uploadRawProfilePhoto = async (
       })
       return undefined
     }
-    res.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).send({
-      code: "PROFILE_PHOTO_INVALID",
-      message: "Profile photo content is invalid or cannot be processed",
-    })
-    return undefined
+    if (error instanceof InvalidProfilePhotoContent) {
+      res.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).send({
+        code: "PROFILE_PHOTO_INVALID",
+        message: "Profile photo content is invalid or cannot be processed",
+      })
+      return undefined
+    }
+    throw error
   }
 }

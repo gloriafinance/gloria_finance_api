@@ -64,6 +64,8 @@ export class UpdateMemberProfilePhoto {
       throw error
     }
 
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
+
     if (previousPhotoPath && previousPhotoPath !== uploadedPath) {
       await this.storage.deleteFile(previousPhotoPath).catch((error: any) => {
         this.logger.error("Unable to delete previous member profile photo", {
@@ -85,5 +87,16 @@ export class UpdateMemberProfilePhoto {
   private canUpdate(member: { getStatus(): MemberStatus }): boolean {
     const status = member.getStatus()
     return status === MemberStatus.APPROVED || status === MemberStatus.INACTIVE
+  }
+
+  private async deleteStagedPhoto(stagedProfilePhotoPath: string) {
+    await this.storage
+      .deleteFile(stagedProfilePhotoPath)
+      .catch((error: any) => {
+        this.logger.error("Unable to delete staged member profile photo", {
+          stagedProfilePhotoPath,
+          message: error?.message ?? "Unknown error",
+        })
+      })
   }
 }

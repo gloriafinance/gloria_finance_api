@@ -2,11 +2,12 @@ import { Storage } from "@google-cloud/storage"
 import * as fs from "fs"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
-import sharp from "sharp"
+import sharp = require("sharp")
 import {
   GenericException,
   type ICacheService,
   type IStorageService,
+  InvalidProfilePhotoContent,
 } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
@@ -171,6 +172,10 @@ export class StorageGCP implements IStorageService {
     const destination = bucket.file(key)
     const image = sharp({ limitInputPixels: 40_000_000, failOn: "error" })
     const metadataPromise = image.metadata()
+    let imageProcessingError: unknown
+    image.once("error", (error: Error) => {
+      imageProcessingError = error
+    })
 
     try {
       await pipeline(
@@ -200,12 +205,15 @@ export class StorageGCP implements IStorageService {
         mimeByFormat[metadata.format] !== expectedMimeType
       ) {
         await destination.delete({ ignoreNotFound: true })
-        throw new GenericException("Invalid profile photo content.")
+        throw new InvalidProfilePhotoContent()
       }
 
       return key
     } catch (error) {
       await destination.delete({ ignoreNotFound: true }).catch(() => undefined)
+      if (imageProcessingError) {
+        throw new InvalidProfilePhotoContent()
+      }
       throw error
     }
   }
@@ -215,13 +223,18 @@ export class StorageGCP implements IStorageService {
       throw new GenericException("Invalid staged profile photo path.")
     }
 
-    const finalPath = `profile-photos/${crypto.randomUUID()}.webp`
+    const finalPath = stagedPath.replace(
+      "profile-photos/staged/",
+      "profile-photos/"
+    )
     const bucket = this.storage.bucket(this.bucketName)
     const source = bucket.file(stagedPath)
     const destination = bucket.file(finalPath)
 
-    await source.copy(destination)
-    await source.delete({ ignoreNotFound: true })
+    const [destinationExists] = await destination.exists()
+    if (!destinationExists) {
+      await source.copy(destination)
+    }
     return finalPath
   }
 

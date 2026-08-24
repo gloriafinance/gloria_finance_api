@@ -103,6 +103,9 @@ describe("UpdateMemberProfilePhoto", () => {
     )
     expect(memberRepository.upsert).toHaveBeenCalledTimes(1)
     expect(member.setProfilePhoto).toHaveBeenCalledWith("2026/6/new-photo.webp")
+    expect(storage.deleteFile).toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
     expect(storage.deleteFile).toHaveBeenCalledWith("2025/5/old-photo.jpg")
     expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
     expect(result).toEqual({
@@ -111,11 +114,16 @@ describe("UpdateMemberProfilePhoto", () => {
     })
   })
 
-  it("rolls back the uploaded file when persistence fails", async () => {
+  it("keeps the staged upload available for a retry when persistence fails", async () => {
     memberRepository.one.mockResolvedValue(createMember())
-    memberRepository.upsert.mockRejectedValue(new Error("db down"))
+    memberRepository.upsert
+      .mockRejectedValueOnce(new Error("db down"))
+      .mockResolvedValueOnce(undefined)
     storage.promoteProfilePhoto.mockResolvedValue("2026/6/new-photo.webp")
     storage.deleteFile.mockResolvedValue(undefined)
+    storage.downloadFile.mockResolvedValue(
+      "https://cdn.example.com/new-photo.webp"
+    )
 
     const useCase = new UpdateMemberProfilePhoto(memberRepository, storage)
 
@@ -128,6 +136,25 @@ describe("UpdateMemberProfilePhoto", () => {
     ).rejects.toThrow("db down")
 
     expect(storage.deleteFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
-    expect(storage.downloadFile).not.toHaveBeenCalled()
+    expect(storage.deleteFile).not.toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
+
+    await expect(
+      useCase.execute({
+        churchId: "church-1",
+        memberId: "member-1",
+        stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
+      })
+    ).resolves.toEqual({
+      profilePhoto: "2026/6/new-photo.webp",
+      profilePhotoUrl: "https://cdn.example.com/new-photo.webp",
+    })
+
+    expect(storage.promoteProfilePhoto).toHaveBeenCalledTimes(2)
+    expect(storage.deleteFile).toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
+    expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
   })
 })
