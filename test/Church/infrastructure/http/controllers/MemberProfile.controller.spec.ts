@@ -2,6 +2,7 @@ const findMemberExecuteMock = jest.fn()
 const updateProfilePhotoExecuteMock = jest.fn()
 const downloadFileMock = jest.fn()
 const memberRepositoryInstanceMock = {}
+const uploadRawProfilePhotoMock = jest.fn()
 
 jest.mock("@/Church/applications", () => ({
   FindMemberById: jest.fn().mockImplementation(() => ({
@@ -32,6 +33,10 @@ jest.mock("@/Shared/infrastructure", () => ({
   },
 }))
 
+jest.mock("@/Church/infrastructure/http/ProfilePhotoRawUpload", () => ({
+  uploadRawProfilePhoto: uploadRawProfilePhotoMock,
+}))
+
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import { MemberProfileController } from "@/Church/infrastructure/http/controllers/MemberProfile.controller"
@@ -53,6 +58,14 @@ describe("MemberProfileController", () => {
         memberId: "member-1",
       },
       files: undefined,
+      raw: new Request("https://example.com", {
+        method: "PATCH",
+        headers: {
+          "content-type": "image/jpeg",
+          "content-length": "1024",
+        },
+        body: new Uint8Array([1]),
+      }),
       ...overrides,
     }) as any
 
@@ -134,6 +147,9 @@ describe("MemberProfileController", () => {
   })
 
   it("updates only the authenticated member photo", async () => {
+    uploadRawProfilePhotoMock.mockResolvedValue(
+      "profile-photos/staged/profile.webp"
+    )
     updateProfilePhotoExecuteMock.mockResolvedValue({
       profilePhoto: "2026/6/new-profile.jpg",
       profilePhotoUrl: "https://cdn.example.com/new-profile.jpg",
@@ -148,14 +164,6 @@ describe("MemberProfileController", () => {
           churchId: "church-1",
           memberId: "member-1",
         },
-        body: {
-          memberId: "member-2",
-          profilePhoto: {
-            name: "profile.jpg",
-            type: "image/jpeg",
-            size: 1024,
-          },
-        },
       }),
       res as any
     )
@@ -163,11 +171,7 @@ describe("MemberProfileController", () => {
     expect(updateProfilePhotoExecuteMock).toHaveBeenCalledWith({
       churchId: "church-1",
       memberId: "member-1",
-      profilePhoto: expect.objectContaining({
-        name: "profile.jpg",
-        type: "image/jpeg",
-        size: 1024,
-      }),
+      stagedProfilePhotoPath: "profile-photos/staged/profile.webp",
     })
     expect(res.status).toHaveBeenCalledWith(HttpStatus.OK)
     expect(res.send).toHaveBeenCalledWith({
