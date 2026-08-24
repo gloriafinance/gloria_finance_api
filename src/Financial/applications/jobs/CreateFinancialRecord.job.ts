@@ -41,10 +41,16 @@ export class CreateFinancialRecordJob implements IJob {
       year: new Date(args.date).getFullYear(),
     })
 
-    args.availabilityAccount =
-      typeof args.availabilityAccount === "object"
-        ? AvailabilityAccount.fromPrimitives(args.availabilityAccount)
-        : args.availabilityAccount
+    if (typeof args.availabilityAccount === "object") {
+      const aggregateId = args.availabilityAccount.aggregateId
+
+      const availabilityAccount = AvailabilityAccount.fromPrimitives(
+        args.availabilityAccount
+      )
+      availabilityAccount.assignId(aggregateId)
+
+      args.availabilityAccount = availabilityAccount
+    }
 
     const voucher = args.voucher
 
@@ -75,9 +81,10 @@ export class CreateFinancialRecordJob implements IJob {
       this.dispatchUpdateAvailabilityAccountBalance(args)
       this.dispatchUpdateCostCenter(args)
     } catch (e: any) {
-      this.logger.error(`Error in create financial record process`, e)
+      this.logger.error(`Error in create financial record process ${e.message}`)
 
       if (voucher) await this.store.deleteFile(voucher)
+
       throw e
     }
   }

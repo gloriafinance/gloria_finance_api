@@ -1,5 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { IBankRepository } from "@/Banking/domain/"
+import { type IBankRepository } from "@/Banking/domain/"
 import { Bank } from "@/Banking/domain/Bank"
 import { Collection } from "mongodb"
 
