@@ -1,7 +1,9 @@
-import { Logger } from "@/Shared/adapter"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
-import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
-import type { IStorageService } from "@/Shared/domain"
+import {
+  DispatchUpdateAvailabilityAccountBalance,
+  DispatchUpdateCostCenterMaster,
+} from "@/Financial/applications"
 import {
   AvailabilityAccount,
   ConceptType,
@@ -12,12 +14,10 @@ import {
   FinancialRecordStatus,
   TypeOperationMoney,
 } from "@/Financial/domain"
-import {
-  DispatchUpdateAvailabilityAccountBalance,
-  DispatchUpdateCostCenterMaster,
-} from "@/Financial/applications"
-import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import type { IJob, IQueueService } from "@/package/queue/domain"
+import { Logger } from "@/Shared/adapter"
+import type { IStorageService } from "@/Shared/domain"
 
 export class CreateFinancialRecordJob implements IJob {
   private logger = Logger(CreateFinancialRecordJob.name)
@@ -50,6 +50,10 @@ export class CreateFinancialRecordJob implements IJob {
       availabilityAccount.assignId(aggregateId)
 
       args.availabilityAccount = availabilityAccount
+    }
+
+    if (args.costCenter && typeof args.costCenter === "object") {
+      args.costCenter = CostCenter.fromPrimitives(args.costCenter)
     }
 
     const voucher = args.voucher
@@ -96,10 +100,6 @@ export class CreateFinancialRecordJob implements IJob {
 
     if (!this.isRealizedStatus(args.status)) {
       return
-    }
-
-    if (typeof args.costCenter === "object") {
-      args.costCenter = CostCenter.fromPrimitives(args.costCenter)
     }
 
     new DispatchUpdateCostCenterMaster(this.queueService).execute({
