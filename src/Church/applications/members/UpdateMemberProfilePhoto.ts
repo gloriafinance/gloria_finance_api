@@ -1,9 +1,11 @@
 import { Logger } from "@/Shared/adapter"
 import { type IStorageService } from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure/services/StorageProvider.service"
-import { MemberNotFound } from "../../domain/exceptions/MemberNotFound.exception"
-import { InvalidMemberStatus } from "../../domain/exceptions/InvalidMemberStatus.exception"
-import { MemberStatus } from "../../domain/enums/MemberStatus.enum"
+import {
+  InvalidMemberStatus,
+  MemberNotFound,
+  MemberStatus,
+} from "@/Church/domain"
 
 type MemberRepository = {
   one(criteria: Record<string, unknown>): Promise<any>
@@ -13,7 +15,7 @@ type MemberRepository = {
 export type UpdateMemberProfilePhotoRequest = {
   churchId: string
   memberId: string
-  profilePhoto: any
+  stagedProfilePhotoPath: string
 }
 
 export type UpdateMemberProfilePhotoResult = {
@@ -50,7 +52,9 @@ export class UpdateMemberProfilePhoto {
     }
 
     const previousPhotoPath = member.getProfilePhoto()
-    const uploadedPath = await this.storage.uploadFile(request.profilePhoto)
+    const uploadedPath = await this.storage.promoteProfilePhoto(
+      request.stagedProfilePhotoPath
+    )
 
     try {
       member.setProfilePhoto(uploadedPath)
@@ -59,6 +63,8 @@ export class UpdateMemberProfilePhoto {
       await this.storage.deleteFile(uploadedPath).catch(() => undefined)
       throw error
     }
+
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
 
     if (previousPhotoPath && previousPhotoPath !== uploadedPath) {
       await this.storage.deleteFile(previousPhotoPath).catch((error: any) => {
@@ -81,5 +87,16 @@ export class UpdateMemberProfilePhoto {
   private canUpdate(member: { getStatus(): MemberStatus }): boolean {
     const status = member.getStatus()
     return status === MemberStatus.APPROVED || status === MemberStatus.INACTIVE
+  }
+
+  private async deleteStagedPhoto(stagedProfilePhotoPath: string) {
+    await this.storage
+      .deleteFile(stagedProfilePhotoPath)
+      .catch((error: any) => {
+        this.logger.error("Unable to delete staged member profile photo", {
+          stagedProfilePhotoPath,
+          message: error?.message ?? "Unknown error",
+        })
+      })
   }
 }

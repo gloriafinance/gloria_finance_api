@@ -1,4 +1,5 @@
 import type { IStorageService } from "@/Shared/domain"
+import type { Readable } from "node:stream"
 
 /**
  * NoOpStorage
@@ -32,6 +33,17 @@ export class NoOpStorage implements IStorageService {
 
   async deleteFile(): Promise<void> {
     // Nothing to remove
+  }
+
+  async uploadOptimizedProfilePhoto(
+    _source: Readable,
+    _expectedMimeType: string
+  ): Promise<string> {
+    throw new Error("Profile photo uploads are not supported in NoOpStorage.")
+  }
+
+  async promoteProfilePhoto(_stagedPath: string): Promise<string> {
+    throw new Error("Profile photo uploads are not supported in NoOpStorage.")
   }
 
   setBucketName(): IStorageService {

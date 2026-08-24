@@ -7,6 +7,7 @@ import {
   MemberStatus,
   TokenNotFound,
 } from "../../domain"
+import type { IStorageService } from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
 import { Logger } from "@/Shared/adapter"
 import type { MemberAddress } from "../../domain/type/MemberAddress.type"
@@ -17,7 +18,7 @@ export type RegisterMemberByTokenRequest = {
   fullName: string
   phone: string
   lgpdConsentAccepted: boolean
-  profilePhoto: any
+  stagedProfilePhotoPath: string
   email?: string
   dni?: string
   birthdate?: Date
@@ -34,7 +35,8 @@ export class RegisterMemberByToken {
 
   constructor(
     private readonly memberRepository: IMemberRepository,
-    private readonly churchRepository: IChurchRepository
+    private readonly churchRepository: IChurchRepository,
+    private readonly storage: IStorageService = StorageProviderService.getInstance()
   ) {}
 
   async execute(
@@ -96,7 +98,9 @@ export class RegisterMemberByToken {
       }
     }
 
-    const photoPath = await this.uploadProfilePhoto(request.profilePhoto)
+    const photoPath = await this.storage.promoteProfilePhoto(
+      request.stagedProfilePhotoPath
+    )
 
     const member = Member.create({
       name: request.fullName,
@@ -121,7 +125,14 @@ export class RegisterMemberByToken {
         : undefined,
     })
 
-    await this.memberRepository.upsert(member)
+    try {
+      await this.memberRepository.upsert(member)
+    } catch (error) {
+      await this.storage.deleteFile(photoPath).catch(() => undefined)
+      throw error
+    }
+
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
 
     this.logger.info(`Pending member created: ${member.getMemberId()}`)
 
@@ -140,15 +151,14 @@ export class RegisterMemberByToken {
     return church
   }
 
-  private async uploadProfilePhoto(photo: any): Promise<string> {
-    return await StorageProviderService.getInstance().uploadFile(photo)
-  }
-
   private async updatePendingMember(
     member: Member,
     request: RegisterMemberByTokenRequest
   ): Promise<void> {
-    const photoPath = await this.uploadProfilePhoto(request.profilePhoto)
+    const previousPhotoPath = member.getProfilePhoto()
+    const photoPath = await this.storage.promoteProfilePhoto(
+      request.stagedProfilePhotoPath
+    )
 
     member.setName(request.fullName)
     member.setPhone(request.phone)
@@ -168,8 +178,30 @@ export class RegisterMemberByToken {
         : undefined
     )
 
-    await this.memberRepository.upsert(member)
+    try {
+      await this.memberRepository.upsert(member)
+    } catch (error) {
+      await this.storage.deleteFile(photoPath).catch(() => undefined)
+      throw error
+    }
+
+    await this.deleteStagedPhoto(request.stagedProfilePhotoPath)
+
+    if (previousPhotoPath && previousPhotoPath !== photoPath) {
+      await this.storage.deleteFile(previousPhotoPath).catch(() => undefined)
+    }
 
     this.logger.info(`Pending member updated: ${member.getMemberId()}`)
+  }
+
+  private async deleteStagedPhoto(stagedProfilePhotoPath: string) {
+    await this.storage
+      .deleteFile(stagedProfilePhotoPath)
+      .catch((error: any) => {
+        this.logger.error("Unable to delete staged member profile photo", {
+          stagedProfilePhotoPath,
+          message: error?.message ?? "Unknown error",
+        })
+      })
   }
 }

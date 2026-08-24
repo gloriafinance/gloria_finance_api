@@ -16,10 +16,15 @@ import {
   Post,
   Req,
   Res,
-  type BunMultipartFile,
   type ServerResponse,
 } from "bun-platform-kit"
 import { MemberAlreadyExists, TokenNotFound } from "@/Church/domain"
+import { StorageProviderService } from "@/Shared/infrastructure"
+import {
+  issueProfilePhotoUploadReceipt,
+  verifyProfilePhotoUploadReceipt,
+} from "../ProfilePhotoUploadReceipt"
+import { uploadRawProfilePhoto } from "../ProfilePhotoRawUpload"
 
 @Controller("/api/v1/public/member-registration")
 export class PublicMemberRegistrationController {
@@ -53,30 +58,14 @@ export class PublicMemberRegistrationController {
   ) {
     try {
       const body = req.body ?? {}
-      const files = req.files?.profilePhoto
-      const profilePhoto = (Array.isArray(files) ? files[0] : files) as
-        BunMultipartFile | undefined
-
-      if (!profilePhoto) {
-        return res.status(HttpStatus.BAD_REQUEST).send({
-          code: "PROFILE_PHOTO_REQUIRED",
-          message: "Profile photo is required",
-        })
-      }
-
-      const allowedMimes = ["image/jpeg", "image/png", "image/webp"]
-      if (!allowedMimes.includes(profilePhoto.type)) {
-        return res.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).send({
-          code: "INVALID_PROFILE_PHOTO",
-          message: "Invalid photo format. Allowed: jpeg, png, webp",
-        })
-      }
-
-      const maxSize = 3 * 1024 * 1024
-      if (profilePhoto.size > maxSize) {
-        return res.status(HttpStatus.PAYLOAD_TOO_LARGE).send({
-          code: "PROFILE_PHOTO_TOO_LARGE",
-          message: "Profile photo must be at most 3 MB",
+      const stagedProfilePhotoPath = verifyProfilePhotoUploadReceipt(
+        body.profilePhotoUploadReceipt?.toString() ?? "",
+        token
+      )
+      if (!stagedProfilePhotoPath) {
+        return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
+          code: "PROFILE_PHOTO_UPLOAD_REQUIRED",
+          message: "A valid profile photo upload is required",
         })
       }
 
@@ -103,7 +92,7 @@ export class PublicMemberRegistrationController {
         fullName,
         phone,
         lgpdConsentAccepted,
-        profilePhoto,
+        stagedProfilePhotoPath,
         email: body.email?.toString().trim(),
         dni: body.dni?.toString().trim(),
         birthdate,
@@ -133,6 +122,46 @@ export class PublicMemberRegistrationController {
         return res.status(HttpStatus.CONFLICT).send({
           code: "MEMBER_ALREADY_EXISTS",
           message: "A member with this document or email already exists",
+        })
+      }
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/:token/photo")
+  async uploadPhoto(
+    @Param("token") token: string,
+    @Req() req: { raw?: Request },
+    @Res() res: ServerResponse
+  ) {
+    try {
+      await new GetPublicChurchByToken(
+        ChurchMongoRepository.getInstance()
+      ).execute(token)
+      if (!req.raw) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          code: "PROFILE_PHOTO_REQUIRED",
+          message: "Profile photo is required",
+        })
+      }
+      const stagedProfilePhotoPath = await uploadRawProfilePhoto(
+        req.raw,
+        res,
+        StorageProviderService.getInstance()
+      )
+      if (!stagedProfilePhotoPath) return
+
+      res.status(HttpStatus.OK).send({
+        profilePhotoUploadReceipt: issueProfilePhotoUploadReceipt(
+          token,
+          stagedProfilePhotoPath
+        ),
+      })
+    } catch (e) {
+      if (e instanceof TokenNotFound) {
+        return res.status(HttpStatus.NOT_FOUND).send({
+          code: "TOKEN_NOT_FOUND",
+          message: "The registration link is invalid or has expired",
         })
       }
       domainResponse(e, res)

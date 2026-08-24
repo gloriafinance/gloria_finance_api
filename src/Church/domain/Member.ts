@@ -2,7 +2,7 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { Church } from "./Church"
 import { DateBR } from "@/Shared/helpers"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { MemberSettings } from "@/Church/domain"
+import { type MemberSettings } from "@/Church/domain"
 import { MemberStatus } from "./enums/MemberStatus.enum"
 import { MemberGender } from "./enums/MemberGender.enum"
 import { InvalidMemberStatus } from "./exceptions/InvalidMemberStatus.exception"
@@ -260,7 +260,7 @@ export class Member extends AggregateRoot {
     return this.lgpdConsent
   }
 
-  setLgpdConsent(lgpdConsent: LgpdConsent) {
+  setLgpdConsent(lgpdConsent?: LgpdConsent) {
     this.lgpdConsent = lgpdConsent
   }
 

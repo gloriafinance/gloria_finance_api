@@ -1,11 +1,8 @@
-jest.mock(
-  "@/Shared/infrastructure/services/StorageProvider.service",
-  () => ({
-    StorageProviderService: {
-      getInstance: jest.fn(),
-    },
-  })
-)
+jest.mock("@/Shared/infrastructure/services/StorageProvider.service", () => ({
+  StorageProviderService: {
+    getInstance: jest.fn(),
+  },
+}))
 
 import { UpdateMemberProfilePhoto } from "@/Church/applications/members/UpdateMemberProfilePhoto"
 import { MemberNotFound } from "@/Church/domain/exceptions/MemberNotFound.exception"
@@ -34,6 +31,8 @@ describe("UpdateMemberProfilePhoto", () => {
     downloadFile: jest.fn(),
     deleteFile: jest.fn(),
     setBucketName: jest.fn(),
+    promoteProfilePhoto: jest.fn(),
+    uploadOptimizedProfilePhoto: jest.fn(),
   } as unknown as jest.Mocked<IStorageService>
 
   beforeEach(() => {
@@ -43,10 +42,9 @@ describe("UpdateMemberProfilePhoto", () => {
   it("throws when member scope is missing", async () => {
     const useCase = new UpdateMemberProfilePhoto(memberRepository, storage)
 
-    // @ts-expect-error testing invalid payload
-    await expect(useCase.execute({ churchId: "church-1" })).rejects.toBeInstanceOf(
-      MemberNotFound
-    )
+    await expect(
+      useCase.execute({ churchId: "church-1" } as any)
+    ).rejects.toBeInstanceOf(MemberNotFound)
   })
 
   it("throws when member does not exist", async () => {
@@ -58,7 +56,7 @@ describe("UpdateMemberProfilePhoto", () => {
       useCase.execute({
         churchId: "church-1",
         memberId: "member-1",
-        profilePhoto: { name: "photo.jpg" },
+        stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
       })
     ).rejects.toBeInstanceOf(MemberNotFound)
   })
@@ -76,7 +74,7 @@ describe("UpdateMemberProfilePhoto", () => {
       useCase.execute({
         churchId: "church-1",
         memberId: "member-1",
-        profilePhoto: { name: "photo.jpg" },
+        stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
       })
     ).rejects.toBeInstanceOf(InvalidMemberStatus)
   })
@@ -87,33 +85,45 @@ describe("UpdateMemberProfilePhoto", () => {
     })
     memberRepository.one.mockResolvedValue(member)
     memberRepository.upsert.mockResolvedValue(undefined)
-    storage.uploadFile.mockResolvedValue("2026/6/new-photo.jpg")
-    storage.downloadFile.mockResolvedValue("https://cdn.example.com/new-photo.jpg")
+    storage.promoteProfilePhoto.mockResolvedValue("2026/6/new-photo.webp")
+    storage.downloadFile.mockResolvedValue(
+      "https://cdn.example.com/new-photo.jpg"
+    )
     storage.deleteFile.mockResolvedValue(undefined)
 
     const useCase = new UpdateMemberProfilePhoto(memberRepository, storage)
     const result = await useCase.execute({
       churchId: "church-1",
       memberId: "member-1",
-      profilePhoto: { name: "photo.jpg" },
+      stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
     })
 
-    expect(storage.uploadFile).toHaveBeenCalledWith({ name: "photo.jpg" })
+    expect(storage.promoteProfilePhoto).toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
     expect(memberRepository.upsert).toHaveBeenCalledTimes(1)
-    expect(member.setProfilePhoto).toHaveBeenCalledWith("2026/6/new-photo.jpg")
+    expect(member.setProfilePhoto).toHaveBeenCalledWith("2026/6/new-photo.webp")
+    expect(storage.deleteFile).toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
     expect(storage.deleteFile).toHaveBeenCalledWith("2025/5/old-photo.jpg")
-    expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.jpg")
+    expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
     expect(result).toEqual({
-      profilePhoto: "2026/6/new-photo.jpg",
+      profilePhoto: "2026/6/new-photo.webp",
       profilePhotoUrl: "https://cdn.example.com/new-photo.jpg",
     })
   })
 
-  it("rolls back the uploaded file when persistence fails", async () => {
+  it("keeps the staged upload available for a retry when persistence fails", async () => {
     memberRepository.one.mockResolvedValue(createMember())
-    memberRepository.upsert.mockRejectedValue(new Error("db down"))
-    storage.uploadFile.mockResolvedValue("2026/6/new-photo.jpg")
+    memberRepository.upsert
+      .mockRejectedValueOnce(new Error("db down"))
+      .mockResolvedValueOnce(undefined)
+    storage.promoteProfilePhoto.mockResolvedValue("2026/6/new-photo.webp")
     storage.deleteFile.mockResolvedValue(undefined)
+    storage.downloadFile.mockResolvedValue(
+      "https://cdn.example.com/new-photo.webp"
+    )
 
     const useCase = new UpdateMemberProfilePhoto(memberRepository, storage)
 
@@ -121,11 +131,30 @@ describe("UpdateMemberProfilePhoto", () => {
       useCase.execute({
         churchId: "church-1",
         memberId: "member-1",
-        profilePhoto: { name: "photo.jpg" },
+        stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
       })
     ).rejects.toThrow("db down")
 
-    expect(storage.deleteFile).toHaveBeenCalledWith("2026/6/new-photo.jpg")
-    expect(storage.downloadFile).not.toHaveBeenCalled()
+    expect(storage.deleteFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
+    expect(storage.deleteFile).not.toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
+
+    await expect(
+      useCase.execute({
+        churchId: "church-1",
+        memberId: "member-1",
+        stagedProfilePhotoPath: "profile-photos/staged/photo.webp",
+      })
+    ).resolves.toEqual({
+      profilePhoto: "2026/6/new-photo.webp",
+      profilePhotoUrl: "https://cdn.example.com/new-photo.webp",
+    })
+
+    expect(storage.promoteProfilePhoto).toHaveBeenCalledTimes(2)
+    expect(storage.deleteFile).toHaveBeenCalledWith(
+      "profile-photos/staged/photo.webp"
+    )
+    expect(storage.downloadFile).toHaveBeenCalledWith("2026/6/new-photo.webp")
   })
 })

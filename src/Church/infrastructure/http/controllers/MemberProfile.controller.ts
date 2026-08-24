@@ -16,7 +16,7 @@ import {
   PermissionMiddleware,
 } from "@/Shared/infrastructure"
 import { StorageProviderService } from "@/Shared/infrastructure"
-import { UpdateMemberProfilePhotoValidator } from "../validators/UpdateMemberProfilePhoto.validator"
+import { uploadRawProfilePhoto } from "../ProfilePhotoRawUpload"
 
 @Controller("/api/v1/member")
 export class MemberProfileController {
@@ -45,7 +45,7 @@ export class MemberProfileController {
   }
 
   @Patch("/profile/photo")
-  @Use([PermissionMiddleware, UpdateMemberProfilePhotoValidator])
+  @Use([PermissionMiddleware])
   async updateProfilePhoto(
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
@@ -58,14 +58,26 @@ export class MemberProfileController {
         })
       }
 
-      const profilePhoto = (req as any).body?.profilePhoto
+      const rawRequest = (req as any).raw as Request | undefined
+      if (!rawRequest) {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          code: "PROFILE_PHOTO_REQUIRED",
+          message: "Profile photo is required",
+        })
+      }
+      const stagedProfilePhotoPath = await uploadRawProfilePhoto(
+        rawRequest,
+        res,
+        StorageProviderService.getInstance()
+      )
+      if (!stagedProfilePhotoPath) return
 
       const result = await new UpdateMemberProfilePhoto(
         MemberMongoRepository.getInstance()
       ).execute({
         churchId: req.auth.churchId,
         memberId,
-        profilePhoto,
+        stagedProfilePhotoPath,
       })
 
       res.status(HttpStatus.OK).send({

@@ -1,10 +1,13 @@
 import { Storage } from "@google-cloud/storage"
 import * as fs from "fs"
 import { Readable } from "node:stream"
+import { pipeline } from "node:stream/promises"
+import sharp = require("sharp")
 import {
   GenericException,
   type ICacheService,
   type IStorageService,
+  InvalidProfilePhotoContent,
 } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
@@ -158,6 +161,81 @@ export class StorageGCP implements IStorageService {
       this.logger.error("Error uploading file to GCP Storage:", error)
       throw new Error("Error uploading file to GCP Storage.")
     }
+  }
+
+  async uploadOptimizedProfilePhoto(
+    source: Readable,
+    expectedMimeType: string
+  ): Promise<string> {
+    const key = `profile-photos/staged/${crypto.randomUUID()}.webp`
+    const bucket = this.storage.bucket(this.bucketName)
+    const destination = bucket.file(key)
+    const image = sharp({ limitInputPixels: 40_000_000, failOn: "error" })
+    const metadataPromise = image.metadata()
+    let imageProcessingError: unknown
+    image.once("error", (error: Error) => {
+      imageProcessingError = error
+    })
+
+    try {
+      await pipeline(
+        source,
+        image
+          .rotate()
+          .resize({
+            width: 1024,
+            height: 1024,
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .webp({ quality: 82 }),
+        destination.createWriteStream({
+          metadata: { contentType: "image/webp" },
+        })
+      )
+
+      const metadata = await metadataPromise
+      const mimeByFormat: Record<string, string> = {
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+      }
+      if (
+        !metadata.format ||
+        mimeByFormat[metadata.format] !== expectedMimeType
+      ) {
+        await destination.delete({ ignoreNotFound: true })
+        throw new InvalidProfilePhotoContent()
+      }
+
+      return key
+    } catch (error) {
+      await destination.delete({ ignoreNotFound: true }).catch(() => undefined)
+      if (imageProcessingError) {
+        throw new InvalidProfilePhotoContent()
+      }
+      throw error
+    }
+  }
+
+  async promoteProfilePhoto(stagedPath: string): Promise<string> {
+    if (!stagedPath.startsWith("profile-photos/staged/")) {
+      throw new GenericException("Invalid staged profile photo path.")
+    }
+
+    const finalPath = stagedPath.replace(
+      "profile-photos/staged/",
+      "profile-photos/"
+    )
+    const bucket = this.storage.bucket(this.bucketName)
+    const source = bucket.file(stagedPath)
+    const destination = bucket.file(finalPath)
+
+    const [destinationExists] = await destination.exists()
+    if (!destinationExists) {
+      await source.copy(destination)
+    }
+    return finalPath
   }
 
   /**
