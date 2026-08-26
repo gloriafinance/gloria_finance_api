@@ -63,7 +63,7 @@ export class OnboardingController {
         new Filters([]),
         Order.fromValues("createdAt", OrderTypes.DESC),
         Number(query.perPage) ?? 10,
-        Number(query.page)
+        Number(query.page) ?? 1
       )
       const customers =
         await CustomerMongoRepository.getInstance().list(criteria)
