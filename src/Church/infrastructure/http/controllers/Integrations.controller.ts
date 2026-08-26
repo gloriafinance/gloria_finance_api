@@ -3,6 +3,7 @@ import { GenericException } from "@/Shared/domain/exceptions/generic-exception"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
   DisconnectWhatsappIntegration,
+  SendWhatsappTextMessage,
   SetWhatsappCredentials,
 } from "@/Church/applications"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
@@ -25,6 +26,7 @@ import {
   MetaWhatsappGraphService,
   WhatsappConnectionResolverService,
 } from "@/package/whatsapp"
+import SendWhatsappTestMessageValidator from "../validators/SendWhatsappTestMessage.validator"
 
 @Controller("/api/v1/integrations")
 export class IntegrationsController {
@@ -112,6 +114,32 @@ export class IntegrationsController {
       })
     } catch (e: any) {
       this.logger.error("WhatsApp disconnect flow failed", e)
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/whatsapp/test-message")
+  @Use([PermissionMiddleware, SendWhatsappTestMessageValidator])
+  async sendWhatsappTestMessage(
+    @Body() body: { to: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const response = await new SendWhatsappTextMessage(
+        ChurchMongoRepository.getInstance()
+      ).execute({
+        churchId: req.auth.churchId,
+        to: body.to,
+        body: "Olá! Esta é uma mensagem de teste do Glória Finance.",
+      })
+
+      res.status(HttpStatus.OK).send({
+        message: "WhatsApp test message sent successfully",
+        messageId: response.messageId,
+      })
+    } catch (e: any) {
+      this.logger.error("WhatsApp test message failed", e)
       domainResponse(e, res)
     }
   }
