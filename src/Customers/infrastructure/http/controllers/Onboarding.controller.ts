@@ -37,7 +37,7 @@ export class OnboardingController {
 
       QueueService.getInstance().dispatch(
         QueueName.TelegramNotificationJob,
-        payload
+        JSON.stringify(payload)
       )
 
       res.status(HttpStatus.CREATED).send({
