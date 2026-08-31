@@ -9,6 +9,7 @@ export * from "./financeRecord/CancelFinancialRecord"
 export * from "./financeRecord/UpdateFinancialRecord"
 export * from "./financeRecord/CreateInternalTransfer"
 export * from "./financeRecord/ReverseInternalTransfer"
+export * from "./financeRecord/FindOneFinanceRecord"
 
 export { DispatchUpdateAvailabilityAccountBalance } from "./dispatchers/DispatchUpdateAvailabilityAccountBalance"
 export { DispatchCreateFinancialRecord } from "./dispatchers/DispatchCreateFinancialRecord"

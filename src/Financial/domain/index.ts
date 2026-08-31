@@ -19,6 +19,7 @@ export { CostCenterNotFound } from "./exceptions/CostCenterNotFound.exception"
 export { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
 export * from "./exceptions/FinancialMovementNotFound.exception"
+export * from "./exceptions/FinanceRecordNotFound.exception"
 
 export * from "./enums/MemberContributionType.enum"
 export * from "./enums/MemberPaymentChannel.enum"

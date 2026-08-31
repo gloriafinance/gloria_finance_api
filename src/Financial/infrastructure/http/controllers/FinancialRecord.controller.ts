@@ -20,6 +20,7 @@ import {
   CancelFinancialRecord,
   CreateInternalTransfer,
   FetchingFinanceRecord,
+  FindOneFinanceRecord,
   GenerateFinanceRecordReport,
   ReverseInternalTransfer,
 } from "@/Financial/applications"
@@ -62,7 +63,10 @@ import {
 } from "bun-platform-kit"
 import FinancialRecordValidator from "@/Financial/infrastructure/http/validators/FinancialRecord.validator"
 import InternalTransferValidator from "@/Financial/infrastructure/http/validators/InternalTransfer.validator"
-import FinanceRecordPaginateDTO from "@/Financial/infrastructure/http/dto/FinanceRecordPaginate.dto"
+import {
+  FinanceRecordDTO,
+  FinanceRecordPaginateDTO,
+} from "@/Financial/infrastructure/http/dto/FinanceRecordPaginate.dto"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import {
   HandlebarsHTMLAdapter,
@@ -324,7 +328,6 @@ export class FinancialRecordController {
   @Get("/")
   @Use([PermissionMiddleware, Can("financial_records", "read")])
   async fetching(
-    @Param() params: FilterFinanceRecordRequest,
     @Query() q: FilterFinanceRecordRequest,
     @Res() res: ServerResponse,
     @Req() req: AuthenticatedRequest
@@ -339,6 +342,30 @@ export class FinancialRecordController {
       ).execute(filter)
 
       res.status(HttpStatus.OK).send(await FinanceRecordPaginateDTO(list))
+    } catch (e) {
+      return domainResponse(e, res)
+    }
+  }
+
+  @Get("/:financialRecordId")
+  @Use([PermissionMiddleware, Can("financial_records", "read")])
+  async one(
+    @Param("financialRecordId") financialRecordId: string,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const financialRecord = await new FindOneFinanceRecord(
+        FinanceRecordMongoRepository.getInstance()
+      ).execute(financialRecordId)
+
+      return res
+        .status(HttpStatus.OK)
+        .send(
+          await FinanceRecordDTO(
+            financialRecord.toPrimitives(),
+            StorageProviderService.getInstance()
+          )
+        )
     } catch (e) {
       return domainResponse(e, res)
     }
