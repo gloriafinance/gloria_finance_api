@@ -38,8 +38,8 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import type { Paginate } from "@abejarano/ts-mongodb-criteria"
-import MemberContributionsDTO from "@/Financial/infrastructure/http/dto/MemberContributions.dto"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
+import { MemberContributionPaginateDTO } from "@/Financial/infrastructure/http/dto/MemberContributionsDTO.ts"
 
 @Controller("/api/v1/me/contribution")
 export class ContributionMemberController {
@@ -140,7 +140,11 @@ export class ContributionMemberController {
         OnlineContributionsMongoRepository.getInstance()
       ).execute(filter)
 
-      res.status(HttpStatus.OK).send(await MemberContributionsDTO(list))
+      res
+        .status(HttpStatus.OK)
+        .send(
+          await MemberContributionPaginateDTO(list, req.auth.symbolFormatMoney)
+        )
     } catch (e) {
       domainResponse(e, res)
     }

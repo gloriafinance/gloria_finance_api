@@ -5,17 +5,22 @@ import type {
 import { OnlineContributions } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
 import {
+  FindOneContributions,
   ListContributions,
   UpdateContributionStatus,
 } from "../../../applications"
 import { HttpStatus } from "@/Shared/domain"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
 import {
+  type AuthenticatedRequest,
   Can,
   PermissionMiddleware,
   QueueService,
+  StorageProviderService,
 } from "@/Shared/infrastructure"
-import MemberContributionsDTO from "../dto/MemberContributions.dto"
+import {
+  MemberContributionPaginateDTO,
+  MemberContributionsDTO,
+} from "../dto/MemberContributionsDTO.ts"
 import {
   AvailabilityAccountMongoRepository,
   OnlineContributionsMongoRepository,
@@ -27,6 +32,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Query,
   Req,
@@ -64,7 +70,9 @@ export class ContributionController {
 
       res
         .status(HttpStatus.OK)
-        .send(await MemberContributionsDTO(list, req.auth.symbolFormatMoney))
+        .send(
+          await MemberContributionPaginateDTO(list, req.auth.symbolFormatMoney)
+        )
     } catch (e) {
       domainResponse(e, res)
     }
@@ -94,6 +102,33 @@ export class ContributionController {
       res.status(HttpStatus.OK).send({ message: "Contribution updated" })
     } catch (e) {
       domainResponse(e, res)
+    }
+  }
+
+  @Get("/:contributionId")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", ["list_contributions", "adm_contributions"]),
+  ])
+  async one(
+    @Param("contributionId") contributionId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const financialRecord = await new FindOneContributions(
+        OnlineContributionsMongoRepository.getInstance()
+      ).execute(contributionId)
+
+      return res.status(HttpStatus.OK).send(
+        await MemberContributionsDTO({
+          item: financialRecord.toPrimitives(),
+          symbol: req.auth.symbolFormatMoney,
+          storage: StorageProviderService.getInstance(),
+        })
+      )
+    } catch (e) {
+      return domainResponse(e, res)
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "church_financial_api",
-  "version": "2.16.0",
+  "version": "2.17.0",
   "description": "API Church Financial System",
   "main": "dist/app.js",
   "scripts": {
