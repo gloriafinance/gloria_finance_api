@@ -4,17 +4,19 @@ import type {
   UpdateMemberRequest,
 } from "../../../domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { ApprovePendingMember } from "../../../applications/members/ApprovePendingMember"
-import { AllMember } from "../../../applications/members/AllMember"
-import { CreateMember } from "../../../applications/members/CreateMember"
-import { DeleteMember } from "../../../applications/members/DeleteMember"
-import { FindMemberById } from "../../../applications/members/FindMemberById"
-import { FindPendingReviewMemberById } from "../../../applications/members/FindPendingReviewMemberById"
-import { GetOrCreateMemberRegistrationLink } from "../../../applications/members/GetOrCreateMemberRegistrationLink"
-import { RejectPendingMember } from "../../../applications/members/RejectPendingMember"
-import { SearchMembers } from "../../../applications/members/SearchMembers"
-import { SearchPendingReviewMembers } from "../../../applications/members/SearchPendingReviewMembers"
-import { UpdateMember } from "../../../applications/members/UpdateMember"
+import {
+  AllMember,
+  ApprovePendingMember,
+  CreateMember,
+  DeleteMember,
+  FindMemberById,
+  FindPendingReviewMemberById,
+  GetOrCreateMemberRegistrationLink,
+  RejectPendingMember,
+  SearchMembers,
+  SearchPendingReviewMembers,
+  UpdateMember,
+} from "@/Church/applications"
 import {
   ChurchMongoRepository,
   MemberMongoRepository,
@@ -49,8 +51,8 @@ import {
   type AuthenticatedRequest,
   Can,
   PermissionMiddleware,
+  StorageProviderService,
 } from "@/Shared/infrastructure"
-import { StorageProviderService } from "@/Shared/infrastructure"
 import {
   CreateMemberValidator,
   UpdateMemberValidator,

@@ -11,7 +11,6 @@ import type { IStorageService } from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
 import { Logger } from "@/Shared/adapter"
 import type { MemberAddress } from "../../domain/type/MemberAddress.type"
-import type { LgpdConsent } from "../../domain/type/LgpdConsent.type"
 
 export type RegisterMemberByTokenRequest = {
   token: string

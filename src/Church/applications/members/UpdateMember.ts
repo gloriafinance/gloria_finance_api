@@ -1,10 +1,9 @@
 import {
-  IMemberRepository,
+  type IMemberRepository,
   InvalidMemberStatus,
-  Member,
   MemberNotFound,
   MemberStatus,
-  UpdateMemberRequest,
+  type UpdateMemberRequest,
 } from "../../domain"
 import { Logger } from "@/Shared/adapter"
 

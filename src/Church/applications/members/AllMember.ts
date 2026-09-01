@@ -1,4 +1,4 @@
-import { IMemberRepository, MemberStatus } from "@/Church/domain"
+import { type IMemberRepository, MemberStatus } from "@/Church/domain"
 import { Logger } from "@/Shared/adapter"
 
 export class AllMember {

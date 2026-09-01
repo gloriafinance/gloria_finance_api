@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  type Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { type IMemberRepository, Member } from "../../domain"
 import { Collection } from "mongodb"
 
@@ -26,27 +22,6 @@ export class MemberMongoRepository
 
   collectionName(): string {
     return "members"
-  }
-
-  override list(criteria: Criteria): Promise<Paginate<Member>>
-  override list(filter: object): Promise<Member[]>
-
-  override async list(
-    arg: Criteria | object
-  ): Promise<Paginate<Member> | Member[]> {
-    if (arg instanceof Criteria) {
-      return super.list(arg)
-    }
-
-    const collection = await this.collection()
-    const result = await collection.find(arg).toArray()
-
-    return result.map((item) =>
-      Member.fromPrimitives({
-        ...item,
-        id: item._id.toString(),
-      })
-    )
   }
 
   async deleteByMemberId(memberId: string): Promise<void> {
