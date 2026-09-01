@@ -1,16 +1,12 @@
-export type ChurchBankingScope =
-  | "banking:accounts:create"
-  | "banking:payments:create"
-  | "banking:onboarding:documents:upload"
+import type { ConnectExternalAccountResponse } from "@/Banking/domain/requests/ConnectExternalAccount.request"
 
-export type ChurchBankingCommand<TPayload> = {
-  path: string
-  scope: ChurchBankingScope
-  payload: TPayload
+export type ConnectExternalAccountInput = {
+  externalAccountId: string
+  apiKey: string
 }
 
 export interface IChurchBankingClient {
-  execute<TPayload, TResponse>(
-    command: ChurchBankingCommand<TPayload>
-  ): Promise<TResponse>
+  connectExternalAccount(
+    input: ConnectExternalAccountInput
+  ): Promise<ConnectExternalAccountResponse>
 }

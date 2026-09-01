@@ -7,13 +7,25 @@ import {
   type KeyLike,
 } from "jose"
 import type {
-  ChurchBankingCommand,
+  ConnectExternalAccountInput,
+  ConnectExternalAccountResponse,
   IChurchBankingClient,
-} from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
+} from "@/Banking/domain"
 import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provider"
 
 const TOKEN_LIFETIME_SECONDS = 120
 const JWKS_CACHE_MS = 5 * 60 * 1000
+
+type ChurchBankingScope =
+  | "banking:accounts:create"
+  | "banking:payments:create"
+  | "banking:onboarding:documents:upload"
+
+type ChurchBankingCommand<TPayload> = {
+  path: string
+  scope: ChurchBankingScope
+  payload: TPayload
+}
 
 type EncryptionKey = {
   key: KeyLike
@@ -34,9 +46,21 @@ export class ChurchBankingClientError extends Error {
 export class ChurchBankingClient implements IChurchBankingClient {
   private encryptionKey?: EncryptionKey
 
-  async execute<TPayload, TResponse>(
+  async connectExternalAccount(
+    input: ConnectExternalAccountInput
+  ): Promise<ConnectExternalAccountResponse> {
+    const response = await this.execute<ConnectExternalAccountInput>({
+      path: "/api/accounts/connect",
+      scope: "banking:accounts:create",
+      payload: input,
+    })
+
+    return this.parseConnectExternalAccountResponse(response)
+  }
+
+  private async execute<TPayload>(
     command: ChurchBankingCommand<TPayload>
-  ): Promise<TResponse> {
+  ): Promise<unknown> {
     const config = this.config()
     this.assertPath(command.path)
 
@@ -92,7 +116,37 @@ export class ChurchBankingClient implements IChurchBankingClient {
       throw new ChurchBankingClientError(response.status, code)
     }
 
-    return responseBody as TResponse
+    return responseBody
+  }
+
+  private parseConnectExternalAccountResponse(
+    value: unknown
+  ): ConnectExternalAccountResponse {
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      Array.isArray(value) ||
+      Object.keys(value).length !== 4 ||
+      !("accountId" in value) ||
+      !("externalAccountId" in value) ||
+      !("status" in value) ||
+      !("connectionMode" in value) ||
+      typeof value.accountId !== "string" ||
+      value.accountId.trim() === "" ||
+      typeof value.externalAccountId !== "string" ||
+      value.externalAccountId.trim() === "" ||
+      value.status !== "ACTIVE" ||
+      value.connectionMode !== "EXTERNAL_API_KEY"
+    ) {
+      throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
+    }
+
+    return {
+      accountId: value.accountId,
+      externalAccountId: value.externalAccountId,
+      status: value.status,
+      connectionMode: value.connectionMode,
+    }
   }
 
   private config() {
@@ -167,10 +221,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
     try {
       return JSON.parse(text)
     } catch {
-      throw new ChurchBankingClientError(
-        response.status,
-        "CHURCH_BANKING_INVALID_RESPONSE"
-      )
+      throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
     }
   }
 }

@@ -12,6 +12,7 @@ export type * from "./requests/LinkBankStatement.request"
 export type * from "./requests/ListBankStatements.request"
 export type * from "./requests/RetryBankStatementHttp.request"
 export type * from "./requests/LinkBankStatementHttp.request"
+export type * from "./requests/ConnectExternalAccount.request"
 
 export type * from "./interfaces/BankRepository.interface"
 export type * from "./interfaces/MovementBankRepository.interface"
