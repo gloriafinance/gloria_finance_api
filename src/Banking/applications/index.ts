@@ -1,6 +1,7 @@
 export * from "./FinBankByBankId"
 export * from "./CreateOrUpdateBank"
 export * from "./SearchBankByChurchId"
+export * from "./ConnectProviderBankAccount.ts"
 export * from "@/Banking/applications/MovementBankRecord.job"
 export * from "./bankStatement/ImportBankStatement"
 export * from "./bankStatement/ListBankStatements"

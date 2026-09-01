@@ -1,16 +1,39 @@
-import { Body, Controller, Get, Param, Post, Res, Use } from "bun-platform-kit"
-import type { BankRequest } from "@/Banking/domain"
 import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+  type ServerResponse,
+  Use,
+} from "bun-platform-kit"
+import type {
+  BankRequest,
+  ConnectExternalAccountRequest,
+} from "@/Banking/domain"
+import {
+  ConnectProviderBankAccount,
   CreateOrUpdateBank,
   FinBankByBankId,
   SearchBankByChurchId,
 } from "@/Banking/applications"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
+import {
+  ChurchBankingClient,
+  ChurchBankingClientError,
+} from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
 import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
 import domainResponse from "@/Shared/helpers/domainResponse"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
+import {
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
+import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
 
 @Controller("/api/v1/bank")
 export class BankController {
@@ -34,6 +57,36 @@ export class BankController {
         res.status(HttpStatus.OK).send({ message: "Updated bank" })
       }
     } catch (e) {
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/asaas/connect")
+  @Use([
+    PermissionMiddleware,
+    Can("banking", "manage"),
+    connectAsaasAccountValidator,
+  ])
+  async connectAsaasAccount(
+    @Body() request: Pick<ConnectExternalAccountRequest, "apiKey">,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await new ConnectProviderBankAccount(
+        new ChurchBankingClient()
+      ).execute({
+        churchId: req.auth.churchId,
+        apiKey: request.apiKey,
+      })
+
+      res.status(HttpStatus.OK).send(result)
+    } catch (e) {
+      if (e instanceof ChurchBankingClientError) {
+        res.status(e.status).send({ code: e.code })
+        return
+      }
+
       domainResponse(e, res)
     }
   }
