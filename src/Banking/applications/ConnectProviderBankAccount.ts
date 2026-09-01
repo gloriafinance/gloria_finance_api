@@ -4,7 +4,7 @@ import type {
   IChurchBankingClient,
 } from "@/Banking/domain"
 
-export class ConnectAsaasAccount {
+export class ConnectProviderBankAccount {
   constructor(private readonly churchBankingClient: IChurchBankingClient) {}
 
   async execute(

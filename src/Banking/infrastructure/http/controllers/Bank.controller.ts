@@ -14,7 +14,7 @@ import type {
   ConnectExternalAccountRequest,
 } from "@/Banking/domain"
 import {
-  ConnectAsaasAccount,
+  ConnectProviderBankAccount,
   CreateOrUpdateBank,
   FinBankByBankId,
   SearchBankByChurchId,
@@ -34,8 +34,6 @@ import {
 } from "@/Shared/infrastructure"
 import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
 import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
-
-const churchBankingClient = new ChurchBankingClient()
 
 @Controller("/api/v1/bank")
 export class BankController {
@@ -75,12 +73,12 @@ export class BankController {
     @Res() res: ServerResponse
   ) {
     try {
-      const result = await new ConnectAsaasAccount(churchBankingClient).execute(
-        {
-          churchId: req.auth.churchId,
-          apiKey: request.apiKey,
-        }
-      )
+      const result = await new ConnectProviderBankAccount(
+        new ChurchBankingClient()
+      ).execute({
+        churchId: req.auth.churchId,
+        apiKey: request.apiKey,
+      })
 
       res.status(HttpStatus.OK).send(result)
     } catch (e) {

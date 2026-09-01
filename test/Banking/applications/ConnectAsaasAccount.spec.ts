@@ -1,7 +1,7 @@
-import { ConnectAsaasAccount } from "@/Banking/applications/ConnectAsaasAccount"
+import { ConnectProviderBankAccount } from "@/Banking/applications/ConnectProviderBankAccount.ts"
 import type { IChurchBankingClient } from "@/Banking/domain"
 
-describe("ConnectAsaasAccount", () => {
+describe("ConnectProviderBankAccount", () => {
   it("forwards the church id and API key through the generic banking port", async () => {
     const connectExternalAccount = jest.fn()
     const client = {
@@ -15,7 +15,7 @@ describe("ConnectAsaasAccount", () => {
     }
     connectExternalAccount.mockResolvedValue(response)
 
-    const result = await new ConnectAsaasAccount(client).execute({
+    const result = await new ConnectProviderBankAccount(client).execute({
       churchId: "church-123",
       apiKey: "$aact_secret",
     })

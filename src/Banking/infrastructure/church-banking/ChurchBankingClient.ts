@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from "node:crypto"
 import {
   CompactEncrypt,
-  SignJWT,
   importJWK,
   type JWK,
   type KeyLike,
+  SignJWT,
 } from "jose"
 import type {
   ConnectExternalAccountInput,
@@ -16,14 +16,8 @@ import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provi
 const TOKEN_LIFETIME_SECONDS = 120
 const JWKS_CACHE_MS = 5 * 60 * 1000
 
-type ChurchBankingScope =
-  | "banking:accounts:create"
-  | "banking:payments:create"
-  | "banking:onboarding:documents:upload"
-
 type ChurchBankingCommand<TPayload> = {
   path: string
-  scope: ChurchBankingScope
   payload: TPayload
 }
 
@@ -51,7 +45,6 @@ export class ChurchBankingClient implements IChurchBankingClient {
   ): Promise<ConnectExternalAccountResponse> {
     const response = await this.execute<ConnectExternalAccountInput>({
       path: "/api/accounts/connect",
-      scope: "banking:accounts:create",
       payload: input,
     })
 
@@ -83,7 +76,6 @@ export class ChurchBankingClient implements IChurchBankingClient {
       method: "POST",
       path: command.path,
       bodyHash,
-      scope: [command.scope],
     })
       .setProtectedHeader({ alg: "ES256", kid: signing.keyId, typ: "JWT" })
       .setIssuer(config.issuer)
