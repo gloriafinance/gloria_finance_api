@@ -32,6 +32,7 @@ export class Church extends AggregateRoot {
   private doctrinalBases: ChurchDoctrinalBase[] = []
   private notificationTime: string
   private memberRegistration?: { token: string; createdAt: Date }
+  private asaasConnect: boolean
 
   static create(params: {
     name: string
@@ -103,6 +104,7 @@ export class Church extends AggregateRoot {
     c.doctrinalBases = Church.normalizeDoctrinalBases(doctrinalBases)
 
     c.notificationTime = notificationTime ?? "15:30"
+    c.asaasConnect = false
 
     return c
   }
@@ -141,6 +143,7 @@ export class Church extends AggregateRoot {
         createdAt: new Date(plainData.memberRegistration.createdAt),
       }
     }
+    c.asaasConnect = plainData.asaasConnect ?? false
 
     return c
   }
@@ -350,6 +353,14 @@ export class Church extends AggregateRoot {
     return this.notificationTime
   }
 
+  enableAsaasConnect() {
+    this.asaasConnect = true
+  }
+
+  isAsaasConnected() {
+    return this.asaasConnect
+  }
+
   toPrimitives(): any {
     return {
       churchId: this.churchId,
@@ -377,6 +388,7 @@ export class Church extends AggregateRoot {
       doctrinalBases: this.doctrinalBases,
       notificationTime: this.notificationTime,
       memberRegistration: this.memberRegistration,
+      asaasConnect: this.asaasConnect,
     }
   }
 

@@ -21,13 +21,14 @@ export class AvailabilityAccount extends AggregateRoot {
     active: boolean,
     accountType: AccountType,
     symbol: string,
-    source?: any
+    source?: any,
+    balance = 0
   ): AvailabilityAccount {
     const account: AvailabilityAccount = new AvailabilityAccount()
     account.churchId = churchId
     account.availabilityAccountId = IdentifyEntity.get(`availabilityAccount`)
     account.accountName = accountName
-    account.balance = 0
+    account.balance = balance
     account.active = active
     account.accountType = accountType
     account.createdAt = DateBR()

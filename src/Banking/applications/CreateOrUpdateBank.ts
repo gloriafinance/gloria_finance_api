@@ -1,6 +1,6 @@
-import { Church, ChurchNotFound, IChurchRepository } from "@/Church/domain"
-import { BankNotFound } from "@/Banking/domain"
+import { Church, ChurchNotFound, type IChurchRepository } from "@/Church/domain"
 import type { BankRequest, IBankRepository } from "@/Banking/domain"
+import { BankNotFound } from "@/Banking/domain"
 import { Bank } from "@/Banking/domain/Bank"
 
 export class CreateOrUpdateBank {
@@ -9,13 +9,14 @@ export class CreateOrUpdateBank {
     private readonly churchRepository: IChurchRepository
   ) {}
 
-  async execute(requestBank: BankRequest) {
+  async execute(requestBank: BankRequest): Promise<Bank> {
     if (!requestBank.bankId) {
-      await this.registerBank(requestBank)
-      return
+      return await this.registerBank(requestBank)
     }
 
-    const bank: Bank = await this.bankRepository.findById(requestBank.bankId)
+    const bank: Bank | undefined = await this.bankRepository.findById(
+      requestBank.bankId
+    )
 
     if (!bank) {
       throw new BankNotFound()
@@ -28,9 +29,11 @@ export class CreateOrUpdateBank {
     bank.setStatus(requestBank.active)
 
     await this.bankRepository.upsert(bank)
+
+    return bank
   }
 
-  private async registerBank(requestBank: BankRequest): Promise<void> {
+  private async registerBank(requestBank: BankRequest): Promise<Bank> {
     //TODO validar si el banco ya existe
     const bank = Bank.create(
       requestBank.accountType,
@@ -42,6 +45,8 @@ export class CreateOrUpdateBank {
       await this.getChurch(requestBank.churchId)
     )
     await this.bankRepository.upsert(bank)
+
+    return bank
   }
 
   private async getChurch(churchId: string): Promise<Church> {

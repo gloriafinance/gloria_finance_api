@@ -68,6 +68,7 @@ type ChurchContext = {
   lang: string
   country: string
   symbolFormatMoney: string
+  asaasConnect: boolean
 }
 
 @Controller("/api/v1/user")
@@ -344,6 +345,7 @@ export class UserController {
       lang: churchEntity.getLang(),
       country: churchEntity.getCountry(),
       symbolFormatMoney: churchEntity.getSymbolFormatMoney(),
+      asaasConnect: churchEntity.isAsaasConnected(),
     }
     console.log(church)
 
@@ -405,6 +407,7 @@ export class UserController {
       roles: roles!.getRoles(),
       token,
       refreshToken,
+      asaasConnect: church.asaasConnect,
     }
   }
 }

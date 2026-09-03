@@ -7,7 +7,13 @@ import { Logger } from "@/Shared/adapter"
 
 type CreateAvailabilityAccountRequest = Pick<
   AvailabilityAccountRequest,
-  "churchId" | "accountName" | "active" | "accountType" | "symbol" | "source"
+  | "churchId"
+  | "accountName"
+  | "active"
+  | "accountType"
+  | "symbol"
+  | "source"
+  | "balance"
 >
 
 export class CreateAvailabilityAccount {
@@ -31,7 +37,8 @@ export class CreateAvailabilityAccount {
       requestAvailabilityAccount.active,
       requestAvailabilityAccount.accountType,
       requestAvailabilityAccount.symbol,
-      requestAvailabilityAccount.source
+      requestAvailabilityAccount.source,
+      requestAvailabilityAccount.balance
     )
 
     await this.availabilityAccountRepository.upsert(availabilityAccount)

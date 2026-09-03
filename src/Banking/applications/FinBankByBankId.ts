@@ -1,12 +1,12 @@
 import { Logger } from "@/Shared/adapter"
-import { BankNotFound, IBankRepository } from "@/Banking/domain"
+import { Bank, BankNotFound, type IBankRepository } from "@/Banking/domain"
 
 export class FinBankByBankId {
   private logger = Logger(FinBankByBankId.name)
 
   constructor(private readonly bankRepository: IBankRepository) {}
 
-  async execute(bankId: string) {
+  async execute(bankId: string): Promise<Bank> {
     this.logger.info(`Finding bank by bankId: ${bankId}`)
 
     const bank = await this.bankRepository.findById(bankId)

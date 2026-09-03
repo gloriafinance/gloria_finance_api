@@ -97,6 +97,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
     })
 
     const responseBody = await this.readJson(response)
+
     if (!response.ok) {
       const code =
         typeof responseBody === "object" &&
@@ -118,17 +119,32 @@ export class ChurchBankingClient implements IChurchBankingClient {
       typeof value !== "object" ||
       value === null ||
       Array.isArray(value) ||
-      Object.keys(value).length !== 4 ||
       !("accountId" in value) ||
       !("externalAccountId" in value) ||
       !("status" in value) ||
       !("connectionMode" in value) ||
+      !("accountNumber" in value) ||
+      !("availableBalanceInCents" in value) ||
       typeof value.accountId !== "string" ||
       value.accountId.trim() === "" ||
       typeof value.externalAccountId !== "string" ||
       value.externalAccountId.trim() === "" ||
       value.status !== "ACTIVE" ||
-      value.connectionMode !== "EXTERNAL_API_KEY"
+      value.connectionMode !== "EXTERNAL_API_KEY" ||
+      typeof value.accountNumber !== "object" ||
+      value.accountNumber === null ||
+      Array.isArray(value.accountNumber) ||
+      !("agency" in value.accountNumber) ||
+      !("account" in value.accountNumber) ||
+      !("accountDigit" in value.accountNumber) ||
+      typeof value.accountNumber.agency !== "string" ||
+      value.accountNumber.agency.trim() === "" ||
+      typeof value.accountNumber.account !== "string" ||
+      value.accountNumber.account.trim() === "" ||
+      typeof value.accountNumber.accountDigit !== "string" ||
+      value.accountNumber.accountDigit.trim() === "" ||
+      typeof value.availableBalanceInCents !== "number" ||
+      !Number.isSafeInteger(value.availableBalanceInCents)
     ) {
       throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
     }
@@ -138,6 +154,13 @@ export class ChurchBankingClient implements IChurchBankingClient {
       externalAccountId: value.externalAccountId,
       status: value.status,
       connectionMode: value.connectionMode,
+      accountNumber: {
+        codeBank: "461",
+        agency: value.accountNumber.agency,
+        account: value.accountNumber.account,
+        accountDigit: value.accountNumber.accountDigit,
+      },
+      availableBalanceInCents: value.availableBalanceInCents,
     }
   }
 

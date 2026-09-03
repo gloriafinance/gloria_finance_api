@@ -9,9 +9,10 @@ import {
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
-import type {
-  BankRequest,
-  ConnectExternalAccountRequest,
+import {
+  type BankRequest,
+  type ConnectExternalAccountRequest,
+  TypeBankAccount,
 } from "@/Banking/domain"
 import {
   ConnectProviderBankAccount,
@@ -34,6 +35,9 @@ import {
 } from "@/Shared/infrastructure"
 import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
 import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
+import { EventBus } from "@/package/events"
+import { CreateAvailabilityAccountDomainEvent } from "@/Banking/domain/events/CreateAvailabilityAccount.event.ts"
+import { AccountType } from "@/FinanceConfig/domain"
 
 @Controller("/api/v1/bank")
 export class BankController {
@@ -79,6 +83,40 @@ export class BankController {
         ...request,
         churchId: req.auth.churchId,
       })
+
+      const bank = new CreateOrUpdateBank(
+        BankMongoRepository.getInstance(),
+        ChurchMongoRepository.getInstance()
+      ).execute({
+        accountType: TypeBankAccount.CURRENT_ACCOUNT,
+        active: true,
+        name: request.connectionName,
+        tag: request.connectionName,
+        addressInstancePayment: "",
+        bankInstruction: {
+          codeBank: result.accountNumber.codeBank,
+          agency: result.accountNumber.agency,
+          account: `${result.accountNumber.account}-${result.accountNumber.accountDigit}`,
+        },
+        churchId: req.auth.churchId,
+      })
+
+      await EventBus.instance().publish(
+        new CreateAvailabilityAccountDomainEvent({
+          balance: Number(result.availableBalanceInCents) / 100,
+          churchId: req.auth.churchId,
+          accountName: request.connectionName,
+          accountType: AccountType.BANK,
+          symbol: req.auth.symbolFormatMoney,
+          source: bank,
+        })
+      )
+
+      const church = await ChurchMongoRepository.getInstance().one({
+        churchId: req.auth.churchId,
+      })
+      church!.enableAsaasConnect()
+      await ChurchMongoRepository.getInstance().upsert(church!)
 
       res.status(HttpStatus.OK).send(result)
     } catch (e) {

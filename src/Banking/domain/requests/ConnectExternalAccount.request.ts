@@ -9,4 +9,11 @@ export type ConnectExternalAccountResponse = {
   externalAccountId: string
   status: "ACTIVE"
   connectionMode: "EXTERNAL_API_KEY"
+  accountNumber: {
+    codeBank: string
+    agency: string
+    account: string
+    accountDigit: string
+  }
+  availableBalanceInCents: number
 }
