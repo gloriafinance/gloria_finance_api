@@ -68,7 +68,7 @@ export class BankController {
     connectAsaasAccountValidator,
   ])
   async connectAsaasAccount(
-    @Body() request: Pick<ConnectExternalAccountRequest, "apiKey">,
+    @Body() request: Omit<ConnectExternalAccountRequest, "churchId">,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
@@ -76,8 +76,8 @@ export class BankController {
       const result = await new ConnectProviderBankAccount(
         new ChurchBankingClient()
       ).execute({
+        ...request,
         churchId: req.auth.churchId,
-        apiKey: request.apiKey,
       })
 
       res.status(HttpStatus.OK).send(result)

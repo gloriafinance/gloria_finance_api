@@ -1,6 +1,7 @@
 export type ConnectExternalAccountRequest = {
   churchId: string
   apiKey: string
+  connectionName: string
 }
 
 export type ConnectExternalAccountResponse = {

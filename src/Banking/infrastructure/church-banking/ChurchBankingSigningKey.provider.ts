@@ -1,10 +1,4 @@
-import {
-  calculateJwkThumbprint,
-  exportJWK,
-  importJWK,
-  type JWK,
-  type KeyLike,
-} from "jose"
+import { calculateJwkThumbprint, importJWK, type JWK, type KeyLike } from "jose"
 
 export type ChurchBankingSigningKeys = {
   privateKey: KeyLike
@@ -41,7 +35,11 @@ export class ChurchBankingSigningKeyProvider {
       privateJwk.kty !== "EC" ||
       privateJwk.crv !== "P-256" ||
       typeof privateJwk.d !== "string" ||
-      privateJwk.d === ""
+      privateJwk.d === "" ||
+      typeof privateJwk.x !== "string" ||
+      privateJwk.x === "" ||
+      typeof privateJwk.y !== "string" ||
+      privateJwk.y === ""
     ) {
       throw new Error(
         "CHURCH_BANKING_SIGNING_PRIVATE_JWK must be a P-256 EC private JWK"
@@ -49,16 +47,25 @@ export class ChurchBankingSigningKeyProvider {
     }
 
     const privateKey = (await importJWK(privateJwk, "ES256")) as KeyLike
-    const exported = await exportJWK(privateKey)
-    delete exported.d
 
-    const keyId = await calculateJwkThumbprint(exported)
+    // Derivar la parte pública directamente del JWK privado.
+    // Evita `exportJWK(privateKey)` que falla en Bun/WebCrypto cuando
+    // la clave se importa como non-extractable (jwk.ext !== true) ->
+    // TypeError: non-extractable CryptoKey cannot be exported as a JWK
+    const publicJwkRaw: JWK = {
+      kty: privateJwk.kty,
+      crv: privateJwk.crv,
+      x: privateJwk.x,
+      y: privateJwk.y,
+    }
+
+    const keyId = await calculateJwkThumbprint(publicJwkRaw)
 
     return {
       privateKey,
       keyId,
       publicJwk: {
-        ...exported,
+        ...publicJwkRaw,
         alg: "ES256",
         kid: keyId,
         use: "sig",

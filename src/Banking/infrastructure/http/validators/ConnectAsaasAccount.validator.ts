@@ -11,39 +11,19 @@ export default async (
   res: ServerResponse,
   next: NextFunction
 ): Promise<void> => {
-  const payload = req.body
+  const payload = req.body as any
 
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    Array.isArray(payload) ||
-    Object.keys(payload).some((key) => key !== "apiKey")
-  ) {
-    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
-      payload: {
-        message: "Payload must contain only the apiKey field",
-      },
-    })
-    return
+  const rule = {
+    apiKey: "required|string|minLength:6",
+    connectionName: "required|string|minLength:4",
   }
 
-  const validator = new Validator(payload, {
-    apiKey: "required|string|minLength:1",
-  })
+  const v = new Validator(payload, rule)
 
-  if (!(await validator.check())) {
-    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
-    return
-  }
+  const matched = await v.check()
 
-  const apiKey = (payload as { apiKey: string }).apiKey
-  if (apiKey.trim() === "") {
-    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
-      apiKey: {
-        message: "The apiKey field is required",
-      },
-    })
-    return
+  if (!matched) {
+    return res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(v.errors)
   }
 
   next()

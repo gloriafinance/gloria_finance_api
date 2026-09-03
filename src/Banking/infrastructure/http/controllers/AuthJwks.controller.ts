@@ -1,7 +1,7 @@
 import { Controller, Get, Res, type ServerResponse } from "bun-platform-kit"
 import { churchBankingSigningKeyProvider } from "@/Banking/infrastructure/church-banking/ChurchBankingSigningKey.provider"
 
-@Controller("/auth")
+@Controller("/api/v1/auth")
 export class AuthJwksController {
   @Get("/jwks")
   async handle(@Res() res: ServerResponse) {
