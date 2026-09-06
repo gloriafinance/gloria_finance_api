@@ -1,4 +1,34 @@
 import {
+  ConnectProviderBankAccount,
+  CreateOrUpdateBank,
+  FinBankByBankId,
+  SearchBankByChurchId,
+} from "@/Banking/applications"
+import {
+  type BankRequest,
+  type ConnectExternalAccountRequest,
+  CreateStaticPixForOfferingsDomainEvent,
+  TypeBankAccount,
+} from "@/Banking/domain"
+import { CreateAvailabilityAccountDomainEvent } from "@/Banking/domain/events/CreateAvailabilityAccount.event.ts"
+import {
+  ChurchBankingClient,
+  ChurchBankingClientError,
+} from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
+import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
+import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
+import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import { AccountType } from "@/FinanceConfig/domain"
+import { EventBus } from "@/package/events"
+import { HttpStatus } from "@/Shared/domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
+import {
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
+import {
   Body,
   Controller,
   Get,
@@ -9,35 +39,6 @@ import {
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
-import {
-  type BankRequest,
-  type ConnectExternalAccountRequest,
-  TypeBankAccount,
-} from "@/Banking/domain"
-import {
-  ConnectProviderBankAccount,
-  CreateOrUpdateBank,
-  FinBankByBankId,
-  SearchBankByChurchId,
-} from "@/Banking/applications"
-import { BankMongoRepository } from "@/Banking/infrastructure/persistence"
-import {
-  ChurchBankingClient,
-  ChurchBankingClientError,
-} from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
-import { HttpStatus } from "@/Shared/domain"
-import domainResponse from "@/Shared/helpers/domainResponse"
-import {
-  type AuthenticatedRequest,
-  Can,
-  PermissionMiddleware,
-} from "@/Shared/infrastructure"
-import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
-import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
-import { EventBus } from "@/package/events"
-import { CreateAvailabilityAccountDomainEvent } from "@/Banking/domain/events/CreateAvailabilityAccount.event.ts"
-import { AccountType } from "@/FinanceConfig/domain"
 
 @Controller("/api/v1/bank")
 export class BankController {
@@ -101,7 +102,7 @@ export class BankController {
         churchId: req.auth.churchId,
       })
 
-      await EventBus.instance().publish(
+      EventBus.instance().publish(
         new CreateAvailabilityAccountDomainEvent({
           balance: Number(result.availableBalanceInCents) / 100,
           churchId: req.auth.churchId,
@@ -109,6 +110,12 @@ export class BankController {
           accountType: AccountType.BANK,
           symbol: req.auth.symbolFormatMoney,
           source: bank,
+        })
+      )
+
+      EventBus.instance().publish(
+        new CreateStaticPixForOfferingsDomainEvent({
+          churchId: req.auth.churchId,
         })
       )
 

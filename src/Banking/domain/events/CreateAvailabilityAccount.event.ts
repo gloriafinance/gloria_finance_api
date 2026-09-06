@@ -1,5 +1,5 @@
-import type { DomainEvent } from "@/package/events"
 import { AccountType } from "@/FinanceConfig/domain"
+import type { DomainEvent } from "@/package/events"
 
 type request = {
   balance: number
