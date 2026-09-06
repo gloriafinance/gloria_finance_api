@@ -1,9 +1,9 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { ConceptType } from "./enums/ConcepType.enum"
-import { StatementCategory } from "@/Financial/domain"
 import { Church } from "@/Church/domain"
+import { StatementCategory } from "@/Financial/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { ConceptType } from "./enums/ConcepType.enum"
 
 export type FinancialConceptImpactFlags = {
   affectsCashFlow: boolean
@@ -30,6 +30,11 @@ export class FinancialConcept extends AggregateRoot {
   private affectsBalance: boolean
   private isOperational: boolean
   private tag?: string
+  private pix?: {
+    pixQrCodeId: string
+    copyPaste: string
+    encodedImage: string
+  }
 
   private constructor() {
     super()
@@ -82,6 +87,7 @@ export class FinancialConcept extends AggregateRoot {
     concept.isOperational = plainData.isOperational
     concept.isSystem = plainData.isSystem
     concept.tag = plainData.tag
+    concept.pix = plainData.pix
 
     return concept
   }
@@ -160,6 +166,14 @@ export class FinancialConcept extends AggregateRoot {
     }
   }
 
+  setStaticPix(input: {
+    pixQrCodeId: string
+    copyPaste: string
+    encodedImage: string
+  }) {
+    this.pix = input
+  }
+
   getAffectsCashFlow(): boolean {
     return this.affectsCashFlow
   }
@@ -192,6 +206,7 @@ export class FinancialConcept extends AggregateRoot {
       isOperational: this.isOperational,
       tag: this.tag,
       isSystem: this.isSystem,
+      pix: this.pix,
     }
   }
 }

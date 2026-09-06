@@ -1,4 +1,10 @@
-import { createHash, randomUUID } from "node:crypto"
+import type {
+  ConnectExternalAccountInput,
+  ConnectExternalAccountResponse,
+  CreateStaticPixInput,
+  IChurchBankingClient,
+  StaticPixResponse,
+} from "@/Banking/domain"
 import {
   CompactEncrypt,
   importJWK,
@@ -6,11 +12,7 @@ import {
   type KeyLike,
   SignJWT,
 } from "jose"
-import type {
-  ConnectExternalAccountInput,
-  ConnectExternalAccountResponse,
-  IChurchBankingClient,
-} from "@/Banking/domain"
+import { createHash, randomUUID } from "node:crypto"
 import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provider"
 
 const TOKEN_LIFETIME_SECONDS = 120
@@ -39,6 +41,21 @@ export class ChurchBankingClientError extends Error {
 
 export class ChurchBankingClient implements IChurchBankingClient {
   private encryptionKey?: EncryptionKey
+
+  async createStaticPix(
+    input: CreateStaticPixInput
+  ): Promise<StaticPixResponse> {
+    const response = await this.execute<CreateStaticPixInput>({
+      path: "/api/pix/qr-codes/static",
+      payload: input,
+    })
+
+    return {
+      pixQrCodeId: (response as any).pixQrCodeId,
+      copyPaste: (response as any).copyPaste,
+      encodedImage: (response as any).encodedImage,
+    }
+  }
 
   async connectExternalAccount(
     input: ConnectExternalAccountInput

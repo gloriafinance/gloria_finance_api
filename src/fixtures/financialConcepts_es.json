@@ -359,7 +359,8 @@
     "affectsResult": true,
     "affectsBalance": false,
     "isOperational": false,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Offering"
   },
   {
     "name": "Gastos legales y contables",
@@ -431,7 +432,8 @@
     "affectsResult": true,
     "affectsBalance": false,
     "isOperational": true,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Offering"
   },
   {
     "name": "Diezmos de miembros",
@@ -456,7 +458,8 @@
     "affectsResult": true,
     "affectsBalance": false,
     "isOperational": false,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Offering"
   },
   {
     "name": "Ventas de comida o mercancías",
@@ -480,7 +483,8 @@
     "affectsResult": true,
     "affectsBalance": false,
     "isOperational": false,
-    "isSystem": true
+    "isSystem": true,
+    "tag": "Offering"
   },
   {
     "name": "Proyecto de grupos de jóvenes",
