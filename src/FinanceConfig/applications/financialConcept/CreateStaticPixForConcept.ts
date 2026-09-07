@@ -2,6 +2,7 @@ import type { IChurchBankingClient } from "@/Banking/domain"
 import { FinancialConceptNotFound } from "@/FinanceConfig/domain/exceptions/FinancialConceptNotFound.exception"
 import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
 import { Logger } from "@/Shared/adapter"
+import { GenericException } from "@/Shared/domain"
 
 export class CreateStaticPixForConcept {
   private logger = Logger(CreateStaticPixForConcept.name)
@@ -28,6 +29,10 @@ export class CreateStaticPixForConcept {
 
     if (!concept) {
       throw new FinancialConceptNotFound()
+    }
+
+    if (!concept.isIncome()) {
+      throw new GenericException("FINANCIAL_CONCEPT_IS_NOT_INCOME")
     }
 
     if (concept.hasStaticPix()) {

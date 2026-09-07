@@ -1,6 +1,5 @@
 import type { IChurchBankingClient } from "@/Banking/domain"
 import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
-import { CreateAvailabilityAccountSubscriber } from "@/FinanceConfig/infrastructure/subscribers/CreateAvailabilityAccount.subscriber"
 import { Logger } from "@/Shared/adapter"
 
 export class CreateStaticPixForOfferginsAndTithes {
@@ -13,7 +12,7 @@ export class CreateStaticPixForOfferginsAndTithes {
 
   async execute(churchId: string): Promise<void> {
     this.logger.info(
-      `Handle static pix for offerings connected to start onboarding. ${churchId}`
+      `Create static pix for offerings connected to start onboarding. ${churchId}`
     )
 
     const concepts = await this.financialConceptRepository.many({

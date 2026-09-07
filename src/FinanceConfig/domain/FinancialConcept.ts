@@ -92,6 +92,10 @@ export class FinancialConcept extends AggregateRoot {
     return concept
   }
 
+  isIncome(): boolean {
+    return this.type === ConceptType.INCOME
+  }
+
   getFinancialConceptId(): string {
     return this.financialConceptId
   }
