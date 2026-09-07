@@ -5,6 +5,7 @@ import type {
   IChurchBankingClient,
   StaticPixResponse,
 } from "@/Banking/domain"
+import { Logger } from "@/Shared/adapter"
 import {
   CompactEncrypt,
   importJWK,
@@ -40,15 +41,31 @@ export class ChurchBankingClientError extends Error {
 }
 
 export class ChurchBankingClient implements IChurchBankingClient {
+  private logger = Logger(ChurchBankingClient.name)
   private encryptionKey?: EncryptionKey
 
   async createStaticPix(
     input: CreateStaticPixInput
   ): Promise<StaticPixResponse> {
-    const response = await this.execute<CreateStaticPixInput>({
+    this.logger.info(`Creating static pix for concept. `, input)
+
+    const response = await this.execute<{
+      externalAccountId: string
+      externalReference: string
+      description: string
+    }>({
       path: "/api/pix/qr-codes/static",
-      payload: input,
+      payload: {
+        externalReference: input.referenceId,
+        externalAccountId: input.churchId,
+        description: input.description,
+      },
     })
+
+    this.logger.info(
+      `Static pix created for concept. ${input.churchId} - ${input.referenceId}`,
+      response as any
+    )
 
     return {
       pixQrCodeId: (response as any).pixQrCodeId,
@@ -102,6 +119,20 @@ export class ChurchBankingClient implements IChurchBankingClient {
       .setIssuedAt(now)
       .setExpirationTime(now + TOKEN_LIFETIME_SECONDS)
       .sign(signing.privateKey)
+
+    this.logger.info(`Fetching: ${config.baseUrl}${command.path}`)
+
+    console.log(
+      JSON.stringify({
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body,
+      })
+    )
 
     const response = await fetch(`${config.baseUrl}${command.path}`, {
       method: "POST",

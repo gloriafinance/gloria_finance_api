@@ -1,14 +1,22 @@
+import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import {
+  CreateOrUpdateFinancialConcept,
+  CreateStaticPixForConcept,
+  FindFinancialConceptsByChurchIdAndTypeConcept,
+} from "@/FinanceConfig/applications"
+import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
 import {
   type FilterFinancialConceptRequest,
   type FinancialConceptRequest,
 } from "@/Financial/domain"
-import domainResponse from "@/Shared/helpers/domainResponse"
-import { ChurchMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"
+import domainResponse from "@/Shared/helpers/domainResponse"
 import {
-  CreateOrUpdateFinancialConcept,
-  FindFinancialConceptsByChurchIdAndTypeConcept,
-} from "@/FinanceConfig/applications"
+  type AuthenticatedRequest,
+  Can,
+  PermissionMiddleware,
+} from "@/Shared/infrastructure"
 import {
   Body,
   Controller,
@@ -16,15 +24,39 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   type ServerResponse,
   Use,
 } from "bun-platform-kit"
-import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence"
-import { Can, PermissionMiddleware } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/finance/configuration/financial-concepts")
 export class FinancialConceptController {
+  @Post("/create-static-pix")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_configuration", "manage_concepts"),
+  ])
+  async createStaticPix(
+    @Body() body: { financialConceptId: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const response = await new CreateStaticPixForConcept(
+        new ChurchBankingClient(),
+        FinancialConceptMongoRepository.getInstance()
+      ).execute({
+        churchId: req.auth.churchId,
+        financialConceptId: body.financialConceptId,
+      })
+
+      res.status(HttpStatus.CREATED).send(response)
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
   @Post("/")
   @Use([
     PermissionMiddleware,

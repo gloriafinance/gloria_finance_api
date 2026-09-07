@@ -1,4 +1,5 @@
 export * from "./financialConcept/CreateOrUpdateFinancialConcept"
+export * from "./financialConcept/CreateStaticPixForConcept"
 export * from "./financialConcept/CreateStaticPixForOfferginsAndTithes"
 export * from "./financialConcept/FindFinancialConceptByChurchIdAndFinancialConceptId"
 export * from "./financialConcept/FindFinancialConceptsByChurchIdAndTypeConcept"

@@ -174,6 +174,20 @@ export class FinancialConcept extends AggregateRoot {
     this.pix = input
   }
 
+  hasStaticPix(): boolean {
+    return !!this.pix
+  }
+
+  getStaticPix():
+    | {
+        pixQrCodeId: string
+        copyPaste: string
+        encodedImage: string
+      }
+    | undefined {
+    return this.pix
+  }
+
   getAffectsCashFlow(): boolean {
     return this.affectsCashFlow
   }
