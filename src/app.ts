@@ -1,6 +1,5 @@
 import "reflect-metadata"
 import {
-  BunAdapter,
   BunKitServer,
   CorsModule,
   FileUploadModule,
@@ -15,11 +14,12 @@ import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
 import { RateLimitModule } from "@/Shared/infrastructure/modules/RateLimitModule"
 import { MongoDBService } from "@/bootstrap/MongoDB.service.ts"
+import { ChurchBankingWebhookBunAdapter } from "@/Webhook/infrastructure/http/ChurchBankingWebhookBun.adapter.ts"
 
 export const APP_DIR = __dirname
 
 const server = new BunKitServer(Number(process.env.APP_PORT || 8080), {
-  adapter: new BunAdapter(),
+  adapter: new ChurchBankingWebhookBunAdapter(),
   hostname: process.env.NODE_ENV === "production" ? "127.0.0.1" : "0.0.0.0",
 })
 
@@ -31,7 +31,7 @@ server.addModules([
   new SecurityModule(),
   new RequestContextModule(),
   new RateLimitModule({
-    excludePaths: ["/ui/queues", "/health"],
+    excludePaths: ["/ui/queues", "/health", "/webhooks/church-banking"],
     windowMs: 8 * 60 * 1000,
     limit: 100,
     standardHeaders: true,
