@@ -17,6 +17,7 @@ import { PatrimonyController } from "@/Patrimony/infrastructure/http/controllers
 import { churchControllers } from "@/Church/infrastructure/http/controllers"
 import { WorldController } from "@/World/infrastructure/http/controllers/World.controller"
 import { WhatsappController } from "@/Webhook/infrastructure/http/controllers/Whatsapp.controller.ts"
+import { ChurchBankingController } from "@/Webhook/infrastructure/http/controllers/ChurchBanking.controller.ts"
 import { supportControllers } from "@/Support/infrastructure/controllers"
 import { CashFlowController } from "@/Reports/infrastructure/http/controllers/CashFlow.controller.ts"
 
@@ -41,5 +42,6 @@ export const controllersModule = () =>
     PatrimonyController,
     WorldController,
     WhatsappController,
+    ChurchBankingController,
     CashFlowController,
   ])
