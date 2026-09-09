@@ -28,6 +28,7 @@ type payloadWebhook = {
       paymentDate: string
       transactionReceiptUrl: string
       externalReference: string
+      payer?: { name: string; cpfCnpj: string }
     }
   }
 }
@@ -68,6 +69,7 @@ export class ChurchBankingController {
         invoice: body.data.payment.transactionReceiptUrl,
         financialConceptId: body.data.payment.externalReference,
         status: body.data.payment.status,
+        payer: body.data.payment.payer,
       })
 
       res.status(200).send({ message: "ok" })

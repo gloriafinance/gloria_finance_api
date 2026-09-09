@@ -8,7 +8,7 @@ import {
   SecurityModule,
 } from "bun-platform-kit"
 
-import { controllersModule } from "./bootstrap"
+import { controllersModule, ServerSocketService } from "./bootstrap"
 import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
@@ -52,7 +52,11 @@ server.addModules([
   controllersModule(),
 ])
 
-server.addServices([new FactoryService(), new MongoDBService()])
+server.addServices([
+  new FactoryService(),
+  new MongoDBService(),
+  new ServerSocketService(),
+])
 
 server.getApp().set?.("trustProxy", ["127.0.0.1/8"])
 StartQueueService({

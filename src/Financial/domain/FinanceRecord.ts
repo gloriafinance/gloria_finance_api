@@ -1,6 +1,6 @@
 import { AccountType, FinancialConcept } from "@/FinanceConfig/domain"
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { IdentifyEntity } from "@/Shared/adapter"
+import { Urn } from "@/Shared/adapter"
 import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 import {
   FinancialRecordSource,
@@ -55,9 +55,16 @@ export class FinanceRecord extends AggregateRoot {
       source,
       createdBy,
       reference,
+      financialRecordId,
     } = params
     const financialRecord: FinanceRecord = new FinanceRecord()
-    financialRecord.financialRecordId = IdentifyEntity.get(`financialRecord`)
+    if (!financialRecordId) {
+      financialRecord.financialRecordId = Urn.create({
+        entity: "financialRecord",
+      })
+    } else {
+      financialRecord.financialRecordId = financialRecordId
+    }
 
     if (typeof financialConcept === "object") {
       financialRecord.financialConcept =

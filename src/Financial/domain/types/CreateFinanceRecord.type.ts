@@ -8,6 +8,7 @@ import {
 } from "@/Financial/domain"
 
 export type CreateFinanceRecord = {
+  financialRecordId?: string
   financialConcept?: FinancialConcept
   type: FinancialRecordType
   churchId: string

@@ -60,6 +60,7 @@ export class CreateFinancialRecordJob implements IJob {
 
     try {
       const financialRecord = FinanceRecord.create({
+        financialRecordId: args.financialRecordId,
         financialConcept: args.financialConcept,
         churchId: args.churchId,
         amount: args.amount,

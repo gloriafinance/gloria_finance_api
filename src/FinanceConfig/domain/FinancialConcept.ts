@@ -116,6 +116,10 @@ export class FinancialConcept extends AggregateRoot {
     return this.type
   }
 
+  getTag() {
+    return this.tag
+  }
+
   getChurchId(): string {
     return this.churchId
   }

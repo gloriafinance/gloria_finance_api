@@ -8,9 +8,13 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
+import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
 import { QueueService } from "@/package/queue/infrastructure"
-import { Logger } from "@/Shared/adapter"
+import { Logger, Urn } from "@/Shared/adapter"
 import { StorageProviderService } from "@/Shared/infrastructure"
+import { MemberMongoRepository } from "@/Church/infrastructure"
+import { SocketIOService } from "@/bootstrap"
+import { RealTimeEvent } from "@/Shared/domain"
 
 type Operation = {
   id: string
@@ -21,6 +25,7 @@ type Operation = {
   invoice: string
   financialConceptId?: string
   status: "RECEIVED" | "REFUNDED"
+  payer?: { name: string; cpfCnpj: string }
 }
 
 export class ProcessAsaasTransactionService {
@@ -28,10 +33,26 @@ export class ProcessAsaasTransactionService {
 
   constructor(
     private readonly availabilityAccountRepository = AvailabilityAccountMongoRepository.getInstance(),
-    private readonly financialConceptRepository = FinancialConceptMongoRepository.getInstance()
+    private readonly financialConceptRepository = FinancialConceptMongoRepository.getInstance(),
+    private readonly financeRecordRepository = FinanceRecordMongoRepository.getInstance()
   ) {}
+
   async handle(input: Operation) {
     this.logger.info("Processing Asaas transaction", input)
+
+    const financialRecordId = Urn.create({
+      entity: "financialRecord",
+      entityId: input.id,
+    })
+
+    const exists = await this.financeRecordRepository.one({ financialRecordId })
+    if (exists) {
+      this.logger.info(
+        `Financial record with ID ${financialRecordId} already exists. Skipping processing.`,
+        input
+      )
+      return
+    }
 
     if (input.status === "RECEIVED") {
       const concept = await this.financialConceptRepository.one({
@@ -66,23 +87,66 @@ export class ProcessAsaasTransactionService {
 
       const voucher = await this.saveReceipt(input.id, input.invoice)
 
-      await new DispatchCreateFinancialRecord(
-        QueueService.getInstance()
-      ).execute({
-        voucher,
-        availabilityAccount,
-        createdBy: "system",
-        description: concept?.getDescription()!,
-        financialConcept: concept!,
-        financialRecordType: FinancialRecordType.INCOME,
-        source: FinancialRecordSource.AUTO,
-        status: FinancialRecordStatus.CLEARED,
-        churchId: input.churchId,
-        amount: input.amount,
-        date: new Date(input.date),
-      })
+      let description = concept?.getDescription()!
+
+      if (input.payer && concept.getTag() === "Tithes") {
+        description += ":" + input.payer?.name
+      }
+
+      await Promise.all([
+        new DispatchCreateFinancialRecord(QueueService.getInstance()).execute({
+          voucher,
+          availabilityAccount,
+          financialRecordId: Urn.create({
+            entity: "financialRecord",
+            entityId: input.id,
+          }),
+          createdBy: "system",
+          description,
+          financialConcept: concept!,
+          financialRecordType: FinancialRecordType.INCOME,
+          source: FinancialRecordSource.AUTO,
+          status: FinancialRecordStatus.RECONCILED,
+          churchId: input.churchId,
+          amount: input.amount,
+          date: new Date(input.date),
+        }),
+        this.notify(input.payer),
+      ])
 
       return
+    }
+  }
+
+  private async notify(payer?: { name: string; cpfCnpj: string }) {
+    if (!payer) {
+      return
+    }
+
+    const cpfCnpjFormat = (str: string) => {
+      const nro = str.replace(/\D/g, "")
+
+      if (nro.length === 11) {
+        // CPF: 123.456.789-09
+        return `${nro.substring(0, 3)}.${nro.substring(3, 6)}.${nro.substring(6, 9)}-${nro.substring(9)}`
+      } else if (nro.length === 14) {
+        // CNPJ: 12.345.678/0001-95
+        return `${nro.substring(0, 2)}.${nro.substring(2, 5)}.${nro.substring(5, 8)}/${nro.substring(8, 12)}-${nro.substring(12)}`
+      }
+    }
+
+    const doc = cpfCnpjFormat(payer.cpfCnpj)
+
+    const member = await MemberMongoRepository.getInstance().one({
+      dni: doc,
+    })
+
+    if (member) {
+      SocketIOService.getInstance().notifyClient(
+        member.getMemberId(),
+        RealTimeEvent.PaidPix,
+        { payment: "finish" }
+      )
     }
   }
 

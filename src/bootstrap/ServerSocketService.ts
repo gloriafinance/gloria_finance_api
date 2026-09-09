@@ -1,66 +1,68 @@
-// import { Server as SocketIOServer, Socket } from "socket.io"
-// import { Server } from "http"
-// import { Logger } from "@/Shared/adapter"
-// import { IRealTimeEventService, RealTimeEvent } from "@/Shared/domain"
-// import { BaseServerService } from "bun-platform-kit"// export class SocketIOService implements IRealTimeEventService {
-//   private static instance: SocketIOService
-//   private io: SocketIOServer
-//   private logger = Logger(SocketIOService.name)
+import { Server as SocketIOServer, Socket } from "socket.io"
+import { Server } from "http"
+import { Logger } from "@/Shared/adapter"
+import { type IRealTimeEventService, RealTimeEvent } from "@/Shared/domain"
+import { BaseServerService } from "bun-platform-kit"
 
-//   private constructor() {}
+export class SocketIOService implements IRealTimeEventService {
+  private static instance: SocketIOService
+  private io: SocketIOServer
+  private logger = Logger(SocketIOService.name)
 
-//   public static getInstance(): SocketIOService {
-//     if (!SocketIOService.instance) {
-//       SocketIOService.instance = new SocketIOService()
-//     }
-//     return SocketIOService.instance
-//   }
+  private constructor() {}
 
-//   public initialize(httpServer: Server): void {
-//     this.io = new SocketIOServer(httpServer, {
-//       cors: {
-//         origin: "*", // Ajusta esto a tus necesidades de seguridad
-//       },
-//     })
+  public static getInstance(): SocketIOService {
+    if (!SocketIOService.instance) {
+      SocketIOService.instance = new SocketIOService()
+    }
+    return SocketIOService.instance
+  }
 
-//     this.io.on("connection", (socket: Socket) => {
-//       const clientId = socket.handshake.query.clientId as string
-//       if (clientId) {
-//         socket.join(clientId)
-//         this.logger.info(
-//           `Client connected: ${socket.id} for clientId: ${clientId}`
-//         )
-//       }
+  public initialize(httpServer: Server): void {
+    this.io = new SocketIOServer(httpServer, {
+      cors: {
+        origin: "*", // Ajusta esto a tus necesidades de seguridad
+      },
+    })
 
-//       socket.on("disconnect", () => {
-//         this.logger.info(`Client disconnected: ${socket.id}`)
-//       })
-//     })
-//   }
+    this.io.on("connection", (socket: Socket) => {
+      const clientId = socket.handshake.query.clientId as string
+      if (clientId) {
+        socket.join(clientId)
+        this.logger.info(
+          `Client connected: ${socket.id} for clientId: ${clientId}`
+        )
+      }
 
-//   notifyClient(clientId: string, event: RealTimeEvent, data: any): void {
-//     this.logger.info(`Notifying client ${clientId} with event ${event}`, data)
-//     this.io.to(clientId).emit(event, data)
-//   }
+      socket.on("disconnect", () => {
+        this.logger.info(`Client disconnected: ${socket.id}`)
+      })
+    })
+  }
 
-//   public close(): void {
-//     if (this.io) {
-//       this.io.close((err) => {
-//         if (err) {
-//           this.logger.error("Error closing Socket.IO server", err)
-//         } else {
-//           this.logger.info("Socket.IO server closed.")
-//         }
-//       })
-//     }
-//   }
-// }
+  notifyClient(clientId: string, event: RealTimeEvent, data: any): void {
+    this.logger.info(`Notifying client ${clientId} with event ${event}`, data)
+    this.io.to(clientId).emit(event, data)
+  }
 
-// export class ServerSocketService extends BaseServerService {
-//   name = "ServerSocket"
-//   priority = -80
+  public close(): void {
+    if (this.io) {
+      this.io.close((err) => {
+        if (err) {
+          this.logger.error("Error closing Socket.IO server", err)
+        } else {
+          this.logger.info("Socket.IO server closed.")
+        }
+      })
+    }
+  }
+}
 
-//   start(http: Server): Promise<void> | void {
-//     SocketIOService.getInstance().initialize(http)
-//   }
-// }
+export class ServerSocketService extends BaseServerService {
+  name = "ServerSocket"
+  priority = -80
+
+  start(http: Server): Promise<void> | void {
+    SocketIOService.getInstance().initialize(http)
+  }
+}

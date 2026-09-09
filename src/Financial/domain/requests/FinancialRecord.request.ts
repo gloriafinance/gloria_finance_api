@@ -9,6 +9,7 @@ import {
 export type BankingOperationType = "DEPOSIT" | "WITHDRAWAL" | "INTEREST"
 
 export type FinancialRecordCreateQueue = {
+  financialRecordId?: string
   churchId: string
   amount: number
   description: string
