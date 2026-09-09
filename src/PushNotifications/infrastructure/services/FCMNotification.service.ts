@@ -1,4 +1,9 @@
-import { type App, getApps, initializeApp } from "firebase-admin/app"
+import {
+  type App,
+  applicationDefault,
+  getApps,
+  initializeApp,
+} from "firebase-admin/app"
 import {
   getMessaging,
   type Message,
@@ -6,9 +11,7 @@ import {
   type MulticastMessage,
 } from "firebase-admin/messaging"
 
-import { credential } from "firebase-admin"
 import { NotificationsTopic } from "@/PushNotifications/domain"
-import applicationDefault = credential.applicationDefault
 
 export type FCMNotificationPayload = {
   title: string

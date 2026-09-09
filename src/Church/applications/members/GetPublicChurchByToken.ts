@@ -3,6 +3,7 @@ import { type IChurchRepository, TokenNotFound } from "../../domain"
 export type PublicChurchInfoDTO = {
   churchId: string
   churchName: string
+  country: string
 }
 
 export class GetPublicChurchByToken {
@@ -20,6 +21,7 @@ export class GetPublicChurchByToken {
     return {
       churchId: church.getChurchId(),
       churchName: church.getName(),
+      country: church.getCountry(),
     }
   }
 }
