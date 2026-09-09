@@ -2,6 +2,7 @@ import { Church, ChurchNotFound, type IChurchRepository } from "@/Church/domain"
 import type { BankRequest, IBankRepository } from "@/Banking/domain"
 import { BankNotFound } from "@/Banking/domain"
 import { Bank } from "@/Banking/domain/Bank"
+import { Urn } from "@/Shared/adapter"
 
 export class CreateOrUpdateBank {
   constructor(
@@ -10,7 +11,10 @@ export class CreateOrUpdateBank {
   ) {}
 
   async execute(requestBank: BankRequest): Promise<Bank> {
-    if (!requestBank.bankId) {
+    if (
+      !requestBank.bankId ||
+      (requestBank.bankId && !Urn.isValid(requestBank.bankId))
+    ) {
       return await this.registerBank(requestBank)
     }
 

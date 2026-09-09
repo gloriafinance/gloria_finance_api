@@ -1,3 +1,4 @@
+import { Logger } from "@/Shared/adapter"
 import {
   Body,
   Controller,
@@ -6,7 +7,7 @@ import {
   Res,
   type ServerResponse,
 } from "bun-platform-kit"
-import { Logger } from "@/Shared/adapter"
+import { ProcessAsaasTransactionService } from "../../services/ProcessAsaasTransaction.service.ts"
 import type { ChurchBankingWebhookRequest } from "../ChurchBankingWebhookBun.adapter.ts"
 import {
   ChurchBankingWebhookVerificationError,
@@ -15,6 +16,21 @@ import {
 } from "../ChurchBankingWebhookVerifier.ts"
 
 type WebhookVerifier = Pick<ChurchBankingWebhookVerifier, "verify">
+
+type payloadWebhook = {
+  id: string
+  externalAccountId: string
+  accountId: string
+  data: {
+    payment: {
+      amountInCents: number
+      status: "RECEIVED" | "REFUNDED"
+      paymentDate: string
+      transactionReceiptUrl: string
+      externalReference: string
+    }
+  }
+}
 
 @Controller("/webhooks")
 export class ChurchBankingController {
@@ -26,7 +42,7 @@ export class ChurchBankingController {
 
   @Post("/church-banking")
   async receive(
-    @Body() body: any,
+    @Body() body: payloadWebhook,
     @Req() req: ChurchBankingWebhookRequest,
     @Res() res: ServerResponse
   ) {
@@ -42,6 +58,17 @@ export class ChurchBankingController {
         "Received an authenticated Church Banking webhook request.",
         body
       )
+
+      await new ProcessAsaasTransactionService().handle({
+        id: body.id,
+        bankId: body.accountId,
+        churchId: body.externalAccountId,
+        amount: Number(body.data.payment.amountInCents) / 100,
+        date: body.data.payment.paymentDate,
+        invoice: body.data.payment.transactionReceiptUrl,
+        financialConceptId: body.data.payment.externalReference,
+        status: body.data.payment.status,
+      })
 
       res.status(200).send({ message: "ok" })
     } catch (error) {

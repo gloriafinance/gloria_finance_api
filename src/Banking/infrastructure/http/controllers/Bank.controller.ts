@@ -8,7 +8,6 @@ import {
   type BankRequest,
   type ConnectExternalAccountRequest,
   CreateStaticPixForOfferingsDomainEvent,
-  TypeBankAccount,
 } from "@/Banking/domain"
 import { CreateAvailabilityAccountDomainEvent } from "@/Banking/domain/events/CreateAvailabilityAccount.event.ts"
 import {
@@ -78,33 +77,18 @@ export class BankController {
     @Res() res: ServerResponse
   ) {
     try {
-      const result = await new ConnectProviderBankAccount(
+      const { account, bank } = await new ConnectProviderBankAccount(
+        BankMongoRepository.getInstance(),
+        ChurchMongoRepository.getInstance(),
         new ChurchBankingClient()
       ).execute({
         ...request,
         churchId: req.auth.churchId,
       })
 
-      const bank = new CreateOrUpdateBank(
-        BankMongoRepository.getInstance(),
-        ChurchMongoRepository.getInstance()
-      ).execute({
-        accountType: TypeBankAccount.CURRENT_ACCOUNT,
-        active: true,
-        name: request.connectionName,
-        tag: request.connectionName,
-        addressInstancePayment: "",
-        bankInstruction: {
-          codeBank: result.accountNumber.codeBank,
-          agency: result.accountNumber.agency,
-          account: `${result.accountNumber.account}-${result.accountNumber.accountDigit}`,
-        },
-        churchId: req.auth.churchId,
-      })
-
       EventBus.instance().publish(
         new CreateAvailabilityAccountDomainEvent({
-          balance: Number(result.availableBalanceInCents) / 100,
+          balance: Number(account.availableBalanceInCents) / 100,
           churchId: req.auth.churchId,
           accountName: request.connectionName,
           accountType: AccountType.BANK,
@@ -125,7 +109,7 @@ export class BankController {
       church!.enableAsaasConnect()
       await ChurchMongoRepository.getInstance().upsert(church!)
 
-      res.status(HttpStatus.OK).send(result)
+      res.status(HttpStatus.OK).send(account)
     } catch (e) {
       if (e instanceof ChurchBankingClientError) {
         res.status(e.status).send({ code: e.code })

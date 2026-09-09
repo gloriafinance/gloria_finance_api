@@ -56,5 +56,8 @@ export class AvailabilityAccountMongoRepository
 
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex({ availabilityAccountId: 1 }, { unique: true })
+    await collection.createIndex({
+      "source.bankId": 1,
+    })
   }
 }
