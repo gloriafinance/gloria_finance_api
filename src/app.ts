@@ -8,7 +8,7 @@ import {
   SecurityModule,
 } from "bun-platform-kit"
 
-import { controllersModule, ServerSocketService } from "./bootstrap"
+import { controllersModule, SocketIOService } from "./bootstrap"
 import { FactoryService } from "./bootstrap/FactoryService"
 import { StartQueueService } from "@/Shared/infrastructure"
 import { Queues } from "./queues"
@@ -18,8 +18,12 @@ import { ChurchBankingWebhookBunAdapter } from "@/Webhook/infrastructure/http/Ch
 
 export const APP_DIR = __dirname
 
+const socketIOService = SocketIOService.getInstance()
+
 const server = new BunKitServer(Number(process.env.APP_PORT || 8080), {
-  adapter: new ChurchBankingWebhookBunAdapter(),
+  adapter: new ChurchBankingWebhookBunAdapter(
+    socketIOService.getBunWebSocketAdapterOptions()
+  ),
   hostname: process.env.NODE_ENV === "production" ? "127.0.0.1" : "0.0.0.0",
 })
 
@@ -52,11 +56,7 @@ server.addModules([
   controllersModule(),
 ])
 
-server.addServices([
-  new FactoryService(),
-  new MongoDBService(),
-  new ServerSocketService(),
-])
+server.addServices([new FactoryService(), new MongoDBService()])
 
 server.getApp().set?.("trustProxy", ["127.0.0.1/8"])
 StartQueueService({
