@@ -1,3 +1,5 @@
+import { SocketIOService } from "@/bootstrap"
+import { MemberMongoRepository } from "@/Church/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinancialConceptMongoRepository,
@@ -11,10 +13,8 @@ import {
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
 import { QueueService } from "@/package/queue/infrastructure"
 import { Logger, Urn } from "@/Shared/adapter"
-import { StorageProviderService } from "@/Shared/infrastructure"
-import { MemberMongoRepository } from "@/Church/infrastructure"
-import { SocketIOService } from "@/bootstrap"
 import { RealTimeEvent } from "@/Shared/domain"
+import { StorageProviderService } from "@/Shared/infrastructure"
 
 type Operation = {
   id: string
@@ -55,67 +55,71 @@ export class ProcessAsaasTransactionService {
     }
 
     if (input.status === "RECEIVED") {
-      const concept = await this.financialConceptRepository.one({
-        financialConceptId: input.financialConceptId!,
-      })
-
-      if (!concept) {
-        this.logger.error(
-          `Financial concept with ID ${input.financialConceptId} not found.`,
-          input
-        )
-
-        throw new Error(
-          `Financial concept with ID ${input.financialConceptId} not found.`
-        )
-      }
-
-      const availabilityAccount = await this.availabilityAccountRepository.one({
-        "source.bankId": input.bankId,
-      })
-
-      if (!availabilityAccount) {
-        this.logger.error(
-          `Availability account with bank ID ${input.bankId} not found.`,
-          input
-        )
-
-        throw new Error(
-          `Availability account with bank ID ${input.bankId} not found.`
-        )
-      }
-
-      const voucher = await this.saveReceipt(input.id, input.invoice)
-
-      let description = concept?.getDescription()!
-
-      if (input.payer && concept.getTag() === "Tithes") {
-        description += ":" + input.payer?.name
-      }
-
-      await Promise.all([
-        new DispatchCreateFinancialRecord(QueueService.getInstance()).execute({
-          voucher,
-          availabilityAccount,
-          financialRecordId: Urn.create({
-            entity: "financialRecord",
-            entityId: input.id,
-          }),
-          createdBy: "system",
-          description,
-          financialConcept: concept!,
-          financialRecordType: FinancialRecordType.INCOME,
-          source: FinancialRecordSource.AUTO,
-          status: FinancialRecordStatus.RECONCILED,
-          churchId: input.churchId,
-          amount: input.amount,
-          date: new Date(input.date),
-        }),
-        this.notify(input.payer),
-      ])
+      await this.paymentIncome(input)
 
       return
     }
+  }
+
+  private async paymentIncome(input: Operation) {
+    const concept = await this.financialConceptRepository.one({
+      financialConceptId: input.financialConceptId!,
+    })
+
+    if (!concept) {
+      this.logger.error(
+        `Financial concept with ID ${input.financialConceptId} not found.`,
+        input
+      )
+
+      throw new Error(
+        `Financial concept with ID ${input.financialConceptId} not found.`
+      )
+    }
+
+    const availabilityAccount = await this.availabilityAccountRepository.one({
+      "source.bankId": input.bankId,
+    })
+
+    if (!availabilityAccount) {
+      this.logger.error(
+        `Availability account with bank ID ${input.bankId} not found.`,
+        input
+      )
+
+      throw new Error(
+        `Availability account with bank ID ${input.bankId} not found.`
+      )
+    }
+
+    const voucher = await this.saveReceipt(input.id, input.invoice)
+
+    let description = concept?.getDescription()!
+
+    if (input.payer && concept.getTag() === "Tithes") {
+      description += ":" + input.payer?.name
+    }
+
+    await Promise.all([
+      new DispatchCreateFinancialRecord(QueueService.getInstance()).execute({
+        voucher,
+        availabilityAccount,
+        financialRecordId: Urn.create({
+          entity: "financialRecord",
+          entityId: input.id,
+        }),
+        createdBy: "system",
+        description,
+        financialConcept: concept!,
+        financialRecordType: FinancialRecordType.INCOME,
+        source: FinancialRecordSource.AUTO,
+        status: FinancialRecordStatus.RECONCILED,
+        churchId: input.churchId,
+        amount: input.amount,
+        date: new Date(input.date),
+      }),
+      this.notify(input.payer),
+    ])
   }
 
   private async notify(payer?: { name: string; cpfCnpj: string }) {

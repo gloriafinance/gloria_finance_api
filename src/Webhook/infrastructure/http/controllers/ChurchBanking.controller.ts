@@ -1,4 +1,5 @@
 import { Logger } from "@/Shared/adapter"
+import domainResponse from "@/Shared/helpers/domainResponse.ts"
 import {
   Body,
   Controller,
@@ -74,28 +75,17 @@ export class ChurchBankingController {
 
       res.status(200).send({ message: "ok" })
     } catch (error) {
+      this.logger.error("Error processing Church Banking webhook request.", {
+        error,
+        body,
+      })
+
       if (error instanceof ChurchBankingWebhookVerificationError) {
         res.status(error.status).send({ code: error.code })
         return
       }
-      throw error
+
+      domainResponse(error, res)
     }
   }
 }
-
-// function webhookLogContext(body: unknown): Record<string, unknown> {
-//   if (typeof body !== "object" || body === null || Array.isArray(body))
-//     return {}
-//
-//   const event = body as Record<string, unknown>
-//   return {
-//     eventId: typeof event.id === "string" ? event.id : undefined,
-//     type: typeof event.type === "string" ? event.type : undefined,
-//     requestId:
-//       typeof event.requestId === "string" ? event.requestId : undefined,
-//     externalAccountId:
-//       typeof event.externalAccountId === "string"
-//         ? event.externalAccountId
-//         : undefined,
-//   }
-//}

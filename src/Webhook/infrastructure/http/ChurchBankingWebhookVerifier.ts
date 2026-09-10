@@ -1,10 +1,10 @@
-import { createHash } from "node:crypto"
 import {
   createRemoteJWKSet,
   errors,
   jwtVerify,
   type JWTVerifyGetKey,
 } from "jose"
+import { createHash } from "node:crypto"
 
 const CLOCK_TOLERANCE_SECONDS = 5
 const MAX_TOKEN_LIFETIME_SECONDS = 300
