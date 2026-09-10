@@ -1,5 +1,7 @@
 import { SocketIOService } from "@/bootstrap"
+import { Member } from "@/Church/domain"
 import { MemberMongoRepository } from "@/Church/infrastructure"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
   FinancialConceptMongoRepository,
@@ -13,6 +15,7 @@ import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
+  OnlineContributionsStatus,
 } from "@/Financial/domain"
 import {
   FinanceRecordMongoRepository,
@@ -22,8 +25,6 @@ import { QueueService } from "@/package/queue/infrastructure"
 import { Logger, Urn } from "@/Shared/adapter"
 import { RealTimeEvent } from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
-import { Member } from "@/Church/domain"
-import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 type Operation = {
   id: string
@@ -136,6 +137,10 @@ export class ProcessAsaasTransactionService {
 
   private async notify(member: Member | null) {
     if (!member) {
+      this.logger.info(
+        "No member found for the payer. Skipping real-time notification.",
+        member || {}
+      )
       return
     }
 
@@ -179,6 +184,10 @@ export class ProcessAsaasTransactionService {
     const { voucher, member, input, concept } = params
 
     if (!member) {
+      this.logger.info(
+        `No member found for payer ${input.payer?.name} with CPF/CNPJ ${input.payer?.cpfCnpj}. Skipping contribution registration.`,
+        input
+      )
       return
     }
 
@@ -188,6 +197,7 @@ export class ProcessAsaasTransactionService {
       FinancialYearMongoRepository.getInstance()
     ).execute(
       {
+        status: OnlineContributionsStatus.PROCESSED,
         amount: input.amount,
         observation: "",
         paidAt: input.date,

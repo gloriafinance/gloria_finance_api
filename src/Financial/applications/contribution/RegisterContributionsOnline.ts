@@ -2,6 +2,7 @@ import {
   AvailabilityAccount,
   FinancialConcept,
   OnlineContributions,
+  OnlineContributionsStatus,
 } from "../../domain"
 import { AmountValue, type IStorageService } from "@/Shared/domain"
 import { Member } from "@/Church/domain"
@@ -22,6 +23,7 @@ export class RegisterContributionsOnline {
 
   async execute(
     params: {
+      status?: OnlineContributionsStatus
       amount: number
       observation?: string
       paidAt: string
@@ -46,6 +48,7 @@ export class RegisterContributionsOnline {
       observation,
       amount,
       availabilityAccount,
+      status,
     } = params
     const date = DateBR()
 
@@ -63,6 +66,7 @@ export class RegisterContributionsOnline {
     const voucherPath = (voucher as string) || ""
 
     const contribution: OnlineContributions = OnlineContributions.create({
+      status,
       amount: AmountValue.create(amount),
       member,
       financialConcept,
