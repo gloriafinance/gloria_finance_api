@@ -4,17 +4,26 @@ import {
   AvailabilityAccountMongoRepository,
   FinancialConceptMongoRepository,
 } from "@/FinanceConfig/infrastructure/presistence"
-import { DispatchCreateFinancialRecord } from "@/Financial/applications"
 import {
+  DispatchCreateFinancialRecord,
+  RegisterContributionsOnline,
+} from "@/Financial/applications"
+import {
+  FinancialConcept,
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import { FinanceRecordMongoRepository } from "@/Financial/infrastructure"
+import {
+  FinanceRecordMongoRepository,
+  OnlineContributionsMongoRepository,
+} from "@/Financial/infrastructure"
 import { QueueService } from "@/package/queue/infrastructure"
 import { Logger, Urn } from "@/Shared/adapter"
 import { RealTimeEvent } from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
+import { Member } from "@/Church/domain"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 
 type Operation = {
   id: string
@@ -100,6 +109,8 @@ export class ProcessAsaasTransactionService {
       description += ":" + input.payer?.name
     }
 
+    const member = await this.lookMember(input.payer)
+
     await Promise.all([
       new DispatchCreateFinancialRecord(QueueService.getInstance()).execute({
         voucher,
@@ -118,13 +129,26 @@ export class ProcessAsaasTransactionService {
         amount: input.amount,
         date: new Date(input.date),
       }),
-      this.notify(input.payer),
+      this.notify(member),
+      this.recordHistoryInContributions({ concept, input, voucher, member }),
     ])
   }
 
-  private async notify(payer?: { name: string; cpfCnpj: string }) {
-    if (!payer) {
+  private async notify(member: Member | null) {
+    if (!member) {
       return
+    }
+
+    SocketIOService.getInstance().notifyClient(
+      member.getMemberId(),
+      RealTimeEvent.PaidPix,
+      { payment: "finish" }
+    )
+  }
+
+  private async lookMember(payer?: { name: string; cpfCnpj: string }) {
+    if (!payer) {
+      return null
     }
 
     const cpfCnpjFormat = (str: string) => {
@@ -141,17 +165,37 @@ export class ProcessAsaasTransactionService {
 
     const doc = cpfCnpjFormat(payer.cpfCnpj)
 
-    const member = await MemberMongoRepository.getInstance().one({
+    return await MemberMongoRepository.getInstance().one({
       dni: doc,
     })
+  }
 
-    if (member) {
-      SocketIOService.getInstance().notifyClient(
-        member.getMemberId(),
-        RealTimeEvent.PaidPix,
-        { payment: "finish" }
-      )
+  private async recordHistoryInContributions(params: {
+    concept: FinancialConcept
+    input: Operation
+    voucher?: string
+    member: Member | null
+  }) {
+    const { voucher, member, input, concept } = params
+
+    if (!member) {
+      return
     }
+
+    await new RegisterContributionsOnline(
+      OnlineContributionsMongoRepository.getInstance(),
+      StorageProviderService.getInstance(),
+      FinancialYearMongoRepository.getInstance()
+    ).execute(
+      {
+        amount: input.amount,
+        observation: "",
+        paidAt: input.date,
+        bankTransferReceipt: voucher,
+      },
+      member,
+      concept
+    )
   }
 
   private async saveReceipt(

@@ -38,6 +38,7 @@ export class OnlineContributions extends AggregateRoot {
       accountReceivableId?: string
       installmentId?: string
     }
+    status?: OnlineContributionsStatus
   }): OnlineContributions {
     const {
       member,
@@ -48,6 +49,7 @@ export class OnlineContributions extends AggregateRoot {
       observation,
       paidAt,
       reference,
+      status,
     } = params
 
     const contributions: OnlineContributions = new OnlineContributions()
@@ -56,7 +58,8 @@ export class OnlineContributions extends AggregateRoot {
     contributions.contributionId = IdentifyEntity.get(`contribution`)
     contributions.bankTransferReceipt = bankTransferReceipt
 
-    contributions.status = OnlineContributionsStatus.PENDING_VERIFICATION
+    contributions.status =
+      status ?? OnlineContributionsStatus.PENDING_VERIFICATION
     contributions.amount = amount.getValue()
     contributions.createdAt = DateBR()
     contributions.financialConcept = financialConcept
