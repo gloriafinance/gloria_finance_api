@@ -1,5 +1,6 @@
 import {
-  BunAdapter,
+  BunWebSocketAdapter,
+  type BunWebSocketAdapterOptions,
   type ServerHandler,
   type ServerRequest,
 } from "bun-platform-kit"
@@ -11,9 +12,13 @@ export type ChurchBankingWebhookRequest = ServerRequest & {
   rawBody?: Uint8Array
 }
 
-export class ChurchBankingWebhookBunAdapter extends BunAdapter {
+export class ChurchBankingWebhookBunAdapter extends BunWebSocketAdapter {
+  constructor(options: BunWebSocketAdapterOptions) {
+    super(options)
+  }
+
   override configure(
-    app: Parameters<BunAdapter["configure"]>[0],
+    app: Parameters<BunWebSocketAdapter["configure"]>[0],
     port: number
   ) {
     app.use(captureChurchBankingWebhookRawBody)
