@@ -3,7 +3,7 @@ import type {
   RecordPurchaseRequest,
 } from "../../../domain/requests"
 
-import type { ServerResponse } from "bun-platform-kit"
+import type { BunMultipartFile, ServerResponse } from "bun-platform-kit"
 import {
   Body,
   Controller,
@@ -15,6 +15,33 @@ import {
   Use,
 } from "bun-platform-kit"
 
+import { CreateAccountPayable } from "@/AccountsPayable/applications"
+import {
+  AccountPayableTaxStatus,
+  TaxDocumentType,
+} from "@/AccountsPayable/domain"
+import {
+  AccountsPayableMongoRepository,
+  SupplierMongoRepository,
+} from "@/AccountsPayable/infrastructure/persistence"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
+import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
+import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
+import CreditPurchaseValidator from "@/Purchases/infrastructure/http/validators/CreditPurchase.validator.ts"
+import { mergePdfFilesService } from "@/Purchases/infrastructure/services/MergePdfFiles.service.ts"
+import { readPurchaseFromPdfs } from "@/Purchases/infrastructure/services/ReadPDF.service.ts"
+import { GenericException, HttpStatus } from "@/Shared/domain"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure"
+import {
+  Can,
+  PermissionMiddleware,
+  StorageProviderService,
+} from "@/Shared/infrastructure"
 import domainResponse from "../../../../Shared/helpers/domainResponse"
 import {
   RecordPurchase,
@@ -22,42 +49,17 @@ import {
   SearchPurchase,
 } from "../../../applications"
 import { PurchaseMongoRepository } from "../../persistence/PurchaseMongoRepository"
-import { AvailabilityAccountMongoRepository } from "@/Financial/infrastructure/persistence"
-import { HttpStatus } from "@/Shared/domain"
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
-import {
-  Can,
-  PermissionMiddleware,
-  StorageProviderService,
-} from "@/Shared/infrastructure"
-import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
-import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import PurchasePaginateDto from "../dto/PurchasePaginate.dto"
-import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
-import { mergePdfFiles } from "@/Shared/helpers/mergePdfFiles"
-import {
-  FinancialConceptMongoRepository,
-  FinancialConfigurationMongoRepository,
-} from "@/FinanceConfig/infrastructure/presistence"
 import PurchaseValidator from "../validators/Purchase.validator"
-import {
-  AccountPayableTaxStatus,
-  TaxDocumentType,
-} from "@/AccountsPayable/domain"
-import { CreateAccountPayable } from "@/AccountsPayable/applications"
-import {
-  AccountsPayableMongoRepository,
-  SupplierMongoRepository,
-} from "@/AccountsPayable/infrastructure/persistence"
-import CreditPurchaseValidator from "@/Purchases/infrastructure/http/validators/CreditPurchase.validator.ts"
 
 type RecordPurchasePayload = Omit<
   RecordPurchaseRequest,
   "churchId" | "createdBy" | "invoice" | "file"
 >
 
-const normalizeFiles = (files: any): any[] =>
-  Array.isArray(files) ? files : files ? [files] : []
+const normalizeFiles = (
+  files: BunMultipartFile | BunMultipartFile[] | undefined
+): BunMultipartFile[] => (Array.isArray(files) ? files : files ? [files] : [])
 
 @Controller("/api/v1/purchase")
 export class PurchaseController {
@@ -86,6 +88,27 @@ export class PurchaseController {
       if (request?.invoice) {
         await StorageProviderService.getInstance().deleteFile(request.invoice)
       }
+      domainResponse(e, res)
+    }
+  }
+
+  @Post("/pdf-read")
+  @Use([PermissionMiddleware, Can("purchases", "manage")])
+  async readPdf(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ): Promise<void> {
+    try {
+      const invoiceFiles = normalizeFiles(req.files?.file)
+
+      if (!invoiceFiles.length) {
+        throw new GenericException("Field `file` is required")
+      }
+
+      const purchase = await readPurchaseFromPdfs(invoiceFiles)
+
+      res.status(HttpStatus.OK).send(purchase)
+    } catch (e) {
       domainResponse(e, res)
     }
   }
@@ -170,7 +193,7 @@ export class PurchaseController {
     @Req() req: AuthenticatedRequest
   ): Promise<RecordPurchaseRequest> {
     const invoiceFiles = normalizeFiles(req.files?.file)
-    const invoiceFile = await mergePdfFiles(invoiceFiles)
+    const invoiceFile = await mergePdfFilesService(invoiceFiles)
 
     const request = {
       ...body,

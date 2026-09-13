@@ -19,7 +19,9 @@ const toBuffer = async (file: any): Promise<Buffer> => {
   throw new Error("Unsupported file input for PDF merge.")
 }
 
-export const mergePdfFiles = async (files: any[]): Promise<any | undefined> => {
+export const mergePdfFilesService = async (
+  files: any[]
+): Promise<any | undefined> => {
   if (!files.length) {
     return undefined
   }
