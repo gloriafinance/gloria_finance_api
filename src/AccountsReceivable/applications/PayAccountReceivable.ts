@@ -18,7 +18,6 @@ import {
   type IFinancialConceptRepository,
 } from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
-import { DateBR } from "@/Shared/helpers"
 import { PaymentAmountExceedsPending } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
 import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
@@ -105,9 +104,10 @@ export class PayAccountReceivable {
       }
 
       await new DispatchCreateFinancialRecord(this.queueService).execute({
-        voucher,
+        financialRecordId: req.financialRecordId,
+        voucher: voucher ?? req.voucher,
         churchId: eventData.accountReceivable.getChurchId(),
-        date: DateBR(),
+        date: req.date,
         createdBy: req.createdBy,
         financialRecordType: FinancialRecordType.INCOME,
         source: FinancialRecordSource.AUTO,

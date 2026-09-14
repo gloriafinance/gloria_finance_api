@@ -23,17 +23,29 @@ import {
 } from "@/Financial/infrastructure"
 import { QueueService } from "@/package/queue/infrastructure"
 import { Logger, Urn } from "@/Shared/adapter"
-import { RealTimeEvent } from "@/Shared/domain"
+import {
+  AmountValue,
+  PaymentAmountExceedsPending,
+  RealTimeEvent,
+} from "@/Shared/domain"
 import { StorageProviderService } from "@/Shared/infrastructure"
+import {
+  AccountReceivable,
+  AccountReceivableNotFound,
+} from "@/AccountsReceivable/domain"
+import { PayAccountReceivable } from "@/AccountsReceivable/applications"
+import { AccountsReceivableMongoRepository } from "@/AccountsReceivable/infrastructure/persistence/AccountsReceivableMongoRepository"
 
 type Operation = {
   id: string
   bankId: string
   churchId: string
   amount: number
+  transactionFeeInCents: number
+  platformFeeInCents: number
   date: string
   invoice: string
-  financialConceptId?: string
+  externalReference: string
   status: "RECEIVED" | "REFUNDED"
   payer?: { name: string; cpfCnpj: string }
 }
@@ -65,28 +77,12 @@ export class ProcessAsaasTransactionService {
     }
 
     if (input.status === "RECEIVED") {
-      await this.paymentIncome(input)
-
+      await this.paymentIncome(input, financialRecordId)
       return
     }
   }
 
-  private async paymentIncome(input: Operation) {
-    const concept = await this.financialConceptRepository.one({
-      financialConceptId: input.financialConceptId!,
-    })
-
-    if (!concept) {
-      this.logger.error(
-        `Financial concept with ID ${input.financialConceptId} not found.`,
-        input
-      )
-
-      throw new Error(
-        `Financial concept with ID ${input.financialConceptId} not found.`
-      )
-    }
-
+  private async paymentIncome(input: Operation, financialRecordId: string) {
     const availabilityAccount = await this.availabilityAccountRepository.one({
       "source.bankId": input.bankId,
     })
@@ -103,26 +99,48 @@ export class ProcessAsaasTransactionService {
     }
 
     const voucher = await this.saveReceipt(input.id, input.invoice)
+    const member = await this.lookMember(input.payer)
 
-    let description = concept?.getDescription()!
-
-    if (input.payer && concept.getTag() === "Tithes") {
-      description += ":" + input.payer?.name
+    if (input.externalReference.startsWith("urn:accountReceivable:")) {
+      await this.paymentAccountReceivable({
+        input,
+        financialRecordId,
+        availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
+        voucher,
+        member,
+      })
+      return
     }
 
-    const member = await this.lookMember(input.payer)
+    const concept = await this.financialConceptRepository.one({
+      financialConceptId: input.externalReference,
+    })
+
+    if (!concept) {
+      this.logger.error(
+        `Financial concept with ID ${input.externalReference} not found.`,
+        input
+      )
+
+      throw new Error(
+        `Financial concept with ID ${input.externalReference} not found.`
+      )
+    }
+
+    let description = concept.getDescription()
+
+    if (input.payer && concept.getTag() === "Tithes") {
+      description += ":" + input.payer.name
+    }
 
     await Promise.all([
       new DispatchCreateFinancialRecord(QueueService.getInstance()).execute({
         voucher,
         availabilityAccount,
-        financialRecordId: Urn.create({
-          entity: "financialRecord",
-          entityId: input.id,
-        }),
+        financialRecordId,
         createdBy: "system",
         description,
-        financialConcept: concept!,
+        financialConcept: concept,
         financialRecordType: FinancialRecordType.INCOME,
         source: FinancialRecordSource.AUTO,
         status: FinancialRecordStatus.RECONCILED,
@@ -133,6 +151,88 @@ export class ProcessAsaasTransactionService {
       this.notify(member),
       this.recordHistoryInContributions({ concept, input, voucher, member }),
     ])
+  }
+
+  private async paymentAccountReceivable(params: {
+    input: Operation
+    financialRecordId: string
+    availabilityAccountId: string
+    voucher?: string
+    member: Member | null
+  }) {
+    const { input, financialRecordId, availabilityAccountId, voucher, member } =
+      params
+
+    const account = await AccountsReceivableMongoRepository.getInstance().one({
+      accountReceivableId: input.externalReference,
+      churchId: input.churchId,
+    })
+
+    if (!account) {
+      throw new AccountReceivableNotFound()
+    }
+
+    if (input.amount > account.getAmountPending()) {
+      throw new PaymentAmountExceedsPending()
+    }
+
+    const installmentIds = this.installmentIdsForPayment(account, input.amount)
+
+    await new PayAccountReceivable(
+      this.financialConceptRepository,
+      this.availabilityAccountRepository,
+      AccountsReceivableMongoRepository.getInstance(),
+      QueueService.getInstance()
+    ).execute({
+      accountReceivableId: account.getAccountReceivableId(),
+      installmentId: installmentIds[0]!,
+      installmentIds,
+      financialTransactionId: input.id,
+      financialRecordId,
+      availabilityAccountId,
+      churchId: input.churchId,
+      amount: AmountValue.create(input.amount),
+      date: new Date(input.date),
+      voucher,
+      concept: account.getFinancialConcept().getName(),
+      createdBy: "system",
+      symbol: "R$",
+    })
+
+    await Promise.all([
+      this.notify(member),
+      this.recordHistoryInContributions({
+        concept: account.getFinancialConcept(),
+        input,
+        voucher,
+        member,
+        accountReceivableId: account.getAccountReceivableId(),
+      }),
+    ])
+  }
+
+  private installmentIdsForPayment(
+    account: AccountReceivable,
+    amount: number
+  ): string[] {
+    let remaining = amount
+    const installmentIds: string[] = []
+
+    for (const installment of account.getInstallments()) {
+      if (remaining <= 0) break
+
+      const amountPending = installment.amountPending ?? installment.amount
+      if (amountPending <= 0) continue
+
+      installmentIds.push(installment.installmentId)
+      remaining -= Math.min(remaining, amountPending)
+    }
+
+    if (installmentIds.length === 0 || remaining > 0) {
+      throw new PaymentAmountExceedsPending()
+    }
+
+    return installmentIds
   }
 
   private async notify(member: Member | null) {
@@ -160,10 +260,8 @@ export class ProcessAsaasTransactionService {
       const nro = str.replace(/\D/g, "")
 
       if (nro.length === 11) {
-        // CPF: 123.456.789-09
         return `${nro.substring(0, 3)}.${nro.substring(3, 6)}.${nro.substring(6, 9)}-${nro.substring(9)}`
       } else if (nro.length === 14) {
-        // CNPJ: 12.345.678/0001-95
         return `${nro.substring(0, 2)}.${nro.substring(2, 5)}.${nro.substring(5, 8)}/${nro.substring(8, 12)}-${nro.substring(12)}`
       }
     }
@@ -180,8 +278,9 @@ export class ProcessAsaasTransactionService {
     input: Operation
     voucher?: string
     member: Member | null
+    accountReceivableId?: string
   }) {
-    const { voucher, member, input, concept } = params
+    const { voucher, member, input, concept, accountReceivableId } = params
 
     if (!member) {
       this.logger.info(
@@ -202,6 +301,7 @@ export class ProcessAsaasTransactionService {
         observation: "",
         paidAt: input.date,
         bankTransferReceipt: voucher,
+        accountReceivableId,
       },
       member,
       concept
@@ -212,10 +312,8 @@ export class ProcessAsaasTransactionService {
     id: string,
     transactionReceiptUrl: string
   ): Promise<string | undefined> {
-    // 1. Resolver URL real del PDF
     const pdfUrl = await this.getAsaasReceiptPdfUrl(transactionReceiptUrl)
 
-    // 2. Descargar PDF
     const response = await fetch(pdfUrl)
 
     if (!response.ok) {

@@ -175,7 +175,7 @@ export class AccountReceivableController {
     PayAccountReceivableValidator,
   ])
   async pay(
-    @Body() body: PayAccountReceivableRequest,
+    @Body() body: Omit<PayAccountReceivableRequest, "date">,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
@@ -200,6 +200,7 @@ export class AccountReceivableController {
         createdBy: req.auth.name,
         installmentIds,
         amount: AmountValue.create(Number(body.amount)),
+        date: DateBR(),
         file: req?.files?.file,
       })
 

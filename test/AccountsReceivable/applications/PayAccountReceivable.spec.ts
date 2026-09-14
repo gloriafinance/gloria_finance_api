@@ -102,9 +102,11 @@ const createRequest = (overrides: Partial<any> = {}) => ({
   installmentId: overrides.installmentId ?? "installment-1",
   installmentIds: overrides.installmentIds ?? ["installment-1"],
   financialTransactionId: overrides.financialTransactionId ?? "tx-1",
+  financialRecordId: overrides.financialRecordId,
   availabilityAccountId: overrides.availabilityAccountId ?? "availability-1",
   churchId: overrides.churchId ?? "church-1",
   amount: overrides.amount ?? AmountValue.create(100),
+  date: overrides.date ?? new Date("2026-09-14T12:00:00.000Z"),
   file: overrides.file,
   voucher: overrides.voucher,
   concept: overrides.concept ?? "Receivable payment",
@@ -181,5 +183,16 @@ describe("PayAccountReceivable", () => {
       InstallmentNotFound
     )
     expect(accountReceivableRepository.upsert).toHaveBeenCalledTimes(1)
+  })
+
+  it("uses the payment date when dispatching the financial record", async () => {
+    const date = new Date("2026-08-31T23:30:00.000Z")
+
+    await useCase.execute(createRequest({ date }))
+
+    expect(queueService.dispatch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ date })
+    )
   })
 })

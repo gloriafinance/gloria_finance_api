@@ -5,9 +5,11 @@ export type PayAccountReceivableRequest = {
   installmentId: string
   installmentIds: string[]
   financialTransactionId: string
+  financialRecordId?: string
   availabilityAccountId: string
   churchId: string
   amount: AmountValue
+  date: Date
   file?: any
   voucher?: string
   concept: any
