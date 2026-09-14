@@ -1,4 +1,5 @@
 import type { FilterContributionsRequest } from "../../domain"
+import { OnlineContributions } from "../../domain"
 import {
   Criteria,
   Filters,
@@ -15,7 +16,9 @@ export class ListContributions {
   ) {}
 
   async execute(filter: FilterContributionsRequest) {
-    return this.contributionRepository.list(this.prepareFilter(filter))
+    return this.contributionRepository.list<OnlineContributions>(
+      this.prepareFilter(filter)
+    )
   }
 
   private prepareFilter(reqFilters: FilterContributionsRequest) {
@@ -25,7 +28,7 @@ export class ListContributions {
     if (reqFilters.startDate) {
       filters.push(
         new Map<string, string | Date>([
-          ["field", "createdAt"],
+          ["field", "paidAt"],
           ["operator", Operator.GTE],
           ["value", StringToDate(reqFilters.startDate)],
         ])
@@ -35,7 +38,7 @@ export class ListContributions {
     if (reqFilters.endDate) {
       filters.push(
         new Map<string, string | Date>([
-          ["field", "createdAt"],
+          ["field", "paidAt"],
           ["operator", Operator.LTE],
           ["value", StringToDate(reqFilters.endDate)],
         ])
