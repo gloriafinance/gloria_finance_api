@@ -13,15 +13,6 @@ export default async (
 ): Promise<void> => {
   const payload = req.body as any
 
-  if (typeof payload.amount !== "number" || !Number.isFinite(payload.amount)) {
-    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
-      amount: {
-        message: "The amount must be a valid number.",
-      },
-    })
-    return
-  }
-
   const rule = {
     externalReference: "required|string",
     amount: "required|numeric",

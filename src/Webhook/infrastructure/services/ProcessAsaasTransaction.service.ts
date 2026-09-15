@@ -1,6 +1,9 @@
 import { SocketIOService } from "@/bootstrap"
 import { Member } from "@/Church/domain"
-import { MemberMongoRepository } from "@/Church/infrastructure"
+import {
+  ChurchMongoRepository,
+  MemberMongoRepository,
+} from "@/Church/infrastructure"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import {
   AvailabilityAccountMongoRepository,
@@ -56,7 +59,8 @@ export class ProcessAsaasTransactionService {
   constructor(
     private readonly availabilityAccountRepository = AvailabilityAccountMongoRepository.getInstance(),
     private readonly financialConceptRepository = FinancialConceptMongoRepository.getInstance(),
-    private readonly financeRecordRepository = FinanceRecordMongoRepository.getInstance()
+    private readonly financeRecordRepository = FinanceRecordMongoRepository.getInstance(),
+    private readonly churchRepository = ChurchMongoRepository.getInstance()
   ) {}
 
   async handle(input: Operation) {
@@ -98,6 +102,8 @@ export class ProcessAsaasTransactionService {
       )
     }
 
+    const church = await this.churchRepository.one({ churchId: input.churchId })
+
     const voucher = await this.saveReceipt(input.id, input.invoice)
     const member = await this.lookMember(input.payer)
 
@@ -108,6 +114,7 @@ export class ProcessAsaasTransactionService {
         availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
         voucher,
         member,
+        symbol: church?.getSymbolFormatMoney()!,
       })
       return
     }
@@ -159,9 +166,16 @@ export class ProcessAsaasTransactionService {
     availabilityAccountId: string
     voucher?: string
     member: Member | null
+    symbol: string
   }) {
-    const { input, financialRecordId, availabilityAccountId, voucher, member } =
-      params
+    const {
+      input,
+      financialRecordId,
+      availabilityAccountId,
+      voucher,
+      member,
+      symbol,
+    } = params
 
     const account = await AccountsReceivableMongoRepository.getInstance().one({
       accountReceivableId: input.externalReference,
@@ -196,7 +210,7 @@ export class ProcessAsaasTransactionService {
       voucher,
       concept: account.getFinancialConcept().getName(),
       createdBy: "system",
-      symbol: "R$",
+      symbol,
     })
 
     await Promise.all([
@@ -224,7 +238,7 @@ export class ProcessAsaasTransactionService {
       const amountPending = installment.amountPending ?? installment.amount
       if (amountPending <= 0) continue
 
-      installmentIds.push(installment.installmentId)
+      installmentIds.push(installment.installmentId!)
       remaining -= Math.min(remaining, amountPending)
     }
 
