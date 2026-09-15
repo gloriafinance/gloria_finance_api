@@ -25,6 +25,8 @@ type payloadWebhook = {
   data: {
     payment: {
       amountInCents: number
+      transactionFeeInCents: number
+      platformFeeInCents: number
       status: "RECEIVED" | "REFUNDED"
       paymentDate: string
       transactionReceiptUrl: string
@@ -66,9 +68,11 @@ export class ChurchBankingController {
         bankId: body.accountId,
         churchId: body.externalAccountId,
         amount: Number(body.data.payment.amountInCents) / 100,
+        transactionFeeInCents: body.data.payment.transactionFeeInCents,
+        platformFeeInCents: body.data.payment.platformFeeInCents,
         date: body.data.payment.paymentDate,
         invoice: body.data.payment.transactionReceiptUrl,
-        financialConceptId: body.data.payment.externalReference,
+        externalReference: body.data.payment.externalReference,
         status: body.data.payment.status,
         payer: body.data.payment.payer,
       })

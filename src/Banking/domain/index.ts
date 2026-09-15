@@ -5,6 +5,7 @@ export * from "./enums/TypeBankingOperation.enum"
 
 export type * from "./requests/Bank.request"
 export type * from "./requests/ConnectExternalAccount.request"
+export type * from "./requests/CreatePixPayment.request"
 export type * from "./requests/ImportBankStatement.request"
 export type * from "./requests/LinkBankStatement.request"
 export type * from "./requests/LinkBankStatementHttp.request"
