@@ -104,7 +104,7 @@ export class PayAccountReceivable {
       }
 
       await new DispatchCreateFinancialRecord(this.queueService).execute({
-        financialRecordId: req.financialRecordId,
+        financialRecordId: req.financialTransactionId,
         voucher: voucher ?? req.voucher,
         churchId: eventData.accountReceivable.getChurchId(),
         date: req.date,

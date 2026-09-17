@@ -28,6 +28,7 @@ import { QueueService } from "@/package/queue/infrastructure"
 import { Logger, Urn } from "@/Shared/adapter"
 import {
   AmountValue,
+  InstallmentsStatus,
   PaymentAmountExceedsPending,
   RealTimeEvent,
 } from "@/Shared/domain"
@@ -107,7 +108,7 @@ export class ProcessAsaasTransactionService {
     const voucher = await this.saveReceipt(input.id, input.invoice)
     const member = await this.lookMember(input.payer)
 
-    if (input.externalReference.startsWith("urn:accountReceivable:")) {
+    if (input.externalReference.startsWith("urn:installment:")) {
       await this.paymentAccountReceivable({
         input,
         financialRecordId,
@@ -178,7 +179,7 @@ export class ProcessAsaasTransactionService {
     } = params
 
     const account = await AccountsReceivableMongoRepository.getInstance().one({
-      accountReceivableId: input.externalReference,
+      "installments.installmentId": input.externalReference,
       churchId: input.churchId,
     })
 
@@ -190,7 +191,11 @@ export class ProcessAsaasTransactionService {
       throw new PaymentAmountExceedsPending()
     }
 
-    const installmentIds = this.installmentIdsForPayment(account, input.amount)
+    const installmentIds = this.installmentIdsForPayment(
+      input.externalReference,
+      account,
+      input.amount
+    )
 
     await new PayAccountReceivable(
       this.financialConceptRepository,
@@ -199,10 +204,13 @@ export class ProcessAsaasTransactionService {
       QueueService.getInstance()
     ).execute({
       accountReceivableId: account.getAccountReceivableId(),
-      installmentId: installmentIds[0]!,
+      installmentId: account.getInstallment(input.externalReference)
+        ?.installmentId!,
       installmentIds,
-      financialTransactionId: input.id,
-      financialRecordId,
+      financialTransactionId: Urn.create({
+        entity: "financialRecord",
+        entityId: input.id,
+      }),
       availabilityAccountId,
       churchId: input.churchId,
       amount: AmountValue.create(input.amount),
@@ -226,6 +234,7 @@ export class ProcessAsaasTransactionService {
   }
 
   private installmentIdsForPayment(
+    installmentId: string,
     account: AccountReceivable,
     amount: number
   ): string[] {
@@ -235,11 +244,13 @@ export class ProcessAsaasTransactionService {
     for (const installment of account.getInstallments()) {
       if (remaining <= 0) break
 
-      const amountPending = installment.amountPending ?? installment.amount
-      if (amountPending <= 0) continue
-
-      installmentIds.push(installment.installmentId!)
-      remaining -= Math.min(remaining, amountPending)
+      if (installment.status === InstallmentsStatus.PENDING) {
+        installmentIds.push(installment.installmentId!)
+        remaining -= Math.min(
+          remaining,
+          installment.amount ?? installment.amountPending
+        )
+      }
     }
 
     if (installmentIds.length === 0 || remaining > 0) {
