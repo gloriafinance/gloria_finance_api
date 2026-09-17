@@ -100,6 +100,7 @@ export class UpdateContributionStatus {
         availabilityAccountId: availabilityAccount.getAvailabilityAccountId(),
         churchId: contribution.getMember().getChurchId(),
         amount: AmountValue.create(contribution.getAmount()),
+        date: contribution.getPaidAt(),
         voucher: contribution.getBankTransferReceipt(),
         concept: concept.getName(),
         createdBy: createdBy,

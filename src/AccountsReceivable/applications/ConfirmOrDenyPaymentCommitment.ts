@@ -4,10 +4,14 @@ import {
   AccountsReceivableStatus,
   ActionsPaymentCommitment,
   type ConfirmOrDenyPaymentCommitmentRequest,
-  IAccountsReceivableRepository,
+  type IAccountsReceivableRepository,
 } from "@/AccountsReceivable/domain"
 import { GeneratePDFAdapter, Logger } from "@/Shared/adapter"
-import { Church, IChurchRepository, IMemberRepository } from "@/Church/domain"
+import {
+  Church,
+  type IChurchRepository,
+  type IMemberRepository,
+} from "@/Church/domain"
 import { FindChurchById } from "@/Church/applications"
 
 export class ConfirmOrDenyPaymentCommitment {
@@ -90,11 +94,11 @@ export class ConfirmOrDenyPaymentCommitment {
           name: church.getName(),
           address: church.getAddress(),
           legalRepresentative: {
-            name: minister.getName(),
+            name: minister!.getName(),
             //role: minister.getMinisterType(),
             role: "Pastor",
             //dni: minister.getDNI(),
-            dni: minister.getDni(),
+            dni: minister!.getDni(),
           },
         },
       })

@@ -8,6 +8,7 @@ export type PayAccountReceivableRequest = {
   availabilityAccountId: string
   churchId: string
   amount: AmountValue
+  date: Date
   file?: any
   voucher?: string
   concept: any

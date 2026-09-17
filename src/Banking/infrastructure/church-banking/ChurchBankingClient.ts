@@ -1,6 +1,8 @@
 import type {
   ConnectExternalAccountInput,
   ConnectExternalAccountResponse,
+  CreatePaymentInput,
+  CreatePaymentResponse,
   CreateStaticPixInput,
   IChurchBankingClient,
   StaticPixResponse,
@@ -43,6 +45,15 @@ export class ChurchBankingClientError extends Error {
 export class ChurchBankingClient implements IChurchBankingClient {
   private logger = Logger(ChurchBankingClient.name)
   private encryptionKey?: EncryptionKey
+
+  async createPayment(
+    input: CreatePaymentInput
+  ): Promise<CreatePaymentResponse> {
+    return (await this.execute<CreatePaymentInput>({
+      path: "/api/payments",
+      payload: input,
+    })) as CreatePaymentResponse
+  }
 
   async createStaticPix(
     input: CreateStaticPixInput
