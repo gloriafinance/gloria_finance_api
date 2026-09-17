@@ -8,13 +8,7 @@ import type {
   StaticPixResponse,
 } from "@/Banking/domain"
 import { Logger } from "@/Shared/adapter"
-import {
-  CompactEncrypt,
-  importJWK,
-  type JWK,
-  type KeyLike,
-  SignJWT,
-} from "jose"
+import { CompactEncrypt, importJWK, type JWK, KeyLike, SignJWT } from "jose"
 import { createHash, randomUUID } from "node:crypto"
 import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provider"
 
@@ -49,6 +43,8 @@ export class ChurchBankingClient implements IChurchBankingClient {
   async createPayment(
     input: CreatePaymentInput
   ): Promise<CreatePaymentResponse> {
+    this.logger.info("Requesting create payment pix", input)
+
     return (await this.execute<CreatePaymentInput>({
       path: "/api/payments",
       payload: input,
