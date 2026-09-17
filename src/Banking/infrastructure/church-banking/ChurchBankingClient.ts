@@ -43,7 +43,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
   async createPayment(
     input: CreatePaymentInput
   ): Promise<CreatePaymentResponse> {
-    this.logger.info("Requesting create payment pix", input)
+    this.logger.info(`Requesting create payment pix: ${JSON.stringify(input)}`)
 
     return (await this.execute<CreatePaymentInput>({
       path: "/api/payments",
