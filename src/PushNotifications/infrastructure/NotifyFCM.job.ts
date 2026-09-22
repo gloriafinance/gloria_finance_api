@@ -19,18 +19,23 @@ export class NotifyFCMJob implements IJob {
   ) {}
 
   async handle(args: NotificationRequest): Promise<any> {
-    this.logger.info(`Processing FCM job for member ${args.memberId}`, args)
+    try {
+      this.logger.info(`Processing FCM job for member ${args.memberId}`, args)
 
-    if (!args.memberId || args.memberId.length === 0) {
-      // es para notificar a todos los miembros
-      return this.notifyAllMembers(args)
+      if (!args.memberId || args.memberId.length === 0) {
+        // es para notificar a todos los miembros
+        return this.notifyAllMembers(args)
+      }
+
+      const members = await this.memberRepository.many({
+        memberId: { $in: args.memberId },
+      })
+
+      await this.notifyMembers({ ...args, members })
+    } catch (e) {
+      this.logger.info(`error: ${e instanceof Error ? e.message : String(e)}`)
+      throw e
     }
-
-    const members = await this.memberRepository.list({
-      memberId: { $in: args.memberId },
-    })
-
-    await this.notifyMembers({ ...args, members })
   }
 
   private async notifyMembers(
