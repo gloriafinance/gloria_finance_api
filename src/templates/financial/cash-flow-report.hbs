@@ -44,20 +44,20 @@
       .card {
         border: 1px solid #dbe3ea;
         border-radius: 8px;
-        padding: 12px;
+        padding: 10px 12px;
         background: #f8fafc;
       }
 
       .card .label {
         display: block;
-        font-size: 11px;
+        font-size: 10px;
         text-transform: uppercase;
         color: #64748b;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
       }
 
       .card .value {
-        font-size: 16px;
+        font-size: 13px;
         font-weight: 700;
       }
 
@@ -92,6 +92,11 @@
 
       .number {
         text-align: right;
+      }
+
+      .negative {
+        color: #b42318;
+        font-weight: 600;
       }
 
       .empty {
@@ -158,37 +163,35 @@
         <span class="label">{{t
             "cash_flow_report.summary.opening_balance"
           }}</span>
-        <span class="value">{{formatCurrency
-            summary.openingBalance
-            filters.symbol
-          }}</span>
+        <span class="value {{#if (isNegative summary.openingBalance)}}negative{{/if}}">
+          {{formatCurrency summary.openingBalance filters.symbol}}
+        </span>
       </div>
       <div class="card">
         <span class="label">{{t "cash_flow_report.summary.entries"}}</span>
-        <span class="value">{{formatCurrency
-            summary.entries
-            filters.symbol
-          }}</span>
+        <span class="value {{#if (isNegative summary.entries)}}negative{{/if}}">
+          {{formatCurrency summary.entries filters.symbol}}
+        </span>
       </div>
       <div class="card">
         <span class="label">{{t "cash_flow_report.summary.exits"}}</span>
-        <span class="value">{{formatCurrency
-            summary.exits
-            filters.symbol
-          }}</span>
+        <span class="value {{#if (isNegative summary.exits)}}negative{{/if}}">
+          {{formatCurrency summary.exits filters.symbol}}
+        </span>
       </div>
       <div class="card">
         <span class="label">{{t "cash_flow_report.summary.net"}}</span>
-        <span class="value">{{formatCurrency summary.net filters.symbol}}</span>
+        <span class="value {{#if (isNegative summary.net)}}negative{{/if}}">
+          {{formatCurrency summary.net filters.symbol}}
+        </span>
       </div>
       <div class="card">
         <span class="label">{{t
             "cash_flow_report.summary.closing_balance"
           }}</span>
-        <span class="value">{{formatCurrency
-            summary.closingBalance
-            filters.symbol
-          }}</span>
+        <span class="value {{#if (isNegative summary.closingBalance)}}negative{{/if}}">
+          {{formatCurrency summary.closingBalance filters.symbol}}
+        </span>
       </div>
     </div>
 
@@ -216,22 +219,20 @@
           {{#each series}}
             <tr>
               <td>{{formatDate period}}</td>
-              <td class="number">{{formatCurrency
-                  entries
-                  @root.filters.symbol
-                }}</td>
-              <td class="number">{{formatCurrency
-                  exits
-                  @root.filters.symbol
-                }}</td>
-              <td class="number">{{formatCurrency
-                  net
-                  @root.filters.symbol
-                }}</td>
-              <td class="number">{{formatCurrency
-                  runningBalance
-                  @root.filters.symbol
-                }}</td>
+              <td class="number {{#if (isNegative entries)}}negative{{/if}}">
+                {{formatCurrency entries @root.filters.symbol}}
+              </td>
+              <td class="number {{#if (isNegative exits)}}negative{{/if}}">
+                {{formatCurrency exits @root.filters.symbol}}
+              </td>
+              <td class="number {{#if (isNegative net)}}negative{{/if}}">
+                {{formatCurrency net @root.filters.symbol}}
+              </td>
+              <td
+                class="number {{#if (isNegative runningBalance)}}negative{{/if}}"
+              >
+                {{formatCurrency runningBalance @root.filters.symbol}}
+              </td>
             </tr>
           {{/each}}
         {{else}}
@@ -273,22 +274,26 @@
               {{#each projection.buckets}}
                 <tr>
                   <td>{{formatDate period}}</td>
-                  <td class="number">{{formatCurrency
-                      projectedEntries
-                      @root.filters.symbol
-                    }}</td>
-                  <td class="number">{{formatCurrency
-                      projectedExits
-                      @root.filters.symbol
-                    }}</td>
-                  <td class="number">{{formatCurrency
-                      projectedNet
-                      @root.filters.symbol
-                    }}</td>
-                  <td class="number">{{formatCurrency
-                      projectedBalance
-                      @root.filters.symbol
-                    }}</td>
+                  <td
+                    class="number {{#if (isNegative projectedEntries)}}negative{{/if}}"
+                  >
+                    {{formatCurrency projectedEntries @root.filters.symbol}}
+                  </td>
+                  <td
+                    class="number {{#if (isNegative projectedExits)}}negative{{/if}}"
+                  >
+                    {{formatCurrency projectedExits @root.filters.symbol}}
+                  </td>
+                  <td
+                    class="number {{#if (isNegative projectedNet)}}negative{{/if}}"
+                  >
+                    {{formatCurrency projectedNet @root.filters.symbol}}
+                  </td>
+                  <td
+                    class="number {{#if (isNegative projectedBalance)}}negative{{/if}}"
+                  >
+                    {{formatCurrency projectedBalance @root.filters.symbol}}
+                  </td>
                 </tr>
               {{/each}}
             {{else}}
