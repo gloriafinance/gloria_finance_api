@@ -7,7 +7,6 @@ export class DREMongoRepository
   implements IDRERepository
 {
   private static instance: DREMongoRepository
-  private dbCollectionName: string = "dre_masters"
 
   private constructor() {
     super(DREMaster)
@@ -19,10 +18,6 @@ export class DREMongoRepository
     }
     DREMongoRepository.instance = new DREMongoRepository()
     return DREMongoRepository.instance
-  }
-
-  collectionName(): string {
-    return this.dbCollectionName
   }
 
   protected ensureIndexes(collection: Collection): Promise<void> {

@@ -1,9 +1,20 @@
 import { Urn } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import type { UserPolicies } from "./types/user-policies.type"
 
 export class User extends AggregateRoot {
+  static collectionName(): string {
+    return "bk_users"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   isActive: boolean
   isSuperUser: boolean
   private userId: string
@@ -15,10 +26,6 @@ export class User extends AggregateRoot {
   private lastLogin?: Date
   private policies?: UserPolicies
   private churchId: string
-
-  private constructor() {
-    super()
-  }
 
   static create(
     name: string,

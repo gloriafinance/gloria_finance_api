@@ -1,6 +1,30 @@
-import { AggregateRoot, MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  type AggregateRelations,
+  MongoRepository,
+} from "@abejarano/ts-mongodb-criteria"
 import { IRolePermissionRepository } from "@/SecuritySystem/domain"
 import { Collection } from "mongodb"
+
+/**
+ * Marcador de la colección `role_permissions`. Este repositorio sólo usa el
+ * driver nativo, así que no hidrata agregados: la clase existe para declarar
+ * la colección que el repositorio hereda de MongoRepository.
+ */
+class RolePermissionDocument {
+  static collectionName(): string {
+    return "role_permissions"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
+  static fromPrimitives(
+    data: Record<string, unknown>
+  ): Record<string, unknown> {
+    return data
+  }
+}
 
 export class RolePermissionMongoRepository
   extends MongoRepository<any>
@@ -9,7 +33,7 @@ export class RolePermissionMongoRepository
   private static instance: RolePermissionMongoRepository
 
   private constructor() {
-    super(AggregateRoot)
+    super(RolePermissionDocument)
   }
 
   static getInstance(): RolePermissionMongoRepository {
@@ -19,10 +43,6 @@ export class RolePermissionMongoRepository
     }
 
     return RolePermissionMongoRepository.instance
-  }
-
-  collectionName(): string {
-    return "role_permissions"
   }
 
   async replacePermissions(

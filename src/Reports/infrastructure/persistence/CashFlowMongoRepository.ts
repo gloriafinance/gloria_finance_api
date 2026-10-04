@@ -135,10 +135,6 @@ export class CashFlowMongoRepository
     return CashFlowMongoRepository.instance
   }
 
-  override collectionName(): string {
-    return "financial_records"
-  }
-
   async getCashFlowDirectReport(
     rawFilters: CashFlowFilters
   ): Promise<CashFlowReportResult> {

@@ -71,7 +71,7 @@ export class CancelFinancialRecord {
               financialRecordId,
               churchId,
             },
-            transaction
+            { transaction }
           )
 
           if (!financialRecord) {
@@ -197,7 +197,7 @@ export class CancelFinancialRecord {
       {
         availabilityAccountId: financialRecord.getAvailabilityAccountId(),
       },
-      transaction
+      { transaction }
     ))!
 
     const cancellationDate = DateBR()

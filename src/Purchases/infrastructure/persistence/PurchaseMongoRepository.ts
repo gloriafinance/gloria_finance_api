@@ -25,10 +25,6 @@ export class PurchaseMongoRepository
     return this.instance
   }
 
-  collectionName(): string {
-    return "purchases"
-  }
-
   async delete(purchaseIds: string[]): Promise<void> {
     const collection = await this.collection()
 

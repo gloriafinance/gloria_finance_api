@@ -23,10 +23,6 @@ export class NotificationMongoRepository
     return NotificationMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "notification_inbox"
-  }
-
   async deleteByUserId(userId: string): Promise<void> {
     const collection = await this.collection()
 

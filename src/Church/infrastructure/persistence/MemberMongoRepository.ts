@@ -20,10 +20,6 @@ export class MemberMongoRepository
     return MemberMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "members"
-  }
-
   async deleteByMemberId(memberId: string): Promise<void> {
     const collection = await this.collection()
     await collection.deleteOne({ memberId })

@@ -11,7 +11,10 @@ import {
   InstallmentsStatus,
   PaymentAmountExceedsPending,
 } from "@/Shared/domain"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { AccountReceivableType } from "./enums/AccountReceivableType.enum"
 import { FinancialConcept } from "@/Financial/domain"
 
@@ -25,6 +28,14 @@ type Debtor = {
 }
 
 export class AccountReceivable extends AggregateRoot {
+  static collectionName(): string {
+    return "accounts_receivable"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   protected amountTotal: number
   protected amountPaid: number
   private type: AccountReceivableType

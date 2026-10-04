@@ -3,11 +3,22 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { AvailabilityAccount, FinancialConcept } from "@/FinanceConfig/domain"
 import { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { AmountValue } from "@/Shared/domain"
 import { ContributionMemberSnapshot } from "./ContributionMemberSnapshot"
 
 export class OnlineContributions extends AggregateRoot {
+  static collectionName(): string {
+    return "contributions"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private member: ContributionMemberSnapshot
   private contributionId: string

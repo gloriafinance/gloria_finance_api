@@ -1,9 +1,20 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import IdentifyAvailabilityAccountMaster from "../applications/helpers/MasterBalanceIdentifier"
 import { AvailabilityAccount } from "@/FinanceConfig/domain"
 import { DateBR } from "@/Shared/helpers"
 
 export class AvailabilityAccountMaster extends AggregateRoot {
+  static collectionName(): string {
+    return "availability_accounts_master"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private availabilityAccount: {
     availabilityAccountId: string

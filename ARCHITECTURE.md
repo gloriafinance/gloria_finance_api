@@ -300,10 +300,6 @@ export class AvailabilityAccountMongoRepository
     return this.instance
   }
 
-  collectionName(): string {
-    return "availability_accounts"
-  }
-
   async upsert(account: AvailabilityAccount): Promise<void> {
     const collection = await this.collection()
     await collection.updateOne(

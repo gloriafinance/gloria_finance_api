@@ -25,10 +25,6 @@ export class AccountsPayableMongoRepository
     return AccountsPayableMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "accounts_payable"
-  }
-
   async dashboardAccountPayable(
     churchId: string
   ): Promise<AccountPayablesDashboardType | null> {

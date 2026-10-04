@@ -24,10 +24,6 @@ export class RoleMongoRepository
     return RoleMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "roles"
-  }
-
   async findByRoleId(churchId: string, roleId: string): Promise<Role | null> {
     const collection = await this.collection()
     const document = await collection.findOne({ churchId, roleId })

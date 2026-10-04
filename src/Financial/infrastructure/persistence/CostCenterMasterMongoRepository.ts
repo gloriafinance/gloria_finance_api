@@ -1,7 +1,11 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  MongoClientFactory,
+  MongoRepository,
+} from "@abejarano/ts-mongodb-criteria"
 import {
   ConceptType,
   CostCenterMaster,
+  FinanceRecord,
   FinancialRecordStatus,
 } from "../../domain"
 import type { ICostCenterMasterRepository } from "../../domain/interfaces"
@@ -13,7 +17,6 @@ export class CostCenterMasterMongoRepository
   implements ICostCenterMasterRepository
 {
   private static instance: CostCenterMasterMongoRepository
-  private dbCollectionName = "cost_centers_master"
   private logger = Logger(CostCenterMasterMongoRepository.name)
 
   private constructor() {
@@ -28,8 +31,14 @@ export class CostCenterMasterMongoRepository
     return this.instance
   }
 
-  collectionName(): string {
-    return this.dbCollectionName
+  /**
+   * El rebuild lee de `financial_records`, que no es la colección de este
+   * agregado. Se resuelve con la misma conexión en lugar de reasignar el
+   * nombre de la colección del repositorio.
+   */
+  private async financialRecordsCollection(): Promise<Collection> {
+    const client = await MongoClientFactory.createClient()
+    return client.db().collection(FinanceRecord.collectionName())
   }
 
   async findById(
@@ -84,8 +93,7 @@ export class CostCenterMasterMongoRepository
     const { churchId, year, month } = filter
 
     // 1) Fuente: financial_records
-    this.dbCollectionName = "financial_records"
-    const financialRecordsCollection = await this.collection()
+    const financialRecordsCollection = await this.financialRecordsCollection()
 
     const startDate = month
       ? new Date(Date.UTC(year, month - 1, 1))
@@ -152,7 +160,6 @@ export class CostCenterMasterMongoRepository
     }
 
     // 2) Escribir en cost_centers_master
-    this.dbCollectionName = "cost_centers_master"
     const masterCollection = await this.collection()
 
     const deleteFilter: any = {
@@ -196,8 +203,6 @@ export class CostCenterMasterMongoRepository
     month?: number
   }): Promise<CostCenterMaster[]> {
     this.logger.info(`Fetch costs center params: ${JSON.stringify(filter)}`)
-
-    this.dbCollectionName = "cost_centers_master"
 
     const { churchId, year, month } = filter
 

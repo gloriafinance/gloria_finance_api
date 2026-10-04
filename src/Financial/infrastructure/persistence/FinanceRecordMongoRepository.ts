@@ -20,7 +20,6 @@ export class FinanceRecordMongoRepository
   implements IFinancialRecordRepository
 {
   private static instance: FinanceRecordMongoRepository
-  private dbCollectionName = "financial_records"
 
   private constructor() {
     super(FinanceRecord)
@@ -33,12 +32,7 @@ export class FinanceRecordMongoRepository
     return FinanceRecordMongoRepository.instance
   }
 
-  collectionName(): string {
-    return this.dbCollectionName
-  }
-
   async deleteByFinancialRecordId(financialRecordId: string): Promise<void> {
-    this.dbCollectionName = "financial_records"
     const collection = await this.collection()
     await collection.deleteOne({ financialRecordId })
   }
@@ -52,8 +46,6 @@ export class FinanceRecordMongoRepository
       symbol: string
     }[]
   }> {
-    this.dbCollectionName = "financial_records"
-
     const filters = {
       ...filter,
       status: { $in: REALIZED_STATUSES },
@@ -98,8 +90,6 @@ export class FinanceRecordMongoRepository
     year: number
     month?: number
   }): Promise<StatementCategorySummary[]> {
-    this.dbCollectionName = "financial_records"
-
     const { churchId, year, month } = filter
 
     const collection = await this.collection()

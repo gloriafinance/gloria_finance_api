@@ -9,7 +9,10 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { AccountPayableStatus } from "./enums/AccountPayableStatus"
 import { SupplierType } from "./enums/SupplierType"
 import { type ICreateAccountPayable } from "./interfaces/CreateAccountPayable.interface"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import type {
   AccountPayableTax,
   AccountPayableTaxInput,
@@ -20,6 +23,14 @@ import { AccountPayableTaxStatus } from "./enums/AccountPayableTaxStatus.enum"
 import { TaxDocumentType } from "@/AccountsPayable/domain/enums/TaxDocumentType.enum"
 
 export class AccountPayable extends AggregateRoot {
+  static collectionName(): string {
+    return "accounts_payable"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   protected amountTotal: number
   protected amountPaid: number
   private supplier: {

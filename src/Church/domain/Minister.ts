@@ -1,10 +1,21 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Church } from "./Church"
 import { MinisterType } from "./enums/MinisterType.enum"
 import { DateBR } from "@/Shared/helpers"
 
 export class Minister extends AggregateRoot {
+  static collectionName(): string {
+    return "ministers"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private ministerId: string
   private name: string
   private email: string

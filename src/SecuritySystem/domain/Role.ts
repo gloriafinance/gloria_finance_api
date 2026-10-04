@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 import { IdentifyEntity } from "@/Shared/adapter"
 
@@ -13,16 +16,20 @@ export type RolePrimitives = {
 }
 
 export class Role extends AggregateRoot {
+  static collectionName(): string {
+    return "roles"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private roleId: string
   private name: string
   private description: string
   private isSystem: boolean
   private createdAt: Date
-
-  private constructor() {
-    super()
-  }
 
   static create(
     churchId: string,

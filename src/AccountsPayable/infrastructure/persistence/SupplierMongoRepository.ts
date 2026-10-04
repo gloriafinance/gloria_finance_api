@@ -20,10 +20,6 @@ export class SupplierMongoRepository
     return SupplierMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "supplier"
-  }
-
   async all(churchId: string): Promise<Supplier[]> {
     const collection = await this.collection()
 

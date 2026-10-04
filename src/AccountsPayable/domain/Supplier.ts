@@ -1,8 +1,19 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { SupplierType } from "@/AccountsPayable/domain/enums/SupplierType"
 import { ISupplier } from "@/AccountsPayable/domain/interfaces/Supplier"
 
 export class Supplier extends AggregateRoot {
+  static collectionName(): string {
+    return "supplier"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private supplierId: string
   private type: SupplierType

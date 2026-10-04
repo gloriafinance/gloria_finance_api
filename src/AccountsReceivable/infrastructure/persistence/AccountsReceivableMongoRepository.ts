@@ -28,10 +28,6 @@ export class AccountsReceivableMongoRepository
     return AccountsReceivableMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "accounts_receivable"
-  }
-
   async countByDebtorAndStatus(params: {
     churchId: string
     debtorDni: string

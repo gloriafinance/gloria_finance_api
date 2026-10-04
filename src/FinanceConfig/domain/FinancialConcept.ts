@@ -2,7 +2,10 @@ import { Church } from "@/Church/domain"
 import { StatementCategory } from "@/Financial/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { ConceptType } from "./enums/ConcepType.enum"
 
 export type FinancialConceptImpactFlags = {
@@ -16,6 +19,14 @@ export type FinancialConceptImpactOverrides =
   Partial<FinancialConceptImpactFlags>
 
 export class FinancialConcept extends AggregateRoot {
+  static collectionName(): string {
+    return "financial_concepts"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   isSystem: boolean = false
   private financialConceptId: string
   private name: string
@@ -34,10 +45,6 @@ export class FinancialConcept extends AggregateRoot {
     pixQrCodeId: string
     copyPaste: string
     encodedImage: string
-  }
-
-  private constructor() {
-    super()
   }
 
   static create(

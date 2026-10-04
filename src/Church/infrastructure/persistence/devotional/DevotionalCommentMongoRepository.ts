@@ -23,10 +23,6 @@ export class DevotionalCommentMongoRepository
     return DevotionalCommentMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "devotional_comments"
-  }
-
   async save(comment: DevotionalComment): Promise<void> {
     const collection = await this.collection()
     const payload = comment.toPrimitives()

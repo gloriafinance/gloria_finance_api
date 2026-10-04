@@ -1,5 +1,8 @@
 import { DateBR, StringToDate } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 
 import {
   type LocationDTO,
@@ -22,6 +25,14 @@ type UpdateDetailsParams = {
 }
 
 export class ScheduleEvent extends AggregateRoot {
+  static collectionName(): string {
+    return "schedule_events"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private scheduleItemId: string
   private churchId: string
   private type: ScheduleEventType

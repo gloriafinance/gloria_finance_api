@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 import {
   type DevotionalReactionPrimitives,
@@ -6,6 +9,14 @@ import {
 } from "@/Church/domain"
 
 export class DevotionalReaction extends AggregateRoot {
+  static collectionName(): string {
+    return "devotional_reactions"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private devotionalId: string
   private memberId: string

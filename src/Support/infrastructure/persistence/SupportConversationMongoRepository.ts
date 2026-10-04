@@ -1,11 +1,33 @@
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  type AggregateRelations,
+  MongoRepository,
+} from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 import type {
   SupportConversation,
   SupportConversationSummary,
 } from "@/Support/domain/types/SupportConversation.type"
 
-class SupportConversationDocument {}
+/**
+ * Marcador de la colección `support_conversations`. Este repositorio sólo usa
+ * el driver nativo, así que no hidrata agregados: la clase existe para
+ * declarar la colección que el repositorio hereda de MongoRepository.
+ */
+class SupportConversationDocument {
+  static collectionName(): string {
+    return "support_conversations"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
+  static fromPrimitives(
+    data: Record<string, unknown>
+  ): Record<string, unknown> {
+    return data
+  }
+}
 
 export class SupportConversationMongoRepository extends MongoRepository<any> {
   private static instance: SupportConversationMongoRepository
@@ -20,10 +42,6 @@ export class SupportConversationMongoRepository extends MongoRepository<any> {
     }
 
     return this.instance
-  }
-
-  collectionName(): string {
-    return "support_conversations"
   }
 
   protected async ensureIndexes(collection: Collection): Promise<void> {

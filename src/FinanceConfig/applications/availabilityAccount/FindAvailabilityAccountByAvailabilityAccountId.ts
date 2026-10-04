@@ -26,7 +26,7 @@ export class FindAvailabilityAccountByAvailabilityAccountId {
       {
         availabilityAccountId,
       },
-      transaction
+      { transaction }
     )
 
     if (!account) {

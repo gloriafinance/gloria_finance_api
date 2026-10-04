@@ -1,8 +1,19 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { type DREStructure } from "./types/DREStructure.type"
 import { type DREResponse } from "@/Reports/domain/responses/DRE.response"
 
 export class DREMaster extends AggregateRoot {
+  static collectionName(): string {
+    return "dre_masters"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private dreMasterId: string
   private churchId: string
   private month: number

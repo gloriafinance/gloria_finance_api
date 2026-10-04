@@ -3,10 +3,21 @@ import { IdentifyEntity } from "@/Shared/adapter"
 import { ChurchStatus } from "./enums/ChurchStatus.enum"
 import { Minister } from "./Minister"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import type { ChurchDoctrinalBase } from "./type/ChurchDoctrinalBase.type"
 
 export class Church extends AggregateRoot {
+  static collectionName(): string {
+    return "churches"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private name: string
   private city: string

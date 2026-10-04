@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import {
@@ -13,6 +16,14 @@ import {
 } from "@/Church/domain"
 
 export class DevotionalWeeklyPlan extends AggregateRoot {
+  static collectionName(): string {
+    return "devotional_weekly_plans"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private devotionalWeeklyPlanId: string
   private churchId: string
   private weekStartDate: string

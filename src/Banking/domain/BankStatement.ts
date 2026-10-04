@@ -1,9 +1,12 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  type AggregateRelations,
+  AggregateRoot,
+} from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import { BankStatementDirection } from "./enums/BankStatementDirection.enum"
 import { BankStatementStatus } from "./enums/BankStatementStatus.enum"
-import { IntermediateBankStatement } from "./types/IntermediateBankStatement.type"
+import { type IntermediateBankStatement } from "./types/IntermediateBankStatement.type"
 
 export class BankStatement extends AggregateRoot {
   private bankStatementId: string
@@ -31,6 +34,14 @@ export class BankStatement extends AggregateRoot {
   private createdAt: Date
   private updatedAt: Date
   private raw?: Record<string, unknown>
+
+  static collectionName(): string {
+    return "bank_statements"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
 
   static create(intermediate: IntermediateBankStatement): BankStatement {
     const statement = new BankStatement()

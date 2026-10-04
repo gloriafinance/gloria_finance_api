@@ -22,10 +22,6 @@ export class CustomerMongoRepository
     return CustomerMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "customers"
-  }
-
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)
   }

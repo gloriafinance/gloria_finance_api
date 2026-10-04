@@ -24,10 +24,6 @@ export class DevotionalMongoRepository
     return DevotionalMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "devotionals"
-  }
-
   async upsert(devotional: Devotional): Promise<void> {
     const collection = await this.collection()
     const payload = devotional.toPrimitives()
