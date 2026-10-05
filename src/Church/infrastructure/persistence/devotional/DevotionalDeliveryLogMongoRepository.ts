@@ -24,10 +24,6 @@ export class DevotionalDeliveryLogMongoRepository
     return DevotionalDeliveryLogMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "devotional_delivery_logs"
-  }
-
   async search(
     request: ListDevotionalHistoryRequest
   ): Promise<DevotionalDeliveryLog[]> {

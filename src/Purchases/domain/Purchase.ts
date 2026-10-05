@@ -4,10 +4,21 @@ import {
   CostCenter,
 } from "@/Financial/domain"
 import { IdentifyEntity } from "@/Shared/adapter"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 
 export class Purchase extends AggregateRoot {
+  static collectionName(): string {
+    return "purchases"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private purchaseId: string
   private churchId: string
   private purchaseDate: Date

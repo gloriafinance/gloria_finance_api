@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 
 export type PermissionPrimitives = {
   id?: string
@@ -10,15 +13,19 @@ export type PermissionPrimitives = {
 }
 
 export class Permission extends AggregateRoot {
+  static collectionName(): string {
+    return "permissions"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private permissionId: string
   private module: string
   private action: string
   private description: string
   private isSystem: boolean
-
-  private constructor() {
-    super()
-  }
 
   static create(data: Omit<PermissionPrimitives, "id">): Permission {
     const permission = new Permission()

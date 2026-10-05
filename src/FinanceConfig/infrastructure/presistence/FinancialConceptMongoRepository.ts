@@ -23,10 +23,6 @@ export class FinancialConceptMongoRepository
     return FinancialConceptMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "financial_concepts"
-  }
-
   async search(filter: object): Promise<FinancialConcept[]> {
     const collection = await this.collection()
     const result = await collection.find(filter).sort({ name: 1 }).toArray()

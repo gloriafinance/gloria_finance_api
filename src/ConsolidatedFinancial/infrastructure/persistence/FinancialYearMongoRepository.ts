@@ -20,10 +20,6 @@ export class FinancialYearMongoRepository
     return FinancialYearMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "financial_months"
-  }
-
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex({
       month: 1,

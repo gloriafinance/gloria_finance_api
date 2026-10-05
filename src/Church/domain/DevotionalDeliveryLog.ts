@@ -1,9 +1,20 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import type { DevotionalDeliveryLogPrimitives } from "@/Church/domain"
 
 export class DevotionalDeliveryLog extends AggregateRoot {
+  static collectionName(): string {
+    return "devotional_delivery_logs"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private devotionalDeliveryLogId: string
   private payload: DevotionalDeliveryLogPrimitives
 

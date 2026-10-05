@@ -23,10 +23,6 @@ export class DevotionalWeeklyPlanMongoRepository
     return DevotionalWeeklyPlanMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "devotional_weekly_plans"
-  }
-
   async upsert(plan: DevotionalWeeklyPlan): Promise<void> {
     const collection = await this.collection()
     const payload = plan.toPrimitives()

@@ -57,8 +57,22 @@ Base class for all MongoDB repositories. Provides:
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 
 export class ChurchMongoRepository extends MongoRepository<Church> {
-  collectionName(): string {
+  private constructor() {
+    super(Church)
+  }
+}
+```
+
+The collection name is declared by the aggregate, not the repository:
+
+```typescript
+export class Church extends AggregateRoot {
+  static collectionName(): string {
     return "churches"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
   }
 }
 ```
@@ -194,10 +208,6 @@ export class SupplierMongoRepository
       this.instance = new SupplierMongoRepository()
     }
     return this.instance
-  }
-
-  collectionName(): string {
-    return "suppliers"
   }
 
   async upsert(supplier: Supplier): Promise<void> {
@@ -416,8 +426,8 @@ export class SearchPurchase {
 ### 3. Repository
 ```typescript
 export class PurchaseMongoRepository extends MongoRepository<Purchase> {
-  collectionName(): string {
-    return "purchases"
+  private constructor() {
+    super(Purchase)
   }
 
   // fetch() method is inherited from MongoRepository

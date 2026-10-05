@@ -4,16 +4,21 @@ import {
   FinancialConcept,
   IFinancialConfigurationRepository,
 } from "@/FinanceConfig/domain"
+import { Church } from "@/Church/domain"
 import { Collection } from "mongodb"
 
+/**
+ * Financial concepts and cost centers live embedded in the `churches`
+ * documents, so the collection name comes from the `Church` aggregate.
+ */
 export class FinancialConfigurationMongoRepository
-  extends MongoRepository<FinancialConcept>
+  extends MongoRepository<Church>
   implements IFinancialConfigurationRepository
 {
   private static instance: FinancialConfigurationMongoRepository
 
   constructor() {
-    super(FinancialConcept)
+    super(Church)
   }
 
   static getInstance(): FinancialConfigurationMongoRepository {
@@ -22,10 +27,6 @@ export class FinancialConfigurationMongoRepository
         new FinancialConfigurationMongoRepository()
     }
     return FinancialConfigurationMongoRepository.instance
-  }
-
-  collectionName(): string {
-    return "churches"
   }
 
   async upsertFinancialConcept(concept: FinancialConcept): Promise<void> {

@@ -25,10 +25,6 @@ export class AssetMongoRepository
     return AssetMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "patrimony_assets"
-  }
-
   async count(filters?: AssetListFilters): Promise<number> {
     const collection = await this.collection()
 

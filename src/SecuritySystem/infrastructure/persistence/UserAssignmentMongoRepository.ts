@@ -25,10 +25,6 @@ export class UserAssignmentMongoRepository
     return UserAssignmentMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "user_assignments"
-  }
-
   async assignRoles(
     churchId: string,
     userId: string,

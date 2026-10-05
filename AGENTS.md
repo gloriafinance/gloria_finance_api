@@ -23,7 +23,7 @@ Follow the conventions below when extending or modifying the codebase.
 -   **Runtime**: Bun with TypeScript
 -   **Web Framework**: `bun-platform-kit`
 -   **Database**: MongoDB (native driver v6.13.0)
--   **Query Builder**: `@abejarano/ts-mongodb-criteria` (v1.2.0) - Custom library for MongoDB queries with DDD patterns
+-   **Query Builder**: `@abejarano/ts-mongodb-criteria` (v2.0.0) - Custom library for MongoDB queries with DDD patterns
 -   **Server Utils**: `bun-platform-kit` modules (CORS, security headers, rate limit, uploads, request context)
 -   **Queue System**: Bull (v4.16.5) with Redis
 -   **Authentication**: JWT (jsonwebtoken v9.0.2)
@@ -55,6 +55,7 @@ Follow the conventions below when extending or modifying the codebase.
 ### Entities and Aggregates
 
 -   Domain models (e.g., `src/Church/domain/Church.ts`, `src/Church/domain/Minister.ts`) extend `AggregateRoot` from `@abejarano/ts-mongodb-criteria`
+-   Each aggregate declares its own persistence metadata: `static collectionName()` (the MongoDB collection that stores it) and `static relations()` (`{}` when it has no declared relations)
 -   Expose factory helpers such as `static create(...)` and `static fromPrimitives(...)` for object construction
 -   Keep state in **private fields** with intention-revealing getters and setters
 -   The `toPrimitives()` method serializes the entity to a plain object for persistence
@@ -62,9 +63,20 @@ Follow the conventions below when extending or modifying the codebase.
 Example:
 
 ```typescript
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class Minister extends AggregateRoot {
+  static collectionName(): string {
+    return "ministers"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private id?: string
   private ministerId: string
   private name: string
@@ -219,15 +231,15 @@ export class AvailabilityAccountMongoRepository
 {
   private static instance: AvailabilityAccountMongoRepository
 
+  private constructor() {
+    super(AvailabilityAccount)
+  }
+
   static getInstance(): AvailabilityAccountMongoRepository {
     if (!this.instance) {
       this.instance = new AvailabilityAccountMongoRepository()
     }
     return this.instance
-  }
-
-  collectionName(): string {
-    return "availability_accounts"
   }
 
   async upsert(account: AvailabilityAccount): Promise<void> {
@@ -251,7 +263,7 @@ export class AvailabilityAccountMongoRepository
 #### Repository Patterns:
 
 -   Repositories follow the **Singleton pattern** via `getInstance()` to share MongoDB connections
--   Must implement the `collectionName()` method to specify the MongoDB collection
+-   Must pass the aggregate class to `super(...)`; the collection name is declared by the aggregate through `static collectionName()`, so repositories no longer override it
 -   Use the native MongoDB driver methods (`findOne`, `updateOne`, `find`, etc.) from the inherited `collection()` method
 -   Entity mapping: Convert MongoDB documents to domain entities using `fromPrimitives()` factory method
 

@@ -100,7 +100,7 @@ export class UpdateFinancialRecord {
         availabilityAccountId:
           availabilityAccountSnapshot.availabilityAccountId,
       },
-      transaction
+      { transaction }
     )
 
     if (availabilityAccount) {

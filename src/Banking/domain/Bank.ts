@@ -1,9 +1,20 @@
 import { Church } from "@/Church/domain"
 import { Urn } from "@/Shared/adapter"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { TypeBankAccount } from "@/Banking/domain"
 
 export class Bank extends AggregateRoot {
+  static collectionName(): string {
+    return "churches"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private accountType: TypeBankAccount
   private bankId: string
   private active: boolean

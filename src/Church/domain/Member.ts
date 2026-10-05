@@ -1,7 +1,10 @@
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Church } from "./Church"
 import { DateBR } from "@/Shared/helpers"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { type MemberSettings } from "@/Church/domain"
 import { MemberStatus } from "./enums/MemberStatus.enum"
 import { MemberGender } from "./enums/MemberGender.enum"
@@ -10,6 +13,14 @@ import type { MemberAddress } from "./type/MemberAddress.type"
 import type { LgpdConsent } from "./type/LgpdConsent.type"
 
 export class Member extends AggregateRoot {
+  static collectionName(): string {
+    return "members"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   public isTreasurer: boolean
   public isMinister: boolean
   private memberId: string

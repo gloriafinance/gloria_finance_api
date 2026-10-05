@@ -1,6 +1,9 @@
 import { IdentifyEntity } from "@/Shared/adapter"
 import { Bank } from "@/Banking/domain"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import {
   OperationImpactType,
   TypeBankingOperation,
@@ -8,6 +11,14 @@ import {
 import { DateBR } from "@/Shared/helpers"
 
 export class MovementBank extends AggregateRoot {
+  static collectionName(): string {
+    return "movement_bank"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private movementBankId: string
   private amount: number
   private impact: OperationImpactType

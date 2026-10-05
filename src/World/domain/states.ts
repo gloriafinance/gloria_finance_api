@@ -1,6 +1,17 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class States extends AggregateRoot {
+  static collectionName(): string {
+    return "states"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private countryId: string
   private stateId: string
   private name: string

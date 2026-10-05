@@ -1,5 +1,8 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { ICreateCustomer } from "./interfaces/CreateCustomer"
+import {
+  type AggregateRelations,
+  AggregateRoot,
+} from "@abejarano/ts-mongodb-criteria"
+import { type ICreateCustomer } from "./interfaces/CreateCustomer"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { DateBR } from "@/Shared/helpers"
 import {
@@ -30,8 +33,12 @@ export class Customer extends AggregateRoot {
   private createdAt: Date
   private lang: string
 
-  private constructor() {
-    super()
+  static collectionName(): string {
+    return "customers"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
   }
 
   static create(data: Partial<ICreateCustomer>): Customer {

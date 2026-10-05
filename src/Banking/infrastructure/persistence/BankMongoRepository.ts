@@ -20,10 +20,6 @@ export class BankMongoRepository
     return BankMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "churches"
-  }
-
   override async upsert(bank: Bank): Promise<void> {
     const collection = await this.collection<Bank>()
 

@@ -41,10 +41,6 @@ export class ScheduleItemMongoRepository
     return ScheduleItemMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "schedule_events"
-  }
-
   async findManyByChurch(
     churchId: string,
     filters?: any

@@ -26,10 +26,6 @@ export class AvailabilityAccountMongoRepository
     return this.instance
   }
 
-  collectionName(): string {
-    return "availability_accounts"
-  }
-
   override list(filter: object): Promise<AvailabilityAccount[]>
   override list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
 

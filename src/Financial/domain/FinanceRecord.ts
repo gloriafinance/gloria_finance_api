@@ -1,5 +1,8 @@
 import { AccountType, FinancialConcept } from "@/FinanceConfig/domain"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { Urn } from "@/Shared/adapter"
 import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 import {
@@ -10,6 +13,14 @@ import {
 import { DateBR, StringToDate } from "@/Shared/helpers"
 
 export class FinanceRecord extends AggregateRoot {
+  static collectionName(): string {
+    return "financial_records"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private costCenter?: {
     costCenterId: string
     name: string

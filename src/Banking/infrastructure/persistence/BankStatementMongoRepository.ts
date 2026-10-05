@@ -7,8 +7,6 @@ import {
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 
-const COLLECTION_NAME = "bank_statements"
-
 export class BankStatementMongoRepository
   extends MongoRepository<BankStatement>
   implements IBankStatementRepository
@@ -25,10 +23,6 @@ export class BankStatementMongoRepository
     }
 
     return BankStatementMongoRepository.instance
-  }
-
-  collectionName(): string {
-    return COLLECTION_NAME
   }
 
   async bulkInsert(statements: BankStatement[]): Promise<void> {

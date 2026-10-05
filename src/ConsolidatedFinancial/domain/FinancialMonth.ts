@@ -1,7 +1,18 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 
 export class FinancialMonth extends AggregateRoot {
+  static collectionName(): string {
+    return "financial_months"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private financialMonthId: string
   private month: number
   private year: number

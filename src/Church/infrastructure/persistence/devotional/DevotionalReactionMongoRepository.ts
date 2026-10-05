@@ -24,10 +24,6 @@ export class DevotionalReactionMongoRepository
     return DevotionalReactionMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "devotional_reactions"
-  }
-
   async upsert(reaction: DevotionalReaction): Promise<void> {
     const collection = await this.collection()
     const payload = reaction.toPrimitives()

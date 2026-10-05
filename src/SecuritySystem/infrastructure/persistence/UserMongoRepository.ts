@@ -21,10 +21,6 @@ export class UserMongoRepository
     return UserMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "bk_users"
-  }
-
   async findByEmail(email: string): Promise<User | undefined> {
     const collection = await this.collection()
     const result = await collection.findOne({ email })

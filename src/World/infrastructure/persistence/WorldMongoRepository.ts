@@ -8,7 +8,6 @@ export class WorldMongoRepository
   implements IWorldRepository
 {
   private static instance: WorldMongoRepository
-  private collectName: string = "states"
 
   constructor() {
     super(States)
@@ -19,10 +18,6 @@ export class WorldMongoRepository
       WorldMongoRepository.instance = new WorldMongoRepository()
     }
     return WorldMongoRepository.instance
-  }
-
-  collectionName(): string {
-    return this.collectName
   }
 
   async findStateById(stateId: string): Promise<States> {

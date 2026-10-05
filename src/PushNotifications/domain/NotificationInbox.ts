@@ -1,7 +1,18 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { NotificationsTopic } from "@/PushNotifications/domain"
 
 export class NotificationInbox extends AggregateRoot {
+  static collectionName(): string {
+    return "notification_inbox"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private memberId: string
   private type: NotificationsTopic
   private body: string

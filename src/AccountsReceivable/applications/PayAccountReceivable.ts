@@ -43,7 +43,7 @@ export class PayAccountReceivable {
             {
               accountReceivableId: req.accountReceivableId,
             },
-            transaction
+            { transaction }
           )
 
         if (!accountReceivable) {

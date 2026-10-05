@@ -2,9 +2,13 @@ import type { IAvailabilityAccountMasterRepository } from "../../domain/interfac
 import {
   AvailabilityAccountMaster,
   ConceptType,
+  FinanceRecord,
   FinancialRecordStatus,
 } from "../../domain"
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import {
+  MongoClientFactory,
+  MongoRepository,
+} from "@abejarano/ts-mongodb-criteria"
 import { Logger } from "@/Shared/adapter"
 import { Collection } from "mongodb"
 
@@ -13,7 +17,6 @@ export class AvailabilityAccountMasterMongoRepository
   implements IAvailabilityAccountMasterRepository
 {
   private static instance: AvailabilityAccountMasterMongoRepository
-  private dbCollectionName = "availability_accounts_master"
   private logger = Logger(AvailabilityAccountMasterMongoRepository.name)
 
   private constructor() {
@@ -28,8 +31,14 @@ export class AvailabilityAccountMasterMongoRepository
     return AvailabilityAccountMasterMongoRepository.instance
   }
 
-  collectionName(): string {
-    return this.dbCollectionName
+  /**
+   * El rebuild lee de `financial_records`, que no es la colección de este
+   * agregado. Se resuelve con la misma conexión en lugar de reasignar el
+   * nombre de la colección del repositorio.
+   */
+  private async financialRecordsCollection(): Promise<Collection> {
+    const client = await MongoClientFactory.createClient()
+    return client.db().collection(FinanceRecord.collectionName())
   }
 
   async findById(
@@ -112,8 +121,7 @@ export class AvailabilityAccountMasterMongoRepository
     const { churchId, year, month } = filter
 
     // 1) Fuente: financial_records
-    this.dbCollectionName = "financial_records"
-    const financialRecordsCollection = await this.collection()
+    const financialRecordsCollection = await this.financialRecordsCollection()
 
     const startDate = month
       ? new Date(Date.UTC(year, month - 1, 1))
@@ -199,7 +207,6 @@ export class AvailabilityAccountMasterMongoRepository
     }
 
     // 2) Escribir en availability_accounts_master
-    this.dbCollectionName = "availability_accounts_master"
     const masterCollection = await this.collection()
 
     const deleteFilter: any = {
@@ -245,8 +252,6 @@ export class AvailabilityAccountMasterMongoRepository
     this.logger.info(
       `Fetch available accounts params: ${JSON.stringify(filter)}`
     )
-
-    this.dbCollectionName = "availability_accounts_master"
 
     const { churchId, year, month } = filter
 

@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { DateBR } from "@/Shared/helpers"
 
 export type UserAssignmentPrimitives = {
@@ -10,14 +13,18 @@ export type UserAssignmentPrimitives = {
 }
 
 export class UserAssignment extends AggregateRoot {
+  static collectionName(): string {
+    return "user_assignments"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private churchId: string
   private userId: string
   private roles: string[]
   private updatedAt: Date
-
-  private constructor() {
-    super()
-  }
 
   static create(
     churchId: string,

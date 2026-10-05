@@ -1,9 +1,20 @@
 import { CostCenter } from "@/FinanceConfig/domain"
 import { DateBR } from "@/Shared/helpers"
 import MasterBalanceIdentifier from "../applications/helpers/MasterBalanceIdentifier"
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 
 export class CostCenterMaster extends AggregateRoot {
+  static collectionName(): string {
+    return "cost_centers_master"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private costCenterMasterId: string | undefined
   private costCenter: {
     costCenterId: string

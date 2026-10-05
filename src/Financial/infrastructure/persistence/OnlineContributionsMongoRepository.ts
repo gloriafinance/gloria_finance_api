@@ -22,10 +22,6 @@ export class OnlineContributionsMongoRepository
     return OnlineContributionsMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "contributions"
-  }
-
   async findById(
     contributionId: string
   ): Promise<OnlineContributions | undefined> {

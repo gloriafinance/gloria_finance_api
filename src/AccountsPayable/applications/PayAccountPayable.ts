@@ -60,7 +60,7 @@ export class PayAccountPayable {
             tag: "Accounts to Pay",
             churchId: accountPayable.getChurchId(),
           },
-          transaction
+          { transaction }
         )
 
         if (!concept) {

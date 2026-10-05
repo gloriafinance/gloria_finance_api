@@ -19,10 +19,6 @@ export class MovementBankMongoRepository
     return MovementBankMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "movement_bank"
-  }
-
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)
   }

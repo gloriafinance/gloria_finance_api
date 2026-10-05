@@ -19,10 +19,6 @@ export class MinisterMongoRepository
     return MinisterMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "ministers"
-  }
-
   async findByDni(dni: string): Promise<Minister | undefined> {
     return await this.buildMinister({ dni })
   }

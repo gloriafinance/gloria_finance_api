@@ -24,10 +24,6 @@ export class PermissionMongoRepository
     return PermissionMongoRepository.instance
   }
 
-  collectionName(): string {
-    return "permissions"
-  }
-
   async findByIds(permissionIds: string[]): Promise<Permission[]> {
     if (!permissionIds.length) {
       return []

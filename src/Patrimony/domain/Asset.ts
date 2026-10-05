@@ -1,4 +1,7 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import {
+  AggregateRoot,
+  type AggregateRelations,
+} from "@abejarano/ts-mongodb-criteria"
 import { IdentifyEntity } from "@/Shared/adapter"
 import { AssetStatus } from "./enums/AssetStatus.enum"
 import { AssetInventoryStatus } from "./enums/AssetInventoryStatus.enum"
@@ -36,6 +39,14 @@ export type AssetPrimitives = {
 }
 
 export class Asset extends AggregateRoot {
+  static collectionName(): string {
+    return "patrimony_assets"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
+
   private assetId: string
   private code: string
   private name: string
