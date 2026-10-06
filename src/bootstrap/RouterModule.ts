@@ -20,9 +20,11 @@ import { WhatsappController } from "@/Webhook/infrastructure/http/controllers/Wh
 import { ChurchBankingController } from "@/Webhook/infrastructure/http/controllers/ChurchBanking.controller.ts"
 import { supportControllers } from "@/Support/infrastructure/controllers"
 import { CashFlowController } from "@/Reports/infrastructure/http/controllers/CashFlow.controller.ts"
+import { ApiDocsController } from "@/Shared/infrastructure/http/controllers/ApiDocs.controller"
 
 export const controllersModule = () =>
   new ControllersModule([
+    ApiDocsController,
     ...accountsReceivableControllers(),
     ...financialControllers(),
     ...consolidatedFinancialControllers(),
