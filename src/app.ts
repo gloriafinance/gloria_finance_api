@@ -35,7 +35,12 @@ server.addModules([
   new SecurityModule(),
   new RequestContextModule(),
   new RateLimitModule({
-    excludePaths: ["/ui/queues", "/health", "/webhooks/church-banking"],
+    excludePaths: [
+      "/ui/queues",
+      "/health",
+      "/webhooks/church-banking",
+      "/docs",
+    ],
     windowMs: 8 * 60 * 1000,
     limit: 100,
     standardHeaders: true,
