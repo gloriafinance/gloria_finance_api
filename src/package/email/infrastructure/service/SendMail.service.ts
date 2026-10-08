@@ -1,6 +1,7 @@
 import nodemailer = require("nodemailer")
 
 import configEngineHTML from "./ConfigEngineHTML.service.ts"
+import { SendMailMicrosoftService } from "./SendMailMicrosoft.service.ts"
 import type { Mail } from "../../domain/types/mail.type.ts"
 import { Logger } from "@/Shared/adapter"
 
@@ -54,6 +55,19 @@ const configTransportMail = async () => {
 }
 
 export const SendMailService = async (payload: Mail) => {
+  const provider =
+    process.env.SEND_MAIL_PROVIDER?.trim().toLowerCase() ?? "google"
+
+  if (provider === "microsoft" || provider === "outlook") {
+    return SendMailMicrosoftService(payload)
+  }
+
+  if (!["google", "gmail", "workspace"].includes(provider)) {
+    throw new Error(
+      `Unsupported SEND_MAIL_PROVIDER=${provider}. Use google or outlook`
+    )
+  }
+
   const logger = Logger("SendMailService")
   const mailFrom = process.env.SEND_MAIL_USER
 
