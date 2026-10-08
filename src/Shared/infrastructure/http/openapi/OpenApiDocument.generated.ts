@@ -34,6 +34,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -199,6 +209,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Account payable created successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -233,6 +255,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -316,6 +348,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -350,6 +392,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -452,6 +504,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Successfully registered",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -514,6 +578,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -654,6 +728,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Account receivable created successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -710,6 +796,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Payment commitment rejected successfully.",
+                      contract: "",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -744,6 +843,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -814,6 +923,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -894,6 +1013,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message:
+                        "Contribuição registrada e aguardando verificação.",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -992,6 +1124,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Account receivable paid successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1043,6 +1187,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1100,6 +1254,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      conversationId: "example-id",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1134,6 +1300,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1178,6 +1354,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      conversationId: "example-id",
+                      deleted: true,
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1220,6 +1409,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      conversationId: "example-id",
+                      messages: "Example message",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1249,6 +1451,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      keys: [{}],
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1330,9 +1544,33 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Updated bank",
+                    },
+                  },
+                },
+              },
+            },
           },
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered bank",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1387,6 +1625,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1431,6 +1679,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1475,6 +1733,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1583,6 +1851,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1644,6 +1922,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1705,6 +1993,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1749,6 +2047,19 @@ export const openApiDocument = {
         responses: {
           "202": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      bank: "example",
+                      queuedAt: "2026-01-01T00:00:00.000Z",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1794,6 +2105,16 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1828,6 +2149,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1948,6 +2279,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Dados da igreja atualizados",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -1992,6 +2335,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2036,6 +2389,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2080,6 +2445,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2135,6 +2512,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2198,6 +2587,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2242,6 +2643,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2297,6 +2710,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2341,6 +2766,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2394,6 +2831,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2438,6 +2887,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2482,6 +2943,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2561,6 +3034,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2634,6 +3117,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2721,6 +3214,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2765,6 +3268,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2808,6 +3321,22 @@ export const openApiDocument = {
         responses: {
           "202": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Devotional generation queued",
+                      weekStartDate: "2026-01-01T00:00:00.000Z",
+                      timezone: "2026-01-01T00:00:00.000Z",
+                      data: "example",
+                      warning: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2852,6 +3381,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -2886,6 +3425,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Church logo updated successfully",
+                      url: "https://example.com",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3014,6 +3566,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered member",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3058,6 +3622,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "MEMBER_DELETED",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3100,6 +3676,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3227,6 +3813,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Updated member",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3271,6 +3869,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "MEMBER_APPROVED",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3315,6 +3925,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "MEMBER_REJECTED",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3349,6 +3971,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3417,6 +4049,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3485,6 +4127,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3529,6 +4181,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3563,6 +4225,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3607,6 +4279,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Minister removed",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3676,6 +4360,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3756,6 +4452,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered availability account",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3801,6 +4509,18 @@ export const openApiDocument = {
           responses: {
             "200": {
               description: "Successful response",
+              content: {
+                "application/json": {
+                  examples: {
+                    success: {
+                      summary: "Successful response",
+                      value: {
+                        message: "Deleted availability account",
+                      },
+                    },
+                  },
+                },
+              },
             },
             "400": {
               description: "Invalid request or domain validation error",
@@ -3874,6 +4594,18 @@ export const openApiDocument = {
           responses: {
             "200": {
               description: "Successful response",
+              content: {
+                "application/json": {
+                  examples: {
+                    success: {
+                      summary: "Successful response",
+                      value: {
+                        message: "Updated availability account",
+                      },
+                    },
+                  },
+                },
+              },
             },
             "400": {
               description: "Invalid request or domain validation error",
@@ -3919,6 +4651,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -3996,6 +4738,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered cost center",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4071,6 +4825,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered cost center",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4115,6 +4881,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4159,6 +4935,19 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message:
+                        "Financial concept created or updated successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4228,6 +5017,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4279,6 +5078,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4323,6 +5132,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4385,6 +5204,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Financial month updated successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4434,6 +5265,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4535,6 +5376,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4591,6 +5442,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Contribution updated",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4635,6 +5498,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4754,6 +5627,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4924,6 +5807,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -4968,6 +5861,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5012,6 +5915,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "successful financial record cancellation",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5047,6 +5962,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5091,6 +6016,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "successful internal transfer reversal",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5136,6 +6073,19 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "successful internal transfer registration",
+                      transfer: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5190,6 +6140,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5244,6 +6204,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5278,6 +6248,19 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "WhatsApp disconnected successfully",
+                      isWhatsappConnected: false,
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5330,6 +6313,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5381,6 +6374,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5482,6 +6485,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5552,6 +6565,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "successful contribution registration",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5587,6 +6612,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5621,6 +6656,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5655,6 +6700,20 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "MEMBER_PROFILE_PHOTO_UPDATED",
+                      profilePhoto: "example",
+                      profilePhotoUrl: "https://example.com",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5719,6 +6778,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Registered minister",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5773,6 +6844,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5831,6 +6912,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5865,6 +6956,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: "Test route",
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -5912,6 +7013,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6005,6 +7116,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6099,6 +7220,19 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Customer created successfully",
+                      customerId: "example-id",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6134,6 +7268,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      results: [],
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6270,6 +7416,16 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6314,6 +7470,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6451,6 +7617,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6505,6 +7681,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6598,6 +7784,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6632,6 +7828,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Processo de importação de inventário iniciado.",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6667,6 +7875,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6702,6 +7920,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6741,6 +7969,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6778,6 +8016,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6817,6 +8065,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6903,6 +8161,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6945,6 +8213,18 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Purchase recorded",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7065,6 +8345,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7099,6 +8389,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7133,6 +8433,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7184,6 +8496,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7218,6 +8540,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7270,6 +8604,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7314,6 +8658,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7376,6 +8732,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7440,6 +8806,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7484,6 +8860,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7519,6 +8907,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7571,6 +8969,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7606,6 +9014,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7666,6 +9084,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7726,6 +9154,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7786,6 +9224,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7846,6 +9294,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7906,6 +9364,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "income statement is arriving in your email",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -7966,6 +9436,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8035,6 +9515,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8185,6 +9675,16 @@ export const openApiDocument = {
         responses: {
           "201": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8229,6 +9729,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Schedule item suspended successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8271,6 +9783,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8419,6 +9941,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8463,6 +9995,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Schedule item activated successfully",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8498,6 +10042,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8532,6 +10086,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8589,6 +10155,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Policies accepted",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8641,6 +10219,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8720,6 +10308,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Usuario actualizado",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8809,6 +10409,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Usuario actualizado",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8858,6 +10470,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8897,6 +10519,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "Temporal password generated",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8943,6 +10577,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8982,6 +10626,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9026,6 +10680,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      data: "example",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9055,6 +10721,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9084,6 +10760,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9123,6 +10809,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "ok",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9163,6 +10861,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "ok",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9193,6 +10903,16 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {},
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9230,6 +10950,18 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      message: "ok",
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid request or domain validation error",

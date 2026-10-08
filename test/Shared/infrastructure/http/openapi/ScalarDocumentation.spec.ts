@@ -50,8 +50,35 @@ describe("Scalar documentation", () => {
         },
       },
     })
-    expect(onboarding?.post?.responses["201"]).toBeDefined()
-    expect(statementImport?.responses["202"]).toBeDefined()
+    expect(onboarding?.post?.responses["201"]).toMatchObject({
+      content: {
+        "application/json": {
+          examples: {
+            success: {
+              value: {
+                message: "Customer created successfully",
+                customerId: "example-id",
+              },
+            },
+          },
+        },
+      },
+    })
+    expect(statementImport?.responses["202"]?.content).toBeDefined()
+  })
+
+  it("includes a JSON example for every successful response with a body", () => {
+    for (const path of Object.values(openApiDocument.paths)) {
+      for (const operation of Object.values(path)) {
+        if (!operation) continue
+        for (const [status, response] of Object.entries(operation.responses)) {
+          if (!status.startsWith("2") || status === "204") continue
+          expect(
+            response.content?.["application/json"].examples.success.value
+          ).toBeDefined()
+        }
+      }
+    }
   })
 })
 

@@ -20,7 +20,29 @@ type OpenApiOperation = {
     content: { "application/json": { schema: OpenApiSchema } }
   }
   security?: Array<{ bearerAuth: string[] }>
-  responses: Record<string, { description: string }>
+  responses: Record<string, OpenApiResponse>
+}
+
+type OpenApiExample =
+  | string
+  | number
+  | boolean
+  | null
+  | OpenApiExample[]
+  | { [key: string]: OpenApiExample }
+
+type OpenApiResponse = {
+  description: string
+  content?: {
+    "application/json": {
+      examples: {
+        success: {
+          summary: string
+          value: OpenApiExample
+        }
+      }
+    }
+  }
 }
 
 type OpenApiSchema = {
@@ -235,9 +257,193 @@ function decoratedParameterType(
   return handler.slice(start).trim()
 }
 
-function successResponses(
-  handler: string
-): Record<string, { description: string }> {
+function matchingDelimiter(
+  source: string,
+  openIndex: number,
+  openDelimiter: string,
+  closeDelimiter: string
+): number {
+  let depth = 0
+  let quote: string | undefined
+
+  for (let index = openIndex; index < source.length; index += 1) {
+    const character = source[index]!
+    const previous = source[index - 1]
+
+    if (quote) {
+      if (character === quote && previous !== "\\") quote = undefined
+      continue
+    }
+    if (character === '"' || character === "'" || character === "`") {
+      quote = character
+      continue
+    }
+    if (character === openDelimiter) depth += 1
+    if (character === closeDelimiter) {
+      depth -= 1
+      if (depth === 0) return index
+    }
+  }
+
+  return source.length - 1
+}
+
+function splitValues(source: string): string[] {
+  const values: string[] = []
+  let start = 0
+  let depth = 0
+  let quote: string | undefined
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]!
+    const previous = source[index - 1]
+
+    if (quote) {
+      if (character === quote && previous !== "\\") quote = undefined
+      continue
+    }
+    if (character === '"' || character === "'" || character === "`") {
+      quote = character
+      continue
+    }
+    if ("{[(".includes(character)) depth += 1
+    if ("}])".includes(character)) depth -= 1
+    if (character === "," && depth === 0) {
+      values.push(source.slice(start, index))
+      start = index + 1
+    }
+  }
+  values.push(source.slice(start))
+  return values
+}
+
+function propertySeparator(source: string): number {
+  let depth = 0
+  let quote: string | undefined
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]!
+    const previous = source[index - 1]
+
+    if (quote) {
+      if (character === quote && previous !== "\\") quote = undefined
+      continue
+    }
+    if (character === '"' || character === "'" || character === "`") {
+      quote = character
+      continue
+    }
+    if ("{[(".includes(character)) depth += 1
+    if ("}])".includes(character)) depth -= 1
+    if (character === ":" && depth === 0) return index
+  }
+  return -1
+}
+
+function exampleForProperty(name: string): OpenApiExample {
+  if (/^(is|has)[A-Z_]/.test(name) || /enabled|success|active/i.test(name))
+    return true
+  if (/count|total|amount|balance|page|perPage|year|month|day/i.test(name))
+    return 0
+  if (/email/i.test(name)) return "member@example.com"
+  if (/date|time|at$/i.test(name)) return "2026-01-01T00:00:00.000Z"
+  if (/url/i.test(name)) return "https://example.com"
+  if (/token/i.test(name)) return "example-token"
+  if (/id$/i.test(name)) return "example-id"
+  if (/message/i.test(name)) return "Example message"
+  if (/s$/i.test(name)) return []
+  return "example"
+}
+
+function exampleFromExpression(
+  expression: string,
+  propertyName?: string
+): OpenApiExample {
+  const value = expression.trim().replace(/^await\s+/, "")
+
+  if (/^[-+]?\d+(?:\.\d+)?$/.test(value)) return Number(value)
+  if (value === "true") return true
+  if (value === "false") return false
+  if (value === "null") return null
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'")) ||
+    (value.startsWith("`") && value.endsWith("`"))
+  ) {
+    return value.slice(1, -1)
+  }
+  if (value.startsWith("[") && value.endsWith("]")) {
+    const values = splitValues(value.slice(1, -1)).filter(Boolean)
+    return values.map((entry) => exampleFromExpression(entry))
+  }
+  if (value.startsWith("{") && value.endsWith("}")) {
+    const example: Record<string, OpenApiExample> = {}
+    for (const member of splitValues(value.slice(1, -1))) {
+      const entry = member.trim()
+      if (!entry || entry.startsWith("...")) continue
+      const separator = propertySeparator(entry)
+      const key = (separator === -1 ? entry : entry.slice(0, separator))
+        .trim()
+        .replace(/^["']|["']$/g, "")
+      if (!/^[A-Za-z0-9_]+$/.test(key)) continue
+      example[key] =
+        separator === -1
+          ? exampleForProperty(key)
+          : exampleFromExpression(entry.slice(separator + 1), key)
+    }
+    return example
+  }
+
+  return propertyName ? exampleForProperty(propertyName) : {}
+}
+
+function statusFrom(source: string): number | undefined {
+  const normalized = source.trim()
+  const enumMatch = normalized.match(/^HttpStatus\.([A-Z_]+)$/)
+  if (enumMatch) return statusCodes[enumMatch[1]!]
+  if (/^20[0-6]$/.test(normalized)) return Number(normalized)
+  return undefined
+}
+
+function responseExamples(handler: string): Map<number, OpenApiExample> {
+  const examples = new Map<number, OpenApiExample>()
+  let cursor = 0
+
+  while (cursor < handler.length) {
+    const statusStart = handler.indexOf(".status(", cursor)
+    if (statusStart === -1) break
+    const statusOpen = statusStart + ".status".length
+    const statusEnd = matchingDelimiter(handler, statusOpen, "(", ")")
+    const status = statusFrom(handler.slice(statusOpen + 1, statusEnd))
+    const sender = /^\s*\.\s*(?:send|json)\s*\(/.exec(
+      handler.slice(statusEnd + 1)
+    )
+
+    if (!status || !sender) {
+      cursor = statusEnd + 1
+      continue
+    }
+
+    const argumentOpen = statusEnd + 1 + sender[0].length - 1
+    const argumentEnd = matchingDelimiter(handler, argumentOpen, "(", ")")
+    if (
+      status >= 200 &&
+      status < 300 &&
+      status !== 204 &&
+      !examples.has(status)
+    ) {
+      examples.set(
+        status,
+        exampleFromExpression(handler.slice(argumentOpen + 1, argumentEnd))
+      )
+    }
+    cursor = argumentEnd + 1
+  }
+
+  return examples
+}
+
+function successResponses(handler: string): Record<string, OpenApiResponse> {
   const statuses = new Set<number>()
   for (const match of handler.matchAll(
     /\.status\(\s*HttpStatus\.([A-Z_]+)\s*\)/g
@@ -248,10 +454,28 @@ function successResponses(
   for (const match of handler.matchAll(/\.status\(\s*(20[0-6])\s*\)/g))
     statuses.add(Number(match[1]))
   if (statuses.size === 0) statuses.add(200)
+  const examples = responseExamples(handler)
   return Object.fromEntries(
-    [...statuses]
-      .sort()
-      .map((status) => [String(status), { description: "Successful response" }])
+    [...statuses].sort().map((status) => [
+      String(status),
+      {
+        description: "Successful response",
+        ...(status === 204
+          ? {}
+          : {
+              content: {
+                "application/json": {
+                  examples: {
+                    success: {
+                      summary: "Successful response",
+                      value: examples.get(status) ?? {},
+                    },
+                  },
+                },
+              },
+            }),
+      },
+    ])
   )
 }
 
