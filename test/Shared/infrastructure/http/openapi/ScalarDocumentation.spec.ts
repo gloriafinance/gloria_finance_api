@@ -26,6 +26,7 @@ describe("Scalar documentation", () => {
     const onboarding = openApiDocument.paths["/api/v1/onboarding"]
     const statementImport =
       openApiDocument.paths["/api/v1/bank/statements/import"]?.post
+    const cashFlow = openApiDocument.paths["/api/v1/reports/cash-flow"]?.get
 
     expect(login?.security).toBeUndefined()
     expect(
@@ -57,7 +58,7 @@ describe("Scalar documentation", () => {
             success: {
               value: {
                 message: "Customer created successfully",
-                customerId: "example-id",
+                customerId: "00000000-0000-0000-0000-000000000001",
               },
             },
           },
@@ -65,20 +66,61 @@ describe("Scalar documentation", () => {
       },
     })
     expect(statementImport?.responses["202"]?.content).toBeDefined()
+    expect(login?.responses["200"]).toMatchObject({
+      content: {
+        "application/json": {
+          examples: {
+            success: {
+              value: expect.objectContaining({
+                userId: expect.any(String),
+                church: expect.objectContaining({ churchId: expect.any(String) }),
+                roles: expect.any(Array),
+                token: expect.any(String),
+                refreshToken: expect.any(String),
+              }),
+            },
+          },
+        },
+      },
+    })
+    expect(cashFlow?.responses["200"]).toMatchObject({
+      content: {
+        "application/json": {
+          examples: {
+            success: {
+              value: expect.objectContaining({
+                reportName: expect.any(String),
+                summary: expect.any(Object),
+                series: expect.any(Array),
+              }),
+            },
+          },
+        },
+      },
+    })
   })
 
   it("includes a JSON example for every successful response with a body", () => {
+    let responseCount = 0
     for (const path of Object.values(openApiDocument.paths)) {
       for (const operation of Object.values(path)) {
         if (!operation) continue
         for (const [status, response] of Object.entries(operation.responses)) {
-          if (!status.startsWith("2") || status === "204") continue
+          if (status !== "200" || status === "204") continue
+          if (!response.content?.["application/json"]) continue
+          responseCount += 1
+          const value = response.content?.["application/json"].examples.success.value
           expect(
-            response.content?.["application/json"].examples.success.value
+            value
           ).toBeDefined()
+          expect(value).not.toEqual({})
+          expect(JSON.stringify(value)).not.toContain('"example"')
+          expect(JSON.stringify(value)).not.toContain('"example-id"')
+          expect(JSON.stringify(value)).not.toContain("__@toStringTag")
         }
       }
     }
+    expect(responseCount).toBeGreaterThan(0)
   })
 })
 
