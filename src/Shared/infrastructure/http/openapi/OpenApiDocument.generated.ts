@@ -39,7 +39,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -353,7 +357,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Account payable paid successfully",
+                    },
                   },
                 },
               },
@@ -583,7 +589,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -928,7 +938,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -1192,7 +1206,21 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      needsCreate: true,
+                      justification: "example",
+                      concept: {
+                        financialConceptId: "example-id",
+                        name: "example",
+                        description: "example",
+                        type: "INCOME",
+                        statementCategory: "REVENUE",
+                        affectsCashFlow: true,
+                        affectsResult: true,
+                        affectsBalance: true,
+                        isOperational: true,
+                      },
+                    },
                   },
                 },
               },
@@ -1305,7 +1333,50 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [
+                      {
+                        conversationId: "example-id",
+                        churchId: "example-id",
+                        userId: "example-id",
+                        question: "example",
+                        answer: "example",
+                        intent: {
+                          conversationId: "example-id",
+                          answer: "example",
+                          intent: "example",
+                          confidence: "example",
+                          recommendedRoute: "example",
+                          recommendedScreen: "example",
+                          recommendedConcept: {
+                            financialConceptId: "example-id",
+                            name: "example",
+                          },
+                          steps: ["example"],
+                          warnings: ["example"],
+                          extractedData: {
+                            documentType: "example",
+                            vendor: "example",
+                            amount: "example",
+                            currency: "example",
+                            documentDate: "2026-01-01T00:00:00.000Z",
+                            summary: "example",
+                          },
+                          sources: ["example"],
+                        },
+                        response: "example",
+                        analysisTarget: "example",
+                        attachments: [
+                          {
+                            name: "example",
+                            mimeType: "example",
+                            size: 0,
+                            dataBase64: "example",
+                          },
+                        ],
+                        sources: ["example"],
+                        createdAt: "2026-01-01T00:00:00.000Z",
+                      },
+                    ],
                   },
                 },
               },
@@ -1360,7 +1431,6 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      conversationId: "example-id",
                       deleted: true,
                     },
                   },
@@ -1414,10 +1484,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      conversationId: "example-id",
-                      messages: "Example message",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -1457,7 +1524,39 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      keys: [{}],
+                      keys: {
+                        kty: "AKP",
+                        alg: "ES256",
+                        key_ops: ["example"],
+                        ext: false,
+                        use: "sig",
+                        x5c: ["example"],
+                        x5t: "example",
+                        "x5t#S256": "example",
+                        x5u: "example",
+                        kid: "example-id",
+                        crv: "example",
+                        d: "example",
+                        dp: "example",
+                        dq: "example",
+                        e: "example",
+                        k: "example",
+                        n: "example",
+                        p: "example",
+                        q: "example",
+                        qi: "example",
+                        x: "example",
+                        y: "example",
+                        pub: "example",
+                        priv: "example",
+                        oth: [
+                          {
+                            d: "example",
+                            r: "example",
+                            t: "example",
+                          },
+                        ],
+                      },
                     },
                   },
                 },
@@ -1630,7 +1729,19 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      accountId: "example-id",
+                      externalAccountId: "example-id",
+                      status: "ACTIVE",
+                      connectionMode: "EXTERNAL_API_KEY",
+                      accountNumber: {
+                        codeBank: "example",
+                        agency: "example",
+                        account: "example",
+                        accountDigit: "example",
+                      },
+                      availableBalanceInCents: 0,
+                    },
                   },
                 },
               },
@@ -1684,7 +1795,17 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      aggregateId: "example-id",
+                      accountType: "CURRENT",
+                      bankId: "example-id",
+                      active: true,
+                      name: "example",
+                      tag: "example",
+                      addressInstancePayment: "example",
+                      bankInstruction: "example",
+                      churchId: "example-id",
+                    },
                   },
                 },
               },
@@ -1738,7 +1859,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [{}],
                   },
                 },
               },
@@ -1856,7 +1977,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -1927,7 +2052,10 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      reconciled: true,
+                      financialRecordId: "example-id",
+                    },
                   },
                 },
               },
@@ -1998,7 +2126,10 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      matched: true,
+                      financialRecordId: "example-id",
+                    },
                   },
                 },
               },
@@ -2110,7 +2241,23 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      paymentId: "example-id",
+                      externalAccountId: "example-id",
+                      externalReference: "example",
+                      status: "example",
+                      principalAmountInCents: 0,
+                      transactionFeeInCents: 0,
+                      platformFeeInCents: 0,
+                      chargeAmountInCents: 0,
+                      providerPaymentId: "example-id",
+                      pix: {
+                        copyPaste: "example",
+                        encodedImage: "example",
+                        expirationDate: "2026-01-01T00:00:00.000Z",
+                      },
+                      errorCode: "example",
+                    },
                   },
                 },
               },
@@ -2154,7 +2301,28 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [
+                        {
+                          address: "example",
+                          churchId: "example-id",
+                          city: "example",
+                          createdAt: "2026-01-01T00:00:00.000Z",
+                          email: "member@example.com",
+                          name: "example",
+                          number: "example",
+                          openingDate: "2026-01-01T00:00:00.000Z",
+                          postalCode: "example",
+                          region: {
+                            regionId: "example-id",
+                            name: "example",
+                          },
+                          street: "example",
+                        },
+                      ],
+                    },
                   },
                 },
               },
@@ -2394,9 +2562,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2450,9 +2616,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2517,9 +2681,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2592,9 +2754,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2648,9 +2808,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2715,9 +2873,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2771,9 +2927,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2836,9 +2990,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2892,9 +3044,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -2948,9 +3098,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {
-                      data: "example",
-                    },
+                    value: {},
                   },
                 },
               },
@@ -3039,7 +3187,22 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      weekStartDate: "2026-01-01T00:00:00.000Z",
+                      nextSendAt: "2026-01-01T00:00:00.000Z",
+                      inReviewCount: 0,
+                      items: [
+                        {
+                          devotionalId: "example-id",
+                          weekStartDate: "2026-01-01T00:00:00.000Z",
+                          scheduleDate: "2026-01-01T00:00:00.000Z",
+                          dayOfWeek: "MONDAY",
+                          scheduledAt: "2026-01-01T00:00:00.000Z",
+                          status: "pending",
+                          isLate: true,
+                        },
+                      ],
+                    },
                   },
                 },
               },
@@ -3122,7 +3285,20 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      title: "example",
+                      devotional: "example",
+                      scriptures: [
+                        {
+                          reference: "example",
+                          quote: "example",
+                        },
+                      ],
+                      push: {
+                        push_title: "example",
+                        push_body: "example",
+                      },
+                    },
                   },
                 },
               },
@@ -3219,7 +3395,45 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      metrics: {
+                        total: 0,
+                        sent: 0,
+                        partial: 0,
+                        error: 0,
+                      },
+                      items: [
+                        {
+                          devotionalDeliveryLogId: "example-id",
+                          devotionalId: "example-id",
+                          churchId: "example-id",
+                          devotionalWeeklyPlanId: "example-id",
+                          weekStartDate: "2026-01-01T00:00:00.000Z",
+                          scheduleDate: "2026-01-01T00:00:00.000Z",
+                          scheduledAt: "2026-01-01T00:00:00.000Z",
+                          attemptedAt: "2026-01-01T00:00:00.000Z",
+                          audience: "all",
+                          themeWeek: "example",
+                          versionNumber: 0,
+                          channels: {
+                            pushEnabled: true,
+                            whatsappEnabled: true,
+                          },
+                          results: {
+                            push: "pending",
+                            whatsapp: "pending",
+                            overall: "sent",
+                          },
+                          errors: ["example"],
+                          contentSnapshot: {
+                            title: "example",
+                            devotional: "example",
+                            pushTitle: "example",
+                            pushBody: "example",
+                          },
+                        },
+                      ],
+                    },
                   },
                 },
               },
@@ -3273,7 +3487,37 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: {
+                        devotionalWeeklyPlanId: "example-id",
+                        churchId: "example-id",
+                        weekStartDate: "2026-01-01T00:00:00.000Z",
+                        isEnabled: true,
+                        themeWeek: "example",
+                        daysOfWeek: ["MONDAY"],
+                        sendTime: "2026-01-01T00:00:00.000Z",
+                        timezone: "2026-01-01T00:00:00.000Z",
+                        audience: "all",
+                        channels: {
+                          pushEnabled: true,
+                          whatsappEnabled: true,
+                        },
+                        mode: "automatic",
+                        dayConfigs: [
+                          {
+                            dayOfWeek: "MONDAY",
+                            titleHint: "example",
+                            biblicalContext: "example",
+                            tone: "pastoral",
+                          },
+                        ],
+                        configuredByUserId: "example-id",
+                        updatedByUserId: "2026-01-01T00:00:00.000Z",
+                        createdAt: "2026-01-01T00:00:00.000Z",
+                        updatedAt: "2026-01-01T00:00:00.000Z",
+                        lastSavedAt: "2026-01-01T00:00:00.000Z",
+                      },
+                    },
                   },
                 },
               },
@@ -3328,9 +3572,36 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "Devotional generation queued",
-                      weekStartDate: "2026-01-01T00:00:00.000Z",
-                      timezone: "2026-01-01T00:00:00.000Z",
-                      data: "example",
+                      data: {
+                        aggregateId: "example-id",
+                        devotionalWeeklyPlanId: "example-id",
+                        churchId: "example-id",
+                        weekStartDate: "2026-01-01T00:00:00.000Z",
+                        isEnabled: true,
+                        themeWeek: "example",
+                        daysOfWeek: ["MONDAY"],
+                        sendTime: "2026-01-01T00:00:00.000Z",
+                        timezone: "2026-01-01T00:00:00.000Z",
+                        audience: "all",
+                        channels: {
+                          pushEnabled: true,
+                          whatsappEnabled: true,
+                        },
+                        mode: "automatic",
+                        dayConfigs: [
+                          {
+                            dayOfWeek: "MONDAY",
+                            titleHint: "example",
+                            biblicalContext: "example",
+                            tone: "pastoral",
+                          },
+                        ],
+                        configuredByUserId: "example-id",
+                        updatedByUserId: "2026-01-01T00:00:00.000Z",
+                        createdAt: "2026-01-01T00:00:00.000Z",
+                        updatedAt: "2026-01-01T00:00:00.000Z",
+                        lastSavedAt: "2026-01-01T00:00:00.000Z",
+                      },
                       warning: "example",
                     },
                   },
@@ -3386,7 +3657,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: ["example"],
+                    },
                   },
                 },
               },
@@ -3432,7 +3705,6 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "Church logo updated successfully",
-                      url: "https://example.com",
                     },
                   },
                 },
@@ -4054,7 +4326,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -4132,7 +4408,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -4230,7 +4510,12 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      churchId: "example-id",
+                      churchName: "example",
+                      token: "example-token",
+                      registrationPath: "example",
+                    },
                   },
                 },
               },
@@ -4366,7 +4651,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: ["example"],
                     },
                   },
                 },
@@ -4656,7 +4941,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [{}],
                   },
                 },
               },
@@ -4886,7 +5171,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [{}],
                   },
                 },
               },
@@ -5022,7 +5307,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [{}],
                   },
                 },
               },
@@ -5076,14 +5361,17 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "201": {
             description: "Successful response",
             content: {
               "application/json": {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      copyPaste: "example",
+                      encodedImage: "example",
+                    },
                   },
                 },
               },
@@ -5137,7 +5425,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [{}],
                   },
                 },
               },
@@ -5270,7 +5558,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Financial month generate successfully",
+                    },
                   },
                 },
               },
@@ -5805,14 +6095,16 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "201": {
             description: "Successful response",
             content: {
               "application/json": {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "successful financial record registration",
+                    },
                   },
                 },
               },
@@ -6080,7 +6372,6 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "successful internal transfer registration",
-                      transfer: "example",
                     },
                   },
                 },
@@ -6145,7 +6436,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "process",
+                    },
                   },
                 },
               },
@@ -6209,7 +6502,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "process",
+                    },
                   },
                 },
               },
@@ -6318,7 +6613,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message:
+                        "WhatsApp connected and credentials saved successfully",
+                      isWhatsappConnected: true,
+                    },
                   },
                 },
               },
@@ -6379,7 +6678,10 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "WhatsApp test message sent successfully",
+                      messageId: "example-id",
+                    },
                   },
                 },
               },
@@ -6617,7 +6919,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      contributedYear: 0,
+                      contributedMonth: 0,
+                      activeCommitments: 0,
+                    },
                   },
                 },
               },
@@ -6849,7 +7155,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Assigned church",
+                    },
                   },
                 },
               },
@@ -6917,7 +7225,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Token saved successfully",
+                    },
                   },
                 },
               },
@@ -7018,7 +7328,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -7121,7 +7435,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Onboarding process started",
+                    },
                   },
                 },
               },
@@ -7274,7 +7590,57 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      results: [],
+                      results: [
+                        {
+                          assetId: "example-id",
+                          code: "example",
+                          name: "example",
+                          category: "example",
+                          acquisitionDate: "2026-01-01T00:00:00.000Z",
+                          value: 0,
+                          quantity: 0,
+                          churchId: "example-id",
+                          location: "example",
+                          responsibleId: "example-id",
+                          responsible: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                            phone: "example",
+                          },
+                          status: "ACTIVE",
+                          attachments: [
+                            {
+                              attachmentId: "example-id",
+                              name: "example",
+                              url: "https://example.com",
+                              mimetype: "example",
+                              size: 0,
+                              uploadedAt: "2026-01-01T00:00:00.000Z",
+                            },
+                          ],
+                          history: [
+                            {
+                              entryId: "example-id",
+                              action: "example",
+                              performedByDetails: {
+                                memberId: "example-id",
+                                name: "example",
+                                email: "member@example.com",
+                              },
+                              performedAt: "2026-01-01T00:00:00.000Z",
+                              notes: "example",
+                              changes: [],
+                            },
+                          ],
+                          inventoryStatus: [],
+                          inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                          inventoryCheckedBy: "example",
+                          disposal: "example",
+                          createdAt: "2026-01-01T00:00:00.000Z",
+                          updatedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
                     },
                   },
                 },
@@ -7421,7 +7787,70 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      assetId: "example-id",
+                      code: "example",
+                      name: "example",
+                      category: "example",
+                      acquisitionDate: "2026-01-01T00:00:00.000Z",
+                      value: 0,
+                      quantity: 0,
+                      churchId: "example-id",
+                      location: "example",
+                      responsibleId: "example-id",
+                      responsible: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                        phone: "example",
+                      },
+                      status: "ACTIVE",
+                      attachments: [
+                        {
+                          attachmentId: "example-id",
+                          name: "example",
+                          url: "https://example.com",
+                          mimetype: "example",
+                          size: 0,
+                          uploadedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
+                      history: [
+                        {
+                          entryId: "example-id",
+                          action: "example",
+                          performedByDetails: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                          },
+                          performedAt: "2026-01-01T00:00:00.000Z",
+                          notes: "example",
+                          changes: [],
+                        },
+                      ],
+                      inventoryStatus: "CONFIRMED",
+                      inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                      inventoryCheckedBy: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                      },
+                      disposal: {
+                        status: "ACTIVE",
+                        reason: "example",
+                        performedByDetails: {
+                          memberId: "example-id",
+                          name: "example",
+                          email: "member@example.com",
+                        },
+                        occurredAt: "2026-01-01T00:00:00.000Z",
+                        notes: "example",
+                      },
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      documentsPending: true,
+                    },
                   },
                 },
               },
@@ -7475,7 +7904,70 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      assetId: "example-id",
+                      code: "example",
+                      name: "example",
+                      category: "example",
+                      acquisitionDate: "2026-01-01T00:00:00.000Z",
+                      value: 0,
+                      quantity: 0,
+                      churchId: "example-id",
+                      location: "example",
+                      responsibleId: "example-id",
+                      responsible: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                        phone: "example",
+                      },
+                      status: "ACTIVE",
+                      attachments: [
+                        {
+                          attachmentId: "example-id",
+                          name: "example",
+                          url: "https://example.com",
+                          mimetype: "example",
+                          size: 0,
+                          uploadedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
+                      history: [
+                        {
+                          entryId: "example-id",
+                          action: "example",
+                          performedByDetails: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                          },
+                          performedAt: "2026-01-01T00:00:00.000Z",
+                          notes: "example",
+                          changes: [],
+                        },
+                      ],
+                      inventoryStatus: "CONFIRMED",
+                      inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                      inventoryCheckedBy: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                      },
+                      disposal: {
+                        status: "ACTIVE",
+                        reason: "example",
+                        performedByDetails: {
+                          memberId: "example-id",
+                          name: "example",
+                          email: "member@example.com",
+                        },
+                        occurredAt: "2026-01-01T00:00:00.000Z",
+                        notes: "example",
+                      },
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      documentsPending: true,
+                    },
                   },
                 },
               },
@@ -7622,7 +8114,70 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      assetId: "example-id",
+                      code: "example",
+                      name: "example",
+                      category: "example",
+                      acquisitionDate: "2026-01-01T00:00:00.000Z",
+                      value: 0,
+                      quantity: 0,
+                      churchId: "example-id",
+                      location: "example",
+                      responsibleId: "example-id",
+                      responsible: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                        phone: "example",
+                      },
+                      status: "ACTIVE",
+                      attachments: [
+                        {
+                          attachmentId: "example-id",
+                          name: "example",
+                          url: "https://example.com",
+                          mimetype: "example",
+                          size: 0,
+                          uploadedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
+                      history: [
+                        {
+                          entryId: "example-id",
+                          action: "example",
+                          performedByDetails: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                          },
+                          performedAt: "2026-01-01T00:00:00.000Z",
+                          notes: "example",
+                          changes: [],
+                        },
+                      ],
+                      inventoryStatus: "CONFIRMED",
+                      inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                      inventoryCheckedBy: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                      },
+                      disposal: {
+                        status: "ACTIVE",
+                        reason: "example",
+                        performedByDetails: {
+                          memberId: "example-id",
+                          name: "example",
+                          email: "member@example.com",
+                        },
+                        occurredAt: "2026-01-01T00:00:00.000Z",
+                        notes: "example",
+                      },
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      documentsPending: true,
+                    },
                   },
                 },
               },
@@ -7686,7 +8241,70 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      assetId: "example-id",
+                      code: "example",
+                      name: "example",
+                      category: "example",
+                      acquisitionDate: "2026-01-01T00:00:00.000Z",
+                      value: 0,
+                      quantity: 0,
+                      churchId: "example-id",
+                      location: "example",
+                      responsibleId: "example-id",
+                      responsible: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                        phone: "example",
+                      },
+                      status: "ACTIVE",
+                      attachments: [
+                        {
+                          attachmentId: "example-id",
+                          name: "example",
+                          url: "https://example.com",
+                          mimetype: "example",
+                          size: 0,
+                          uploadedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
+                      history: [
+                        {
+                          entryId: "example-id",
+                          action: "example",
+                          performedByDetails: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                          },
+                          performedAt: "2026-01-01T00:00:00.000Z",
+                          notes: "example",
+                          changes: [],
+                        },
+                      ],
+                      inventoryStatus: "CONFIRMED",
+                      inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                      inventoryCheckedBy: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                      },
+                      disposal: {
+                        status: "ACTIVE",
+                        reason: "example",
+                        performedByDetails: {
+                          memberId: "example-id",
+                          name: "example",
+                          email: "member@example.com",
+                        },
+                        occurredAt: "2026-01-01T00:00:00.000Z",
+                        notes: "example",
+                      },
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      documentsPending: true,
+                    },
                   },
                 },
               },
@@ -7789,7 +8407,70 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      assetId: "example-id",
+                      code: "example",
+                      name: "example",
+                      category: "example",
+                      acquisitionDate: "2026-01-01T00:00:00.000Z",
+                      value: 0,
+                      quantity: 0,
+                      churchId: "example-id",
+                      location: "example",
+                      responsibleId: "example-id",
+                      responsible: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                        phone: "example",
+                      },
+                      status: "ACTIVE",
+                      attachments: [
+                        {
+                          attachmentId: "example-id",
+                          name: "example",
+                          url: "https://example.com",
+                          mimetype: "example",
+                          size: 0,
+                          uploadedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
+                      history: [
+                        {
+                          entryId: "example-id",
+                          action: "example",
+                          performedByDetails: {
+                            memberId: "example-id",
+                            name: "example",
+                            email: "member@example.com",
+                          },
+                          performedAt: "2026-01-01T00:00:00.000Z",
+                          notes: "example",
+                          changes: [],
+                        },
+                      ],
+                      inventoryStatus: "CONFIRMED",
+                      inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
+                      inventoryCheckedBy: {
+                        memberId: "example-id",
+                        name: "example",
+                        email: "member@example.com",
+                      },
+                      disposal: {
+                        status: "ACTIVE",
+                        reason: "example",
+                        performedByDetails: {
+                          memberId: "example-id",
+                          name: "example",
+                          email: "member@example.com",
+                        },
+                        occurredAt: "2026-01-01T00:00:00.000Z",
+                        notes: "example",
+                      },
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      documentsPending: true,
+                    },
                   },
                 },
               },
@@ -7974,7 +8655,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      churchId: "example-id",
+                      churchName: "example",
+                      country: "example",
+                    },
                   },
                 },
               },
@@ -8021,7 +8706,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "MEMBER_REGISTRATION_RECEIVED",
+                    },
                   },
                 },
               },
@@ -8070,7 +8757,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      profilePhotoUploadReceipt: "example",
+                    },
                   },
                 },
               },
@@ -8343,14 +9032,16 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "201": {
             description: "Successful response",
             content: {
               "application/json": {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Purchase recorded",
+                    },
                   },
                 },
               },
@@ -8394,7 +9085,20 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      items: [
+                        {
+                          quantity: 0,
+                          price: 0,
+                          total: 0,
+                          name: "example",
+                        },
+                      ],
+                      purchaseDate: "2026-01-01T00:00:00.000Z",
+                      total: 0,
+                      tax: 0,
+                      description: "example",
+                    },
                   },
                 },
               },
@@ -8439,7 +9143,16 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: [
+                        {
+                          id: "example-id",
+                          permissionId: "example-id",
+                          module: "example",
+                          action: "example",
+                          description: "example",
+                          isSystem: true,
+                        },
+                      ],
                     },
                   },
                 },
@@ -8494,14 +9207,16 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "201": {
             description: "Successful response",
             content: {
               "application/json": {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "RBAC bootstrap completed",
+                    },
                   },
                 },
               },
@@ -8546,7 +9261,17 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: [
+                        {
+                          id: "example-id",
+                          churchId: "example-id",
+                          roleId: "example-id",
+                          name: "example",
+                          description: "example",
+                          isSystem: true,
+                          createdAt: "2026-01-01T00:00:00.000Z",
+                        },
+                      ],
                     },
                   },
                 },
@@ -8602,14 +9327,25 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "201": {
             description: "Successful response",
             content: {
               "application/json": {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Role created",
+                      data: {
+                        id: "example-id",
+                        churchId: "example-id",
+                        roleId: "example-id",
+                        name: "example",
+                        description: "example",
+                        isSystem: true,
+                        createdAt: "2026-01-01T00:00:00.000Z",
+                      },
+                    },
                   },
                 },
               },
@@ -8664,7 +9400,27 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: {
+                        role: {
+                          id: "example-id",
+                          churchId: "example-id",
+                          roleId: "example-id",
+                          name: "example",
+                          description: "example",
+                          isSystem: true,
+                          createdAt: "2026-01-01T00:00:00.000Z",
+                        },
+                        permissions: [
+                          {
+                            id: "example-id",
+                            permissionId: "example-id",
+                            module: "example",
+                            action: "example",
+                            description: "example",
+                            isSystem: true,
+                          },
+                        ],
+                      },
                     },
                   },
                 },
@@ -8737,7 +9493,18 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Permissions updated",
+                      data: {
+                        id: "example-id",
+                        churchId: "example-id",
+                        roleId: "example-id",
+                        name: "example",
+                        description: "example",
+                        isSystem: true,
+                        createdAt: "2026-01-01T00:00:00.000Z",
+                      },
+                    },
                   },
                 },
               },
@@ -8811,7 +9578,16 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Roles assigned",
+                      data: {
+                        id: "example-id",
+                        churchId: "example-id",
+                        userId: "example-id",
+                        roles: ["example"],
+                        updatedAt: "2026-01-01T00:00:00.000Z",
+                      },
+                    },
                   },
                 },
               },
@@ -8866,7 +9642,10 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: {
+                        roles: ["example"],
+                        permissions: ["example"],
+                      },
                     },
                   },
                 },
@@ -8912,7 +9691,52 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      reportName: "example",
+                      generatedAt: "2026-01-01T00:00:00.000Z",
+                      filters: {
+                        startDate: "2026-01-01T00:00:00.000Z",
+                        endDate: "2026-01-01T00:00:00.000Z",
+                        groupBy: "day",
+                        symbol: "example",
+                        method: "example",
+                        availabilityAccountIds: ["example"],
+                        costCenterId: "example-id",
+                        includeProjection: true,
+                        projectionBuckets: 0,
+                      },
+                      summary: {
+                        openingBalance: 0,
+                        entries: 0,
+                        exits: 0,
+                        net: 0,
+                        closingBalance: 0,
+                      },
+                      series: [
+                        {
+                          period: "example",
+                          entries: 0,
+                          exits: 0,
+                          net: 0,
+                          runningBalance: 0,
+                        },
+                      ],
+                      projection: {
+                        label: "example",
+                        status: "available",
+                        message: "Example message",
+                        buckets: [
+                          {
+                            period: "example",
+                            projectedEntries: 0,
+                            projectedExits: 0,
+                            projectedNet: 0,
+                            projectedBalance: 0,
+                          },
+                        ],
+                      },
+                      messages: ["Example message"],
+                    },
                   },
                 },
               },
@@ -8974,7 +9798,25 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      startDate: "2026-01-01T00:00:00.000Z",
+                      endDate: "2026-01-01T00:00:00.000Z",
+                      groupBy: "day",
+                      details: [
+                        {
+                          financialRecordId: "example-id",
+                          date: "2026-01-01T00:00:00.000Z",
+                          description: "example",
+                          amount: 0,
+                          type: "example",
+                          flowType: "entry",
+                          status: "example",
+                          accountId: 0,
+                          accountName: 0,
+                          voucher: "example",
+                        },
+                      ],
+                    },
                   },
                 },
               },
@@ -9089,7 +9931,25 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      grossRevenue: 0,
+                      netRevenue: 0,
+                      directCosts: 0,
+                      grossProfit: 0,
+                      operationalExpenses: 0,
+                      ministryTransfers: 0,
+                      capexInvestments: 0,
+                      extraordinaryResults: 0,
+                      operationalResult: 0,
+                      netResult: 0,
+                      totalsBySymbol: [
+                        {
+                          symbol: "example",
+                        },
+                      ],
+                      year: 0,
+                      month: 0,
+                    },
                   },
                 },
               },
@@ -9159,7 +10019,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "income statement is arriving in your email",
+                    },
                   },
                 },
               },
@@ -9229,7 +10091,34 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      period: {
+                        year: 0,
+                        month: 0,
+                      },
+                      trend: {
+                        revenue: {
+                          current: 0,
+                          previous: 0,
+                        },
+                        opex: {
+                          current: 0,
+                          previous: 0,
+                        },
+                        transfers: {
+                          current: 0,
+                          previous: 0,
+                        },
+                        capex: {
+                          current: 0,
+                          previous: 0,
+                        },
+                        netIncome: {
+                          current: 0,
+                          previous: 0,
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -9299,7 +10188,67 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      period: {
+                        year: 0,
+                        month: 0,
+                      },
+                      summary: [
+                        {
+                          symbol: "example",
+                          summary: {
+                            revenue: 0,
+                            cogs: 0,
+                            grossProfit: 0,
+                            operatingExpenses: 0,
+                            operatingIncome: 0,
+                            capitalExpenditures: 0,
+                            otherIncome: 0,
+                            otherExpenses: 0,
+                            otherNet: 0,
+                            reversalAdjustments: 0,
+                            totalIncome: 0,
+                            totalExpenses: 0,
+                            netIncome: 0,
+                          },
+                        },
+                      ],
+                      breakdown: [
+                        {
+                          symbol: "example",
+                          breakdown: [
+                            {
+                              category: "REVENUE",
+                              income: 0,
+                              expenses: 0,
+                              net: 0,
+                            },
+                          ],
+                        },
+                      ],
+                      cashFlowSnapshot: {
+                        availabilityAccounts: {
+                          accounts: [0],
+                          totals: [
+                            {
+                              symbol: "example",
+                              total: 0,
+                              income: 0,
+                              expenses: 0,
+                            },
+                          ],
+                        },
+                        costCenters: {
+                          costCenters: [[]],
+                          totals: [
+                            {
+                              symbol: "example",
+                              total: 0,
+                            },
+                          ],
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -9441,7 +10390,23 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      records: [
+                        {
+                          amount: 0,
+                          date: "2026-01-01T00:00:00.000Z",
+                          availabilityAccountName: "example",
+                          availabilityAccountType: "example",
+                          symbol: "example",
+                        },
+                      ],
+                      totals: [
+                        {
+                          total: 0,
+                          symbol: "example",
+                        },
+                      ],
+                    },
                   },
                 },
               },
@@ -9520,7 +10485,11 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      nextPag: "example",
+                      count: 0,
+                      results: [[]],
+                    },
                   },
                 },
               },
@@ -9680,7 +10649,35 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      scheduleItemId: "example-id",
+                      churchId: "example-id",
+                      type: "SERVICE",
+                      title: "example",
+                      description: "example",
+                      location: {
+                        name: "example",
+                        address: "example",
+                      },
+                      recurrencePattern: {
+                        type: "WEEKLY",
+                        dayOfWeek: "SUNDAY",
+                        time: "2026-01-01T00:00:00.000Z",
+                        durationMinutes: 0,
+                        timezone: "2026-01-01T00:00:00.000Z",
+                        startDate: "2026-01-01T00:00:00.000Z",
+                        endDate: "2026-01-01T00:00:00.000Z",
+                      },
+                      visibility: "PUBLIC",
+                      director: "example",
+                      preacher: "example",
+                      observations: "example",
+                      status: "ACTIVE",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      createdByUserId: "example-id",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      updatedByUserId: "2026-01-01T00:00:00.000Z",
+                    },
                   },
                 },
               },
@@ -9788,7 +10785,35 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      scheduleItemId: "example-id",
+                      churchId: "example-id",
+                      type: "SERVICE",
+                      title: "example",
+                      description: "example",
+                      location: {
+                        name: "example",
+                        address: "example",
+                      },
+                      recurrencePattern: {
+                        type: "WEEKLY",
+                        dayOfWeek: "SUNDAY",
+                        time: "2026-01-01T00:00:00.000Z",
+                        durationMinutes: 0,
+                        timezone: "2026-01-01T00:00:00.000Z",
+                        startDate: "2026-01-01T00:00:00.000Z",
+                        endDate: "2026-01-01T00:00:00.000Z",
+                      },
+                      visibility: "PUBLIC",
+                      director: "example",
+                      preacher: "example",
+                      observations: "example",
+                      status: "ACTIVE",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      createdByUserId: "example-id",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      updatedByUserId: "2026-01-01T00:00:00.000Z",
+                    },
                   },
                 },
               },
@@ -9946,7 +10971,35 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      scheduleItemId: "example-id",
+                      churchId: "example-id",
+                      type: "SERVICE",
+                      title: "example",
+                      description: "example",
+                      location: {
+                        name: "example",
+                        address: "example",
+                      },
+                      recurrencePattern: {
+                        type: "WEEKLY",
+                        dayOfWeek: "SUNDAY",
+                        time: "2026-01-01T00:00:00.000Z",
+                        durationMinutes: 0,
+                        timezone: "2026-01-01T00:00:00.000Z",
+                        startDate: "2026-01-01T00:00:00.000Z",
+                        endDate: "2026-01-01T00:00:00.000Z",
+                      },
+                      visibility: "PUBLIC",
+                      director: "example",
+                      preacher: "example",
+                      observations: "example",
+                      status: "ACTIVE",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      createdByUserId: "example-id",
+                      updatedAt: "2026-01-01T00:00:00.000Z",
+                      updatedByUserId: "2026-01-01T00:00:00.000Z",
+                    },
                   },
                 },
               },
@@ -10047,7 +11100,21 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [
+                      {
+                        scheduleItemId: "example-id",
+                        title: "example",
+                        type: "SERVICE",
+                        date: "2026-01-01T00:00:00.000Z",
+                        startTime: "2026-01-01T00:00:00.000Z",
+                        endTime: "2026-01-01T00:00:00.000Z",
+                        location: {
+                          name: "example",
+                          address: "example",
+                        },
+                        visibility: "PUBLIC",
+                      },
+                    ],
                   },
                 },
               },
@@ -10092,7 +11159,11 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: {
+                        nextPag: "example",
+                        count: 0,
+                        results: [[]],
+                      },
                     },
                   },
                 },
@@ -10224,7 +11295,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      message: "Senha alterada com sucesso",
+                    },
                   },
                 },
               },
@@ -10686,7 +11759,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: "example",
+                      data: ["example"],
                     },
                   },
                 },
@@ -10726,7 +11799,8 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value:
+                      '<!DOCTYPE html>\n<html lang="pt-BR">\n  <head>\n    <title>Glória Finance API Reference</title>\n    <meta charset="utf-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1" />\n  </head>\n  <body>\n    <script\n      id="api-reference"\n      data-url="/docs/openapi.json"\n    ></script>\n    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>\n  </body>\n</html>',
                   },
                 },
               },
@@ -10765,7 +11839,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      openapi: "3.1.0",
+                    },
                   },
                 },
               },
