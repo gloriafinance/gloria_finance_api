@@ -40,9 +40,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -264,7 +264,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -403,7 +403,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -590,9 +590,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -858,7 +858,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -939,9 +939,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -1208,11 +1208,12 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       needsCreate: true,
-                      justification: "example",
+                      justification: "Gloria Finance",
                       concept: {
-                        financialConceptId: "example-id",
-                        name: "example",
-                        description: "example",
+                        financialConceptId:
+                          "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        description: "Gloria Finance",
                         type: "INCOME",
                         statementCategory: "REVENUE",
                         affectsCashFlow: true,
@@ -1288,7 +1289,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      conversationId: "example-id",
+                      conversationId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -1335,45 +1336,47 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: [
                       {
-                        conversationId: "example-id",
-                        churchId: "example-id",
-                        userId: "example-id",
-                        question: "example",
-                        answer: "example",
+                        conversationId: "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        userId: "00000000-0000-0000-0000-000000000001",
+                        question: "Gloria Finance",
+                        answer: "Gloria Finance",
                         intent: {
-                          conversationId: "example-id",
-                          answer: "example",
-                          intent: "example",
-                          confidence: "example",
-                          recommendedRoute: "example",
-                          recommendedScreen: "example",
+                          conversationId:
+                            "00000000-0000-0000-0000-000000000001",
+                          answer: "Gloria Finance",
+                          intent: "Gloria Finance",
+                          confidence: "Gloria Finance",
+                          recommendedRoute: "Gloria Finance",
+                          recommendedScreen: "Gloria Finance",
                           recommendedConcept: {
-                            financialConceptId: "example-id",
-                            name: "example",
+                            financialConceptId:
+                              "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                           },
-                          steps: ["example"],
-                          warnings: ["example"],
+                          steps: ["Gloria Finance"],
+                          warnings: ["Gloria Finance"],
                           extractedData: {
-                            documentType: "example",
-                            vendor: "example",
-                            amount: "example",
-                            currency: "example",
+                            documentType: "Gloria Finance",
+                            vendor: "Gloria Finance",
+                            amount: "Gloria Finance",
+                            currency: "Gloria Finance",
                             documentDate: "2026-01-01T00:00:00.000Z",
-                            summary: "example",
+                            summary: "Gloria Finance",
                           },
-                          sources: ["example"],
+                          sources: ["Gloria Finance"],
                         },
-                        response: "example",
-                        analysisTarget: "example",
+                        response: "Gloria Finance",
+                        analysisTarget: "Gloria Finance",
                         attachments: [
                           {
-                            name: "example",
-                            mimeType: "example",
+                            name: "Gloria Finance",
+                            mimeType: "Gloria Finance",
                             size: 0,
-                            dataBase64: "example",
+                            dataBase64: "Gloria Finance",
                           },
                         ],
-                        sources: ["example"],
+                        sources: ["Gloria Finance"],
                         createdAt: "2026-01-01T00:00:00.000Z",
                       },
                     ],
@@ -1431,6 +1434,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
+                      conversationId: "00000000-0000-0000-0000-000000000001",
                       deleted: true,
                     },
                   },
@@ -1484,7 +1488,10 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      conversationId: "00000000-0000-0000-0000-000000000001",
+                      messages: "Operation completed successfully",
+                    },
                   },
                 },
               },
@@ -1527,33 +1534,33 @@ export const openApiDocument = {
                       keys: {
                         kty: "AKP",
                         alg: "ES256",
-                        key_ops: ["example"],
+                        key_ops: ["Gloria Finance"],
                         ext: false,
                         use: "sig",
-                        x5c: ["example"],
-                        x5t: "example",
-                        "x5t#S256": "example",
-                        x5u: "example",
-                        kid: "example-id",
-                        crv: "example",
-                        d: "example",
-                        dp: "example",
-                        dq: "example",
-                        e: "example",
-                        k: "example",
-                        n: "example",
-                        p: "example",
-                        q: "example",
-                        qi: "example",
-                        x: "example",
-                        y: "example",
-                        pub: "example",
-                        priv: "example",
+                        x5c: ["Gloria Finance"],
+                        x5t: "Gloria Finance",
+                        "x5t#S256": "Gloria Finance",
+                        x5u: "Gloria Finance",
+                        kid: "00000000-0000-0000-0000-000000000001",
+                        crv: "Gloria Finance",
+                        d: "Gloria Finance",
+                        dp: "Gloria Finance",
+                        dq: "Gloria Finance",
+                        e: "Gloria Finance",
+                        k: "Gloria Finance",
+                        n: "Gloria Finance",
+                        p: "Gloria Finance",
+                        q: "Gloria Finance",
+                        qi: "Gloria Finance",
+                        x: "Gloria Finance",
+                        y: "Gloria Finance",
+                        pub: "Gloria Finance",
+                        priv: "Gloria Finance",
                         oth: [
                           {
-                            d: "example",
-                            r: "example",
-                            t: "example",
+                            d: "Gloria Finance",
+                            r: "Gloria Finance",
+                            t: "Gloria Finance",
                           },
                         ],
                       },
@@ -1730,15 +1737,15 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      accountId: "example-id",
-                      externalAccountId: "example-id",
+                      accountId: "00000000-0000-0000-0000-000000000001",
+                      externalAccountId: "00000000-0000-0000-0000-000000000001",
                       status: "ACTIVE",
                       connectionMode: "EXTERNAL_API_KEY",
                       accountNumber: {
-                        codeBank: "example",
-                        agency: "example",
-                        account: "example",
-                        accountDigit: "example",
+                        codeBank: "Gloria Finance",
+                        agency: "Gloria Finance",
+                        account: "Gloria Finance",
+                        accountDigit: "Gloria Finance",
                       },
                       availableBalanceInCents: 0,
                     },
@@ -1796,15 +1803,15 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      aggregateId: "example-id",
+                      aggregateId: "00000000-0000-0000-0000-000000000001",
                       accountType: "CURRENT",
-                      bankId: "example-id",
+                      bankId: "00000000-0000-0000-0000-000000000001",
                       active: true,
-                      name: "example",
-                      tag: "example",
-                      addressInstancePayment: "example",
-                      bankInstruction: "example",
-                      churchId: "example-id",
+                      name: "Gloria Finance",
+                      tag: "Gloria Finance",
+                      addressInstancePayment: "Gloria Finance",
+                      bankInstruction: "Gloria Finance",
+                      churchId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -1978,9 +1985,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -2054,7 +2061,8 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       reconciled: true,
-                      financialRecordId: "example-id",
+                      bankStatementId: "00000000-0000-0000-0000-000000000001",
+                      financialRecordId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -2128,7 +2136,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       matched: true,
-                      financialRecordId: "example-id",
+                      financialRecordId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -2184,7 +2192,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      bank: "example",
+                      bank: "Gloria Finance",
                       queuedAt: "2026-01-01T00:00:00.000Z",
                     },
                   },
@@ -2242,21 +2250,21 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      paymentId: "example-id",
-                      externalAccountId: "example-id",
-                      externalReference: "example",
-                      status: "example",
+                      paymentId: "00000000-0000-0000-0000-000000000001",
+                      externalAccountId: "00000000-0000-0000-0000-000000000001",
+                      externalReference: "Gloria Finance",
+                      status: "Gloria Finance",
                       principalAmountInCents: 0,
                       transactionFeeInCents: 0,
                       platformFeeInCents: 0,
                       chargeAmountInCents: 0,
-                      providerPaymentId: "example-id",
+                      providerPaymentId: "00000000-0000-0000-0000-000000000001",
                       pix: {
-                        copyPaste: "example",
-                        encodedImage: "example",
+                        copyPaste: "Gloria Finance",
+                        encodedImage: "Gloria Finance",
                         expirationDate: "2026-01-01T00:00:00.000Z",
                       },
-                      errorCode: "example",
+                      errorCode: "Gloria Finance",
                     },
                   },
                 },
@@ -2302,26 +2310,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [
-                        {
-                          address: "example",
-                          churchId: "example-id",
-                          city: "example",
-                          createdAt: "2026-01-01T00:00:00.000Z",
-                          email: "member@example.com",
-                          name: "example",
-                          number: "example",
-                          openingDate: "2026-01-01T00:00:00.000Z",
-                          postalCode: "example",
-                          region: {
-                            regionId: "example-id",
-                            name: "example",
-                          },
-                          street: "example",
-                        },
-                      ],
+                      results: [],
                     },
                   },
                 },
@@ -2508,7 +2499,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -2562,7 +2553,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2616,7 +2609,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2681,7 +2676,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2754,7 +2751,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2808,7 +2807,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2873,7 +2874,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2927,7 +2930,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -2990,7 +2995,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -3044,7 +3051,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -3098,7 +3107,9 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      data: "Gloria Finance",
+                    },
                   },
                 },
               },
@@ -3193,7 +3204,7 @@ export const openApiDocument = {
                       inReviewCount: 0,
                       items: [
                         {
-                          devotionalId: "example-id",
+                          devotionalId: "00000000-0000-0000-0000-000000000001",
                           weekStartDate: "2026-01-01T00:00:00.000Z",
                           scheduleDate: "2026-01-01T00:00:00.000Z",
                           dayOfWeek: "MONDAY",
@@ -3286,17 +3297,17 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      title: "example",
-                      devotional: "example",
+                      title: "Gloria Finance",
+                      devotional: "Gloria Finance",
                       scriptures: [
                         {
-                          reference: "example",
-                          quote: "example",
+                          reference: "Gloria Finance",
+                          quote: "Gloria Finance",
                         },
                       ],
                       push: {
-                        push_title: "example",
-                        push_body: "example",
+                        push_title: "Gloria Finance",
+                        push_body: "Gloria Finance",
                       },
                     },
                   },
@@ -3404,16 +3415,18 @@ export const openApiDocument = {
                       },
                       items: [
                         {
-                          devotionalDeliveryLogId: "example-id",
-                          devotionalId: "example-id",
-                          churchId: "example-id",
-                          devotionalWeeklyPlanId: "example-id",
+                          devotionalDeliveryLogId:
+                            "00000000-0000-0000-0000-000000000001",
+                          devotionalId: "00000000-0000-0000-0000-000000000001",
+                          churchId: "00000000-0000-0000-0000-000000000001",
+                          devotionalWeeklyPlanId:
+                            "00000000-0000-0000-0000-000000000001",
                           weekStartDate: "2026-01-01T00:00:00.000Z",
                           scheduleDate: "2026-01-01T00:00:00.000Z",
                           scheduledAt: "2026-01-01T00:00:00.000Z",
                           attemptedAt: "2026-01-01T00:00:00.000Z",
                           audience: "all",
-                          themeWeek: "example",
+                          themeWeek: "Gloria Finance",
                           versionNumber: 0,
                           channels: {
                             pushEnabled: true,
@@ -3424,12 +3437,12 @@ export const openApiDocument = {
                             whatsapp: "pending",
                             overall: "sent",
                           },
-                          errors: ["example"],
+                          errors: ["Gloria Finance"],
                           contentSnapshot: {
-                            title: "example",
-                            devotional: "example",
-                            pushTitle: "example",
-                            pushBody: "example",
+                            title: "Gloria Finance",
+                            devotional: "Gloria Finance",
+                            pushTitle: "Gloria Finance",
+                            pushBody: "Gloria Finance",
                           },
                         },
                       ],
@@ -3489,11 +3502,12 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       data: {
-                        devotionalWeeklyPlanId: "example-id",
-                        churchId: "example-id",
+                        devotionalWeeklyPlanId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
                         weekStartDate: "2026-01-01T00:00:00.000Z",
                         isEnabled: true,
-                        themeWeek: "example",
+                        themeWeek: "Gloria Finance",
                         daysOfWeek: ["MONDAY"],
                         sendTime: "2026-01-01T00:00:00.000Z",
                         timezone: "2026-01-01T00:00:00.000Z",
@@ -3506,12 +3520,13 @@ export const openApiDocument = {
                         dayConfigs: [
                           {
                             dayOfWeek: "MONDAY",
-                            titleHint: "example",
-                            biblicalContext: "example",
+                            titleHint: "Gloria Finance",
+                            biblicalContext: "Gloria Finance",
                             tone: "pastoral",
                           },
                         ],
-                        configuredByUserId: "example-id",
+                        configuredByUserId:
+                          "00000000-0000-0000-0000-000000000001",
                         updatedByUserId: "2026-01-01T00:00:00.000Z",
                         createdAt: "2026-01-01T00:00:00.000Z",
                         updatedAt: "2026-01-01T00:00:00.000Z",
@@ -3572,13 +3587,16 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "Devotional generation queued",
+                      weekStartDate: "2026-01-01T00:00:00.000Z",
+                      timezone: "2026-01-01T00:00:00.000Z",
                       data: {
-                        aggregateId: "example-id",
-                        devotionalWeeklyPlanId: "example-id",
-                        churchId: "example-id",
+                        aggregateId: "00000000-0000-0000-0000-000000000001",
+                        devotionalWeeklyPlanId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
                         weekStartDate: "2026-01-01T00:00:00.000Z",
                         isEnabled: true,
-                        themeWeek: "example",
+                        themeWeek: "Gloria Finance",
                         daysOfWeek: ["MONDAY"],
                         sendTime: "2026-01-01T00:00:00.000Z",
                         timezone: "2026-01-01T00:00:00.000Z",
@@ -3591,18 +3609,19 @@ export const openApiDocument = {
                         dayConfigs: [
                           {
                             dayOfWeek: "MONDAY",
-                            titleHint: "example",
-                            biblicalContext: "example",
+                            titleHint: "Gloria Finance",
+                            biblicalContext: "Gloria Finance",
                             tone: "pastoral",
                           },
                         ],
-                        configuredByUserId: "example-id",
+                        configuredByUserId:
+                          "00000000-0000-0000-0000-000000000001",
                         updatedByUserId: "2026-01-01T00:00:00.000Z",
                         createdAt: "2026-01-01T00:00:00.000Z",
                         updatedAt: "2026-01-01T00:00:00.000Z",
                         lastSavedAt: "2026-01-01T00:00:00.000Z",
                       },
-                      warning: "example",
+                      warning: "Gloria Finance",
                     },
                   },
                 },
@@ -3658,7 +3677,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: ["example"],
+                      data: ["Gloria Finance"],
                     },
                   },
                 },
@@ -3705,6 +3724,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "Church logo updated successfully",
+                      url: "https://example.com",
                     },
                   },
                 },
@@ -3953,7 +3973,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -4248,7 +4268,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: [],
                   },
                 },
               },
@@ -4327,9 +4347,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -4409,9 +4429,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -4466,7 +4486,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -4511,10 +4531,10 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      churchId: "example-id",
-                      churchName: "example",
-                      token: "example-token",
-                      registrationPath: "example",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      churchName: "Gloria Finance",
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      registrationPath: "Gloria Finance",
                     },
                   },
                 },
@@ -4651,7 +4671,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: ["example"],
+                      data: ["Gloria Finance"],
                     },
                   },
                 },
@@ -5369,8 +5389,8 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      copyPaste: "example",
-                      encodedImage: "example",
+                      copyPaste: "Gloria Finance",
+                      encodedImage: "Gloria Finance",
                     },
                   },
                 },
@@ -5671,7 +5691,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -5793,7 +5813,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -5922,7 +5942,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -6158,7 +6178,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -6254,16 +6274,6 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
-            content: {
-              "application/json": {
-                examples: {
-                  success: {
-                    summary: "Successful response",
-                    value: {},
-                  },
-                },
-              },
-            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -6372,6 +6382,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "successful internal transfer registration",
+                      transfer: "Gloria Finance",
                     },
                   },
                 },
@@ -6616,6 +6627,8 @@ export const openApiDocument = {
                     value: {
                       message:
                         "WhatsApp connected and credentials saved successfully",
+                      wabaId: "00000000-0000-0000-0000-000000000001",
+                      phoneNumberId: "00000000-0000-0000-0000-000000000001",
                       isWhatsappConnected: true,
                     },
                   },
@@ -6680,7 +6693,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "WhatsApp test message sent successfully",
-                      messageId: "example-id",
+                      messageId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -6792,7 +6805,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -6967,7 +6980,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -7013,7 +7026,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "MEMBER_PROFILE_PHOTO_UPDATED",
-                      profilePhoto: "example",
+                      profilePhoto: "Gloria Finance",
                       profilePhotoUrl: "https://example.com",
                     },
                   },
@@ -7329,9 +7342,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -7543,7 +7556,7 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       message: "Customer created successfully",
-                      customerId: "example-id",
+                      customerId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -7590,57 +7603,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      results: [
-                        {
-                          assetId: "example-id",
-                          code: "example",
-                          name: "example",
-                          category: "example",
-                          acquisitionDate: "2026-01-01T00:00:00.000Z",
-                          value: 0,
-                          quantity: 0,
-                          churchId: "example-id",
-                          location: "example",
-                          responsibleId: "example-id",
-                          responsible: {
-                            memberId: "example-id",
-                            name: "example",
-                            email: "member@example.com",
-                            phone: "example",
-                          },
-                          status: "ACTIVE",
-                          attachments: [
-                            {
-                              attachmentId: "example-id",
-                              name: "example",
-                              url: "https://example.com",
-                              mimetype: "example",
-                              size: 0,
-                              uploadedAt: "2026-01-01T00:00:00.000Z",
-                            },
-                          ],
-                          history: [
-                            {
-                              entryId: "example-id",
-                              action: "example",
-                              performedByDetails: {
-                                memberId: "example-id",
-                                name: "example",
-                                email: "member@example.com",
-                              },
-                              performedAt: "2026-01-01T00:00:00.000Z",
-                              notes: "example",
-                              changes: [],
-                            },
-                          ],
-                          inventoryStatus: [],
-                          inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
-                          inventoryCheckedBy: "example",
-                          disposal: "example",
-                          createdAt: "2026-01-01T00:00:00.000Z",
-                          updatedAt: "2026-01-01T00:00:00.000Z",
-                        },
-                      ],
+                      nextPag: null,
+                      count: 0,
+                      results: [],
                     },
                   },
                 },
@@ -7788,64 +7753,64 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      assetId: "example-id",
-                      code: "example",
-                      name: "example",
-                      category: "example",
+                      assetId: "00000000-0000-0000-0000-000000000001",
+                      code: "Gloria Finance",
+                      name: "Gloria Finance",
+                      category: "Gloria Finance",
                       acquisitionDate: "2026-01-01T00:00:00.000Z",
                       value: 0,
                       quantity: 0,
-                      churchId: "example-id",
-                      location: "example",
-                      responsibleId: "example-id",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      location: "Gloria Finance",
+                      responsibleId: "00000000-0000-0000-0000-000000000001",
                       responsible: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
-                        phone: "example",
+                        phone: "Gloria Finance",
                       },
                       status: "ACTIVE",
                       attachments: [
                         {
-                          attachmentId: "example-id",
-                          name: "example",
+                          attachmentId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           url: "https://example.com",
-                          mimetype: "example",
+                          mimetype: "Gloria Finance",
                           size: 0,
                           uploadedAt: "2026-01-01T00:00:00.000Z",
                         },
                       ],
                       history: [
                         {
-                          entryId: "example-id",
-                          action: "example",
+                          entryId: "00000000-0000-0000-0000-000000000001",
+                          action: "Gloria Finance",
                           performedByDetails: {
-                            memberId: "example-id",
-                            name: "example",
+                            memberId: "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                             email: "member@example.com",
                           },
                           performedAt: "2026-01-01T00:00:00.000Z",
-                          notes: "example",
+                          notes: "Gloria Finance",
                           changes: [],
                         },
                       ],
                       inventoryStatus: "CONFIRMED",
                       inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
                       inventoryCheckedBy: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
                       },
                       disposal: {
                         status: "ACTIVE",
-                        reason: "example",
+                        reason: "Gloria Finance",
                         performedByDetails: {
-                          memberId: "example-id",
-                          name: "example",
+                          memberId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           email: "member@example.com",
                         },
                         occurredAt: "2026-01-01T00:00:00.000Z",
-                        notes: "example",
+                        notes: "Gloria Finance",
                       },
                       createdAt: "2026-01-01T00:00:00.000Z",
                       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -7905,64 +7870,64 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      assetId: "example-id",
-                      code: "example",
-                      name: "example",
-                      category: "example",
+                      assetId: "00000000-0000-0000-0000-000000000001",
+                      code: "Gloria Finance",
+                      name: "Gloria Finance",
+                      category: "Gloria Finance",
                       acquisitionDate: "2026-01-01T00:00:00.000Z",
                       value: 0,
                       quantity: 0,
-                      churchId: "example-id",
-                      location: "example",
-                      responsibleId: "example-id",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      location: "Gloria Finance",
+                      responsibleId: "00000000-0000-0000-0000-000000000001",
                       responsible: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
-                        phone: "example",
+                        phone: "Gloria Finance",
                       },
                       status: "ACTIVE",
                       attachments: [
                         {
-                          attachmentId: "example-id",
-                          name: "example",
+                          attachmentId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           url: "https://example.com",
-                          mimetype: "example",
+                          mimetype: "Gloria Finance",
                           size: 0,
                           uploadedAt: "2026-01-01T00:00:00.000Z",
                         },
                       ],
                       history: [
                         {
-                          entryId: "example-id",
-                          action: "example",
+                          entryId: "00000000-0000-0000-0000-000000000001",
+                          action: "Gloria Finance",
                           performedByDetails: {
-                            memberId: "example-id",
-                            name: "example",
+                            memberId: "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                             email: "member@example.com",
                           },
                           performedAt: "2026-01-01T00:00:00.000Z",
-                          notes: "example",
+                          notes: "Gloria Finance",
                           changes: [],
                         },
                       ],
                       inventoryStatus: "CONFIRMED",
                       inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
                       inventoryCheckedBy: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
                       },
                       disposal: {
                         status: "ACTIVE",
-                        reason: "example",
+                        reason: "Gloria Finance",
                         performedByDetails: {
-                          memberId: "example-id",
-                          name: "example",
+                          memberId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           email: "member@example.com",
                         },
                         occurredAt: "2026-01-01T00:00:00.000Z",
-                        notes: "example",
+                        notes: "Gloria Finance",
                       },
                       createdAt: "2026-01-01T00:00:00.000Z",
                       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -8115,64 +8080,64 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      assetId: "example-id",
-                      code: "example",
-                      name: "example",
-                      category: "example",
+                      assetId: "00000000-0000-0000-0000-000000000001",
+                      code: "Gloria Finance",
+                      name: "Gloria Finance",
+                      category: "Gloria Finance",
                       acquisitionDate: "2026-01-01T00:00:00.000Z",
                       value: 0,
                       quantity: 0,
-                      churchId: "example-id",
-                      location: "example",
-                      responsibleId: "example-id",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      location: "Gloria Finance",
+                      responsibleId: "00000000-0000-0000-0000-000000000001",
                       responsible: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
-                        phone: "example",
+                        phone: "Gloria Finance",
                       },
                       status: "ACTIVE",
                       attachments: [
                         {
-                          attachmentId: "example-id",
-                          name: "example",
+                          attachmentId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           url: "https://example.com",
-                          mimetype: "example",
+                          mimetype: "Gloria Finance",
                           size: 0,
                           uploadedAt: "2026-01-01T00:00:00.000Z",
                         },
                       ],
                       history: [
                         {
-                          entryId: "example-id",
-                          action: "example",
+                          entryId: "00000000-0000-0000-0000-000000000001",
+                          action: "Gloria Finance",
                           performedByDetails: {
-                            memberId: "example-id",
-                            name: "example",
+                            memberId: "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                             email: "member@example.com",
                           },
                           performedAt: "2026-01-01T00:00:00.000Z",
-                          notes: "example",
+                          notes: "Gloria Finance",
                           changes: [],
                         },
                       ],
                       inventoryStatus: "CONFIRMED",
                       inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
                       inventoryCheckedBy: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
                       },
                       disposal: {
                         status: "ACTIVE",
-                        reason: "example",
+                        reason: "Gloria Finance",
                         performedByDetails: {
-                          memberId: "example-id",
-                          name: "example",
+                          memberId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           email: "member@example.com",
                         },
                         occurredAt: "2026-01-01T00:00:00.000Z",
-                        notes: "example",
+                        notes: "Gloria Finance",
                       },
                       createdAt: "2026-01-01T00:00:00.000Z",
                       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -8242,64 +8207,64 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      assetId: "example-id",
-                      code: "example",
-                      name: "example",
-                      category: "example",
+                      assetId: "00000000-0000-0000-0000-000000000001",
+                      code: "Gloria Finance",
+                      name: "Gloria Finance",
+                      category: "Gloria Finance",
                       acquisitionDate: "2026-01-01T00:00:00.000Z",
                       value: 0,
                       quantity: 0,
-                      churchId: "example-id",
-                      location: "example",
-                      responsibleId: "example-id",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      location: "Gloria Finance",
+                      responsibleId: "00000000-0000-0000-0000-000000000001",
                       responsible: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
-                        phone: "example",
+                        phone: "Gloria Finance",
                       },
                       status: "ACTIVE",
                       attachments: [
                         {
-                          attachmentId: "example-id",
-                          name: "example",
+                          attachmentId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           url: "https://example.com",
-                          mimetype: "example",
+                          mimetype: "Gloria Finance",
                           size: 0,
                           uploadedAt: "2026-01-01T00:00:00.000Z",
                         },
                       ],
                       history: [
                         {
-                          entryId: "example-id",
-                          action: "example",
+                          entryId: "00000000-0000-0000-0000-000000000001",
+                          action: "Gloria Finance",
                           performedByDetails: {
-                            memberId: "example-id",
-                            name: "example",
+                            memberId: "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                             email: "member@example.com",
                           },
                           performedAt: "2026-01-01T00:00:00.000Z",
-                          notes: "example",
+                          notes: "Gloria Finance",
                           changes: [],
                         },
                       ],
                       inventoryStatus: "CONFIRMED",
                       inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
                       inventoryCheckedBy: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
                       },
                       disposal: {
                         status: "ACTIVE",
-                        reason: "example",
+                        reason: "Gloria Finance",
                         performedByDetails: {
-                          memberId: "example-id",
-                          name: "example",
+                          memberId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           email: "member@example.com",
                         },
                         occurredAt: "2026-01-01T00:00:00.000Z",
-                        notes: "example",
+                        notes: "Gloria Finance",
                       },
                       createdAt: "2026-01-01T00:00:00.000Z",
                       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -8408,64 +8373,64 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      assetId: "example-id",
-                      code: "example",
-                      name: "example",
-                      category: "example",
+                      assetId: "00000000-0000-0000-0000-000000000001",
+                      code: "Gloria Finance",
+                      name: "Gloria Finance",
+                      category: "Gloria Finance",
                       acquisitionDate: "2026-01-01T00:00:00.000Z",
                       value: 0,
                       quantity: 0,
-                      churchId: "example-id",
-                      location: "example",
-                      responsibleId: "example-id",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      location: "Gloria Finance",
+                      responsibleId: "00000000-0000-0000-0000-000000000001",
                       responsible: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
-                        phone: "example",
+                        phone: "Gloria Finance",
                       },
                       status: "ACTIVE",
                       attachments: [
                         {
-                          attachmentId: "example-id",
-                          name: "example",
+                          attachmentId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           url: "https://example.com",
-                          mimetype: "example",
+                          mimetype: "Gloria Finance",
                           size: 0,
                           uploadedAt: "2026-01-01T00:00:00.000Z",
                         },
                       ],
                       history: [
                         {
-                          entryId: "example-id",
-                          action: "example",
+                          entryId: "00000000-0000-0000-0000-000000000001",
+                          action: "Gloria Finance",
                           performedByDetails: {
-                            memberId: "example-id",
-                            name: "example",
+                            memberId: "00000000-0000-0000-0000-000000000001",
+                            name: "Gloria Finance",
                             email: "member@example.com",
                           },
                           performedAt: "2026-01-01T00:00:00.000Z",
-                          notes: "example",
+                          notes: "Gloria Finance",
                           changes: [],
                         },
                       ],
                       inventoryStatus: "CONFIRMED",
                       inventoryCheckedAt: "2026-01-01T00:00:00.000Z",
                       inventoryCheckedBy: {
-                        memberId: "example-id",
-                        name: "example",
+                        memberId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
                         email: "member@example.com",
                       },
                       disposal: {
                         status: "ACTIVE",
-                        reason: "example",
+                        reason: "Gloria Finance",
                         performedByDetails: {
-                          memberId: "example-id",
-                          name: "example",
+                          memberId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
                           email: "member@example.com",
                         },
                         occurredAt: "2026-01-01T00:00:00.000Z",
-                        notes: "example",
+                        notes: "Gloria Finance",
                       },
                       createdAt: "2026-01-01T00:00:00.000Z",
                       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -8556,16 +8521,6 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
-            content: {
-              "application/json": {
-                examples: {
-                  success: {
-                    summary: "Successful response",
-                    value: {},
-                  },
-                },
-              },
-            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8601,16 +8556,6 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
-            content: {
-              "application/json": {
-                examples: {
-                  success: {
-                    summary: "Successful response",
-                    value: {},
-                  },
-                },
-              },
-            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -8656,9 +8601,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      churchId: "example-id",
-                      churchName: "example",
-                      country: "example",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      churchName: "Gloria Finance",
+                      country: "Gloria Finance",
                     },
                   },
                 },
@@ -8758,7 +8703,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      profilePhotoUploadReceipt: "example",
+                      profilePhotoUploadReceipt: "Gloria Finance",
                     },
                   },
                 },
@@ -8855,7 +8800,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },
@@ -9091,13 +9036,13 @@ export const openApiDocument = {
                           quantity: 0,
                           price: 0,
                           total: 0,
-                          name: "example",
+                          name: "Gloria Finance",
                         },
                       ],
                       purchaseDate: "2026-01-01T00:00:00.000Z",
                       total: 0,
                       tax: 0,
-                      description: "example",
+                      description: "Gloria Finance",
                     },
                   },
                 },
@@ -9145,11 +9090,11 @@ export const openApiDocument = {
                     value: {
                       data: [
                         {
-                          id: "example-id",
-                          permissionId: "example-id",
-                          module: "example",
-                          action: "example",
-                          description: "example",
+                          id: "00000000-0000-0000-0000-000000000001",
+                          permissionId: "00000000-0000-0000-0000-000000000001",
+                          module: "Gloria Finance",
+                          action: "Gloria Finance",
+                          description: "Gloria Finance",
                           isSystem: true,
                         },
                       ],
@@ -9263,11 +9208,11 @@ export const openApiDocument = {
                     value: {
                       data: [
                         {
-                          id: "example-id",
-                          churchId: "example-id",
-                          roleId: "example-id",
-                          name: "example",
-                          description: "example",
+                          id: "00000000-0000-0000-0000-000000000001",
+                          churchId: "00000000-0000-0000-0000-000000000001",
+                          roleId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
+                          description: "Gloria Finance",
                           isSystem: true,
                           createdAt: "2026-01-01T00:00:00.000Z",
                         },
@@ -9337,11 +9282,11 @@ export const openApiDocument = {
                     value: {
                       message: "Role created",
                       data: {
-                        id: "example-id",
-                        churchId: "example-id",
-                        roleId: "example-id",
-                        name: "example",
-                        description: "example",
+                        id: "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        roleId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        description: "Gloria Finance",
                         isSystem: true,
                         createdAt: "2026-01-01T00:00:00.000Z",
                       },
@@ -9402,21 +9347,22 @@ export const openApiDocument = {
                     value: {
                       data: {
                         role: {
-                          id: "example-id",
-                          churchId: "example-id",
-                          roleId: "example-id",
-                          name: "example",
-                          description: "example",
+                          id: "00000000-0000-0000-0000-000000000001",
+                          churchId: "00000000-0000-0000-0000-000000000001",
+                          roleId: "00000000-0000-0000-0000-000000000001",
+                          name: "Gloria Finance",
+                          description: "Gloria Finance",
                           isSystem: true,
                           createdAt: "2026-01-01T00:00:00.000Z",
                         },
                         permissions: [
                           {
-                            id: "example-id",
-                            permissionId: "example-id",
-                            module: "example",
-                            action: "example",
-                            description: "example",
+                            id: "00000000-0000-0000-0000-000000000001",
+                            permissionId:
+                              "00000000-0000-0000-0000-000000000001",
+                            module: "Gloria Finance",
+                            action: "Gloria Finance",
+                            description: "Gloria Finance",
                             isSystem: true,
                           },
                         ],
@@ -9496,11 +9442,11 @@ export const openApiDocument = {
                     value: {
                       message: "Permissions updated",
                       data: {
-                        id: "example-id",
-                        churchId: "example-id",
-                        roleId: "example-id",
-                        name: "example",
-                        description: "example",
+                        id: "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        roleId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        description: "Gloria Finance",
                         isSystem: true,
                         createdAt: "2026-01-01T00:00:00.000Z",
                       },
@@ -9581,10 +9527,10 @@ export const openApiDocument = {
                     value: {
                       message: "Roles assigned",
                       data: {
-                        id: "example-id",
-                        churchId: "example-id",
-                        userId: "example-id",
-                        roles: ["example"],
+                        id: "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        userId: "00000000-0000-0000-0000-000000000001",
+                        roles: ["Gloria Finance"],
                         updatedAt: "2026-01-01T00:00:00.000Z",
                       },
                     },
@@ -9643,8 +9589,8 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       data: {
-                        roles: ["example"],
-                        permissions: ["example"],
+                        roles: ["Gloria Finance"],
+                        permissions: ["Gloria Finance"],
                       },
                     },
                   },
@@ -9692,16 +9638,16 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      reportName: "example",
+                      reportName: "Gloria Finance",
                       generatedAt: "2026-01-01T00:00:00.000Z",
                       filters: {
                         startDate: "2026-01-01T00:00:00.000Z",
                         endDate: "2026-01-01T00:00:00.000Z",
                         groupBy: "day",
-                        symbol: "example",
-                        method: "example",
-                        availabilityAccountIds: ["example"],
-                        costCenterId: "example-id",
+                        symbol: "Gloria Finance",
+                        method: "Gloria Finance",
+                        availabilityAccountIds: ["Gloria Finance"],
+                        costCenterId: "00000000-0000-0000-0000-000000000001",
                         includeProjection: true,
                         projectionBuckets: 0,
                       },
@@ -9714,7 +9660,7 @@ export const openApiDocument = {
                       },
                       series: [
                         {
-                          period: "example",
+                          period: "Gloria Finance",
                           entries: 0,
                           exits: 0,
                           net: 0,
@@ -9722,12 +9668,12 @@ export const openApiDocument = {
                         },
                       ],
                       projection: {
-                        label: "example",
+                        label: "Gloria Finance",
                         status: "available",
-                        message: "Example message",
+                        message: "Operation completed successfully",
                         buckets: [
                           {
-                            period: "example",
+                            period: "Gloria Finance",
                             projectedEntries: 0,
                             projectedExits: 0,
                             projectedNet: 0,
@@ -9735,7 +9681,7 @@ export const openApiDocument = {
                           },
                         ],
                       },
-                      messages: ["Example message"],
+                      messages: ["Operation completed successfully"],
                     },
                   },
                 },
@@ -9804,16 +9750,17 @@ export const openApiDocument = {
                       groupBy: "day",
                       details: [
                         {
-                          financialRecordId: "example-id",
+                          financialRecordId:
+                            "00000000-0000-0000-0000-000000000001",
                           date: "2026-01-01T00:00:00.000Z",
-                          description: "example",
+                          description: "Gloria Finance",
                           amount: 0,
-                          type: "example",
+                          type: "Gloria Finance",
                           flowType: "entry",
-                          status: "example",
+                          status: "Gloria Finance",
                           accountId: 0,
                           accountName: 0,
-                          voucher: "example",
+                          voucher: "Gloria Finance",
                         },
                       ],
                     },
@@ -9856,16 +9803,6 @@ export const openApiDocument = {
         responses: {
           "200": {
             description: "Successful response",
-            content: {
-              "application/json": {
-                examples: {
-                  success: {
-                    summary: "Successful response",
-                    value: {},
-                  },
-                },
-              },
-            },
           },
           "400": {
             description: "Invalid request or domain validation error",
@@ -9944,7 +9881,7 @@ export const openApiDocument = {
                       netResult: 0,
                       totalsBySymbol: [
                         {
-                          symbol: "example",
+                          symbol: "Gloria Finance",
                         },
                       ],
                       year: 0,
@@ -10195,7 +10132,7 @@ export const openApiDocument = {
                       },
                       summary: [
                         {
-                          symbol: "example",
+                          symbol: "Gloria Finance",
                           summary: {
                             revenue: 0,
                             cogs: 0,
@@ -10215,7 +10152,7 @@ export const openApiDocument = {
                       ],
                       breakdown: [
                         {
-                          symbol: "example",
+                          symbol: "Gloria Finance",
                           breakdown: [
                             {
                               category: "REVENUE",
@@ -10231,7 +10168,7 @@ export const openApiDocument = {
                           accounts: [0],
                           totals: [
                             {
-                              symbol: "example",
+                              symbol: "Gloria Finance",
                               total: 0,
                               income: 0,
                               expenses: 0,
@@ -10242,7 +10179,7 @@ export const openApiDocument = {
                           costCenters: [[]],
                           totals: [
                             {
-                              symbol: "example",
+                              symbol: "Gloria Finance",
                               total: 0,
                             },
                           ],
@@ -10395,15 +10332,15 @@ export const openApiDocument = {
                         {
                           amount: 0,
                           date: "2026-01-01T00:00:00.000Z",
-                          availabilityAccountName: "example",
-                          availabilityAccountType: "example",
-                          symbol: "example",
+                          availabilityAccountName: "Gloria Finance",
+                          availabilityAccountType: "Gloria Finance",
+                          symbol: "Gloria Finance",
                         },
                       ],
                       totals: [
                         {
                           total: 0,
-                          symbol: "example",
+                          symbol: "Gloria Finance",
                         },
                       ],
                     },
@@ -10486,9 +10423,9 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      nextPag: "example",
+                      nextPag: null,
                       count: 0,
-                      results: [[]],
+                      results: [],
                     },
                   },
                 },
@@ -10650,14 +10587,14 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      scheduleItemId: "example-id",
-                      churchId: "example-id",
+                      scheduleItemId: "00000000-0000-0000-0000-000000000001",
+                      churchId: "00000000-0000-0000-0000-000000000001",
                       type: "SERVICE",
-                      title: "example",
-                      description: "example",
+                      title: "Gloria Finance",
+                      description: "Gloria Finance",
                       location: {
-                        name: "example",
-                        address: "example",
+                        name: "Gloria Finance",
+                        address: "Gloria Finance",
                       },
                       recurrencePattern: {
                         type: "WEEKLY",
@@ -10669,12 +10606,12 @@ export const openApiDocument = {
                         endDate: "2026-01-01T00:00:00.000Z",
                       },
                       visibility: "PUBLIC",
-                      director: "example",
-                      preacher: "example",
-                      observations: "example",
+                      director: "Gloria Finance",
+                      preacher: "Gloria Finance",
+                      observations: "Gloria Finance",
                       status: "ACTIVE",
                       createdAt: "2026-01-01T00:00:00.000Z",
-                      createdByUserId: "example-id",
+                      createdByUserId: "00000000-0000-0000-0000-000000000001",
                       updatedAt: "2026-01-01T00:00:00.000Z",
                       updatedByUserId: "2026-01-01T00:00:00.000Z",
                     },
@@ -10786,14 +10723,14 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      scheduleItemId: "example-id",
-                      churchId: "example-id",
+                      scheduleItemId: "00000000-0000-0000-0000-000000000001",
+                      churchId: "00000000-0000-0000-0000-000000000001",
                       type: "SERVICE",
-                      title: "example",
-                      description: "example",
+                      title: "Gloria Finance",
+                      description: "Gloria Finance",
                       location: {
-                        name: "example",
-                        address: "example",
+                        name: "Gloria Finance",
+                        address: "Gloria Finance",
                       },
                       recurrencePattern: {
                         type: "WEEKLY",
@@ -10805,12 +10742,12 @@ export const openApiDocument = {
                         endDate: "2026-01-01T00:00:00.000Z",
                       },
                       visibility: "PUBLIC",
-                      director: "example",
-                      preacher: "example",
-                      observations: "example",
+                      director: "Gloria Finance",
+                      preacher: "Gloria Finance",
+                      observations: "Gloria Finance",
                       status: "ACTIVE",
                       createdAt: "2026-01-01T00:00:00.000Z",
-                      createdByUserId: "example-id",
+                      createdByUserId: "00000000-0000-0000-0000-000000000001",
                       updatedAt: "2026-01-01T00:00:00.000Z",
                       updatedByUserId: "2026-01-01T00:00:00.000Z",
                     },
@@ -10972,14 +10909,14 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      scheduleItemId: "example-id",
-                      churchId: "example-id",
+                      scheduleItemId: "00000000-0000-0000-0000-000000000001",
+                      churchId: "00000000-0000-0000-0000-000000000001",
                       type: "SERVICE",
-                      title: "example",
-                      description: "example",
+                      title: "Gloria Finance",
+                      description: "Gloria Finance",
                       location: {
-                        name: "example",
-                        address: "example",
+                        name: "Gloria Finance",
+                        address: "Gloria Finance",
                       },
                       recurrencePattern: {
                         type: "WEEKLY",
@@ -10991,12 +10928,12 @@ export const openApiDocument = {
                         endDate: "2026-01-01T00:00:00.000Z",
                       },
                       visibility: "PUBLIC",
-                      director: "example",
-                      preacher: "example",
-                      observations: "example",
+                      director: "Gloria Finance",
+                      preacher: "Gloria Finance",
+                      observations: "Gloria Finance",
                       status: "ACTIVE",
                       createdAt: "2026-01-01T00:00:00.000Z",
-                      createdByUserId: "example-id",
+                      createdByUserId: "00000000-0000-0000-0000-000000000001",
                       updatedAt: "2026-01-01T00:00:00.000Z",
                       updatedByUserId: "2026-01-01T00:00:00.000Z",
                     },
@@ -11102,15 +11039,15 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: [
                       {
-                        scheduleItemId: "example-id",
-                        title: "example",
+                        scheduleItemId: "00000000-0000-0000-0000-000000000001",
+                        title: "Gloria Finance",
                         type: "SERVICE",
                         date: "2026-01-01T00:00:00.000Z",
                         startTime: "2026-01-01T00:00:00.000Z",
                         endTime: "2026-01-01T00:00:00.000Z",
                         location: {
-                          name: "example",
-                          address: "example",
+                          name: "Gloria Finance",
+                          address: "Gloria Finance",
                         },
                         visibility: "PUBLIC",
                       },
@@ -11160,9 +11097,9 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: {
                       data: {
-                        nextPag: "example",
+                        nextPag: null,
                         count: 0,
-                        results: [[]],
+                        results: [],
                       },
                     },
                   },
@@ -11548,7 +11485,29 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      name: "Maria Silva",
+                      email: "member@example.com",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      isActive: true,
+                      userId: "00000000-0000-0000-0000-000000000001",
+                      memberId: "00000000-0000-0000-0000-000000000002",
+                      lastLogin: null,
+                      policies: {},
+                      isSuperUser: false,
+                      church: {
+                        churchId: "00000000-0000-0000-0000-000000000003",
+                        name: "Igreja Central",
+                        lang: "pt-BR",
+                        country: "BR",
+                        symbolFormatMoney: "BRL",
+                        asaasConnect: false,
+                      },
+                      roles: ["admin"],
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      asaasConnect: false,
+                    },
                   },
                 },
               },
@@ -11655,7 +11614,29 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      name: "Maria Silva",
+                      email: "member@example.com",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      isActive: true,
+                      userId: "00000000-0000-0000-0000-000000000001",
+                      memberId: "00000000-0000-0000-0000-000000000002",
+                      lastLogin: null,
+                      policies: {},
+                      isSuperUser: false,
+                      church: {
+                        churchId: "00000000-0000-0000-0000-000000000003",
+                        name: "Igreja Central",
+                        lang: "pt-BR",
+                        country: "BR",
+                        symbolFormatMoney: "BRL",
+                        asaasConnect: false,
+                      },
+                      roles: ["admin"],
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      asaasConnect: false,
+                    },
                   },
                 },
               },
@@ -11704,7 +11685,29 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: {
+                      name: "Maria Silva",
+                      email: "member@example.com",
+                      createdAt: "2026-01-01T00:00:00.000Z",
+                      isActive: true,
+                      userId: "00000000-0000-0000-0000-000000000001",
+                      memberId: "00000000-0000-0000-0000-000000000002",
+                      lastLogin: null,
+                      policies: {},
+                      isSuperUser: false,
+                      church: {
+                        churchId: "00000000-0000-0000-0000-000000000003",
+                        name: "Igreja Central",
+                        lang: "pt-BR",
+                        country: "BR",
+                        symbolFormatMoney: "BRL",
+                        asaasConnect: false,
+                      },
+                      roles: ["admin"],
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+                      asaasConnect: false,
+                    },
                   },
                 },
               },
@@ -11759,7 +11762,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      data: ["example"],
+                      data: ["Gloria Finance"],
                     },
                   },
                 },
@@ -11984,7 +11987,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: {},
+                    value: null,
                   },
                 },
               },

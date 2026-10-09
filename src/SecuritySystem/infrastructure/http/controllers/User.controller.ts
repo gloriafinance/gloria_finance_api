@@ -23,6 +23,7 @@ import type {
   RefreshTokenRequest,
 } from "../../../domain"
 import { User } from "../../../domain"
+import type { UserPrimitives } from "../../../domain/User"
 import { FetchAllUsers } from "../../../applications/finder/FetchAllUsers"
 import { Logger } from "@/Shared/adapter"
 
@@ -68,6 +69,14 @@ type ChurchContext = {
   lang: string
   country: string
   symbolFormatMoney: string
+  asaasConnect: boolean
+}
+
+type AuthResponse = Omit<UserPrimitives, "password" | "churchId"> & {
+  church: ChurchContext
+  roles: string[]
+  token: string
+  refreshToken: string
   asaasConnect: boolean
 }
 
@@ -384,7 +393,7 @@ export class UserController {
     }
   }
 
-  private async buildAuthResponse(user: User) {
+  private async buildAuthResponse(user: User): Promise<AuthResponse> {
     const church = await this.resolveChurchContext(user)
 
     const roles = await UserAssignmentMongoRepository.getInstance().findByUser(

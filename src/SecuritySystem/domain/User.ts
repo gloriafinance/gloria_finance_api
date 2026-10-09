@@ -6,6 +6,20 @@ import {
 } from "@abejarano/ts-mongodb-criteria"
 import type { UserPolicies } from "./types/user-policies.type"
 
+export type UserPrimitives = {
+  name: string
+  email: string
+  password: string
+  createdAt: Date
+  isActive: boolean
+  userId: string
+  memberId?: string
+  lastLogin?: Date | null
+  policies?: UserPolicies
+  isSuperUser: boolean
+  churchId: string
+}
+
 export class User extends AggregateRoot {
   static collectionName(): string {
     return "bk_users"
@@ -145,7 +159,7 @@ export class User extends AggregateRoot {
     return this
   }
 
-  toPrimitives(): any {
+  toPrimitives(): UserPrimitives {
     return {
       name: this.name,
       email: this.email,

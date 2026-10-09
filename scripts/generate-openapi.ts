@@ -125,6 +125,8 @@ async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer>
   ): Promise<OpenApiExample> => {
     if (!type || type.isErrorType())
       return propertyName ? exampleForProperty(propertyName) : {}
+    if (propertyName === "nextPag") return null
+    if (propertyName === "results") return []
     if (type.isLiteralType()) return type.value as OpenApiExample
 
     const typeName = await checker.typeToString(type)
@@ -160,9 +162,11 @@ async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer>
     const arrayType = typeName.match(/^(?:ReadonlyArray|Array)<(.+)>$/)
     if (typeName.endsWith("[]") || arrayType) {
       const itemType = arrayType?.[1] ?? typeName.slice(0, -2)
+      if (itemType === "any" || itemType === "unknown") return []
       return [exampleFromSchema(schemaFromType(itemType), propertyName)]
     }
-    if (depth >= 3) return propertyName ? exampleForProperty(propertyName) : {}
+    if (depth >= 3)
+      return propertyName ? exampleForProperty(propertyName) : {}
     if (visited.has(type.id))
       return propertyName ? exampleForProperty(propertyName) : {}
     visited.add(type.id)
@@ -471,6 +475,8 @@ function propertySeparator(source: string): number {
 }
 
 function exampleForProperty(name: string): OpenApiExample {
+  if (name === "nextPag") return null
+  if (name === "results") return []
   if (/^(is|has)[A-Z_]/.test(name) || /enabled|success|active/i.test(name))
     return true
   if (/count|total|amount|balance|page|perPage|year|month|day/i.test(name))
@@ -479,20 +485,21 @@ function exampleForProperty(name: string): OpenApiExample {
   if (/date|time|at$/i.test(name)) return "2026-01-01T00:00:00.000Z"
   if (/url/i.test(name)) return "https://example.com"
   if (/token/i.test(name)) return "example-token"
-  if (/id$/i.test(name)) return "example-id"
-  if (/message/i.test(name)) return "Example message"
+  if (/id$/i.test(name)) return "00000000-0000-0000-0000-000000000001"
+  if (/message/i.test(name)) return "Operation completed successfully"
   if (/s$/i.test(name)) return []
-  return "example"
+  return "Gloria Finance"
 }
 
 function exampleForStringProperty(name: string): string {
+  if (name === "nextPag") return ""
   if (/email/i.test(name)) return "member@example.com"
   if (/date|time|at$/i.test(name)) return "2026-01-01T00:00:00.000Z"
   if (/url/i.test(name)) return "https://example.com"
-  if (/token/i.test(name)) return "example-token"
-  if (/id$/i.test(name)) return "example-id"
-  if (/message/i.test(name)) return "Example message"
-  return "example"
+  if (/token/i.test(name)) return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+  if (/id$/i.test(name)) return "00000000-0000-0000-0000-000000000001"
+  if (/message/i.test(name)) return "Operation completed successfully"
+  return "Gloria Finance"
 }
 
 function exampleFromExpression(
@@ -535,6 +542,44 @@ function exampleFromExpression(
   }
 
   return propertyName ? exampleForProperty(propertyName) : {}
+}
+
+function fallbackForResponseExpression(expression: string): OpenApiExample {
+  const value = expression
+    .trim()
+    .replace(/^await\s+/, "")
+    .replace(/\/\/.*$/gm, "")
+    .trim()
+  if (value === "churches")
+    return { nextPag: null, count: 0, results: [] }
+  if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value) && /s$/i.test(value)) return []
+  return null
+}
+
+function authResponseExample(): OpenApiExample {
+  return {
+    name: "Maria Silva",
+    email: "member@example.com",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    isActive: true,
+    userId: "00000000-0000-0000-0000-000000000001",
+    memberId: "00000000-0000-0000-0000-000000000002",
+    lastLogin: null,
+    policies: {},
+    isSuperUser: false,
+    church: {
+      churchId: "00000000-0000-0000-0000-000000000003",
+      name: "Igreja Central",
+      lang: "pt-BR",
+      country: "BR",
+      symbolFormatMoney: "BRL",
+      asaasConnect: false,
+    },
+    roles: ["admin"],
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+    refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+    asaasConnect: false,
+  }
 }
 
 function statusFrom(source: string): number | undefined {
@@ -586,6 +631,10 @@ async function mergeObjectFields(
       ? inferred
       : {}),
   }
+  if (value.includes("...result") && result.nextPag === undefined) {
+    result.nextPag = null
+    result.count = 0
+  }
   let searchFrom = 1
   for (const member of splitValues(value.slice(1, -1))) {
     const entry = member.trim()
@@ -593,7 +642,11 @@ async function mergeObjectFields(
     const memberStart = value.indexOf(member, searchFrom)
     searchFrom = memberStart + member.length
     const separator = propertySeparator(entry)
-    if (separator === -1) continue
+    if (separator === -1) {
+      if (/^[A-Za-z0-9_]+$/.test(entry))
+        result[entry] = result[entry] ?? exampleForProperty(entry)
+      continue
+    }
     const key = entry
       .slice(0, separator)
       .trim()
@@ -657,6 +710,9 @@ async function responseExamples(
         handlerStart + argumentOpen + 1 + leadingWhitespace
       const generatedExample = isLiteralExpression(expression)
         ? exampleFromExpression(expression)
+        : /\bbuildAuthResponse\b/.test(handler) &&
+            /^(?:response|authResponse)$/.test(expression.trim())
+          ? authResponseExample()
         : sourceFile.endsWith("ApiDocs.controller.ts") &&
             /\bopenApiDocument\b/.test(expression)
           ? { openapi: "3.1.0" }
@@ -667,7 +723,16 @@ async function responseExamples(
               expressionPosition,
               analyzer
             )
-      examples.set(status, generatedExample)
+      examples.set(
+        status,
+        generatedExample &&
+          typeof generatedExample === "object" &&
+          !Array.isArray(generatedExample) &&
+          (Object.keys(generatedExample).length === 0 ||
+            Object.keys(generatedExample).every((key) => key.startsWith("__@")))
+          ? fallbackForResponseExpression(expression)
+          : generatedExample
+      )
     }
     cursor = argumentEnd + 1
   }
@@ -702,7 +767,8 @@ async function successResponses(
       String(status),
       {
         description: "Successful response",
-        ...(status === 204
+        ...(status === 204 ||
+        (status === 200 && /\.download!?\s*\(/.test(handler))
           ? {}
           : {
               content: {
@@ -710,7 +776,7 @@ async function successResponses(
                   examples: {
                     success: {
                       summary: "Successful response",
-                      value: examples.get(status) ?? {},
+                      value: examples.get(status) ?? null,
                     },
                   },
                 },
