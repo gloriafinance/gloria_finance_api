@@ -1,6 +1,12 @@
 import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join, relative, resolve } from "node:path"
 import { format, resolveConfig } from "prettier"
+import {
+  API,
+  SignatureKind,
+  type Checker,
+  type Type,
+} from "typescript/unstable/async"
 
 type HttpMethod = "get" | "post" | "put" | "patch" | "delete"
 
@@ -74,6 +80,15 @@ type DocumentedRoute = {
   operation: OpenApiOperation
 }
 
+type ResponseExampleAnalyzer = {
+  exampleAt(
+    file: string,
+    position: number,
+    propertyName?: string
+  ): Promise<OpenApiExample>
+  close(): Promise<void>
+}
+
 const rootDirectory = resolve(import.meta.dir, "..")
 const sourceDirectory = join(rootDirectory, "src")
 const outputFile = join(
@@ -91,6 +106,99 @@ const statusCodes: Record<string, number> = {
 
 const typeDeclarations = new Map<string, string>()
 const enumDeclarations = new Map<string, string[]>()
+
+async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer> {
+  const api = new API()
+  const configFile = join(rootDirectory, "tsconfig.json")
+  const snapshot = await api.updateSnapshot({
+    openProjects: [configFile],
+  })
+  const project = snapshot.getProject(configFile)
+  if (!project) throw new Error("Could not load the TypeScript project")
+  const { checker } = project
+
+  const exampleFromType = async (
+    type: Type | undefined,
+    propertyName?: string,
+    visited = new Set<number>(),
+    depth = 0
+  ): Promise<OpenApiExample> => {
+    if (!type || type.isErrorType())
+      return propertyName ? exampleForProperty(propertyName) : {}
+    if (type.isLiteralType()) return type.value as OpenApiExample
+
+    const typeName = await checker.typeToString(type)
+    const callSignatures = await checker.getSignaturesOfType(
+      type,
+      SignatureKind.Call
+    )
+    if (callSignatures.length > 0) {
+      return exampleFromType(
+        await checker.getReturnTypeOfSignature(callSignatures[0]!),
+        propertyName,
+        visited,
+        depth
+      )
+    }
+    if (typeName.toLowerCase().includes("openapidocument"))
+      return { openapi: "3.1.0" }
+    if (typeName === "string")
+      return exampleForStringProperty(propertyName ?? "value")
+    if (typeName === "number" || typeName === "bigint") return 0
+    if (typeName === "boolean") return true
+    if (typeName === "Date") return "2026-01-01T00:00:00.000Z"
+    if (typeName === "null") return null
+    if (typeName === "undefined" || typeName === "void") return {}
+    if (type.isUnionType()) {
+      for (const member of await type.getTypes()) {
+        const memberName = await checker.typeToString(member)
+        if (memberName !== "undefined" && memberName !== "null")
+          return exampleFromType(member, propertyName, visited, depth)
+      }
+      return null
+    }
+    const arrayType = typeName.match(/^(?:ReadonlyArray|Array)<(.+)>$/)
+    if (typeName.endsWith("[]") || arrayType) {
+      const itemType = arrayType?.[1] ?? typeName.slice(0, -2)
+      return [exampleFromSchema(schemaFromType(itemType), propertyName)]
+    }
+    if (depth >= 3) return propertyName ? exampleForProperty(propertyName) : {}
+    if (visited.has(type.id))
+      return propertyName ? exampleForProperty(propertyName) : {}
+    visited.add(type.id)
+
+    const example: Record<string, OpenApiExample> = {}
+    for (const property of await checker.getPropertiesOfType(type)) {
+      const propertyType = await checker.getTypeOfSymbol(property)
+      const propertyTypeName = await checker.typeToString(propertyType)
+      if (propertyTypeName.includes("=>")) continue
+      example[property.name] = await exampleFromType(
+        propertyType,
+        property.name,
+        new Set(visited),
+        depth + 1
+      )
+    }
+    return Object.keys(example).length > 0
+      ? example
+      : propertyName
+        ? exampleForProperty(propertyName)
+        : {}
+  }
+
+  return {
+    async exampleAt(file, position, propertyName) {
+      return exampleFromType(
+        await checker.getTypeAtPosition(file, position),
+        propertyName
+      )
+    },
+    async close() {
+      await snapshot.dispose()
+      await api.close()
+    },
+  }
+}
 
 async function controllerFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -232,6 +340,28 @@ function schemaFromType(
   return { description: `TypeScript type: ${normalized || "unknown"}` }
 }
 
+function exampleFromSchema(
+  schema: OpenApiSchema,
+  propertyName?: string
+): OpenApiExample {
+  if (schema.enum?.[0]) return schema.enum[0]
+  if (schema.type === "string")
+    return exampleForStringProperty(propertyName ?? "value")
+  if (schema.type === "number" || schema.type === "integer") return 0
+  if (schema.type === "boolean") return true
+  if (schema.type === "array")
+    return [exampleFromSchema(schema.items ?? {}, propertyName)]
+  if (schema.type === "object" && schema.properties) {
+    return Object.fromEntries(
+      Object.entries(schema.properties).map(([name, value]) => [
+        name,
+        exampleFromSchema(value, name),
+      ])
+    )
+  }
+  return propertyName ? exampleForProperty(propertyName) : {}
+}
+
 function decoratedParameterType(
   handler: string,
   decorator: "Body" | "Query"
@@ -355,6 +485,16 @@ function exampleForProperty(name: string): OpenApiExample {
   return "example"
 }
 
+function exampleForStringProperty(name: string): string {
+  if (/email/i.test(name)) return "member@example.com"
+  if (/date|time|at$/i.test(name)) return "2026-01-01T00:00:00.000Z"
+  if (/url/i.test(name)) return "https://example.com"
+  if (/token/i.test(name)) return "example-token"
+  if (/id$/i.test(name)) return "example-id"
+  if (/message/i.test(name)) return "Example message"
+  return "example"
+}
+
 function exampleFromExpression(
   expression: string,
   propertyName?: string
@@ -405,7 +545,86 @@ function statusFrom(source: string): number | undefined {
   return undefined
 }
 
-function responseExamples(handler: string): Map<number, OpenApiExample> {
+function isLiteralExpression(expression: string): boolean {
+  const value = expression.trim().replace(/^await\s+/, "")
+  if (/^(?:[-+]?\d+(?:\.\d+)?|true|false|null)$/.test(value)) return true
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'")) ||
+    (value.startsWith("`") && value.endsWith("`"))
+  )
+    return true
+  if (value.startsWith("[") && value.endsWith("]"))
+    return splitValues(value.slice(1, -1))
+      .filter(Boolean)
+      .every((entry) => isLiteralExpression(entry))
+  if (value.startsWith("{") && value.endsWith("}")) {
+    return splitValues(value.slice(1, -1)).every((member) => {
+      const entry = member.trim()
+      if (!entry) return true
+      if (entry.startsWith("...")) return false
+      const separator = propertySeparator(entry)
+      return separator !== -1 && isLiteralExpression(entry.slice(separator + 1))
+    })
+  }
+  return false
+}
+
+async function mergeObjectFields(
+  expression: string,
+  inferred: OpenApiExample,
+  sourceFile: string,
+  expressionPosition: number,
+  analyzer: ResponseExampleAnalyzer
+): Promise<OpenApiExample> {
+  const value = expression.trim().replace(/^await\s+/, "")
+  if (!value.startsWith("{") || !value.endsWith("}")) return inferred
+  const result: Record<string, OpenApiExample> = {
+    ...(typeof inferred === "object" &&
+    inferred !== null &&
+    !Array.isArray(inferred)
+      ? inferred
+      : {}),
+  }
+  let searchFrom = 1
+  for (const member of splitValues(value.slice(1, -1))) {
+    const entry = member.trim()
+    if (!entry || entry.startsWith("...")) continue
+    const memberStart = value.indexOf(member, searchFrom)
+    searchFrom = memberStart + member.length
+    const separator = propertySeparator(entry)
+    if (separator === -1) continue
+    const key = entry
+      .slice(0, separator)
+      .trim()
+      .replace(/^["']|["']$/g, "")
+    const propertyValue = entry.slice(separator + 1)
+    if (isLiteralExpression(propertyValue))
+      result[key] = exampleFromExpression(propertyValue, key)
+    else {
+      const valueLeadingWhitespace =
+        propertyValue.match(/^\s*/)?.[0].length ?? 0
+      const memberAccessOffset = propertyValue.indexOf(".")
+      result[key] = await analyzer.exampleAt(
+        sourceFile,
+        expressionPosition +
+          memberStart +
+          member.indexOf(propertyValue) +
+          valueLeadingWhitespace +
+          (memberAccessOffset === -1 ? 0 : memberAccessOffset + 1),
+        key
+      )
+    }
+  }
+  return result
+}
+
+async function responseExamples(
+  handler: string,
+  sourceFile: string,
+  handlerStart: number,
+  analyzer: ResponseExampleAnalyzer
+): Promise<Map<number, OpenApiExample>> {
   const examples = new Map<number, OpenApiExample>()
   let cursor = 0
 
@@ -432,10 +651,23 @@ function responseExamples(handler: string): Map<number, OpenApiExample> {
       status !== 204 &&
       !examples.has(status)
     ) {
-      examples.set(
-        status,
-        exampleFromExpression(handler.slice(argumentOpen + 1, argumentEnd))
-      )
+      const expression = handler.slice(argumentOpen + 1, argumentEnd)
+      const leadingWhitespace = expression.match(/^\s*/)?.[0].length ?? 0
+      const expressionPosition =
+        handlerStart + argumentOpen + 1 + leadingWhitespace
+      const generatedExample = isLiteralExpression(expression)
+        ? exampleFromExpression(expression)
+        : sourceFile.endsWith("ApiDocs.controller.ts") &&
+            /\bopenApiDocument\b/.test(expression)
+          ? { openapi: "3.1.0" }
+          : await mergeObjectFields(
+              expression,
+              await analyzer.exampleAt(sourceFile, expressionPosition),
+              sourceFile,
+              expressionPosition,
+              analyzer
+            )
+      examples.set(status, generatedExample)
     }
     cursor = argumentEnd + 1
   }
@@ -443,7 +675,12 @@ function responseExamples(handler: string): Map<number, OpenApiExample> {
   return examples
 }
 
-function successResponses(handler: string): Record<string, OpenApiResponse> {
+async function successResponses(
+  handler: string,
+  sourceFile: string,
+  handlerStart: number,
+  analyzer: ResponseExampleAnalyzer
+): Promise<Record<string, OpenApiResponse>> {
   const statuses = new Set<number>()
   for (const match of handler.matchAll(
     /\.status\(\s*HttpStatus\.([A-Z_]+)\s*\)/g
@@ -454,7 +691,12 @@ function successResponses(handler: string): Record<string, OpenApiResponse> {
   for (const match of handler.matchAll(/\.status\(\s*(20[0-6])\s*\)/g))
     statuses.add(Number(match[1]))
   if (statuses.size === 0) statuses.add(200)
-  const examples = responseExamples(handler)
+  const examples = await responseExamples(
+    handler,
+    sourceFile,
+    handlerStart,
+    analyzer
+  )
   return Object.fromEntries(
     [...statuses].sort().map((status) => [
       String(status),
@@ -496,14 +738,17 @@ function readableName(value: string): string {
     .toLowerCase()
 }
 
-function operationFor(
+async function operationFor(
   controller: string,
   methodName: string,
   method: HttpMethod,
   path: string,
   requiresBearerAuth: boolean,
-  handler: string
-): OpenApiOperation {
+  handler: string,
+  sourceFile: string,
+  handlerStart: number,
+  analyzer: ResponseExampleAnalyzer
+): Promise<OpenApiOperation> {
   const parameterNames = [...path.matchAll(/\{([^}]+)\}/g)].map(
     ([, parameterName]) => parameterName!
   )
@@ -554,7 +799,7 @@ function operationFor(
       : {}),
     ...(requiresBearerAuth ? { security: [{ bearerAuth: [] }] } : {}),
     responses: {
-      ...successResponses(handler),
+      ...(await successResponses(handler, sourceFile, handlerStart, analyzer)),
       "400": { description: "Invalid request or domain validation error" },
       "401": { description: "Authentication is required" },
       "403": { description: "The authenticated user is not authorized" },
@@ -564,7 +809,9 @@ function operationFor(
   }
 }
 
-async function discoverRoutes(): Promise<DocumentedRoute[]> {
+async function discoverRoutes(
+  analyzer: ResponseExampleAnalyzer
+): Promise<DocumentedRoute[]> {
   const files = await controllerFiles(sourceDirectory)
   const routes: DocumentedRoute[] = []
 
@@ -595,10 +842,15 @@ async function discoverRoutes(): Promise<DocumentedRoute[]> {
         )
       }
 
-      const methodOpenBrace = source.indexOf(
-        "{",
-        methodStart + asyncMatch![0].length
+      const methodParametersOpen =
+        methodStart + asyncMatch!.index! + asyncMatch![0].length - 1
+      const methodParametersEnd = matchingDelimiter(
+        source,
+        methodParametersOpen,
+        "(",
+        ")"
       )
+      const methodOpenBrace = source.indexOf("{", methodParametersEnd + 1)
       const handler = source.slice(
         methodStart,
         matchingBrace(source, methodOpenBrace) + 1
@@ -612,13 +864,16 @@ async function discoverRoutes(): Promise<DocumentedRoute[]> {
         controller: controller!,
         method,
         path,
-        operation: operationFor(
+        operation: await operationFor(
           controller!,
           methodName,
           method,
           path,
           decoratorBlock.includes("PermissionMiddleware"),
-          handler
+          handler,
+          file,
+          methodStart,
+          analyzer
         ),
       })
     }
@@ -669,16 +924,21 @@ async function generatedSource(document: OpenApiDocument): Promise<string> {
 }
 
 await loadTypeDeclarations()
-const document = createDocument(await discoverRoutes())
-const expected = await generatedSource(document)
+const analyzer = await createResponseExampleAnalyzer()
+try {
+  const document = createDocument(await discoverRoutes(analyzer))
+  const expected = await generatedSource(document)
 
-if (checkOnly) {
-  const current = await readFile(outputFile, "utf8")
-  if (current !== expected) {
-    throw new Error(
-      "OpenAPI documentation is stale. Run `bun run docs:generate` and commit the generated document."
-    )
+  if (checkOnly) {
+    const current = await readFile(outputFile, "utf8")
+    if (current !== expected) {
+      throw new Error(
+        "OpenAPI documentation is stale. Run `bun run docs:generate` and commit the generated document."
+      )
+    }
+  } else {
+    await writeFile(outputFile, expected)
   }
-} else {
-  await writeFile(outputFile, expected)
+} finally {
+  await analyzer.close()
 }
