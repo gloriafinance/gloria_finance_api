@@ -1,6 +1,6 @@
-import type { AuthenticatedRequest } from "@/Shared/infrastructure"
-import { PermissionDescriptionResolver } from "@/Shared/infrastructure"
-import { HttpStatus } from "@/Shared/domain"
+import type { AuthenticatedRequest } from "@/Shared/infrastructure/types/AuthenticatedRequest.type"
+import { PermissionDescriptionResolver } from "@/Shared/infrastructure/services/PermissionDescriptionResolver.service"
+import { HttpStatus } from "@/Shared/domain/enums/HttpStatus.enum"
 import type { NextFunction, ServerResponse } from "bun-platform-kit"
 
 // type AuthenticatedRequest = Request & {

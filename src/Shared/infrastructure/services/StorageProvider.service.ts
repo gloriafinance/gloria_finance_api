@@ -1,5 +1,5 @@
 import { GenericException, type IStorageService } from "@/Shared/domain"
-import { StorageGCP } from "@/package/gcp"
+import { StorageGCP } from "@/package/gcp/infrastructure/StorageGCP"
 
 export class StorageProviderService {
   private static instance: IStorageService

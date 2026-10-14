@@ -47,6 +47,53 @@ export type CreatePaymentResponse = {
   errorCode?: string
 }
 
+export type CreatePixTransferInput = {
+  externalAccountId: string
+  amountInCents: number
+  pixKey: string
+  pixKeyType: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP"
+  description: string
+  externalReference: string
+  context: Record<string, unknown>
+}
+
+export type CreateBillPaymentInput = {
+  externalAccountId: string
+  identificationField: string
+  description: string
+  externalReference: string
+  context: Record<string, unknown>
+}
+
+export type ChurchBankingOutgoingStatus =
+  | "RESERVED"
+  | "CREATING"
+  | "CREATION_UNKNOWN"
+  | "CREATION_FAILED"
+  | "PENDING"
+  | "IN_BANK_PROCESSING"
+  | "BANK_PROCESSING"
+  | "BLOCKED"
+  | "DONE"
+  | "PAID"
+  | "FAILED"
+  | "CANCELLED"
+  | "REFUNDED"
+
+export type ChurchBankingOutgoingPaymentResponse = {
+  externalAccountId: string
+  externalReference: string
+  status: ChurchBankingOutgoingStatus
+  context: Record<string, unknown>
+  providerTransferId?: string
+  providerBillId?: string
+  amountInCents?: number
+  paymentDate?: string | null
+  transactionReceiptUrl?: string | null
+  failureCode?: string
+  errorCode?: string
+}
+
 export interface IChurchBankingClient {
   connectExternalAccount(
     input: ConnectExternalAccountInput
@@ -55,4 +102,12 @@ export interface IChurchBankingClient {
   createStaticPix(input: CreateStaticPixInput): Promise<StaticPixResponse>
 
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResponse>
+
+  createPixTransfer(
+    input: CreatePixTransferInput
+  ): Promise<ChurchBankingOutgoingPaymentResponse>
+
+  createBillPayment(
+    input: CreateBillPaymentInput
+  ): Promise<ChurchBankingOutgoingPaymentResponse>
 }

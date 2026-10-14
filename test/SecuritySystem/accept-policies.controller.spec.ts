@@ -23,6 +23,10 @@ class InMemoryUserRepository implements IUserRepository {
     return this.users.get(userId)
   }
 
+  async findMemberIdsByUserIds(): Promise<string[]> {
+    return []
+  }
+
   async upsert(user: User): Promise<void> {
     this.users.set(user.getUserId(), user)
   }

@@ -2,7 +2,7 @@ import {
   type AggregateRelations,
   MongoRepository,
 } from "@abejarano/ts-mongodb-criteria"
-import { IRolePermissionRepository } from "@/SecuritySystem/domain"
+import type { IRolePermissionRepository } from "@/SecuritySystem/domain/interfaces/rbac"
 import { Collection } from "mongodb"
 
 /**

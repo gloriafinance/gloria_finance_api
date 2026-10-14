@@ -1,5 +1,5 @@
 import { CostCenter, CostCenterNotFound } from "../../../Financial/domain"
-import { IFinancialConfigurationRepository } from "@/FinanceConfig/domain"
+import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain"
 
 export class FindCostCenterByCostCenterId {
   constructor(

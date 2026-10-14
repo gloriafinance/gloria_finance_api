@@ -3,11 +3,15 @@ import type {
   ConnectExternalAccountResponse,
   CreatePaymentInput,
   CreatePaymentResponse,
+  CreateBillPaymentInput,
+  CreatePixTransferInput,
+  ChurchBankingOutgoingPaymentResponse,
   CreateStaticPixInput,
   IChurchBankingClient,
   StaticPixResponse,
 } from "@/Banking/domain"
-import { Logger } from "@/Shared/adapter"
+import { ChurchBankingClientError } from "@/Banking/domain"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { CompactEncrypt, importJWK, type JWK, KeyLike, SignJWT } from "jose"
 import { createHash, randomUUID } from "node:crypto"
 import { churchBankingSigningKeyProvider } from "./ChurchBankingSigningKey.provider"
@@ -26,16 +30,6 @@ type EncryptionKey = {
   expiresAt: number
 }
 
-export class ChurchBankingClientError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string
-  ) {
-    super(`church-banking request failed with ${status} (${code})`)
-    this.name = "ChurchBankingClientError"
-  }
-}
-
 export class ChurchBankingClient implements IChurchBankingClient {
   private logger = Logger(ChurchBankingClient.name)
   private encryptionKey?: EncryptionKey
@@ -49,6 +43,26 @@ export class ChurchBankingClient implements IChurchBankingClient {
       path: "/api/payments",
       payload: input,
     })) as CreatePaymentResponse
+  }
+
+  async createPixTransfer(
+    input: CreatePixTransferInput
+  ): Promise<ChurchBankingOutgoingPaymentResponse> {
+    const response = await this.execute<CreatePixTransferInput>({
+      path: "/api/pix-transfers",
+      payload: input,
+    })
+    return this.parseOutgoingPaymentResponse(response, input)
+  }
+
+  async createBillPayment(
+    input: CreateBillPaymentInput
+  ): Promise<ChurchBankingOutgoingPaymentResponse> {
+    const response = await this.execute<CreateBillPaymentInput>({
+      path: "/api/bill-payments",
+      payload: input,
+    })
+    return this.parseOutgoingPaymentResponse(response, input)
   }
 
   async createStaticPix(
@@ -129,18 +143,6 @@ export class ChurchBankingClient implements IChurchBankingClient {
 
     this.logger.info(`Fetching: ${config.baseUrl}${command.path}`)
 
-    console.log(
-      JSON.stringify({
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${token}`,
-          "content-type": "application/json",
-          accept: "application/json",
-        },
-        body,
-      })
-    )
-
     const response = await fetch(`${config.baseUrl}${command.path}`, {
       method: "POST",
       headers: {
@@ -219,6 +221,60 @@ export class ChurchBankingClient implements IChurchBankingClient {
     }
   }
 
+  private parseOutgoingPaymentResponse(
+    value: unknown,
+    expected: {
+      externalAccountId: string
+      externalReference: string
+      context: Record<string, unknown>
+      amountInCents?: number
+    }
+  ): ChurchBankingOutgoingPaymentResponse {
+    const result =
+      typeof value === "object" && value !== null && "data" in value
+        ? value.data
+        : undefined
+    if (
+      typeof result !== "object" ||
+      result === null ||
+      Array.isArray(result) ||
+      !("externalAccountId" in result) ||
+      !("externalReference" in result) ||
+      !("status" in result) ||
+      !("context" in result) ||
+      result.externalAccountId !== expected.externalAccountId ||
+      result.externalReference !== expected.externalReference ||
+      (expected.amountInCents !== undefined &&
+        result.amountInCents !== expected.amountInCents) ||
+      typeof result.status !== "string" ||
+      ![
+        "RESERVED",
+        "CREATING",
+        "CREATION_UNKNOWN",
+        "CREATION_FAILED",
+        "PENDING",
+        "IN_BANK_PROCESSING",
+        "BANK_PROCESSING",
+        "BLOCKED",
+        "DONE",
+        "PAID",
+        "FAILED",
+        "CANCELLED",
+        "REFUNDED",
+      ].includes(result.status) ||
+      !isRecord(result.context) ||
+      result.context.source !== expected.context.source ||
+      result.context.recurringPaymentId !==
+        expected.context.recurringPaymentId ||
+      result.context.competence !== expected.context.competence ||
+      result.context.attempt !== expected.context.attempt
+    ) {
+      throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
+    }
+
+    return result as ChurchBankingOutgoingPaymentResponse
+  }
+
   private config() {
     const baseUrl = process.env.CHURCH_BANKING_BASE_URL?.replace(/\/$/, "")
     const issuer = process.env.CHURCH_BANKING_CLIENT_ISSUER
@@ -294,4 +350,8 @@ export class ChurchBankingClient implements IChurchBankingClient {
       throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
     }
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

@@ -2,10 +2,10 @@ import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import {
-  DayOfWeek,
   type IScheduleReminderService,
   type ScheduleEvent,
 } from "@/Schedule/domain"
+import { DayOfWeek } from "@/Shared/domain/types"
 
 dayjs.extend(utc)
 dayjs.extend(timezone)

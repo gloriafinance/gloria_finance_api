@@ -1,5 +1,5 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { type IBankRepository } from "@/Banking/domain/"
+import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
 import { Bank } from "@/Banking/domain/Bank"
 import { Collection } from "mongodb"
 
@@ -70,7 +70,7 @@ export class BankMongoRepository
       }
     )
 
-    if (!("banks" in result)) {
+    if (!result || !("banks" in result)) {
       return []
     }
 

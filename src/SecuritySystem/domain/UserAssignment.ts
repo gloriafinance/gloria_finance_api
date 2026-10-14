@@ -2,7 +2,7 @@ import {
   AggregateRoot,
   type AggregateRelations,
 } from "@abejarano/ts-mongodb-criteria"
-import { DateBR } from "@/Shared/helpers"
+import { DateBR } from "@/Shared/helpers/date"
 
 export type UserAssignmentPrimitives = {
   id?: string

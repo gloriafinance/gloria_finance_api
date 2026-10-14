@@ -4,6 +4,17 @@ import type { IRepository } from "@abejarano/ts-mongodb-criteria"
 
 export interface IFinancialRecordRepository extends IRepository<FinanceRecord> {
   deleteByFinancialRecordId(financialRecordId: string): Promise<void>
+  findRecurringPayment(
+    recurringPaymentId: string,
+    competence: string
+  ): Promise<FinanceRecord | undefined>
+  findByBankingExternalReference(
+    reference: string
+  ): Promise<FinanceRecord | undefined>
+  listRecurringPaymentsForChurch(
+    churchId: string,
+    competence: string
+  ): Promise<FinanceRecord[]>
 
   titheList(filter: object): Promise<{
     records: {

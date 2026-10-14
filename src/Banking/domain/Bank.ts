@@ -1,10 +1,10 @@
-import { Church } from "@/Church/domain"
-import { Urn } from "@/Shared/adapter"
+import type { Church } from "@/Church/domain/Church"
+import { Urn } from "@/Shared/adapter/Urn"
 import {
   AggregateRoot,
   type AggregateRelations,
 } from "@abejarano/ts-mongodb-criteria"
-import { TypeBankAccount } from "@/Banking/domain"
+import { TypeBankAccount } from "@/Banking/domain/enums/TypeBankAccount.enum"
 
 export class Bank extends AggregateRoot {
   static collectionName(): string {

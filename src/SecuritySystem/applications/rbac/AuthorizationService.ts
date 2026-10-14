@@ -1,4 +1,4 @@
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import type { ICacheService } from "@/Shared/domain"
 import type {
   IPermissionRepository,

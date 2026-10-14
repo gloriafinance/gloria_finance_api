@@ -13,7 +13,6 @@ jest.mock(
 import { Church, ChurchStatus, type IChurchRepository } from "@/Church/domain"
 import { NotifyScheduleDay } from "@/Schedule/application/jobs/NotifyScheduleDay"
 import {
-  DayOfWeek,
   type IScheduleItemRepository,
   type IScheduleReminderService,
   RecurrenceType,
@@ -22,6 +21,7 @@ import {
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
+import { DayOfWeek } from "@/Shared/domain/types"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 import {
   type Criteria,

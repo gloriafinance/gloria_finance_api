@@ -1,11 +1,9 @@
-import { FinanceRecord } from "@/Financial/domain"
+import { FinanceRecord } from "@/Financial/domain/FinanceRecord"
 import type { IFinancialRecordRepository } from "../../domain/interfaces"
-import {
-  ConceptType,
-  FinancialRecordStatus,
-  StatementCategory,
-  type StatementCategorySummary,
-} from "../../domain"
+import { ConceptType } from "@/FinanceConfig/domain/enums/ConcepType.enum"
+import { FinancialRecordStatus } from "@/Financial/domain/enums/FinancialRecordType.enum"
+import { StatementCategory } from "@/Financial/domain/enums/StatementCategory.enum"
+import type { StatementCategorySummary } from "@/Financial/domain/types/StatementCategorySummary.type"
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { Collection } from "mongodb"
 
@@ -35,6 +33,65 @@ export class FinanceRecordMongoRepository
   async deleteByFinancialRecordId(financialRecordId: string): Promise<void> {
     const collection = await this.collection()
     await collection.deleteOne({ financialRecordId })
+  }
+
+  async findRecurringPayment(
+    recurringPaymentId: string,
+    competence: string
+  ): Promise<FinanceRecord | undefined> {
+    const collection = await this.collection()
+    const document = await collection.findOne({
+      recurringPaymentId,
+      recurringCompetence: competence,
+    })
+    return document ? FinanceRecord.fromPrimitives(document) : undefined
+  }
+
+  async listRecurringPaymentsForChurch(
+    churchId: string,
+    competence: string
+  ): Promise<FinanceRecord[]> {
+    const collection = await this.collection()
+    const documents = await collection
+      .find(
+        { churchId, recurringCompetence: competence },
+        {
+          projection: {
+            _id: 1,
+            financialRecordId: 1,
+            financialConcept: 1,
+            churchId: 1,
+            amount: 1,
+            date: 1,
+            type: 1,
+            availabilityAccount: 1,
+            voucher: 1,
+            description: 1,
+            costCenter: 1,
+            status: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            source: 1,
+            createdBy: 1,
+            reference: 1,
+            recurringPaymentId: 1,
+            recurringCompetence: 1,
+            bankingExternalReference: 1,
+          },
+        }
+      )
+      .toArray()
+    return documents.map((document) => FinanceRecord.fromPrimitives(document))
+  }
+
+  async findByBankingExternalReference(
+    reference: string
+  ): Promise<FinanceRecord | undefined> {
+    const collection = await this.collection()
+    const document = await collection.findOne({
+      bankingExternalReference: reference,
+    })
+    return document ? FinanceRecord.fromPrimitives(document) : undefined
   }
 
   async titheList(filter: object): Promise<{
@@ -196,6 +253,22 @@ export class FinanceRecordMongoRepository
         background: true,
         name: "idx_financialRecordId",
       }
+    )
+
+    await collection.createIndex(
+      { recurringPaymentId: 1, recurringCompetence: 1 },
+      {
+        unique: true,
+        name: "idx_financial_record_recurring_competence_unique",
+        partialFilterExpression: {
+          recurringPaymentId: { $exists: true },
+          recurringCompetence: { $exists: true },
+        },
+      }
+    )
+    await collection.createIndex(
+      { churchId: 1, recurringCompetence: 1 },
+      { name: "idx_financial_records_recurring_by_church_competence" }
     )
 
     await collection.createIndex(

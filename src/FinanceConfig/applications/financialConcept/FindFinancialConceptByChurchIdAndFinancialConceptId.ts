@@ -1,6 +1,6 @@
-import { IFinancialConceptRepository } from "../../../Financial/domain/interfaces"
 import { GenericException } from "@/Shared/domain"
 import { Logger } from "@/Shared/adapter"
+import type { IFinancialConceptRepository } from "@/FinanceConfig/domain"
 
 export class FindFinancialConceptByChurchIdAndFinancialConceptId {
   private logger = Logger("FindFinancialConceptByChurchIdAndFinancialConceptId")

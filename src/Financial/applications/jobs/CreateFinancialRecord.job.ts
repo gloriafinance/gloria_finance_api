@@ -15,6 +15,7 @@ import {
   TypeOperationMoney,
 } from "@/Financial/domain"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface.ts"
 import type { IJob, IQueueService } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter"
 import type { IStorageService } from "@/Shared/domain"
@@ -26,7 +27,8 @@ export class CreateFinancialRecordJob implements IJob {
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly store: IStorageService,
-    private readonly queueService: IQueueService
+    private readonly queueService: IQueueService,
+    private readonly recurringPaymentsRepository?: IRecurringPaymentsRepository
   ) {}
 
   async handle(args: FinancialRecordCreateQueue): Promise<void> {
@@ -74,8 +76,28 @@ export class CreateFinancialRecordJob implements IJob {
         source: args.source,
         createdBy: args.createdBy,
         reference: args.reference,
+        recurringPaymentId: args.recurringPaymentId,
+        recurringCompetence: args.recurringCompetence,
+        bankingExternalReference: args.bankingExternalReference,
       })
       await this.financialRecordRepository.upsert(financialRecord)
+
+      if (args.recurringPaymentId && args.bankingExternalReference) {
+        const recurring = await this.recurringPaymentsRepository?.one({
+          recurringPaymentsId: args.recurringPaymentId,
+        })
+        const currentPayment = recurring?.getCurrentPayment()
+        if (
+          recurring &&
+          currentPayment?.externalReference === args.bankingExternalReference
+        ) {
+          recurring.closeCurrentPayment(args.bankingExternalReference)
+          await this.recurringPaymentsRepository?.saveIfCurrentPaymentMatches(
+            recurring,
+            currentPayment
+          )
+        }
+      }
 
       this.logger.info(`CreateFinancialRecord committed`, {
         jobName: CreateFinancialRecordJob.name,

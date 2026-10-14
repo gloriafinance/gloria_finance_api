@@ -2,7 +2,7 @@ import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
   CostCenter,
   FinancialConcept,
-  IFinancialConfigurationRepository,
+  type IFinancialConfigurationRepository,
 } from "@/FinanceConfig/domain"
 import { Church } from "@/Church/domain"
 import { Collection } from "mongodb"

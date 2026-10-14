@@ -1,8 +1,6 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import {
-  FinancialConcept,
-  type IFinancialConceptRepository,
-} from "@/FinanceConfig/domain"
+import { FinancialConcept } from "@/FinanceConfig/domain/FinancialConcept"
+import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
 import { Collection } from "mongodb"
 
 export class FinancialConceptMongoRepository

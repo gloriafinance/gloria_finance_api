@@ -1,9 +1,9 @@
 import { CreatePixPayment } from "@/Banking/applications"
-import type { CreatePixPaymentRequest } from "@/Banking/domain"
 import {
-  ChurchBankingClient,
+  type CreatePixPaymentRequest,
   ChurchBankingClientError,
-} from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
+} from "@/Banking/domain"
+import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
 import CreatePixPaymentValidator from "@/Banking/infrastructure/http/validators/CreatePixPayment.validator"
 import { MemberMongoRepository } from "@/Church/infrastructure"
 import { HttpStatus } from "@/Shared/domain"

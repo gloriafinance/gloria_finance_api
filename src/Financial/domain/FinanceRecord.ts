@@ -1,16 +1,17 @@
-import { AccountType, FinancialConcept } from "@/FinanceConfig/domain"
+import { FinancialConcept } from "@/FinanceConfig/domain/FinancialConcept"
+import { AccountType } from "@/FinanceConfig/domain/enums/AccountType.enum"
 import {
   AggregateRoot,
   type AggregateRelations,
 } from "@abejarano/ts-mongodb-criteria"
-import { Urn } from "@/Shared/adapter"
+import { Urn } from "@/Shared/adapter/Urn"
 import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
 import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
 } from "./enums/FinancialRecordType.enum"
-import { DateBR, StringToDate } from "@/Shared/helpers"
+import { DateBR, StringToDate } from "@/Shared/helpers/date"
 
 export class FinanceRecord extends AggregateRoot {
   static collectionName(): string {
@@ -43,6 +44,9 @@ export class FinanceRecord extends AggregateRoot {
     type: string
     entityId: string
   }
+  private recurringPaymentId?: string
+  private recurringCompetence?: string
+  private bankingExternalReference?: string
   private status: FinancialRecordStatus
   private source: FinancialRecordSource
   private createdBy: string
@@ -67,6 +71,9 @@ export class FinanceRecord extends AggregateRoot {
       createdBy,
       reference,
       financialRecordId,
+      recurringPaymentId,
+      recurringCompetence,
+      bankingExternalReference,
     } = params
     const financialRecord: FinanceRecord = new FinanceRecord()
     if (!financialRecordId) {
@@ -126,6 +133,9 @@ export class FinanceRecord extends AggregateRoot {
     financialRecord.source = source
     financialRecord.createdBy = createdBy
     financialRecord.reference = reference
+    financialRecord.recurringPaymentId = recurringPaymentId
+    financialRecord.recurringCompetence = recurringCompetence
+    financialRecord.bankingExternalReference = bankingExternalReference
     financialRecord.setStatus(status)
 
     return financialRecord
@@ -161,6 +171,10 @@ export class FinanceRecord extends AggregateRoot {
     financialRecord.createdBy = plainData.createdBy ?? ""
     financialRecord.status = plainData.status
     financialRecord.reference = plainData.reference ?? undefined
+    financialRecord.recurringPaymentId = plainData.recurringPaymentId
+    financialRecord.recurringCompetence = plainData.recurringCompetence
+    financialRecord.bankingExternalReference =
+      plainData.bankingExternalReference
     financialRecord.clearedAt =
       plainData.clearedAt === undefined
         ? undefined
@@ -175,6 +189,10 @@ export class FinanceRecord extends AggregateRoot {
 
   getFinancialRecordId(): string {
     return this.financialRecordId
+  }
+
+  getRecurringPaymentId(): string | undefined {
+    return this.recurringPaymentId
   }
 
   getReference(): { type: string; entityId: string } | undefined {
@@ -270,6 +288,9 @@ export class FinanceRecord extends AggregateRoot {
       source: this.source,
       createdBy: this.createdBy,
       reference: this.reference,
+      recurringPaymentId: this.recurringPaymentId,
+      recurringCompetence: this.recurringCompetence,
+      bankingExternalReference: this.bankingExternalReference,
       clearedAt: this.clearedAt,
       reconciledAt: this.reconciledAt,
     }

@@ -1,5 +1,7 @@
-import { IAvailabilityAccountRepository } from "../../../Financial/domain/interfaces"
-import { AvailabilityAccount } from "../../../Financial/domain"
+import {
+  AvailabilityAccount,
+  type IAvailabilityAccountRepository,
+} from "@/FinanceConfig/domain"
 import { Logger } from "@/Shared/adapter"
 
 export class SearchAvailabilityAccountByChurchId {

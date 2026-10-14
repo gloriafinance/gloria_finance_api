@@ -1,5 +1,5 @@
 import { DomainException, HttpStatus } from "../domain"
-import { Logger } from "../adapter"
+import { Logger } from "../adapter/CustomLogger"
 import { QueueService } from "@/package/queue/infrastructure/QueueService.ts"
 
 import type { ServerResponse } from "bun-platform-kit"

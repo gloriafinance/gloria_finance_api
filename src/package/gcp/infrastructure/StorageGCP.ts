@@ -9,7 +9,7 @@ import {
   type IStorageService,
   InvalidProfilePhotoContent,
 } from "@/Shared/domain"
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 export class StorageGCP implements IStorageService {

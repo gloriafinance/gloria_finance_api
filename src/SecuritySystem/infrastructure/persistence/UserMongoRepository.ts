@@ -48,6 +48,23 @@ export class UserMongoRepository
     return User.fromPrimitives({ ...result, id: result._id.toString() })
   }
 
+  async findMemberIdsByUserIds(
+    churchId: string,
+    userIds: string[]
+  ): Promise<string[]> {
+    if (userIds.length === 0) return []
+    const collection = await this.collection()
+    const users = await collection
+      .find(
+        { churchId, userId: { $in: userIds }, memberId: { $type: "string" } },
+        { projection: { memberId: 1 } }
+      )
+      .toArray()
+    return users.flatMap((user) =>
+      typeof user.memberId === "string" ? [user.memberId] : []
+    )
+  }
+
   async deleteByUserId(userId: string): Promise<void> {
     const collection = await this.collection()
     await collection.deleteOne({ userId })

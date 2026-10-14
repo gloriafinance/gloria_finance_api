@@ -3,7 +3,7 @@ import {
   type UpdateAvailabilityAccountRequest,
 } from "@/FinanceConfig/domain"
 import { Logger } from "@/Shared/adapter"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "./FindAvailabilityAccountByAvailabilityAccountId"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class UpdateAvailabilityAccount {
   private logger = Logger(UpdateAvailabilityAccount.name)
