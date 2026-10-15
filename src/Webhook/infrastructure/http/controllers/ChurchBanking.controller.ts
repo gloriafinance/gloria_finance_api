@@ -161,6 +161,7 @@ function isWebhookEvent(value: unknown): value is ChurchBankingWebhookEvent {
   }
   if (body.type === "BANKING_BILL_PAYMENT_UPDATED") {
     if (!isRecord(body.data) || !isRecord(body.data.billPayment)) return false
+    if (typeof body.data.billPayment.valueInCents !== "number") return false
     const bill = body.data.billPayment
     return (
       typeof bill.providerBillId === "string" &&

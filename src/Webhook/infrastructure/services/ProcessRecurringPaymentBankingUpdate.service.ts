@@ -46,6 +46,12 @@ export type BillPaymentUpdatedEvent = {
       providerBillId: string
       status: string
       externalReference: string
+      /**
+       * Amount the boleto charges, read from the identification field by
+       * church-banking. It is the only proof of what was actually debited, so a
+       * PAID bill is rejected when it disagrees with the recorded amount.
+       */
+      valueInCents: number
       context: Record<string, unknown>
       paymentDate: string | null
       transactionReceiptUrl: string | null
@@ -187,6 +193,12 @@ export class ProcessRecurringPaymentBankingUpdate {
     if (!payment)
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     if (bill.status === "PAID") {
+      // A bill is executed for whatever the boleto charges, which is independent
+      // of the amount the church typed. Recording the local amount without
+      // checking it would book an expense the bank never paid.
+      if (Math.round(payment.amount * 100) !== bill.valueInCents) {
+        throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
+      }
       const paymentDate = bill.paymentDate
         ? new Date(bill.paymentDate)
         : new Date(event.occurredAt)

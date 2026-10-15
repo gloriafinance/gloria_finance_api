@@ -108,7 +108,11 @@ function pixEvent(ctx: ReturnType<typeof setup>, status: string) {
   }
 }
 
-function billEvent(ctx: ReturnType<typeof setup>, status: string) {
+function billEvent(
+  ctx: ReturnType<typeof setup>,
+  status: string,
+  valueInCents = 74283
+) {
   return {
     id: `event-${status}`,
     type: "BANKING_BILL_PAYMENT_UPDATED" as const,
@@ -119,6 +123,7 @@ function billEvent(ctx: ReturnType<typeof setup>, status: string) {
       billPayment: {
         providerBillId: "bill-1",
         status,
+        valueInCents,
         externalReference: ctx.currentPayment.externalReference,
         context,
         paymentDate: null,
@@ -314,6 +319,16 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
       })
     ).rejects.toMatchObject({
       name: "RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH",
+    })
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("rejects a paid bill whose amount differs from the recorded one", async () => {
+    const ctx = setup()
+    await expect(
+      ctx.service.processBill(billEvent(ctx, "PAID", 78243))
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
     })
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
