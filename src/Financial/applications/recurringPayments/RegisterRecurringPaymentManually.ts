@@ -81,6 +81,11 @@ export class RegisterRecurringPaymentManually {
     const recurring = await this.recurringPaymentsRepository.one({
       recurringPaymentId,
       churchId,
+      // Same gate as the banking path: an inactive recurrence is not payable
+      // through any route. A historical competence can still be settled by
+      // reactivating the recurrence first, which keeps the rule explicit
+      // instead of differing per execution path.
+      status: "ACTIVE",
     })
     if (!recurring) {
       throw new RecurringPaymentException("RECURRING_PAYMENT_NOT_FOUND")

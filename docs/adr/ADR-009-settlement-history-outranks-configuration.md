@@ -12,10 +12,10 @@
 El estado de una competencia se **calcula** a partir de dos fuentes con naturalezas
 distintas:
 
-| Fuente | Qué describe | Naturaleza |
-|---|---|---|
-| `FinancialRecord` | Lo que **ocurrió**: el dinero se movió y quedó contabilizado | Histórico, inmutable en lo esencial |
-| `RecurringPayment` | Lo que **debe ocurrir**: el compromiso mensual | Configuración, mutable por el usuario |
+| Fuente             | Qué describe                                                 | Naturaleza                            |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------- |
+| `FinancialRecord`  | Lo que **ocurrió**: el dinero se movió y quedó contabilizado | Histórico, inmutable en lo esencial   |
+| `RecurringPayment` | Lo que **debe ocurrir**: el compromiso mensual               | Configuración, mutable por el usuario |
 
 `CURRENT` evaluaba primero `status !== "ACTIVE"` y devolvía `INACTIVE`, y solo
 después comprobaba si existía un registro liquidado:
@@ -56,6 +56,31 @@ Reglas que se derivan:
    histórica consulta los registros financieros.
 3. **`INACTIVE` solo aplica cuando no hay nada liquidado** en esa competencia.
 
+### `INACTIVE` no se paga por ningún camino
+
+La precedencia anterior es de **lectura**, no de ejecución. Son dos preguntas
+distintas y con reglas distintas:
+
+| Pregunta                              | Fuente que manda                             |
+| ------------------------------------- | -------------------------------------------- |
+| ¿Qué ocurrió en esta competencia?     | El histórico (`FinancialRecord`)             |
+| ¿Se puede ejecutar un pago **ahora**? | La configuración (`RecurringPayment.status`) |
+
+Por tanto:
+
+> **Una recurrencia `INACTIVE` no se paga por ningún camino.** El bloqueo es
+> idéntico en la ejecución bancaria y en el registro manual, y ambos consultan la
+> recurrencia con el mismo filtro `status: "ACTIVE"`.
+
+**Válvula de escape:** para liquidar una competencia histórica se **reactiva** la
+recurrencia (`status` es parte del payload de creación/actualización), se registra
+el pago y se vuelve a desactivar. No existe una excepción implícita por fecha.
+
+**Por qué no se permite por fecha:** el agregado no guarda _cuándo_ se desactivó
+(solo el enum `status`). Permitir "competencias anteriores a la desactivación"
+exigiría un timestamp que hoy no existe, y decidir esa fecha de corte es una
+decisión de producto aparte, no un efecto colateral de un `if`.
+
 ### Vista por competencia
 
 Una recurrencia aparece en el listado de **cualquier** competencia, incluidas las
@@ -92,12 +117,12 @@ consecuencia se asume explícitamente:
 
 ## Alternativas consideradas y rechazadas
 
-| Alternativa | Por qué se rechaza |
-|---|---|
-| `INACTIVE` antes de `PAID` (estado anterior) | Oculta pagos reales. Subordina el hecho contable a la configuración. |
-| Ocultar las recurrencias inactivas del listado | Haría ilegible la historia del mes y rompería la vista por competencia. |
+| Alternativa                                                         | Por qué se rechaza                                                                                                                                                                           |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INACTIVE` antes de `PAID` (estado anterior)                        | Oculta pagos reales. Subordina el hecho contable a la configuración.                                                                                                                         |
+| Ocultar las recurrencias inactivas del listado                      | Haría ilegible la historia del mes y rompería la vista por competencia.                                                                                                                      |
 | Introducir `startCompetence`/`effectiveFrom` y filtrar por vigencia | Añade un dato que hoy no existe y obliga a decidir el fin de vigencia. Se descartó mientras se mantenga la vista operativa por competencia; el histórico fiel ya lo da el `FinancialRecord`. |
-| Derivar `PAID` desde la recurrencia | Viola ADR-004: crearía una segunda fuente de verdad que puede desincronizarse. |
+| Derivar `PAID` desde la recurrencia                                 | Viola ADR-004: crearía una segunda fuente de verdad que puede desincronizarse.                                                                                                               |
 
 ---
 

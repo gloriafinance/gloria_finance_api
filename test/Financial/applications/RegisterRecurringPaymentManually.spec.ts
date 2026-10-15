@@ -7,6 +7,7 @@ type SetupInput = {
   accountExists?: boolean
   alreadyRegistered?: boolean
   providerConnected?: boolean
+  inactive?: boolean
 }
 
 function setup(input: SetupInput = {}) {
@@ -23,7 +24,13 @@ function setup(input: SetupInput = {}) {
   })
 
   const recurringRepository = {
-    one: jest.fn().mockResolvedValue(recurrence),
+    one: jest
+      .fn()
+      .mockImplementation(async (filter: { status?: string }) =>
+        filter.status === "ACTIVE" && input.inactive !== true
+          ? recurrence
+          : undefined
+      ),
   }
   const financialRecords = {
     countRecurringPaymentRecords: jest.fn().mockResolvedValue(0),
@@ -52,11 +59,13 @@ function setup(input: SetupInput = {}) {
     findCostCenterByCostCenterId: jest.fn().mockResolvedValue(costCenter),
   }
   const bankRepository = {
-    all: jest.fn().mockResolvedValue(
-      input.providerConnected
-        ? [{ isActive: () => true, isConnectedTo: () => true }]
-        : []
-    ),
+    all: jest
+      .fn()
+      .mockResolvedValue(
+        input.providerConnected
+          ? [{ isActive: () => true, isConnectedTo: () => true }]
+          : []
+      ),
   }
   const queue = { dispatch: jest.fn() }
   const storage = {
@@ -106,6 +115,31 @@ describe("RegisterRecurringPaymentManually", () => {
     })
     expect(ctx.storage.uploadFile).not.toHaveBeenCalled()
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("refuses to register against an inactive recurrence", async () => {
+    // Same gate as the banking path: deactivating stops the commitment being
+    // settled through either route.
+    const ctx = setup({ amount: 3500, inactive: true })
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", "user-1", {
+        ...request,
+        file: ctx.file,
+      })
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_NOT_FOUND" })
+    expect(ctx.storage.uploadFile).not.toHaveBeenCalled()
+  })
+
+  it("queries the recurrence with the same active gate as the banking path", async () => {
+    const ctx = setup({ amount: 3500 })
+    await ctx.service.execute("church-1", "recurring-1", "user-1", {
+      ...request,
+      file: ctx.file,
+    })
+
+    expect(ctx.recurringRepository.one).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "ACTIVE" })
+    )
   })
 
   it("requires a voucher before touching anything else", async () => {
