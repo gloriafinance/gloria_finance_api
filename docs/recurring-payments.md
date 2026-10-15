@@ -8,22 +8,22 @@
 
 Todo el documento distingue dos planos. **Nunca leas una sección TARGET como si ya estuviera implementada.**
 
-| Etiqueta | Significado |
-|---|---|
-| `CURRENT` | Comportamiento real del código en el PR #146 / `church-banking@main`. Verificado con archivo:línea. |
-| `TARGET` | Decisión arquitectónica definitiva a implementar. Puede no existir todavía. |
-| `GAP` | Diferencia explícita entre CURRENT y TARGET. Ver [`recurring-payments-gap-analysis.md`](./recurring-payments-gap-analysis.md). |
-| `PENDING` | Decisión de producto aún no cerrada. Requiere definición antes de implementar. |
+| Etiqueta  | Significado                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `CURRENT` | Comportamiento real del código en el PR #146 / `church-banking@main`. Verificado con archivo:línea.                            |
+| `TARGET`  | Decisión arquitectónica definitiva a implementar. Puede no existir todavía.                                                    |
+| `GAP`     | Diferencia explícita entre CURRENT y TARGET. Ver [`recurring-payments-gap-analysis.md`](./recurring-payments-gap-analysis.md). |
+| `PENDING` | Decisión de producto aún no cerrada. Requiere definición antes de implementar.                                                 |
 
 ### Índice de documentos
 
-| Documento | Contenido |
-|---|---|
-| [`recurring-payments.md`](./recurring-payments.md) | Este documento. Flujo funcional y arquitectónico, casos, contratos de API, estados. |
-| [`recurring-payments-diagrams.md`](./recurring-payments-diagrams.md) | Diagrama de decisión, 10 diagramas de secuencia, diagrama de estados. |
-| [`recurring-payments-gap-analysis.md`](./recurring-payments-gap-analysis.md) | Tabla de casos funcionales, gaps verificados y checklist de implementación. |
-| [`recurring-payments-audit.md`](./recurring-payments-audit.md) | Auditoría de la implementación real contra esta documentación: matriz de cobertura, hallazgos A-01…A-08, estado de la suite de tests. |
-| [`adr/`](./adr/README.md) | Architecture Decision Records (8 decisiones). |
+| Documento                                                                    | Contenido                                                                                                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [`recurring-payments.md`](./recurring-payments.md)                           | Este documento. Flujo funcional y arquitectónico, casos, contratos de API, estados.                                                   |
+| [`recurring-payments-diagrams.md`](./recurring-payments-diagrams.md)         | Diagrama de decisión, 10 diagramas de secuencia, diagrama de estados.                                                                 |
+| [`recurring-payments-gap-analysis.md`](./recurring-payments-gap-analysis.md) | Tabla de casos funcionales, gaps verificados y checklist de implementación.                                                           |
+| [`recurring-payments-audit.md`](./recurring-payments-audit.md)               | Auditoría de la implementación real contra esta documentación: matriz de cobertura, hallazgos A-01…A-08, estado de la suite de tests. |
+| [`adr/`](./adr/README.md)                                                    | Architecture Decision Records (8 decisiones).                                                                                         |
 
 ---
 
@@ -61,12 +61,12 @@ RecurringPaymentHistory   ← como histórico financiero mensual
 
 ### Qué es y qué no es una recurrencia
 
-| Es | No es |
-|---|---|
-| Un compromiso permanente (contrato de alquiler, energía) | Una instancia de pago de un mes |
-| Una plantilla de datos contables estables | Un histórico de ejecuciones |
-| Un registro que sobrevive a los pagos | Un registro que se crea o duplica por competencia |
-| Unidad de configuración | Unidad de ejecución |
+| Es                                                       | No es                                             |
+| -------------------------------------------------------- | ------------------------------------------------- |
+| Un compromiso permanente (contrato de alquiler, energía) | Una instancia de pago de un mes                   |
+| Una plantilla de datos contables estables                | Un histórico de ejecuciones                       |
+| Un registro que sobrevive a los pagos                    | Un registro que se crea o duplica por competencia |
+| Unidad de configuración                                  | Unidad de ejecución                               |
 
 ### Dónde vive el histórico
 
@@ -177,12 +177,12 @@ Energia elétrica — VARIABLE
 
 ### Campos obligatorios derivados
 
-| Campo | Obligatoriedad | Razón |
-|---|---|---|
-| `financialConceptId` | Obligatorio | Debe ser un concepto de tipo `OUTGO` activo de la iglesia. |
-| `costCenterId` | **Obligatorio** | Todo gasto tiene centro de costo. Ver §4. |
-| `dayOfMonth` | Obligatorio | `1..31`. Si el mes es más corto, se usa el último día del mes. |
-| `churchId` | Obligatorio | Aislamiento multi-tenant. |
+| Campo                | Obligatoriedad  | Razón                                                          |
+| -------------------- | --------------- | -------------------------------------------------------------- |
+| `financialConceptId` | Obligatorio     | Debe ser un concepto de tipo `OUTGO` activo de la iglesia.     |
+| `costCenterId`       | **Obligatorio** | Todo gasto tiene centro de costo. Ver §4.                      |
+| `dayOfMonth`         | Obligatorio     | `1..31`. Si el mes es más corto, se usa el último día del mes. |
+| `churchId`           | Obligatorio     | Aislamiento multi-tenant.                                      |
 
 ---
 
@@ -394,7 +394,7 @@ CON ASAAS
       └── usuario elige PIX o BOLETO
 ```
 
-**La diferencia determinante no es el tipo (`FIXED`/`VARIABLE`) sino la capacidad bancaria.** El tipo determina *qué datos* se piden; la capacidad bancaria determina *si Glória ejecuta el pago o solo lo registra*.
+**La diferencia determinante no es el tipo (`FIXED`/`VARIABLE`) sino la capacidad bancaria.** El tipo determina _qué datos_ se piden; la capacidad bancaria determina _si Glória ejecuta el pago o solo lo registra_.
 
 Ver el diagrama Mermaid completo y desarrollado en [`recurring-payments-diagrams.md`](./recurring-payments-diagrams.md#1-diagrama-de-decisión-principal).
 
@@ -426,11 +426,11 @@ Comprovante          // OBLIGATORIO — ver §10
 
 ### Se toma de la recurrencia (no se pregunta)
 
-| Dato | Origen |
-|---|---|
-| Valor | `RecurringPayment.amount` — **readonly** |
-| `FinancialConcept` | `RecurringPayment.financialConceptId` |
-| `CostCenter` | `RecurringPayment.costCenterId` — **readonly** |
+| Dato               | Origen                                         |
+| ------------------ | ---------------------------------------------- |
+| Valor              | `RecurringPayment.amount` — **readonly**       |
+| `FinancialConcept` | `RecurringPayment.financialConceptId`          |
+| `CostCenter`       | `RecurringPayment.costCenterId` — **readonly** |
 
 ### El método externo de pago NO interesa a Glória
 
@@ -515,12 +515,12 @@ FinancialRecord.voucher
 
 **No crear almacenamiento paralelo.**
 
-| Componente | Ubicación |
-|---|---|
-| Contrato | `src/Shared/domain/interfaces/StorageService.interface.ts` — `uploadFile(file: any): Promise<string>` |
-| Resolución de proveedor | `src/Shared/infrastructure/services/StorageProvider.service.ts` — `StorageProviderService.getInstance(bucketName?)`, vía `CLOUD_PROVIDER` (hoy solo `gcp`) y `BUCKET_FILES` |
-| Implementación | `src/package/gcp/infrastructure/StorageGCP.ts` |
-| Precedente de uso en flujo bancario | `src/Webhook/infrastructure/services/AsaasReceiptStorage.ts` (`storage.uploadFile({ data: buffer, mimetype: "application/pdf", originalname })`) |
+| Componente                          | Ubicación                                                                                                                                                                   |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contrato                            | `src/Shared/domain/interfaces/StorageService.interface.ts` — `uploadFile(file: any): Promise<string>`                                                                       |
+| Resolución de proveedor             | `src/Shared/infrastructure/services/StorageProvider.service.ts` — `StorageProviderService.getInstance(bucketName?)`, vía `CLOUD_PROVIDER` (hoy solo `gcp`) y `BUCKET_FILES` |
+| Implementación                      | `src/package/gcp/infrastructure/StorageGCP.ts`                                                                                                                              |
+| Precedente de uso en flujo bancario | `src/Webhook/infrastructure/services/AsaasReceiptStorage.ts` (`storage.uploadFile({ data: buffer, mimetype: "application/pdf", originalname })`)                            |
 
 Ver [`adr/ADR-005-manual-voucher-is-mandatory.md`](./adr/ADR-005-manual-voucher-is-mandatory.md).
 
@@ -770,16 +770,16 @@ porque describe **la operación concreta**.
 
 ### Diferencia explícita: `configuration` vs `execution command`
 
-| | `configuration` (permanente) | `execution command` (efímero) |
-|---|---|---|
-| Qué describe | **Qué** compromiso existe | **Cómo** se paga este mes |
-| Frecuencia de escritura | Una vez (y cambios excepcionales) | Una vez por competencia ejecutada |
-| Contiene método de pago | **NO** | **SÍ** |
-| Contiene valor | Solo si `FIXED` | **Solo si `VARIABLE`** |
-| Contiene destino PIX | Opcional (`pixDestination`) | Opcional (override puntual) |
-| Contiene `costCenterId` | **SÍ (obligatorio)** | **NO** |
-| Contiene `competence` | **NO** | **SÍ** |
-| Persistencia | `recurringPayments` | No se persiste (o `currentPayment` si es bancario) |
+|                         | `configuration` (permanente)      | `execution command` (efímero)                      |
+| ----------------------- | --------------------------------- | -------------------------------------------------- |
+| Qué describe            | **Qué** compromiso existe         | **Cómo** se paga este mes                          |
+| Frecuencia de escritura | Una vez (y cambios excepcionales) | Una vez por competencia ejecutada                  |
+| Contiene método de pago | **NO**                            | **SÍ**                                             |
+| Contiene valor          | Solo si `FIXED`                   | **Solo si `VARIABLE`**                             |
+| Contiene destino PIX    | Opcional (`pixDestination`)       | Opcional (override puntual)                        |
+| Contiene `costCenterId` | **SÍ (obligatorio)**              | **NO**                                             |
+| Contiene `competence`   | **NO**                            | **SÍ**                                             |
+| Persistencia            | `recurringPayments`               | No se persiste (o `currentPayment` si es bancario) |
 
 **Regla:** ningún dato permanente puede viajar en el comando de ejecución, y ningún dato de ejecución puede escribirse en la configuración.
 
@@ -823,14 +823,14 @@ El validador de `amount` exige además precisión de centavos: `Math.abs(amount 
 
 ### `CURRENT` vs TARGET del comando
 
-| Aspecto | CURRENT | TARGET |
-|---|---|---|
-| Objeto `payment` en el comando | No existe | `{ type: "PIX" \| "BILL", ... }` |
-| `amount` en `FIXED` | Prohibido (`AMOUNT_FORBIDDEN`) | Prohibido — **se mantiene** |
-| `amount` en `VARIABLE` | Obligatorio | Obligatorio — **se mantiene** |
-| PIX informado en ejecución | **Imposible** | `payment.pixKey` + `payment.pixKeyType` |
-| BILL informado en ejecución | `identificationField` (solo si config ya es `BILL`) | `payment.identificationField` (independiente de config) |
-| Método | Derivado de la configuración | Decidido por el comando |
+| Aspecto                        | CURRENT                                             | TARGET                                                  |
+| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
+| Objeto `payment` en el comando | No existe                                           | `{ type: "PIX" \| "BILL", ... }`                        |
+| `amount` en `FIXED`            | Prohibido (`AMOUNT_FORBIDDEN`)                      | Prohibido — **se mantiene**                             |
+| `amount` en `VARIABLE`         | Obligatorio                                         | Obligatorio — **se mantiene**                           |
+| PIX informado en ejecución     | **Imposible**                                       | `payment.pixKey` + `payment.pixKeyType`                 |
+| BILL informado en ejecución    | `identificationField` (solo si config ya es `BILL`) | `payment.identificationField` (independiente de config) |
+| Método                         | Derivado de la configuración                        | Decidido por el comando                                 |
 
 **GAP-04** cubre esta divergencia.
 
@@ -1015,12 +1015,12 @@ Por tanto, una iglesia **sin Asaas no puede usar recurrencias en absoluto**. **G
 
 ### Endpoints `CURRENT` completos
 
-| Método | Ruta | Propósito |
-|---|---|---|
-| `POST` | `/api/v1/recurring-payments` | Crear configuración |
-| `PUT` | `/api/v1/recurring-payments/:id` | Actualizar configuración |
-| `GET` | `/api/v1/recurring-payments?competence=YYYY-MM` | Listar con estado por competencia |
-| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay` | Ejecutar pago bancario |
+| Método | Ruta                                                 | Propósito                         |
+| ------ | ---------------------------------------------------- | --------------------------------- |
+| `POST` | `/api/v1/recurring-payments`                         | Crear configuración               |
+| `PUT`  | `/api/v1/recurring-payments/:id`                     | Actualizar configuración          |
+| `GET`  | `/api/v1/recurring-payments?competence=YYYY-MM`      | Listar con estado por competencia |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay` | Ejecutar pago bancario            |
 
 ---
 
@@ -1101,9 +1101,9 @@ El flujo bancario usa `source = AUTO`, `status = RECONCILED`, `createdBy = "syst
 Cuando `church-banking` confirme:
 
 | Tipo | Estado de confirmación |
-|---|---|
-| PIX | `DONE` |
-| BILL | `PAID` |
+| ---- | ---------------------- |
+| PIX  | `DONE`                 |
+| BILL | `PAID`                 |
 
 se crea:
 
@@ -1178,7 +1178,7 @@ export type CurrentRecurringPayment = {
   amount: number
   bankId: string
   availabilityAccountId: string
-  status: RecurringPaymentExecutionStatus   // PROCESSING | BLOCKED | FAILED
+  status: RecurringPaymentExecutionStatus // PROCESSING | BLOCKED | FAILED
   providerStatus: string
   failureCode?: string
   identificationField?: string
@@ -1192,12 +1192,12 @@ export type CurrentRecurringPayment = {
 
 ### Invariantes de dominio `CURRENT` (verificadas)
 
-| Operación | Regla | Código |
-|---|---|---|
+| Operación               | Regla                                                                                  | Código     |
+| ----------------------- | -------------------------------------------------------------------------------------- | ---------- |
 | `reserveCurrentPayment` | Falla si `status !== "ACTIVE"` o si ya hay `currentPayment` cuyo status `!== "FAILED"` | `:140-149` |
-| `updateCurrentPayment` | Falla si no hay `currentPayment` o si `externalReference` no coincide | `:151-161` |
-| `closeCurrentPayment` | Falla si `externalReference` no coincide | `:163-173` |
-| `updateConfiguration` | Falla si hay `currentPayment` no-`FAILED` | `:125-138` |
+| `updateCurrentPayment`  | Falla si no hay `currentPayment` o si `externalReference` no coincide                  | `:151-161` |
+| `closeCurrentPayment`   | Falla si `externalReference` no coincide                                               | `:163-173` |
+| `updateConfiguration`   | Falla si hay `currentPayment` no-`FAILED`                                              | `:125-138` |
 
 Todas lanzan `RECURRING_PAYMENT_IN_PROGRESS` o `RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH`.
 
@@ -1254,12 +1254,12 @@ Esa invariancia **ya existe** (`idx_financial_record_recurring_competence_unique
 
 **Análisis:**
 
-| Escenario | ¿Basta el índice único? |
-|---|---|
-| Dos requests concurrentes de registro manual | **Sí.** Una inserta; la otra recibe duplicate-key. |
-| Usuario hace doble clic | **Sí.** Igual que arriba. |
-| Reintento del cliente tras timeout de red | **Sí.** La segunda inserción falla por duplicate-key y se responde idempotente. |
-| Upload del comprobante ya subido y luego falla la creación del registro | **No — hay efecto residual.** El archivo queda huérfano en el storage. |
+| Escenario                                                                      | ¿Basta el índice único?                                                               |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Dos requests concurrentes de registro manual                                   | **Sí.** Una inserta; la otra recibe duplicate-key.                                    |
+| Usuario hace doble clic                                                        | **Sí.** Igual que arriba.                                                             |
+| Reintento del cliente tras timeout de red                                      | **Sí.** La segunda inserción falla por duplicate-key y se responde idempotente.       |
+| Upload del comprobante ya subido y luego falla la creación del registro        | **No — hay efecto residual.** El archivo queda huérfano en el storage.                |
 | Usuario quiere corregir un registro manual ya creado (monto/fecha equivocados) | **No cubierto.** El índice **prohíbe** el segundo registro para la misma competencia. |
 
 ### Conclusión
@@ -1284,7 +1284,7 @@ El `currentPayment` bancario existe porque hay un **estado externo asíncrono** 
      → el archivo subido en (1) queda huérfano → requiere limpieza asíncrona
 ```
 
-`PENDING`: definir política de limpieza (job de recolección de archivos sin `FinancialRecord` asociado, o subida diferida *después* de reservar). **No puede quedar indefinido**: sin política, cada intento fallido deja basura en el bucket.
+`PENDING`: definir política de limpieza (job de recolección de archivos sin `FinancialRecord` asociado, o subida diferida _después_ de reservar). **No puede quedar indefinido**: sin política, cada intento fallido deja basura en el bucket.
 
 **2. Corrección de un registro manual.** El índice único es **absoluto por competencia**, así que la corrección **no** puede modelarse como "otro registro". Debe ser:
 
@@ -1326,20 +1326,23 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 
 ### Semántica
 
-| Estado | Significado | Condición de verdad |
-|---|---|---|
-| `UPCOMING` | Vencimiento futuro | `dueDateForCompetence(dayOfMonth, competence) > hoy` |
-| `PENDING` | Debe pagarse y **no existe** `FinancialRecord` | vencimiento `<= hoy` y sin `FinancialRecord` |
-| `PROCESSING` | Existe operación bancaria activa | `currentPayment.status === "PROCESSING"` |
-| `BLOCKED` | Operación bancaria activa bloqueada por el provider | `currentPayment.status === "BLOCKED"` |
-| `FAILED` | Intento bancario terminó **sin** pago | `currentPayment.status === "FAILED"` |
-| `PAID` | Existe `FinancialRecord` liquidado | `∃ FinancialRecord(recurringPaymentId, competence)` con status `CLEARED`/`RECONCILED` |
-| `INACTIVE` | Recurrencia desactivada y **sin** registro liquidado en esa competencia | `RecurringPayment.status !== "ACTIVE"` |
+| Estado       | Significado                                                             | Condición de verdad                                                                   |
+| ------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `UPCOMING`   | Vencimiento futuro                                                      | `dueDateForCompetence(dayOfMonth, competence) > hoy`                                  |
+| `PENDING`    | Debe pagarse y **no existe** `FinancialRecord`                          | vencimiento `<= hoy` y sin `FinancialRecord`                                          |
+| `PROCESSING` | Existe operación bancaria activa                                        | `currentPayment.status === "PROCESSING"`                                              |
+| `BLOCKED`    | Operación bancaria activa bloqueada por el provider                     | `currentPayment.status === "BLOCKED"`                                                 |
+| `FAILED`     | Intento bancario terminó **sin** pago                                   | `currentPayment.status === "FAILED"`                                                  |
+| `PAID`       | Existe `FinancialRecord` liquidado                                      | `∃ FinancialRecord(recurringPaymentId, competence)` con status `CLEARED`/`RECONCILED` |
+| `INACTIVE`   | Recurrencia desactivada y **sin** registro liquidado en esa competencia | `RecurringPayment.status !== "ACTIVE"`                                                |
 
-> ⚠️ **`PENDING` — P-13:** una recurrencia aparece hoy en competencias **anteriores a su
-> creación**, y eso puede leerse como una deuda que nunca existió. El modelo no
-> almacena ningún ancla temporal. **Decisión de producto abierta**, ver
-> [ADR-009](./adr/ADR-009-settlement-history-outranks-configuration.md).
+**Sin `effectiveFrom`: la existencia se ancla al calendario de ejecución.** La
+notificación de vencimiento es _date-driven_: el cron toma la fecha real del barrido
+(`saoPauloDate`) y deriva de ella la competencia, así que una recurrencia creada en
+octubre no puede generar recordatorios de septiembre — cuando ese barrido corrió, no
+existía. El listado por competencia es una **vista operativa** y proyecta el
+compromiso vigente sobre el mes consultado. Ver
+[ADR-009](./adr/ADR-009-settlement-history-outranks-configuration.md).
 
 **Una recurrencia `INACTIVE` no se paga por ningún camino** (ni bancario ni manual):
 ambos consultan la recurrencia con el filtro `status: "ACTIVE"`. Para liquidar una
@@ -1395,7 +1398,7 @@ El retorno temprano para `BLOCKED` **no** incrementa `attempt` ni reenvía a `ch
 
 ```ts
 if (existing.status === "BLOCKED") {
-  return this.result(existing)          // ExecuteRecurringPayment.ts:106-108
+  return this.result(existing) // ExecuteRecurringPayment.ts:106-108
 }
 ```
 
@@ -1497,10 +1500,10 @@ Esta es la decisión correcta: como el `externalReference` es estable, `church-b
 
 `CURRENT` distingue correctamente (`:262-286`):
 
-| Situación | `status` | `providerStatus` |
-|---|---|---|
-| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED` | `CREATION_FAILED` |
-| Cualquier otro error (red, 5xx, respuesta ambigua) | `PROCESSING` | `CREATION_UNKNOWN` |
+| Situación                                                                | `status`     | `providerStatus`   |
+| ------------------------------------------------------------------------ | ------------ | ------------------ |
+| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED`     | `CREATION_FAILED`  |
+| Cualquier otro error (red, 5xx, respuesta ambigua)                       | `PROCESSING` | `CREATION_UNKNOWN` |
 
 **Regla:** solo un rechazo **confirmado** habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
 
@@ -1542,11 +1545,11 @@ Request (`apps/api/src/http/validations/pix-transfer.validation.ts:5-26`):
 ```ts
 {
   externalAccountId: string
-  amountInCents: number          // safeInteger, min 1
+  amountInCents: number // safeInteger, min 1
   pixKey: string
   pixKeyType: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP"
-  description: string            // max 500
-  externalReference: string      // max 100
+  description: string // max 500
+  externalReference: string // max 100
   context: Record<string, unknown>
 }
 ```
@@ -1564,9 +1567,9 @@ Request (`apps/api/src/http/validations/bill-payment.validation.ts:5-22`):
 ```ts
 {
   externalAccountId: string
-  identificationField: string    // solo required|string|notBlank
-  description: string            // max 500
-  externalReference: string      // max 100
+  identificationField: string // solo required|string|notBlank
+  description: string // max 500
+  externalReference: string // max 100
   context: Record<string, unknown>
 }
 ```
@@ -1605,10 +1608,21 @@ Glória lo hace correctamente: `parseOutgoingPaymentResponse` valida `result.sta
 #### Estados de salida
 
 ```ts
-type ChurchBankingOutgoingStatus =          // contrato del cliente de Glória
-  | "RESERVED" | "CREATING" | "CREATION_UNKNOWN" | "CREATION_FAILED"
-  | "PENDING" | "IN_BANK_PROCESSING" | "BANK_PROCESSING"
-  | "BLOCKED" | "DONE" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED"
+type ChurchBankingOutgoingStatus =
+  // contrato del cliente de Glória
+  | "RESERVED"
+  | "CREATING"
+  | "CREATION_UNKNOWN"
+  | "CREATION_FAILED"
+  | "PENDING"
+  | "IN_BANK_PROCESSING"
+  | "BANK_PROCESSING"
+  | "BLOCKED"
+  | "DONE"
+  | "PAID"
+  | "FAILED"
+  | "CANCELLED"
+  | "REFUNDED"
 ```
 
 (`src/Banking/domain/interfaces/ChurchBankingClient.interface.ts:68-81`.) Coincide con la unión real de `church-banking` (PIX + BILL + estados internos). **Sin gap.**
@@ -1641,9 +1655,9 @@ Algoritmo: buscar por identidad → si existe, continuar; si no, `insert` y capt
 
 `docs/asaas-outgoing-money.md` (7 líneas) es el único doc del flujo. Drift verificado:
 
-| Afirmación del doc | Realidad |
-|---|---|
-| "un retry recupera por `externalReference`" | Recupera por el UUID `providerExternalReference` interno, no por el del llamador. |
+| Afirmación del doc                                         | Realidad                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "un retry recupera por `externalReference`"                | Recupera por el UUID `providerExternalReference` interno, no por el del llamador.                                                                                                                                                                                 |
 | "Las razones crudas de Asaas no se propagan al integrador" | **Falso.** `failureCode` propaga `failReason`/`failReasons[0].code` de Asaas (`asaas-outgoing-money-webhook.ts:64,75`). Además es inconsistente: en creación es `ASAAS_TRANSFER_FAILED`/`ASAAS_BILL_FAILED` (código propio), después es el string crudo de Asaas. |
 
 Otros drift relevantes: el `openapi.json` de `church-banking` **no** documenta `BankingPixTransferUpdatedEvent` ni `BankingBillPaymentUpdatedEvent` en `BankingWebhookEvent.oneOf`, y documenta 422/503 como `ServiceErrorResponse` cuando el código devuelve `{data, code:"OK"}`.
@@ -1740,7 +1754,9 @@ close operational payment            (closeCurrentPayment)
 Además, el **dispatch del `FinancialRecord` usa un `jobId` determinista** (`RegisterRecurringPaymentFinancialRecord.ts:88`):
 
 ```ts
-{ jobId: `recurring-${digest}` }   // digest = sha256(externalReference)
+{
+  jobId: `recurring-${digest}`
+} // digest = sha256(externalReference)
 ```
 
 Esto hace que el encolado sea idempotente a nivel de Bull.
@@ -1802,13 +1818,13 @@ if (body.type === "BANKING_PAYMENT_UPDATED") {
 
 ### Tabla de eventos
 
-| Evento | Dirección del dinero | Handler | Crea |
-|---|---|---|---|
-| `BANKING_PAYMENT_UPDATED` | **INGRESO** (cobro/contribución) | `ProcessAsaasTransactionService` | `FinancialRecord` INCOME / contribución |
-| `BANKING_PIX_TRANSFER_UPDATED` | **SALIDA** (PIX recurrentes) | `ProcessRecurringPaymentBankingUpdate.processPix` | `FinancialRecord` OUTGO |
-| `BANKING_BILL_PAYMENT_UPDATED` | **SALIDA** (boleto recurrente) | `ProcessRecurringPaymentBankingUpdate.processBill` | `FinancialRecord` OUTGO |
-| `BANKING_ACCOUNT_STATUS_UPDATED` | — | (fuera de alcance) | — |
-| `BANKING_ONBOARDING_DOCUMENTS_REQUIRED` | — | (fuera de alcance) | — |
+| Evento                                  | Dirección del dinero             | Handler                                            | Crea                                    |
+| --------------------------------------- | -------------------------------- | -------------------------------------------------- | --------------------------------------- |
+| `BANKING_PAYMENT_UPDATED`               | **INGRESO** (cobro/contribución) | `ProcessAsaasTransactionService`                   | `FinancialRecord` INCOME / contribución |
+| `BANKING_PIX_TRANSFER_UPDATED`          | **SALIDA** (PIX recurrentes)     | `ProcessRecurringPaymentBankingUpdate.processPix`  | `FinancialRecord` OUTGO                 |
+| `BANKING_BILL_PAYMENT_UPDATED`          | **SALIDA** (boleto recurrente)   | `ProcessRecurringPaymentBankingUpdate.processBill` | `FinancialRecord` OUTGO                 |
+| `BANKING_ACCOUNT_STATUS_UPDATED`        | —                                | (fuera de alcance)                                 | —                                       |
+| `BANKING_ONBOARDING_DOCUMENTS_REQUIRED` | —                                | (fuera de alcance)                                 | —                                       |
 
 ---
 
@@ -1899,15 +1915,15 @@ Esto significa que **el intento 2 tiene un `externalReference` distinto del inte
 
 ### Resumen de las invariantes de no-doble-pago
 
-| Invariante | Mecanismo | Ubicación |
-|---|---|---|
-| Un `FinancialRecord` por recurrencia+competencia | índice único parcial | `FinanceRecordMongoRepository` |
-| Una `currentPayment` con referencia activa | índice único sparse | `RecurringPaymentsMongoRepository` |
-| Un solo ganador al reservar | CAS `replaceOne` con estado esperado | `saveIfCurrentPaymentMatches` |
-| Webhook procesado una sola vez | cortocircuito por `bankingExternalReference` + `findRecurringPayment` | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
-| Encolado de `FinancialRecord` una sola vez | `jobId` determinista (`sha256(externalReference)`) | `RegisterRecurringPaymentFinancialRecord.ts:88` |
-| Una operación lógica en el banco | índice único `{clientId, externalAccountId, externalReference}` | `church-banking` |
-| Sin intento nuevo tras duda | `CREATION_UNKNOWN` reutiliza `attempt` y exige payload idéntico | `ExecuteRecurringPayment.ts:124-128, 353-366` |
+| Invariante                                       | Mecanismo                                                             | Ubicación                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Un `FinancialRecord` por recurrencia+competencia | índice único parcial                                                  | `FinanceRecordMongoRepository`                                                    |
+| Una `currentPayment` con referencia activa       | índice único sparse                                                   | `RecurringPaymentsMongoRepository`                                                |
+| Un solo ganador al reservar                      | CAS `replaceOne` con estado esperado                                  | `saveIfCurrentPaymentMatches`                                                     |
+| Webhook procesado una sola vez                   | cortocircuito por `bankingExternalReference` + `findRecurringPayment` | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
+| Encolado de `FinancialRecord` una sola vez       | `jobId` determinista (`sha256(externalReference)`)                    | `RegisterRecurringPaymentFinancialRecord.ts:88`                                   |
+| Una operación lógica en el banco                 | índice único `{clientId, externalAccountId, externalReference}`       | `church-banking`                                                                  |
+| Sin intento nuevo tras duda                      | `CREATION_UNKNOWN` reutiliza `attempt` y exige payload idéntico       | `ExecuteRecurringPayment.ts:124-128, 353-366`                                     |
 
 ---
 
@@ -1976,7 +1992,11 @@ POST /api/v1/recurring-payments
   "amount": 3500,
   "dayOfMonth": 10,
   "status": "ACTIVE",
-  "payment": { "method": "PIX", "pixKey": "12345678000190", "pixKeyType": "CNPJ" }
+  "payment": {
+    "method": "PIX",
+    "pixKey": "12345678000190",
+    "pixKeyType": "CNPJ"
+  }
 }
 ```
 
@@ -2058,12 +2078,12 @@ Comprovante *
 
 ### Estado del botón según `competenceStatus`
 
-| Estado | Fila | Acción |
-|---|---|---|
+| Estado     | Fila                 | Acción                                                                    |
+| ---------- | -------------------- | ------------------------------------------------------------------------- |
 | `UPCOMING` | Fecha futura visible | Puede permitirse registrar (pago anticipado, §16) — `PENDING` de producto |
-| `PENDING` | Resaltado | `[ REGISTRAR PAGAMENTO ]` |
-| `PAID` | Marcado como pagado | Sin acción; ver el `FinancialRecord` |
-| `INACTIVE` | Atenuado | Sin acción; ofrecer reactivar |
+| `PENDING`  | Resaltado            | `[ REGISTRAR PAGAMENTO ]`                                                 |
+| `PAID`     | Marcado como pagado  | Sin acción; ver el `FinancialRecord`                                      |
+| `INACTIVE` | Atenuado             | Sin acción; ofrecer reactivar                                             |
 
 ---
 
@@ -2127,12 +2147,12 @@ VARIABLE + PIX:
 
 ### Feedback de estado al usuario
 
-| `competenceStatus` / status | Mensaje sugerido |
-|---|---|
-| `PROCESSING` | "Pagamento em processamento no banco" |
-| `BLOCKED` | "O banco está retendo esta operação. **Não** tente novamente." (§24) |
-| `FAILED` | "O pagamento falhou" + `failureCode` como diagnóstico + `[ TENTAR NOVAMENTE ]` |
-| `PAID` | "Pagamento confirmado" + link al `FinancialRecord` |
+| `competenceStatus` / status | Mensaje sugerido                                                               |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `PROCESSING`                | "Pagamento em processamento no banco"                                          |
+| `BLOCKED`                   | "O banco está retendo esta operação. **Não** tente novamente." (§24)           |
+| `FAILED`                    | "O pagamento falhou" + `failureCode` como diagnóstico + `[ TENTAR NOVAMENTE ]` |
+| `PAID`                      | "Pagamento confirmado" + link al `FinancialRecord`                             |
 
 ⚠️ `failureCode` puede contener la razón **cruda de Asaas** (§26), no un código tipado. La UI **no** debe intentar traducirlo con un mapa cerrado ni mostrarlo como mensaje principal.
 
@@ -2183,18 +2203,18 @@ Los 10 diagramas están en:
 
 [`recurring-payments-diagrams.md` → §2 Diagramas de secuencia](./recurring-payments-diagrams.md#2-diagramas-de-secuencia)
 
-| # | Escenario |
-|---|---|
-| 1 | FIXED manual |
-| 2 | VARIABLE manual |
-| 3 | FIXED + saved PIX |
-| 4 | FIXED + PIX informado |
-| 5 | VARIABLE + PIX |
-| 6 | VARIABLE + BILL |
-| 7 | banking webhook success |
-| 8 | banking failure |
-| 9 | BLOCKED |
-| 10 | retry |
+| #   | Escenario               |
+| --- | ----------------------- |
+| 1   | FIXED manual            |
+| 2   | VARIABLE manual         |
+| 3   | FIXED + saved PIX       |
+| 4   | FIXED + PIX informado   |
+| 5   | VARIABLE + PIX          |
+| 6   | VARIABLE + BILL         |
+| 7   | banking webhook success |
+| 8   | banking failure         |
+| 9   | BLOCKED                 |
+| 10  | retry                   |
 
 ---
 
@@ -2237,20 +2257,20 @@ PAID = FinancialRecord exists
 
 ## 40. Resultado esperado — matriz de respuestas
 
-| Pregunta | Respuesta | Sección |
-|---|---|---|
-| ¿Qué **es** una recurrencia? | Un compromiso financiero mensual permanente, configurado una sola vez | §1 |
-| ¿Qué **no es** una recurrencia? | Una ocurrencia mensual, un histórico, un método de pago | §1, §2 |
-| ¿Qué se configura **una sola vez**? | Nombre, concepto, centro de costo, tipo, monto (si FIXED), día de vencimiento, destino PIX opcional, estado | §3, §30 |
-| ¿Qué se solicita **cada mes**? | Competencia, datos de ejecución (monto si VARIABLE, método y destino si no está guardado), cuenta y comprobante si es manual | §11, §15, §18 |
-| ¿Qué depende de **Asaas**? | Solo la **ejecución bancaria**: PIX y boleto | §7, §26 |
-| ¿Qué ocurre **sin Asaas**? | Registro manual: `FinancialRecord` sin operación bancaria | §8, §9, §18 |
-| ¿Cuándo se crea el `FinancialRecord`? | Bancario: al confirmar webhook terminal (`DONE`/`PAID`). Manual: al registrar con comprobante | §19, §20 |
-| ¿Cómo se evita el **doble pago**? | Índice único `recurringPaymentId + recurringCompetence` + `currentPayment` CAS + idempotencia de `church-banking` | §22, §29 |
-| ¿Cómo funciona **PIX**? | `POST /api/pix-transfers` con `pixKey` + `pixKeyType`; se paga al recibir `DONE` | §12, §13, §26 |
-| ¿Cómo funciona **boleto**? | `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. **El valor no viaja** | §14, §26, §33 |
-| ¿Cómo funciona **manual**? | `POST .../register-payment` multipart con comprobante obligatorio; crea `FinancialRecord` sin referencia bancaria | §18, §19 |
-| ¿Cómo funciona **CostCenter**? | Obligatorio en la configuración; se copia al `FinancialRecord` en toda ejecución | §4 |
-| ¿Cómo funciona el **comprobante**? | Obligatorio en manual; vía `StorageProviderService`; en bancario deriva del recibo de Asaas | §10, §20 |
-| ¿Cómo funciona **retry**? | Solo desde estado terminal fallido confirmado; `attempt` nuevo; `CREATION_UNKNOWN` reutiliza el intento | §25 |
-| ¿Cómo funciona **BLOCKED**? | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago, no incrementa `attempt` | §24 |
+| Pregunta                              | Respuesta                                                                                                                    | Sección       |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| ¿Qué **es** una recurrencia?          | Un compromiso financiero mensual permanente, configurado una sola vez                                                        | §1            |
+| ¿Qué **no es** una recurrencia?       | Una ocurrencia mensual, un histórico, un método de pago                                                                      | §1, §2        |
+| ¿Qué se configura **una sola vez**?   | Nombre, concepto, centro de costo, tipo, monto (si FIXED), día de vencimiento, destino PIX opcional, estado                  | §3, §30       |
+| ¿Qué se solicita **cada mes**?        | Competencia, datos de ejecución (monto si VARIABLE, método y destino si no está guardado), cuenta y comprobante si es manual | §11, §15, §18 |
+| ¿Qué depende de **Asaas**?            | Solo la **ejecución bancaria**: PIX y boleto                                                                                 | §7, §26       |
+| ¿Qué ocurre **sin Asaas**?            | Registro manual: `FinancialRecord` sin operación bancaria                                                                    | §8, §9, §18   |
+| ¿Cuándo se crea el `FinancialRecord`? | Bancario: al confirmar webhook terminal (`DONE`/`PAID`). Manual: al registrar con comprobante                                | §19, §20      |
+| ¿Cómo se evita el **doble pago**?     | Índice único `recurringPaymentId + recurringCompetence` + `currentPayment` CAS + idempotencia de `church-banking`            | §22, §29      |
+| ¿Cómo funciona **PIX**?               | `POST /api/pix-transfers` con `pixKey` + `pixKeyType`; se paga al recibir `DONE`                                             | §12, §13, §26 |
+| ¿Cómo funciona **boleto**?            | `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. **El valor no viaja**                        | §14, §26, §33 |
+| ¿Cómo funciona **manual**?            | `POST .../register-payment` multipart con comprobante obligatorio; crea `FinancialRecord` sin referencia bancaria            | §18, §19      |
+| ¿Cómo funciona **CostCenter**?        | Obligatorio en la configuración; se copia al `FinancialRecord` en toda ejecución                                             | §4            |
+| ¿Cómo funciona el **comprobante**?    | Obligatorio en manual; vía `StorageProviderService`; en bancario deriva del recibo de Asaas                                  | §10, §20      |
+| ¿Cómo funciona **retry**?             | Solo desde estado terminal fallido confirmado; `attempt` nuevo; `CREATION_UNKNOWN` reutiliza el intento                      | §25           |
+| ¿Cómo funciona **BLOCKED**?           | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago, no incrementa `attempt`                       | §24           |

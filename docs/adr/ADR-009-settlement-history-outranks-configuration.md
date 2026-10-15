@@ -1,7 +1,6 @@
 # ADR-009 — Settlement history outranks the recurrence configuration
 
-- **Estado:** ACEPTADA (definitiva) **salvo la sección "Vista por competencia", que
-  permanece ABIERTA** y requiere decisión explícita de producto.
+- **Estado:** ACEPTADA (definitiva)
 - **Fecha:** 2026-10-17
 - **Feature:** Pagamentos Recorrentes
 - **Documento principal:** [`../recurring-payments.md`](../recurring-payments.md) §23, §36
@@ -38,6 +37,85 @@ quedaba subordinado a la configuración.
 > es `PAID` aunque la recurrencia esté desactivada.**
 
 ### Consecuencias normativas
+
+`ListRecurringPayments.competenceStatus` resuelve en este orden:
+
+```text
+1. ∃ FinancialRecord liquidado (CLEARED | RECONCILED)  → PAID
+2. status !== "ACTIVE"                                 → INACTIVE
+3. currentPayment.status (si coincide la competencia)  → PROCESSING | BLOCKED | FAILED
+4. dueDate <= hoy                                      → PENDING, si no → UPCOMING
+```
+
+Reglas que se derivan:
+
+1. **`PAID` precede a `INACTIVE`.** Desactivar detiene compromisos futuros; no borra
+   lo ya pagado.
+2. **El histórico real es el `FinancialRecord`**, no el estado derivado del listado.
+   El listado es una **vista operativa por competencia**; quien necesite fidelidad
+   histórica consulta los registros financieros.
+3. **`INACTIVE` solo aplica cuando no hay nada liquidado** en esa competencia.
+
+### `INACTIVE` no se paga por ningún camino
+
+La precedencia anterior es de **lectura**, no de ejecución. Son dos preguntas
+distintas y con reglas distintas:
+
+| Pregunta                              | Fuente que manda                             |
+| ------------------------------------- | -------------------------------------------- |
+| ¿Qué ocurrió en esta competencia?     | El histórico (`FinancialRecord`)             |
+| ¿Se puede ejecutar un pago **ahora**? | La configuración (`RecurringPayment.status`) |
+
+Por tanto:
+
+> **Una recurrencia `INACTIVE` no se paga por ningún camino.** El bloqueo es
+> idéntico en la ejecución bancaria y en el registro manual, y ambos consultan la
+> recurrencia con el mismo filtro `status: "ACTIVE"`.
+
+**Válvula de escape:** para liquidar una competencia histórica se **reactiva** la
+recurrencia (`status` es parte del payload de creación/actualización), se registra
+el pago y se vuelve a desactivar. No existe una excepción implícita por fecha.
+
+**Por qué no se permite por fecha:** el agregado no guarda _cuándo_ se desactivó
+(solo el enum `status`). Permitir "competencias anteriores a la desactivación"
+exigiría un timestamp que hoy no existe, y decidir esa fecha de corte es una
+decisión de producto aparte, no un efecto colateral de un `if`.
+
+### Existencia de una recurrencia: anclada al calendario, sin campo extra
+
+**Decisión cerrada:** no se introduce `effectiveFrom` ni `startCompetence`.
+
+Una recurrencia **no se notifica retroactivamente** porque la notificación es
+dirigida por la fecha en que corre el cron, no por un rango declarado:
+
+```text
+NotifyRecurringPaymentDue.handle()
+  today        = saoPauloDate(now)        ← fecha real del barrido
+  competence   = addDays(today, offset)   ← competencia derivada de esa fecha
+  notifica si  dueDateForCompetence(dayOfMonth, competence) === reminderDate
+  y solo sobre recurrencias status = "ACTIVE" que existen en ese momento
+```
+
+Una recurrencia creada en octubre **no puede** generar un recordatorio de
+septiembre: cuando el barrido de septiembre corrió, la recurrencia no existía.
+El ancla temporal es el propio calendario de ejecución, no un dato almacenado.
+
+**Consecuencia asumida:** `ListRecurringPayments` proyecta el compromiso vigente
+sobre cualquier competencia consultada. Navegar a un mes anterior a la creación
+muestra la recurrencia en ese mes. No genera notificaciones, no crea registros y no
+declara deuda vencida; es una **vista operativa**, no un reconstruido de existencia
+histórica.
+
+**Por qué no se añade el campo:**
+
+| Motivo                                                    | Detalle                                                 |
+| --------------------------------------------------------- | ------------------------------------------------------- |
+| Resolvería un problema que el calendario ya resuelve      | La notificación ya es date-driven                       |
+| El agregado no tiene ancla y añadirla es coste real       | Campo + backfill + filtros en cada consulta             |
+| La opción "deducir del primer `FinancialRecord`" no sirve | Una recurrencia sin pagos no tendría ancla              |
+| Ya se rechazó `startCompetence` para el listado           | Introducirlo ahora contradiría esa decisión sin aportar |
+
+## Consecuencias normativas
 
 `ListRecurringPayments.competenceStatus` resuelve en este orden:
 
@@ -158,8 +236,9 @@ cualquier mes.
 - [ ] `competenceStatus` evalúa `settledIds` antes de `status !== "ACTIVE"`.
 - [ ] Una recurrencia `INACTIVE` con registro liquidado devuelve `PAID`.
 - [ ] Una recurrencia `INACTIVE` sin registro liquidado devuelve `INACTIVE`.
-- [ ] **ABIERTO:** una competencia anterior a la creación de la recurrencia aparece
-      en el listado. Se acepta hoy como comportamiento actual, **no** como contrato.
+- [ ] Una competencia anterior a la creación aparece en el listado como vista operativa,
+      pero **no** genera notificación (el barrido es date-driven).
+- [ ] No existe `effectiveFrom`/`startCompetence` en el modelo, por decisión explícita.
 - [ ] `PAID` se calcula desde `FinancialRecord`, nunca desde un campo de la recurrencia.
 
 ---
