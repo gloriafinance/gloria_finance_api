@@ -31,6 +31,7 @@ function setup() {
   }
   const financialRecords = {
     findByBankingExternalReference: jest.fn().mockResolvedValue(undefined),
+    countRecurringPaymentRecords: jest.fn().mockResolvedValue(0),
     findRecurringPayment: jest.fn().mockResolvedValue(undefined),
   }
   const concept = {

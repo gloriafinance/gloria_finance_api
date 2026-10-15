@@ -105,7 +105,19 @@ export class RegisterRecurringPaymentFinancialRecord {
       )
     }
 
-    const digest = this.digest(recurring.getRecurringPaymentId(), competence)
+    // A voided record is excluded from uniqueness, so re-paying the same
+    // competence needs a distinct identity. Prior records (including voided
+    // ones) define the sequence.
+    const sequence =
+      await this.financialRecordRepository.countRecurringPaymentRecords(
+        recurring.getRecurringPaymentId(),
+        competence
+      )
+    const digest = this.digest(
+      recurring.getRecurringPaymentId(),
+      competence,
+      sequence
+    )
     await new DispatchCreateFinancialRecord(this.queueService).execute(
       {
         financialRecordId: `urn:financialRecord:${digest}`,
@@ -143,9 +155,13 @@ export class RegisterRecurringPaymentFinancialRecord {
    * Deterministic identity for one competence, so the queued job and the record
    * itself are deduplicated even before the unique index is consulted.
    */
-  private digest(recurringPaymentId: string, competence: string): string {
+  private digest(
+    recurringPaymentId: string,
+    competence: string,
+    sequence: number
+  ): string {
     return createHash("sha256")
-      .update(`${recurringPaymentId}:${competence}`)
+      .update(`${recurringPaymentId}:${competence}:${sequence}`)
       .digest("hex")
   }
 }

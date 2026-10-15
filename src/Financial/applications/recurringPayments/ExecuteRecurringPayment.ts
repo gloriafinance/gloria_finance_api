@@ -104,6 +104,7 @@ export class ExecuteRecurringPayment {
       externalReference,
       amount,
       paymentMethod: method.type,
+      executionDestination: this.destinationOf(method),
       bankId: account.bankId,
       availabilityAccountId: account.availabilityAccountId,
       status: "PROCESSING",
@@ -427,13 +428,14 @@ export class ExecuteRecurringPayment {
   ): PayRecurringPaymentMethod {
     const method = this.resolveMethod(recurring, request)
     const amount = this.resolveAmount(recurring, request)
-    const sameMethod =
+    // church-banking requires byte-identical payee data for the same
+    // externalReference, so a retry must repeat the exact destination.
+    const sameDestination =
       payment.paymentMethod === method.type &&
-      (method.type === "PIX" ||
-        payment.identificationField === method.identificationField)
+      payment.executionDestination === this.destinationOf(method)
     if (
       amount !== payment.amount ||
-      !sameMethod ||
+      !sameDestination ||
       (request.availabilityAccountId !== undefined &&
         request.availabilityAccountId !== payment.availabilityAccountId)
     ) {
@@ -450,6 +452,13 @@ export class ExecuteRecurringPayment {
       competence: payment.competence,
       ...(payment.failureCode ? { failureCode: payment.failureCode } : {}),
     }
+  }
+
+  /** The payee data that identifies this execution's target. */
+  private destinationOf(method: PayRecurringPaymentMethod): string {
+    return method.type === "PIX"
+      ? `${method.pixKeyType}:${method.pixKey}`
+      : method.identificationField
   }
 
   private externalReference(

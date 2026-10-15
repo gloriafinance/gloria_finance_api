@@ -8,7 +8,10 @@ import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persist
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
-import { RegisterRecurringPaymentManually } from "@/Financial/applications/recurringPayments/RegisterRecurringPaymentManually"
+import {
+  RegisterRecurringPaymentManually,
+  type RegisterRecurringPaymentManuallyInput,
+} from "@/Financial/applications/recurringPayments/RegisterRecurringPaymentManually"
 import {
   ListRecurringPayments,
   type RecurringPaymentForCompetence,
@@ -162,8 +165,10 @@ export class RecurringPaymentController {
     @Res() res: ServerResponse
   ) {
     try {
-      const body = req.body as RegisterRecurringPaymentRequest & {
-        file?: any
+      // Uploads arrive as multipart parts, never inside the parsed body.
+      const body: RegisterRecurringPaymentManuallyInput = {
+        ...(req.body as RegisterRecurringPaymentRequest),
+        file: req.files?.file,
       }
       const result = await new RegisterRecurringPaymentManually(
         RecurringPaymentsMongoRepository.getInstance(),

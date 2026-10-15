@@ -8,6 +8,15 @@ export interface IFinancialRecordRepository extends IRepository<FinanceRecord> {
     recurringPaymentId: string,
     competence: string
   ): Promise<FinanceRecord | undefined>
+
+  /**
+   * Includes voided records, so a re-execution after cancellation derives a new
+   * identity instead of colliding with the previous one.
+   */
+  countRecurringPaymentRecords(
+    recurringPaymentId: string,
+    competence: string
+  ): Promise<number>
   findByBankingExternalReference(
     reference: string
   ): Promise<FinanceRecord | undefined>

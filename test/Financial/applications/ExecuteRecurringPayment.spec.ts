@@ -175,6 +175,7 @@ describe("ExecuteRecurringPayment", () => {
       externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
       amount: 123.45,
       paymentMethod: "PIX" as const,
+      executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "FAILED" as const,
@@ -212,6 +213,7 @@ describe("ExecuteRecurringPayment", () => {
       externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
       amount: 123.45,
       paymentMethod: "PIX" as const,
+      executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
@@ -245,6 +247,7 @@ describe("ExecuteRecurringPayment", () => {
       externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
       amount: 123.45,
       paymentMethod: "PIX" as const,
+      executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
@@ -262,6 +265,60 @@ describe("ExecuteRecurringPayment", () => {
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
     expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
+  })
+
+  it("refuses a creation-unknown retry that changes the PIX destination", async () => {
+    const current = {
+      competence: "2026-10",
+      attempt: 1,
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      amount: 123.45,
+      paymentMethod: "PIX" as const,
+      executionDestination: "EVP:key-123",
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "PROCESSING" as const,
+      providerStatus: "CREATION_UNKNOWN",
+      updatedAt: new Date("2026-09-30T12:01:00Z"),
+    }
+    const ctx = setup({ amount: 123.45, currentPayment: current })
+
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", {
+        competence: "2026-10",
+        payment: { type: "PIX", pixKey: "other-key", pixKeyType: "EVP" },
+      })
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
+    expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+  })
+
+  it("accepts a creation-unknown retry that repeats the identical PIX destination", async () => {
+    const current = {
+      competence: "2026-10",
+      attempt: 1,
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      amount: 123.45,
+      paymentMethod: "PIX" as const,
+      executionDestination: "EVP:key-123",
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "PROCESSING" as const,
+      providerStatus: "CREATION_UNKNOWN",
+      updatedAt: new Date("2026-09-30T12:01:00Z"),
+    }
+    const ctx = setup({ amount: 123.45, currentPayment: current })
+
+    await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
+    })
+
+    expect(
+      ctx.banking.createPixTransfer.mock.calls[0]?.[0].pixKey
+    ).toBe("key-123")
+    expect(
+      ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
+    ).toBe(current.externalReference)
   })
 
   it("keeps creation-unknown protected and does not treat a timeout as failure", async () => {
@@ -298,6 +355,21 @@ describe("ExecuteRecurringPayment", () => {
     })
   })
 
+  it("starts a new payment when the previous record for the competence was voided", async () => {
+    // findRecurringPayment excludes VOID, so a cancelled payment is payable again.
+    const ctx = setup({
+      amount: 25,
+      pixDestination: PIX_DESTINATION,
+      paid: false,
+    })
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+    })
+
+    expect(result.status).toBe("PROCESSING")
+    expect(ctx.banking.createPixTransfer).toHaveBeenCalled()
+  })
+
   it("does not call church-banking when the competence already has a financial record", async () => {
     const ctx = setup({
       amount: 25,
@@ -323,6 +395,8 @@ describe("ExecuteRecurringPayment", () => {
         externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
         amount: 25,
         paymentMethod: "PIX" as const,
+        executionDestination: "EVP:key-123",
+      executionDestination: "EVP:key-123",
         bankId: "bank-1",
         availabilityAccountId: "availability-1",
         status,

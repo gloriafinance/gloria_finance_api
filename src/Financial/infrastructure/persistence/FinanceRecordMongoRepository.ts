@@ -35,6 +35,17 @@ export class FinanceRecordMongoRepository
     await collection.deleteOne({ financialRecordId })
   }
 
+  async countRecurringPaymentRecords(
+    recurringPaymentId: string,
+    competence: string
+  ): Promise<number> {
+    const collection = await this.collection()
+    return await collection.countDocuments({
+      recurringPaymentId,
+      recurringCompetence: competence,
+    })
+  }
+
   async findRecurringPayment(
     recurringPaymentId: string,
     competence: string

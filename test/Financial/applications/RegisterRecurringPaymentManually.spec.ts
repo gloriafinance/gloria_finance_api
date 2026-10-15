@@ -25,6 +25,7 @@ function setup(input: SetupInput = {}) {
     one: jest.fn().mockResolvedValue(recurrence),
   }
   const financialRecords = {
+    countRecurringPaymentRecords: jest.fn().mockResolvedValue(0),
     findRecurringPayment: jest
       .fn()
       .mockResolvedValue(input.alreadyRegistered ? {} : undefined),
