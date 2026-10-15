@@ -22,6 +22,8 @@ export class Bank extends AggregateRoot {
   private tag: string
   private addressInstancePayment: string
   private bankInstruction: any
+  /** Payment provider this account is connected to, if any. Empty when manual. */
+  private provider?: string
   private churchId: string
 
   static create(
@@ -59,6 +61,7 @@ export class Bank extends AggregateRoot {
     bank.tag = plainData.tag
     bank.addressInstancePayment = plainData.addressInstancePayment
     bank.bankInstruction = plainData.bankInstruction
+    bank.provider = plainData.provider ?? undefined
     bank.churchId = plainData.churchId ?? undefined
     return bank
   }
@@ -85,6 +88,15 @@ export class Bank extends AggregateRoot {
 
   isActive(): boolean {
     return this.active
+  }
+
+  /**
+   * Banking execution must debit the account connected to the provider. Without
+   * this the church's other banks are indistinguishable and a payment could be
+   * recorded against an account the provider never touched.
+   */
+  isConnectedTo(provider: string): boolean {
+    return this.provider === provider
   }
 
   setInstancePaymentAddress(address: string): void {
@@ -116,6 +128,7 @@ export class Bank extends AggregateRoot {
       tag: this.tag,
       addressInstancePayment: this.addressInstancePayment,
       bankInstruction: this.bankInstruction,
+      provider: this.provider,
       churchId: this.churchId,
     }
   }

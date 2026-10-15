@@ -14,6 +14,7 @@ type SetupInput = {
   currentPayment?: ReturnType<RecurringPayments["getCurrentPayment"]>
   paid?: boolean
   bankCount?: number
+  bankConnected?: boolean
   accounts?: number
 }
 
@@ -48,7 +49,11 @@ function setup(input: SetupInput = {}) {
       .mockResolvedValue(input.paid ? {} : undefined),
     one: jest.fn().mockResolvedValue(input.paid ? {} : undefined),
   }
-  const bank = { isActive: () => true, getBankId: () => "bank-1" }
+  const bank = {
+    isActive: () => true,
+    getBankId: () => "bank-1",
+    isConnectedTo: () => input.bankConnected !== false,
+  }
   const banks = {
     all: jest.fn().mockResolvedValue(input.bankCount === 0 ? [] : [bank]),
   }
@@ -440,6 +445,19 @@ describe("ExecuteRecurringPayment", () => {
       name: "RECURRING_PAYMENT_BANK_ACCOUNT_UNAVAILABLE",
     })
     expect(ctx.repository.saveIfCurrentPaymentMatches).not.toHaveBeenCalled()
+  })
+
+  it("refuses to execute when no bank is connected to the provider", async () => {
+    const ctx = setup({ amount: 25, bankConnected: false })
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", {
+        competence: "2026-10",
+        payment: { type: "PIX", pixKey: "key-1", pixKeyType: "EVP" },
+      })
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_BANK_ACCOUNT_UNAVAILABLE",
+    })
+    expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
   it("requires an explicit account when the church holds several", async () => {

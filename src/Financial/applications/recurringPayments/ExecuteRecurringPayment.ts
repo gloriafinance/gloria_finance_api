@@ -20,6 +20,7 @@ import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/Remote
 import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { assertCompetence } from "./RecurringPaymentCompetence"
+import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 
 export type ExecuteRecurringPaymentResult = {
@@ -220,8 +221,11 @@ export class ExecuteRecurringPayment {
     churchId: string,
     request: PayRecurringPaymentRequest
   ): Promise<{ bankId: string; availabilityAccountId: string }> {
+    // church-banking debits the account bound to the church, so only the bank
+    // connected to the provider is a valid source of funds here. Any other bank
+    // of the church would be recorded as the origin of a debit it never made.
     const activeBanks = (await this.bankRepository.all(churchId)).filter(
-      (bank) => bank.isActive()
+      (bank) => bank.isActive() && bank.isConnectedTo(Provider.ASAAS)
     )
     if (activeBanks.length === 0) {
       throw new PaymentError("RECURRING_PAYMENT_BANK_ACCOUNT_UNAVAILABLE")

@@ -6,6 +6,7 @@ import {
 } from "@/Banking/domain"
 import { CreateOrUpdateBank } from "@/Banking/applications/CreateOrUpdateBank.ts"
 import type { IChurchRepository } from "@/Church/domain"
+import { Provider } from "@/Banking/domain/enums/Provider.enum"
 
 export class ConnectProviderBankAccount {
   constructor(
@@ -37,6 +38,11 @@ export class ConnectProviderBankAccount {
       },
       churchId: request.churchId,
     })
+
+    // Marks which account the provider actually debits, so recurring execution
+    // can never record a payment against a different bank of the same church.
+    bank.setProvider(Provider.ASAAS)
+    await this.bankRepository.upsert(bank)
 
     return { account, bank }
   }
