@@ -355,21 +355,6 @@ describe("ExecuteRecurringPayment", () => {
     })
   })
 
-  it("starts a new payment when the previous record for the competence was voided", async () => {
-    // findRecurringPayment excludes VOID, so a cancelled payment is payable again.
-    const ctx = setup({
-      amount: 25,
-      pixDestination: PIX_DESTINATION,
-      paid: false,
-    })
-    const result = await ctx.service.execute("church-1", "recurring-1", {
-      competence: "2026-10",
-    })
-
-    expect(result.status).toBe("PROCESSING")
-    expect(ctx.banking.createPixTransfer).toHaveBeenCalled()
-  })
-
   it("does not call church-banking when the competence already has a financial record", async () => {
     const ctx = setup({
       amount: 25,

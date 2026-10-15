@@ -51,9 +51,12 @@ export class FinanceRecordMongoRepository
     competence: string
   ): Promise<FinanceRecord | undefined> {
     const collection = await this.collection()
+    // A voided record no longer settles the competence, so it must not block
+    // paying that competence again.
     const document = await collection.findOne({
       recurringPaymentId,
       recurringCompetence: competence,
+      status: { $ne: FinancialRecordStatus.VOID },
     })
     return document ? FinanceRecord.fromPrimitives(document) : undefined
   }
@@ -274,6 +277,7 @@ export class FinanceRecordMongoRepository
         partialFilterExpression: {
           recurringPaymentId: { $exists: true },
           recurringCompetence: { $exists: true },
+          status: { $ne: FinancialRecordStatus.VOID },
         },
       }
     )
