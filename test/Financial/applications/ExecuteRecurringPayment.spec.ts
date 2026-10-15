@@ -600,6 +600,56 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
+  it("rejects a bill whose answered amount differs from the reserved one", async () => {
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PENDING",
+      context: {},
+      valueInCents: 78243,
+    })
+
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", {
+        competence: "2026-10",
+        payment: { type: "BILL", identificationField: "34191..." },
+      })
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+    })
+  })
+
+  it("accepts a bill whose answered amount matches the reserved one", async () => {
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PENDING",
+      context: {},
+      valueInCents: 74283,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    expect(result.status).toBe("PROCESSING")
+  })
+
+  it("does not leak the internal amount expectation to the provider payload", async () => {
+    const ctx = setup({ amount: 742.83 })
+    await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    const payload = ctx.banking.createBillPayment.mock.calls[0]?.[0]
+    expect(payload).not.toHaveProperty("expectedValueInCents")
+    expect(payload).toMatchObject({ identificationField: "34191..." })
+  })
+
   it("executes a variable bill using the per-competence amount and code", async () => {
     const ctx = setup({ type: "VARIABLE" })
     await ctx.service.execute("church-1", "recurring-1", {

@@ -84,6 +84,8 @@ export type ChurchBankingOutgoingPaymentResponse = {
   externalAccountId: string
   externalReference: string
   status: ChurchBankingOutgoingStatus
+  /** Amount the boleto charges, read from the line by church-banking. */
+  valueInCents?: number
   context: Record<string, unknown>
   providerTransferId?: string
   providerBillId?: string

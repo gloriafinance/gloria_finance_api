@@ -390,6 +390,12 @@ export class ExecuteRecurringPayment {
     payment: CurrentRecurringPayment,
     response: ChurchBankingOutgoingPaymentResponse
   ): Promise<ExecuteRecurringPaymentResult> {
+    if (
+      response.valueInCents !== undefined &&
+      response.valueInCents !== this.toCents(payment.amount)
+    ) {
+      throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
+    }
     const status = response.status
     if (status === "DONE" || status === "PAID") {
       const confirmed: CurrentRecurringPayment = {
