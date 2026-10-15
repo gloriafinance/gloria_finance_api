@@ -63,6 +63,12 @@ export type CreateBillPaymentInput = {
   description: string
   externalReference: string
   context: Record<string, unknown>
+  /**
+   * Amount this boleto is expected to charge. Sent so church-banking compares it
+   * with the amount read from the line and refuses before calling Asaas, rather
+   * than after the debit already exists.
+   */
+  expectedAmountInCents?: number
 }
 
 export type ChurchBankingOutgoingStatus =

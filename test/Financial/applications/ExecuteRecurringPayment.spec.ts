@@ -670,6 +670,20 @@ describe("ExecuteRecurringPayment", () => {
     expect(payload).toMatchObject({ identificationField: "34191..." })
   })
 
+  it("declares the expected amount so the provider can refuse before debiting", async () => {
+    const ctx = setup({ amount: 742.83 })
+    await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // Sent on the request, not merely compared afterwards: church-banking must be
+    // able to abort before createBill runs.
+    expect(ctx.banking.createBillPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedAmountInCents: 74283 })
+    )
+  })
+
   it("executes a variable bill using the per-competence amount and code", async () => {
     const ctx = setup({ type: "VARIABLE" })
     await ctx.service.execute("church-1", "recurring-1", {

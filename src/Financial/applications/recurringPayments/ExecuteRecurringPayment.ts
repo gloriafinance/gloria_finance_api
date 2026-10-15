@@ -355,6 +355,8 @@ export class ExecuteRecurringPayment {
           description: recurring.getName(),
           externalReference: payment.externalReference,
           context,
+          // Declared up front so a wrong amount is refused before the debit.
+          expectedAmountInCents: this.toCents(payment.amount),
         })
       }
     } catch (error) {
