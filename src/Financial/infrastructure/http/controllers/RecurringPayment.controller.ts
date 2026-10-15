@@ -185,7 +185,7 @@ export class RecurringPaymentController {
         req.auth.userId ?? req.auth.memberId ?? "unknown",
         body
       )
-      res.status(HttpStatus.OK).send(result)
+      res.status(HttpStatus.ACCEPTED).send(result)
     } catch (error) {
       domainResponse(error, res)
     }

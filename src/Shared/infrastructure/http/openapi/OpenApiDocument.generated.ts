@@ -1803,6 +1803,7 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
+                      aggregateId: "00000000-0000-0000-0000-000000000001",
                       accountType: "CURRENT",
                       bankId: "00000000-0000-0000-0000-000000000001",
                       active: true,
@@ -1810,8 +1811,8 @@ export const openApiDocument = {
                       tag: "Gloria Finance",
                       addressInstancePayment: "Gloria Finance",
                       bankInstruction: "Gloria Finance",
+                      provider: "ASAAS",
                       churchId: "00000000-0000-0000-0000-000000000001",
-                      aggregateId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
                 },
@@ -10019,7 +10020,7 @@ export const openApiDocument = {
           },
         ],
         responses: {
-          "200": {
+          "202": {
             description: "Successful response",
             content: {
               "application/json": {

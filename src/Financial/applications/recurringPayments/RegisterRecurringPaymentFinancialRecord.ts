@@ -14,6 +14,8 @@ import { DispatchCreateFinancialRecord } from "@/Financial/applications/dispatch
 import type { IQueueService } from "@/package/queue/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 
 export type RegisterRecurringPaymentFinancialRecordInput = {
   readonly recurring: RecurringPayments
@@ -48,7 +50,8 @@ export class RegisterRecurringPaymentFinancialRecord {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly financialConceptRepository: IFinancialConceptRepository,
     private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
-    private readonly queueService: IQueueService = QueueService.getInstance()
+    private readonly queueService: IQueueService = QueueService.getInstance(),
+    private readonly financialYearRepository?: IFinancialYearRepository
   ) {}
 
   async execute(
@@ -70,6 +73,16 @@ export class RegisterRecurringPaymentFinancialRecord {
       competence
     )
     if (exists) return
+
+    // The month is checked here, not only inside the queued job, so a closed
+    // period is reported while the caller can still react to it.
+    if (this.financialYearRepository) {
+      await new FinancialMonthValidator(this.financialYearRepository).validate({
+        churchId: recurring.getChurchId(),
+        year: paymentDate.getUTCFullYear(),
+        month: paymentDate.getUTCMonth() + 1,
+      })
+    }
 
     const churchId = recurring.getChurchId()
     const [account, concept, costCenter] = await Promise.all([

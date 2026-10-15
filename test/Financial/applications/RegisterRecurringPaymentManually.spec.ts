@@ -117,7 +117,7 @@ describe("RegisterRecurringPaymentManually", () => {
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
-  it("uses the configured amount for a FIXED recurrence and records it as cleared", async () => {
+  it("uses the configured amount for a FIXED recurrence and reports the queued registration", async () => {
     const ctx = setup({ amount: 3500 })
     const result = await ctx.service.execute(
       "church-1",
@@ -126,7 +126,7 @@ describe("RegisterRecurringPaymentManually", () => {
       { ...request, file: ctx.file }
     )
 
-    expect(result).toEqual({ status: "REGISTERED", competence: "2026-10" })
+    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
     expect(ctx.storage.uploadFile).toHaveBeenCalledWith(ctx.file)
 
     const [, args] = ctx.queue.dispatch.mock.calls[0]!

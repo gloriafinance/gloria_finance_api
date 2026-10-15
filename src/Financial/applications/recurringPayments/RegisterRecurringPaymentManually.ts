@@ -20,7 +20,12 @@ export type RegisterRecurringPaymentManuallyInput =
   }
 
 export type RegisterRecurringPaymentManuallyResult = {
-  status: "REGISTERED" | "ALREADY_REGISTERED"
+  /**
+   * `PROCESSING` because the financial record is created by a queued job, so at
+   * response time it does not exist yet. Reporting `REGISTERED` here would claim
+   * a durable fact the endpoint cannot guarantee.
+   */
+  status: "PROCESSING" | "ALREADY_REGISTERED"
   competence: string
 }
 
@@ -125,7 +130,7 @@ export class RegisterRecurringPaymentManually {
       throw error
     }
 
-    return { status: "REGISTERED", competence: request.competence }
+    return { status: "PROCESSING", competence: request.competence }
   }
 
   private async hasProviderConnection(churchId: string): Promise<boolean> {
