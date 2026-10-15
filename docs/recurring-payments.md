@@ -1336,6 +1336,11 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 | `PAID` | Existe `FinancialRecord` liquidado | `∃ FinancialRecord(recurringPaymentId, competence)` con status `CLEARED`/`RECONCILED` |
 | `INACTIVE` | Recurrencia desactivada y **sin** registro liquidado en esa competencia | `RecurringPayment.status !== "ACTIVE"` |
 
+> ⚠️ **`PENDING` — P-13:** una recurrencia aparece hoy en competencias **anteriores a su
+> creación**, y eso puede leerse como una deuda que nunca existió. El modelo no
+> almacena ningún ancla temporal. **Decisión de producto abierta**, ver
+> [ADR-009](./adr/ADR-009-settlement-history-outranks-configuration.md).
+
 **Una recurrencia `INACTIVE` no se paga por ningún camino** (ni bancario ni manual):
 ambos consultan la recurrencia con el filtro `status: "ACTIVE"`. Para liquidar una
 competencia histórica se reactiva primero. Ver [ADR-009](./adr/ADR-009-settlement-history-outranks-configuration.md).

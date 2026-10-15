@@ -66,4 +66,4 @@ Estas **no** son ADRs cerrados: son preguntas que deben resolverse antes de impl
 | P-08 | ¿Corrección de un registro manual: edición del `FinancialRecord` o `VOID` + nuevo? | ADR-004, ADR-005 | `recurring-payments.md` §22 |
 | ~~P-09~~ | **RESUELTO:** manual = `CLEARED`, bancario = `RECONCILED`. Ver ADR-004. | — | `recurring-payments.md` §19 |
 | P-10 | ¿Se permite registrar pago para una competencia `UPCOMING` (pago anticipado)? | ADR-004 | `recurring-payments.md` §31 |
-| ~~P-13~~ | **RESUELTO:** el histórico manda — `PAID` precede a `INACTIVE`; sin vigencia inicial, la vista por competencia enumera todo compromiso. Ver ADR-009. | — | `recurring-payments.md` §23 |
+| **P-13** | **ABIERTO:** ¿debe una recurrencia aparecer en competencias anteriores a su creación? Hoy aparece y puede leerse como deuda inexistente. El modelo no guarda ningún ancla temporal. Opciones y recomendación en ADR-009. | ADR-009 | `recurring-payments.md` §23 |

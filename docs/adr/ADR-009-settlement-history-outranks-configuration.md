@@ -1,6 +1,7 @@
 # ADR-009 — Settlement history outranks the recurrence configuration
 
-- **Estado:** ACEPTADA (definitiva)
+- **Estado:** ACEPTADA (definitiva) **salvo la sección "Vista por competencia", que
+  permanece ABIERTA** y requiere decisión explícita de producto.
 - **Fecha:** 2026-10-17
 - **Feature:** Pagamentos Recorrentes
 - **Documento principal:** [`../recurring-payments.md`](../recurring-payments.md) §23, §36
@@ -81,18 +82,44 @@ el pago y se vuelve a desactivar. No existe una excepción implícita por fecha.
 exigiría un timestamp que hoy no existe, y decidir esa fecha de corte es una
 decisión de producto aparte, no un efecto colateral de un `if`.
 
-### Vista por competencia
+### Vista por competencia — **DECISIÓN ABIERTA, no cerrada**
 
-Una recurrencia aparece en el listado de **cualquier** competencia, incluidas las
-anteriores a su creación. No hay `startCompetence`/`effectiveFrom`: el listado
-enumera los compromisos vigentes con su estado para el mes consultado.
+> ⚠️ **Esta sección NO es una decisión de producto aprobada.** Describe el
+> comportamiento actual y el problema que genera. Requiere cierre explícito del
+> product owner antes de considerarse normativa.
 
-Una competencia previa a la existencia del compromiso no está liquidada, así que cae
-en la decisión usual (`PENDING`/`UPCOMING`) en lugar de fingir que no existió. La
-consecuencia se asume explícitamente:
+**Comportamiento actual:** una recurrencia aparece en el listado de **cualquier**
+competencia, sin filtro temporal alguno.
 
-> Si se necesita saber si el compromiso **existía** en ese mes, la fuente es la
-> fecha de creación de la recurrencia; el listado por competencia no la reconstruye.
+**Problema:** el modelo **no almacena ningún ancla temporal**. La configuración
+(`RecurringPaymentConfigurationData`) solo tiene `status`; el único `updatedAt`
+pertenece a `currentPayment` (estado operativo en vuelo), y persistir hace
+`replaceOne` con `toPrimitives()`, así que ni siquiera un `createdAt` de Mongo
+sobreviviría. Consecuencia:
+
+```text
+Recurrencia creada: octubre 2026
+Usuario navega:     septiembre 2026
+Resultado:          "Aluguel: PENDENTE"
+```
+
+Se reporta como pendiente una deuda que **nunca existió**, en un mes anterior a que
+el compromiso se configurara. No es un artefacto de presentación: el listado afirma
+un hecho falso.
+
+**Opciones para cerrar la decisión:**
+
+| Opción                                              | Qué implica                                                                                          | Coste                                                                                |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| A. Mantener el comportamiento actual                | La recurrencia es atemporal; el listado es una proyección del compromiso vigente sobre cualquier mes | Reporta deuda inexistente en meses previos                                           |
+| B. No listar antes de la creación                   | Requiere persistir la fecha de creación                                                              | Requiere campo nuevo + backfill                                                      |
+| C. `effectiveFrom` explícito elegido por el usuario | El usuario declara desde qué competencia rige el compromiso                                          | Campo nuevo + decisión de UI; responde también el fin de vigencia                    |
+| D. Deducir existencia del primer `FinancialRecord`  | No requiere campo nuevo                                                                              | No sirve para una recurrencia sin ejecuciones: seguiría mostrándose antes de existir |
+
+**Recomendación del arquitecto:** **C** (`effectiveFrom`), porque resuelve el mes de
+inicio y el de fin con un solo dato declarado, y no depende de que existan pagos.
+El listado debe filtrar por ese campo en lugar de proyectar el compromiso sobre
+cualquier mes.
 
 ---
 
@@ -131,7 +158,8 @@ consecuencia se asume explícitamente:
 - [ ] `competenceStatus` evalúa `settledIds` antes de `status !== "ACTIVE"`.
 - [ ] Una recurrencia `INACTIVE` con registro liquidado devuelve `PAID`.
 - [ ] Una recurrencia `INACTIVE` sin registro liquidado devuelve `INACTIVE`.
-- [ ] Una competencia anterior a la creación de la recurrencia aparece en el listado.
+- [ ] **ABIERTO:** una competencia anterior a la creación de la recurrencia aparece
+      en el listado. Se acepta hoy como comportamiento actual, **no** como contrato.
 - [ ] `PAID` se calcula desde `FinancialRecord`, nunca desde un campo de la recurrencia.
 
 ---
