@@ -1349,7 +1349,7 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 
 `settledIds` son los registros con status `CLEARED`/`RECONCILED`.
 
-**El histórico manda sobre la configuración: `PAID` tiene precedencia sobre `INACTIVE`.** Desactivar una recurrencia detiene compromisos futuros, no borra lo que ya se pagó. El histórico real es el `FinancialRecord`; la configuración solo describe el compromiso. Por eso una competencia liquidada sigue siendo `PAID` aunque la recurrencia esté desactivada.
+**El histórico manda sobre la configuración: `PAID` tiene precedencia sobre `INACTIVE`** (ver [ADR-009](./adr/ADR-009-settlement-history-outranks-configuration.md)). Desactivar una recurrencia detiene compromisos futuros, no borra lo que ya se pagó. El histórico real es el `FinancialRecord`; la configuración solo describe el compromiso. Por eso una competencia liquidada sigue siendo `PAID` aunque la recurrencia esté desactivada.
 
 **`PAID` también tiene precedencia sobre `currentPayment`**: en cuanto existe evidencia contable liquidada, el estado operativo en vuelo es irrelevante.
 

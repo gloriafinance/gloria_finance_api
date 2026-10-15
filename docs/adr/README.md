@@ -20,6 +20,7 @@ Las decisiones marcadas como **ACEPTADA** son definitivas y no deben rediseñars
 | [ADR-006](./ADR-006-availability-account-is-selected-per-manual-execution.md) | AvailabilityAccount is selected per manual execution | La cuenta es un hecho de la ejecución, no del compromiso | **ACEPTADA** |
 | [ADR-007](./ADR-007-pix-destination-is-optional-reusable-metadata.md) | PIX destination is optional reusable metadata | `pixDestination` es conveniencia, no método | **ACEPTADA** |
 | [ADR-008](./ADR-008-current-payment-is-banking-operational-state-only.md) | currentPayment is banking operational state only | Estado operativo en vuelo, nunca histórico, nunca manual | **ACEPTADA** |
+| [ADR-009](./ADR-009-settlement-history-outranks-configuration.md) | Settled history outranks configuration | `PAID` precede a `INACTIVE`; el histórico es el `FinancialRecord` | **ACEPTADA** |
 
 ## Resumen ejecutivo de las decisiones
 
@@ -65,3 +66,4 @@ Estas **no** son ADRs cerrados: son preguntas que deben resolverse antes de impl
 | P-08 | ¿Corrección de un registro manual: edición del `FinancialRecord` o `VOID` + nuevo? | ADR-004, ADR-005 | `recurring-payments.md` §22 |
 | ~~P-09~~ | **RESUELTO:** manual = `CLEARED`, bancario = `RECONCILED`. Ver ADR-004. | — | `recurring-payments.md` §19 |
 | P-10 | ¿Se permite registrar pago para una competencia `UPCOMING` (pago anticipado)? | ADR-004 | `recurring-payments.md` §31 |
+| ~~P-13~~ | **RESUELTO:** el histórico manda — `PAID` precede a `INACTIVE`; sin vigencia inicial, la vista por competencia enumera todo compromiso. Ver ADR-009. | — | `recurring-payments.md` §23 |
