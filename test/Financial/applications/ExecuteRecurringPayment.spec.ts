@@ -16,6 +16,10 @@ type SetupInput = {
   bankCount?: number
   bankConnected?: boolean
   accounts?: number
+  conceptDisabled?: boolean
+  conceptType?: string
+  costCenterMissing?: boolean
+  closedMonth?: boolean
 }
 
 function setup(input: SetupInput = {}) {
@@ -83,9 +87,22 @@ function setup(input: SetupInput = {}) {
       context: {},
     }),
   }
-  const financialConcepts = { one: jest.fn().mockResolvedValue({}) }
+  const concept = {
+    isDisable: () => input.conceptDisabled === true,
+    getType: () => (input.conceptType === undefined ? "OUTGO" : input.conceptType),
+  }
+  const financialConcepts = { one: jest.fn().mockResolvedValue(concept) }
   const financialConfiguration = {
-    findCostCenterByCostCenterId: jest.fn().mockResolvedValue({}),
+    findCostCenterByCostCenterId: jest
+      .fn()
+      .mockResolvedValue(input.costCenterMissing === true ? undefined : {}),
+  }
+  const financialYears = {
+    one: jest
+      .fn()
+      .mockResolvedValue(
+        input.closedMonth === true ? { isClosed: () => true } : { isClosed: () => false }
+      ),
   }
   const queue = { dispatch: jest.fn() }
   const receipt = {
@@ -99,6 +116,7 @@ function setup(input: SetupInput = {}) {
     availabilityAccounts as never,
     financialConcepts as never,
     financialConfiguration as never,
+    financialYears as never,
     banking as never,
     receipt as never,
     queue as never,
@@ -457,6 +475,38 @@ describe("ExecuteRecurringPayment", () => {
     ).rejects.toMatchObject({
       name: "RECURRING_PAYMENT_BANK_ACCOUNT_UNAVAILABLE",
     })
+    expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["a disabled concept", { conceptDisabled: true }, "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"],
+    ["a concept that is no longer OUTGO", { conceptType: "INCOME" }, "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"],
+    ["a cost center that cannot be resolved", { costCenterMissing: true }, "RECURRING_PAYMENT_COST_CENTER_INVALID"],
+  ] as const)(
+    "refuses to move money when the recurrence points to %s",
+    async (_label, overrides, expected) => {
+      const ctx = setup({
+        amount: 25,
+        pixDestination: PIX_DESTINATION,
+        ...overrides,
+      })
+      await expect(
+        ctx.service.execute("church-1", "recurring-1", { competence: "2026-10" })
+      ).rejects.toMatchObject({ name: expected })
+      expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+      expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
+    }
+  )
+
+  it("refuses to move money when the financial month of the competence is closed", async () => {
+    const ctx = setup({
+      amount: 25,
+      pixDestination: PIX_DESTINATION,
+      closedMonth: true,
+    })
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", { competence: "2026-10" })
+    ).rejects.toBeDefined()
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 

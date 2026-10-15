@@ -21,6 +21,9 @@ import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaym
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { assertCompetence } from "./RecurringPaymentCompetence"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
+import { ConceptType } from "@/FinanceConfig/domain/enums/ConcepType.enum"
+import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 
 export type ExecuteRecurringPaymentResult = {
@@ -39,6 +42,7 @@ export class ExecuteRecurringPayment {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly financialConceptRepository: IFinancialConceptRepository,
     private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
+    private readonly financialYearRepository: IFinancialYearRepository,
     private readonly churchBankingClient: IChurchBankingClient,
     private readonly receiptStorage: IRemoteReceiptStorage,
     private readonly queueService: IQueueService = QueueService.getInstance(),
@@ -95,6 +99,10 @@ export class ExecuteRecurringPayment {
 
     const amount = this.resolveAmount(recurring, request)
     const method = this.resolveMethod(recurring, request)
+    // Everything that could make the payment unbookable is checked before the
+    // provider is called: after the debit there is no way back, and a rejected
+    // accounting entry would leave real money moved with no record of it.
+    await this.assertExecutionPreconditions(recurring, request.competence)
     const account = await this.resolveAccount(churchId, request)
     const attempt = existing ? existing.attempt + 1 : 1
     const externalReference = this.externalReference(
@@ -166,6 +174,45 @@ export class ExecuteRecurringPayment {
 
     const method = this.assertSameRetryPayload(recurring, payment, request)
     return await this.submit(recurring, payment, method)
+  }
+
+  /**
+   * Validate that the payment can actually be booked once it happens: the
+   * recurrence still points to an active OUTGO concept and a resolvable cost
+   * center, and the financial month of the competence is open.
+   */
+  private async assertExecutionPreconditions(
+    recurring: RecurringPayments,
+    competence: string
+  ): Promise<void> {
+    const churchId = recurring.getChurchId()
+    const [concept, costCenter] = await Promise.all([
+      this.financialConceptRepository.one({
+        financialConceptId: recurring.getFinancialConceptId(),
+        churchId,
+      }),
+      this.financialConfigurationRepository.findCostCenterByCostCenterId(
+        recurring.getCostCenterId(),
+        churchId
+      ),
+    ])
+    if (
+      !concept ||
+      concept.isDisable() ||
+      concept.getType() !== ConceptType.OUTGO
+    ) {
+      throw new PaymentError("RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID")
+    }
+    if (!costCenter) {
+      throw new PaymentError("RECURRING_PAYMENT_COST_CENTER_INVALID")
+    }
+
+    const [year, month] = competence.split("-").map(Number)
+    await new FinancialMonthValidator(this.financialYearRepository).validate({
+      churchId,
+      year,
+      month,
+    })
   }
 
   /**

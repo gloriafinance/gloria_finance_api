@@ -4,6 +4,7 @@ import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructu
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence/BankMongoRepository"
 import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
 import { AsaasReceiptStorage } from "@/Webhook/infrastructure/services/AsaasReceiptStorage"
+import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
@@ -140,6 +141,7 @@ export class RecurringPaymentController {
         AvailabilityAccountMongoRepository.getInstance(),
         FinancialConceptMongoRepository.getInstance(),
         FinancialConfigurationMongoRepository.getInstance(),
+        FinancialYearMongoRepository.getInstance(),
         new ChurchBankingClient(),
         new AsaasReceiptStorage()
       ).execute(req.auth.churchId, recurringPaymentId, body)
