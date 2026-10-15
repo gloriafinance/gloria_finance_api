@@ -136,7 +136,7 @@ Consecuencias:
 
 **Violación:** ADR-002 y la invariancia contable.
 
-**Requerido (TARGET):** `costCenterId` obligatorio en la configuración; propagado al `FinancialRecord` en ambos caminos. Requiere migración de datos existentes.
+**Requerido (TARGET):** `costCenterId` obligatorio en la configuración; propagado al `FinancialRecord` en ambos caminos. Sin migración: la feature no tiene datos productivos.
 
 ---
 
@@ -350,9 +350,9 @@ Asaas deriva el valor del boleto, y `church-banking` **no lo devuelve** al integ
 
 **Impacto:** confusión para implementadores y frontend; riesgo de errores en la correlación.
 
-**Requerido (TARGET):** unificar a **singular** (`recurringPaymentId`). Requiere migración de documentos y de los `context` enviados (aunque el `context` es libre y ya se usa singular aguas abajo).
+**Requerido (TARGET):** unificar a **singular** (`recurringPaymentId`). Sin migración: la feature no tiene datos productivos.
 
-Se marca **BAJO** porque es cosmético, pero debe resolverse **junto** con la migración de GAP-01/GAP-02, ya que ambos tocan los mismos documentos.
+Se marca **BAJO** porque es cosmético, pero debe resolverse junto con GAP-01/GAP-02, ya que ambos tocan los mismos documentos.
 
 ---
 
@@ -439,9 +439,8 @@ Ambos tocan el payload de creación y los mismos documentos → **un solo cambio
 4. Extender `assertSameRetryPayload` para comparar `payment` completo.
 5. Validar `CostCenter` (pertenencia a la iglesia, activo).
 6. Unificar nomenclatura a `recurringPaymentId`.
-7. Migración idempotente (ver ADR-001 y ADR-002).
+7. Sin migración: la feature no tiene datos productivos (ver ADR-001 y ADR-002).
 
-**Bloqueado por:** decisión sobre la migración de `costCenterId` (`PENDING` P-12).
 **Riesgo:** alto — cambia el contrato de creación y ejecución. Requiere coordinación con frontend.
 
 ### Fase 2 — Registro manual (GAP-01b, GAP-03, GAP-07, GAP-11, GAP-08)
@@ -514,6 +513,4 @@ La feature se considera correctamente implementada cuando:
 
 ### Migración
 
-- [ ] Existe una migración idempotente que transforma `payment.method = "PIX"` en `pixDestination`.
-- [ ] Existe una migración/política para `costCenterId` en recurrencias existentes.
-- [ ] La estructura anterior (`payment` en la configuración) está **retirada**, no coexistente.
+- [x] No aplica: la feature está en construcción y no tiene datos productivos.

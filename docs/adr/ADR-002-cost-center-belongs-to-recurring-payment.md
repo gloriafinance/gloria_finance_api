@@ -104,33 +104,21 @@ Esta invariancia se aplica a **ambos** caminos de ejecución. No hay camino que 
 
 ### Negativas / costos
 
-- **Migración obligatoria** de las recurrencias existentes: no tienen `costCenterId` y el campo pasa a ser obligatorio. Ver "Migración".
 - La creación requiere un `CostCenter` válido disponible: si una iglesia no tiene centros de costo configurados, no puede crear recurrencias. Esto es **intencional** (es una precondición contable), pero exige que la UI guíe al usuario a crearlo.
 
-### Migración
+### Sin migración
 
-```text
-Documentos existentes en `recurringPayments`: sin `costCenterId`.
-```
-
-El campo es obligatorio, así que **no** puede hacerse un backfill mecánico: requiere decidir el centro de costo de cada recurrencia existente. Opciones:
-
-| Opción | Descripción | Riesgo |
-|---|---|---|
-| A — Backfill a un centro de costo por defecto de la iglesia | Asigna un centro de costo designado (p. ej. "Geral") a todas las recurrencias sin él | Imputación posiblemente incorrecta, pero explícita y corregible por el usuario |
-| B — Bloquear hasta completar | Marcar las recurrencias sin `costCenterId` como incompletas y exigir que el usuario las edite antes de ejecutar | Fuerza datos correctos; requiere UX de completado |
-| C — Hacer el campo opcional | **Rechazada.** Viola esta ADR y perpetúa `FinancialRecord` sin imputación | — |
-
-`PENDING`: elegir entre A y B. **Recomendación: B** para iglesias con pocas recurrencias (fuerza datos correctos), con A como fallback para volumen alto.
-
-Según la política del repositorio, el backfill debe ser **idempotente**.
+La feature está **en construcción y no tiene datos productivos**, así que no hay
+recurrencias existentes a las que asignar un centro de costo. `costCenterId` es
+obligatorio desde el inicio y la validación del agregado lo exige en `create()` y
+en `updateConfiguration()`.
 
 ### Interacción con ADR-001
 
 `costCenterId` es permanente → vive en la configuración.
 `payment` es efímero → vive en el comando.
 
-Ambos cambios tocan el mismo payload de creación y la misma migración. **Deben implementarse en el mismo cambio**, no en dos PRs separados, para no dejar el modelo en un estado intermedio incoherente.
+Ambos cambios tocan el mismo payload de creación. Se implementaron en el mismo cambio para no dejar el modelo en un estado intermedio incoherente.
 
 ---
 
@@ -156,7 +144,6 @@ Ambos cambios tocan el mismo payload de creación y la misma migración. **Deben
 - [ ] `ListRecurringPayments` expone el centro de costo.
 - [ ] Existe un test que verifica que el `FinancialRecord` creado por webhook bancario tiene el `costCenterId` de la recurrencia.
 - [ ] Existe un test que verifica lo mismo para el flujo manual.
-- [ ] Existe una migración idempotente para las recurrencias existentes.
 
 ---
 

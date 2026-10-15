@@ -65,7 +65,7 @@ La conveniencia de UX **no requiere** persistir el método: se satisface con `pi
 
 > **`RecurringPayment` NO posee método de pago. PIX/BILL pertenece a la ejecución, no a la configuración permanente.**
 
-> **ESTADO: IMPLEMENTADO.** El payload de configuración ya no acepta `payment`; el comando de ejecución acepta `payment` como unión discriminada por `type`, o se resuelve PIX desde `pixDestination`. Migración: `migrations/20261015120000-recurring-payments-detach-payment-method.js`.
+> **ESTADO: IMPLEMENTADO.** El payload de configuración ya no acepta `payment`; el comando de ejecución acepta `payment` como unión discriminada por `type`, o se resuelve PIX desde `pixDestination`.
 
 ### Consecuencias normativas
 
@@ -103,9 +103,8 @@ La conveniencia de UX **no requiere** persistir el método: se satisface con `pi
 ### Negativas / costos
 
 - El frontend debe preguntar el método en cada ejecución cuando no hay `pixDestination`. Es un costo de UX aceptado y mitigado por ADR-007.
-- **Migración obligatoria:** los documentos existentes con `payment.method` deben transformarse (ver "Migración").
 - `ExecuteRecurringPayment.submit()` debe cambiar de leer `recurring.getPayment()` a leer el `payment` del comando.
-- `assertSameRetryPayload` **debe** extenderse para comparar el objeto `payment` completo. Si no, un `CREATION_UNKNOWN` podría reintentarse con un destino distinto y la deduplicación de `church-banking` respondería con la operación original (409 `PIX_TRANSFER_IDENTITY_CONFLICT` o snapshot original). Ver §25 y §29 del documento principal.
+- **Implementado:** `assertSameRetryPayload` compara el destino exacto persistido en `currentPayment.executionDestination`. Un `CREATION_UNKNOWN` reintentado con otra chave PIX se rechaza en vez de llegar a `church-banking`. Ver §25 y §29 del documento principal.
 
 ### Impacto en idempotencia (crítico)
 
@@ -116,23 +115,12 @@ El `externalReference` (`urn:recurringPayment:{id}:{competence}:{attempt}`) **no
 
 **Pero** el payload asociado a un `externalReference` debe ser inmutable durante su vida. De ahí la obligación de extender `assertSameRetryPayload`.
 
-### Migración
+### Sin migración
 
-```text
-Documento existente:
-  { payment: { method: "PIX", pixKey: "X", pixKeyType: "CNPJ" } }
-
-Transformación idempotente:
-  { pixDestination: { pixKey: "X", pixKeyType: "CNPJ" } }
-
-Documento existente:
-  { payment: { method: "BILL" } }
-
-Transformación:
-  { }                       // sin pixDestination; el método se decide en cada ejecución
-```
-
-Según la política de cambios del repositorio (*Fix at source*, *Schema changes*), la estructura anterior **debe retirarse**; no se mantiene compatibilidad dual ni fallback silencioso. El backfill debe ser idempotente.
+La feature está **en construcción y no tiene datos productivos**, así que no existe
+estructura anterior que transformar. La política del repositorio (*Fix at source*)
+se cumple eliminando el campo antiguo del modelo en el mismo cambio: no se mantiene
+compatibilidad dual ni fallback silencioso.
 
 ---
 
