@@ -90,10 +90,11 @@ export class ExecuteRecurringPayment {
     // Reuses the repository lookup so a voided record does not count as paid;
     // otherwise a cancelled competence could be registered manually but never
     // paid again through the bank.
-    const alreadyPaid = await this.financialRecordRepository.findRecurringPayment(
-      recurringPaymentId,
-      request.competence
-    )
+    const alreadyPaid =
+      await this.financialRecordRepository.findRecurringPayment(
+        recurringPaymentId,
+        request.competence
+      )
     if (alreadyPaid)
       return { status: "ALREADY_PAID", competence: request.competence }
 

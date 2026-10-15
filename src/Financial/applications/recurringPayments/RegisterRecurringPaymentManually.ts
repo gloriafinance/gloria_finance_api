@@ -73,7 +73,9 @@ export class RegisterRecurringPaymentManually {
     // an active provider connection, a payment is either executed through the
     // bank or not paid at all.
     if (await this.hasProviderConnection(churchId)) {
-      throw new RecurringPaymentException("RECURRING_PAYMENT_MANUAL_NOT_ALLOWED")
+      throw new RecurringPaymentException(
+        "RECURRING_PAYMENT_MANUAL_NOT_ALLOWED"
+      )
     }
 
     const recurring = await this.recurringPaymentsRepository.one({
