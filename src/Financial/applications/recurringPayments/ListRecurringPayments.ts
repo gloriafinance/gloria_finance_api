@@ -4,6 +4,7 @@ import type {
   RecurringPayments,
 } from "@/Financial/domain/RecurringPayments"
 import { Order } from "@abejarano/ts-mongodb-criteria"
+import { ObjectId } from "mongodb"
 import {
   assertCompetence,
   dueDateForCompetence,
@@ -25,6 +26,29 @@ export type RecurringPaymentForCompetence =
     competence: string
     competenceStatus: RecurringPaymentCompetenceStatus
   }
+
+/**
+ * Creation competence of a recurrence, derived from its ObjectId.
+ *
+ * `upsert` assigns a fresh `ObjectId` on creation and `hydrate` exposes it via
+ * `getId()`, so the document already carries its creation date. Deriving the
+ * month from it avoids introducing a stored validity field.
+ *
+ * Returns `null` when there is no usable id, in which case no lower bound can be
+ * proven and the recurrence must stay visible rather than silently disappear.
+ */
+export function createdCompetenceOf(id: string | undefined): string | null {
+  if (!id || !ObjectId.isValid(id)) return null
+  const timestamp = new ObjectId(id).getTimestamp()
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(timestamp)
+  const part = (type: string) =>
+    parts.find((value) => value.type === type)?.value
+  return `${part("year")}-${part("month")}`
+}
 
 export class ListRecurringPayments {
   constructor(
@@ -57,18 +81,26 @@ export class ListRecurringPayments {
 
     const today = saoPauloDate()
 
-    return payments.map((payment) => {
-      return {
-        ...payment.toConfiguration(),
-        competence,
-        competenceStatus: this.competenceStatus(
-          payment,
+    return (
+      payments
+        // A recurrence cannot be pending in a month before it was created; that
+        // would report a debt that never existed. The lower bound is the
+        // creation month already embedded in the document id.
+        .filter((payment) => {
+          const created = createdCompetenceOf(payment.getId())
+          return created === null || competence >= created
+        })
+        .map((payment) => ({
+          ...payment.toConfiguration(),
           competence,
-          settledIds,
-          today
-        ),
-      }
-    })
+          competenceStatus: this.competenceStatus(
+            payment,
+            competence,
+            settledIds,
+            today
+          ),
+        }))
+    )
   }
 
   private competenceStatus(

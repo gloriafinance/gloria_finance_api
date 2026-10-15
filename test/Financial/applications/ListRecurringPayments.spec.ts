@@ -1,5 +1,16 @@
-import { ListRecurringPayments } from "@/Financial/applications/recurringPayments/ListRecurringPayments"
+import {
+  ListRecurringPayments,
+  createdCompetenceOf,
+} from "@/Financial/applications/recurringPayments/ListRecurringPayments"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
+import { ObjectId } from "mongodb"
+
+/** ObjectId created at a given instant, so the embedded timestamp is known. */
+function idCreatedAt(iso: string): string {
+  return ObjectId.createFromTime(
+    Math.floor(new Date(iso).getTime() / 1000)
+  ).toString()
+}
 
 const base = {
   churchId: "church-1",
@@ -110,6 +121,63 @@ describe("ListRecurringPayments", () => {
     const result = await service.execute("church-1", "2026-10")
 
     expect(result[0]?.competenceStatus).toBe("INACTIVE")
+  })
+
+  it("hides a recurrence in a month before it was created", async () => {
+    // Created in October; September must not report a commitment that did not
+    // exist then.
+    const created = recurrence()
+    created.assignId(idCreatedAt("2026-10-17T12:00:00Z"))
+    const service = build([created], [])
+
+    const result = await service.execute("church-1", "2026-09")
+
+    expect(result).toHaveLength(0)
+  })
+
+  it("shows the recurrence in its own creation month", async () => {
+    const created = recurrence()
+    created.assignId(idCreatedAt("2026-10-17T12:00:00Z"))
+    const service = build([created], [])
+
+    const result = await service.execute("church-1", "2026-10")
+
+    expect(result).toHaveLength(1)
+  })
+
+  it("shows the recurrence in a month after it was created", async () => {
+    const created = recurrence()
+    created.assignId(idCreatedAt("2026-10-17T12:00:00Z"))
+    const service = build([created], [])
+
+    const result = await service.execute("church-1", "2026-11")
+
+    expect(result).toHaveLength(1)
+  })
+
+  it("derives the creation competence in Sao Paulo time", () => {
+    // 23:00 UTC on Sep 30 is still September in Sao Paulo (UTC-3).
+    expect(createdCompetenceOf(idCreatedAt("2026-09-30T23:00:00Z"))).toBe(
+      "2026-09"
+    )
+    // 02:00 UTC on Oct 1 is Sep 30 in Sao Paulo.
+    expect(createdCompetenceOf(idCreatedAt("2026-10-01T02:00:00Z"))).toBe(
+      "2026-09"
+    )
+  })
+
+  it("cannot filter when there is no usable id", () => {
+    expect(createdCompetenceOf(undefined)).toBeNull()
+    expect(createdCompetenceOf("not-an-object-id")).toBeNull()
+  })
+
+  it("keeps a recurrence without an id visible rather than hiding it", async () => {
+    // No provenance to compare against, so it must not silently disappear.
+    const service = build([recurrence()], [])
+
+    const result = await service.execute("church-1", "2020-01")
+
+    expect(result).toHaveLength(1)
   })
 
   it("shows a recurrence in a competence before it was ever created", async () => {
