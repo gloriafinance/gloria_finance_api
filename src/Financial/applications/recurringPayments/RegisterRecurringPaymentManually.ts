@@ -5,6 +5,8 @@ import { RecurringPaymentException } from "@/Financial/domain/exceptions/Recurri
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type { RegisterRecurringPaymentRequest } from "@/Financial/domain/requests/RecurringPayment.request"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
+import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import type { IQueueService } from "@/package/queue/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import type { IStorageService } from "@/Shared/domain/interfaces/StorageService.interface"
@@ -36,6 +38,7 @@ export class RegisterRecurringPaymentManually {
     financialConceptRepository: IFinancialConceptRepository,
     private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
+    private readonly bankRepository: IBankRepository,
     private readonly queueService: IQueueService = QueueService.getInstance(),
     private readonly storage: IStorageService = StorageProviderService.getInstance()
   ) {
@@ -58,6 +61,14 @@ export class RegisterRecurringPaymentManually {
 
     if (!request.file) {
       throw new RecurringPaymentException("RECURRING_PAYMENT_VOUCHER_REQUIRED")
+    }
+
+    // The two execution paths must not run for the same competence: a manual
+    // record and a real provider debit would both claim it. While the church has
+    // an active provider connection, a payment is either executed through the
+    // bank or not paid at all.
+    if (await this.hasProviderConnection(churchId)) {
+      throw new RecurringPaymentException("RECURRING_PAYMENT_MANUAL_NOT_ALLOWED")
     }
 
     const recurring = await this.recurringPaymentsRepository.one({
@@ -115,6 +126,13 @@ export class RegisterRecurringPaymentManually {
     }
 
     return { status: "REGISTERED", competence: request.competence }
+  }
+
+  private async hasProviderConnection(churchId: string): Promise<boolean> {
+    const banks = await this.bankRepository.all(churchId)
+    return banks.some(
+      (bank) => bank.isActive() && bank.isConnectedTo(Provider.ASAAS)
+    )
   }
 
   /**

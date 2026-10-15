@@ -6,6 +6,7 @@ type SetupInput = {
   amount?: number
   accountExists?: boolean
   alreadyRegistered?: boolean
+  providerConnected?: boolean
 }
 
 function setup(input: SetupInput = {}) {
@@ -50,6 +51,13 @@ function setup(input: SetupInput = {}) {
   const financialConfiguration = {
     findCostCenterByCostCenterId: jest.fn().mockResolvedValue(costCenter),
   }
+  const bankRepository = {
+    all: jest.fn().mockResolvedValue(
+      input.providerConnected
+        ? [{ isActive: () => true, isConnectedTo: () => true }]
+        : []
+    ),
+  }
   const queue = { dispatch: jest.fn() }
   const storage = {
     uploadFile: jest.fn().mockResolvedValue("voucher-key"),
@@ -61,6 +69,7 @@ function setup(input: SetupInput = {}) {
     financialConcepts as never,
     financialConfiguration as never,
     availabilityAccounts as never,
+    bankRepository as never,
     queue as never,
     storage as never
   )
@@ -85,6 +94,20 @@ const request = {
 }
 
 describe("RegisterRecurringPaymentManually", () => {
+  it("refuses a manual registration when the church executes through the provider", async () => {
+    const ctx = setup({ amount: 3500, providerConnected: true })
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", "user-1", {
+        ...request,
+        file: ctx.file,
+      })
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_MANUAL_NOT_ALLOWED",
+    })
+    expect(ctx.storage.uploadFile).not.toHaveBeenCalled()
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
   it("requires a voucher before touching anything else", async () => {
     const ctx = setup({ amount: 3500 })
     await expect(

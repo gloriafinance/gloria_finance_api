@@ -218,7 +218,11 @@ export class ProcessRecurringPaymentBankingUpdate {
       !recurring ||
       !payment ||
       recurring.getChurchId() !== externalAccountId ||
-      payment.bankId !== accountId ||
+      // `accountId` is deliberately not compared against the stored bankId:
+      // church-banking reports its own internal account id, while Glória
+      // generates a local URN for the same connection, so the two identifiers
+      // never match. Correlation rests on the church, the external reference
+      // rebuilt below, and the competence/attempt carried in the context.
       context.source !== "RECURRING_PAYMENT" ||
       context.recurringPaymentId !== recurring.getRecurringPaymentId() ||
       context.competence !== payment.competence ||

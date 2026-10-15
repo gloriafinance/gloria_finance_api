@@ -277,7 +277,16 @@ export class FinanceRecordMongoRepository
         partialFilterExpression: {
           recurringPaymentId: { $exists: true },
           recurringCompetence: { $exists: true },
-          status: { $ne: FinancialRecordStatus.VOID },
+          // MongoDB allows only equality, $exists, ranges, $in, $and, $or, ...
+          // in a partial filter, so voided records are excluded by enumerating
+          // the statuses that do settle a competence rather than with $ne.
+          status: {
+            $in: [
+              FinancialRecordStatus.PENDING,
+              FinancialRecordStatus.CLEARED,
+              FinancialRecordStatus.RECONCILED,
+            ],
+          },
         },
       }
     )

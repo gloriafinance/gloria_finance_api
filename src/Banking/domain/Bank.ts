@@ -5,6 +5,7 @@ import {
   type AggregateRelations,
 } from "@abejarano/ts-mongodb-criteria"
 import { TypeBankAccount } from "@/Banking/domain/enums/TypeBankAccount.enum"
+import { Provider } from "@/Banking/domain/enums/Provider.enum"
 
 export class Bank extends AggregateRoot {
   static collectionName(): string {
@@ -23,7 +24,7 @@ export class Bank extends AggregateRoot {
   private addressInstancePayment: string
   private bankInstruction: any
   /** Payment provider this account is connected to, if any. Empty when manual. */
-  private provider?: string
+  private provider?: Provider
   private churchId: string
 
   static create(
@@ -95,7 +96,7 @@ export class Bank extends AggregateRoot {
    * this the church's other banks are indistinguishable and a payment could be
    * recorded against an account the provider never touched.
    */
-  isConnectedTo(provider: string): boolean {
+  isConnectedTo(provider: Provider): boolean {
     return this.provider === provider
   }
 
@@ -117,6 +118,10 @@ export class Bank extends AggregateRoot {
 
   setAccountType({ accountType }: { accountType: TypeBankAccount }): void {
     this.accountType = accountType
+  }
+
+  setProvider(provider: Provider | undefined): void {
+    this.provider = provider
   }
 
   toPrimitives(): any {
