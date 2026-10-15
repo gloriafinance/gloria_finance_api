@@ -35,8 +35,9 @@ export type RegisterRecurringPaymentFinancialRecordInput = {
  * The single point where a recurring payment becomes accounting history.
  *
  * Both execution paths converge here; only the settlement status differs:
- * a payment executed through church-banking is settled (`CLEARED`), while a
- * manual registration still needs bank reconciliation (`PENDING`).
+ * a payment executed through church-banking is settled against the provider
+ * (`RECONCILED`), while a manual registration is declared by the church
+ * (`CLEARED`) until its own statement confirms it.
  *
  * Concept and cost center are resolved from the recurrence, never accepted from
  * the caller, so accounting imputation cannot be forged per execution.
@@ -116,9 +117,11 @@ export class RegisterRecurringPaymentFinancialRecord {
         source: bankingExternalReference
           ? FinancialRecordSource.AUTO
           : FinancialRecordSource.MANUAL,
+        // Banking payments are settled by the provider channel; manual ones are
+        // declared by the church and settle once its own statement confirms them.
         status: bankingExternalReference
-          ? FinancialRecordStatus.CLEARED
-          : FinancialRecordStatus.PENDING,
+          ? FinancialRecordStatus.RECONCILED
+          : FinancialRecordStatus.CLEARED,
         financialConcept: concept,
         costCenter,
         availabilityAccount: account,

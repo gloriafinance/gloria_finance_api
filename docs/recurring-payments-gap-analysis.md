@@ -238,7 +238,7 @@ Se documenta por separado porque el pedido (§38) exige revisar "creación del F
 | Aspecto | CURRENT | TARGET manual |
 |---|---|---|
 | `source` | `FinancialRecordSource.AUTO` (hardcoded, `:74`) | `MANUAL` |
-| `status` | `FinancialRecordStatus.CLEARED` (bancario) | `PENDING` + conciliación posterior |
+| `status` | `FinancialRecordStatus.RECONCILED` (bancario) | `CLEARED`; concilia a `RECONCILED` |
 | `createdBy` | `"system"` (hardcoded, `:78`) | usuario autenticado |
 | `costCenter` | **no propagado** | de la recurrencia (ADR-002) |
 | `voucher` | de `transactionReceiptUrl` | archivo obligatorio |

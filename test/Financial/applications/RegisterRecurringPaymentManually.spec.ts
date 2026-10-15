@@ -93,7 +93,7 @@ describe("RegisterRecurringPaymentManually", () => {
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
-  it("uses the configured amount for a FIXED recurrence and settles it as pending reconciliation", async () => {
+  it("uses the configured amount for a FIXED recurrence and records it as cleared", async () => {
     const ctx = setup({ amount: 3500 })
     const result = await ctx.service.execute(
       "church-1",
@@ -111,7 +111,7 @@ describe("RegisterRecurringPaymentManually", () => {
       churchId: "church-1",
       financialRecordType: "OUTGO",
       source: "MANUAL",
-      status: "PENDING",
+      status: "CLEARED",
       createdBy: "user-1",
       voucher: "voucher-key",
       recurringPaymentId: "recurring-1",

@@ -18,7 +18,6 @@ export type RecurringPaymentCompetenceStatus =
   | "BLOCKED"
   | "FAILED"
   | "PAID"
-  | "AWAITING_RECONCILIATION"
   | "INACTIVE"
 
 export type RecurringPaymentForCompetence =
@@ -49,14 +48,12 @@ export class ListRecurringPayments {
       ),
     ])
 
-    const settledIds = new Set<string>()
-    const registeredIds = new Set<string>()
-    for (const record of records) {
-      const id = record.getRecurringPaymentId()
-      if (!id) continue
-      registeredIds.add(id)
-      if (record.isSettled()) settledIds.add(id)
-    }
+    const settledIds = new Set(
+      records
+        .filter((record) => record.isSettled())
+        .map((record) => record.getRecurringPaymentId())
+        .filter((id): id is string => Boolean(id))
+    )
 
     const today = saoPauloDate()
 
@@ -68,7 +65,6 @@ export class ListRecurringPayments {
           payment,
           competence,
           settledIds,
-          registeredIds,
           today
         ),
       }
@@ -79,18 +75,12 @@ export class ListRecurringPayments {
     payment: RecurringPayments,
     competence: string,
     settledIds: Set<string>,
-    registeredIds: Set<string>,
     today: string
   ): RecurringPaymentCompetenceStatus {
-    const id = payment.getRecurringPaymentId()
     if (payment.getStatus() !== "ACTIVE") return "INACTIVE"
 
     // A settled record is the only proof the money actually left the account.
-    if (settledIds.has(id)) return "PAID"
-
-    // A manually registered payment exists but has not been matched against the
-    // bank statement yet, so it is not settled.
-    if (registeredIds.has(id)) return "AWAITING_RECONCILIATION"
+    if (settledIds.has(payment.getRecurringPaymentId())) return "PAID"
 
     const currentStatus = payment.getPaymentStatusForCompetence(competence)
     if (currentStatus) return currentStatus

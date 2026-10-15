@@ -167,7 +167,7 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     }
   )
 
-  it("creates one settled OUTGO record with cost center for a confirmed PIX transfer", async () => {
+  it("creates one reconciled OUTGO record with cost center for a confirmed PIX transfer", async () => {
     const ctx = setup()
     await ctx.service.processPix({
       ...pixEvent(ctx, "DONE"),
@@ -185,7 +185,7 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
       churchId: "church-1",
       financialRecordType: "OUTGO",
       source: "AUTO",
-      status: "CLEARED",
+      status: "RECONCILED",
       createdBy: "system",
       recurringPaymentId: "recurring-1",
       recurringCompetence: "2026-10",
@@ -219,7 +219,7 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     expect(ctx.queue.dispatch.mock.calls[0]?.[1]).toMatchObject({
       amount: 742.83,
       financialRecordType: "OUTGO",
-      status: "CLEARED",
+      status: "RECONCILED",
     })
     expect(ctx.receipt.storeRemoteReceipt).not.toHaveBeenCalled()
   })

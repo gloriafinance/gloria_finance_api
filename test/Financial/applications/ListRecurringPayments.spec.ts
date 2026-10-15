@@ -60,11 +60,11 @@ describe("ListRecurringPayments", () => {
     expect(result[0]?.competenceStatus).toBe("PAID")
   })
 
-  it("does not treat a declared-but-unsettled record as paid", async () => {
-    const service = build([recurrence()], [record("PENDING")])
+  it("does not treat a void record as paid", async () => {
+    const service = build([recurrence()], [record("VOID")])
     const result = await service.execute("church-1", "2026-10")
 
-    expect(result[0]?.competenceStatus).toBe("AWAITING_RECONCILIATION")
+    expect(result[0]?.competenceStatus).toBe("PENDING")
   })
 
   it("derives pending when no FinancialRecord or active payment exists", async () => {

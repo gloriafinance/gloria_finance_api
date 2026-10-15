@@ -162,7 +162,8 @@ export class RecurringPayments extends AggregateRoot {
    */
   requiresCostCenterAssignment(): boolean {
     return (
-      this.props.costCenterId === undefined || this.props.requiresCostCenter === true
+      this.props.costCenterId === undefined ||
+      this.props.requiresCostCenter === true
     )
   }
 
@@ -292,10 +293,14 @@ export class RecurringPayments extends AggregateRoot {
     if (props.pixDestination) {
       const { pixKey, pixKeyType } = props.pixDestination
       if (pixKey.trim() === "") {
-        throw new RecurringPaymentException("RECURRING_PAYMENT_PIX_KEY_REQUIRED")
+        throw new RecurringPaymentException(
+          "RECURRING_PAYMENT_PIX_KEY_REQUIRED"
+        )
       }
       if (!PIX_KEY_TYPES.includes(pixKeyType)) {
-        throw new RecurringPaymentException("RECURRING_PAYMENT_PIX_KEY_REQUIRED")
+        throw new RecurringPaymentException(
+          "RECURRING_PAYMENT_PIX_KEY_REQUIRED"
+        )
       }
     }
   }

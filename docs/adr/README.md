@@ -63,5 +63,5 @@ Estas **no** son ADRs cerrados: son preguntas que deben resolverse antes de impl
 | P-06 | ¿`BLOCKED` requiere acción del usuario o mecanismo de cancelación? | ADR-008 | `recurring-payments.md` §24 |
 | P-07 | Política de limpieza de comprobantes huérfanos (subida exitosa + fallo del insert). | ADR-005 | `recurring-payments.md` §22 |
 | P-08 | ¿Corrección de un registro manual: edición del `FinancialRecord` o `VOID` + nuevo? | ADR-004, ADR-005 | `recurring-payments.md` §22 |
-| ~~P-09~~ | **RESUELTO:** manual = `PENDING` (pendiente de conciliar), bancario = `CLEARED`. Ver ADR-004. | — | `recurring-payments.md` §19 |
+| ~~P-09~~ | **RESUELTO:** manual = `CLEARED`, bancario = `RECONCILED`. Ver ADR-004. | — | `recurring-payments.md` §19 |
 | P-10 | ¿Se permite registrar pago para una competencia `UPCOMING` (pago anticipado)? | ADR-004 | `recurring-payments.md` §31 |

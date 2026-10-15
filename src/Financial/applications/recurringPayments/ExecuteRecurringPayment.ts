@@ -9,7 +9,10 @@ import type {
   CurrentRecurringPayment,
   RecurringPayments,
 } from "@/Financial/domain/RecurringPayments"
-import type { PayRecurringPaymentMethod, PayRecurringPaymentRequest } from "@/Financial/domain/requests/RecurringPayment.request"
+import type {
+  PayRecurringPaymentMethod,
+  PayRecurringPaymentRequest,
+} from "@/Financial/domain/requests/RecurringPayment.request"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type { IQueueService } from "@/package/queue/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
@@ -144,7 +147,10 @@ export class ExecuteRecurringPayment {
       return this.result(payment)
     }
 
-    if (payment.providerStatus === "DONE" || payment.providerStatus === "PAID") {
+    if (
+      payment.providerStatus === "DONE" ||
+      payment.providerStatus === "PAID"
+    ) {
       await this.registerRecord(recurring, payment)
       return this.result(payment)
     }

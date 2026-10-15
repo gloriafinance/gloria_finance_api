@@ -141,7 +141,7 @@ Es la única decisión de esta ADR que queda abierta. Según la semántica docum
 | `CLEARED` | "ya ocurrió físicamente… **Tesorería registró el pago de una factura y adjuntó el comprobante**" | **Sí** — es exactamente el caso |
 | `RECONCILED` | "verificado contra el extracto bancario" | **No** — no hubo conciliación contra extracto |
 
-**Resuelto:** el registro manual se declara `PENDING` y `BankStatementReconciler` lo promueve a `RECONCILED` al casar el extracto. El bancario nace `CLEARED` porque el banco ya ejecutó.
+**Resuelto:** el registro manual nace `CLEARED` (la iglesia declara un pago realizado) y `BankStatementReconciler` lo promueve a `RECONCILED` al casar el extracto. El bancario nace `RECONCILED` porque el proveedor ya lo confirmó.
 
 ### `PENDING` P-04 — `REFUNDED` posterior a `PAID`
 

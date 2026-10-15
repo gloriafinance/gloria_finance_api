@@ -1072,8 +1072,8 @@ PENDING | CLEARED | RECONCILED | VOID
 Decisión final (implementada):
 
 ```text
-Ejecución bancaria  (Asaas ejecutó)      → status = CLEARED
-Registro manual     (el usuario declara) → status = PENDING
+Registro manual     (la iglesia declara el pago)  → status = CLEARED
+Ejecución bancaria  (Asaas ejecutó y confirmó)    → status = RECONCILED
 ```
 
 El enum documenta su propia semántica:
@@ -1082,17 +1082,17 @@ El enum documenta su propia semántica:
 - `CLEARED`: ya ocurrió físicamente y cuenta en el flujo de caja real.
 - `RECONCILED`: verificado **contra el extracto bancario** (`"el monto, la fecha y la descripción coinciden con una transacción real en cuenta"`).
 
-**Por qué el bancario es `CLEARED`:** la operación fue ordenada por Glória y confirmada por webhook con `providerTransferId`/`providerBillId`. El dinero salió, pero nadie ha casado ese movimiento contra un extracto importado. `RECONCILED` afirmaría una conciliación que no ocurrió.
+**Por qué el manual es `CLEARED`:** la iglesia declara un pago ya realizado y aporta comprobante; el dinero salió y debe contar en el flujo de caja real. Es exactamente la semántica que el enum documenta para `CLEARED`.
 
-**Por qué el manual es `PENDING`:** el usuario declara el pago y aporta comprobante. El hecho está registrado, pero no verificado. Marcarlo `CLEARED` lo haría contar en caja sin ninguna verificación bancaria.
+**Por qué el bancario es `RECONCILED`:** la ejecución fue ordenada por Glória y confirmada por el canal autoritativo del proveedor con `providerTransferId`/`providerBillId`. El hecho está verificado contra la fuente bancaria, no solo declarado.
 
-**Cómo se promueve:** `BankStatementReconciler` acepta registros `PENDING` y `CLEARED` en su filtro de matching y los pasa a `RECONCILED` cuando el extracto confirma monto, fecha y cuenta. Por tanto el registro manual se promueve automáticamente al importar el extracto, sin intervención manual.
+**Conciliación posterior:** `BankStatementReconciler` acepta registros `PENDING` y `CLEARED` en su filtro de matching y los promueve a `RECONCILED` cuando el extracto confirma monto, fecha y cuenta. Un `CLEARED` manual converge así al mismo estado que un pago bancario.
 
-**Efecto en el listado:** mientras el registro está `PENDING`, la competencia aparece como `AWAITING_RECONCILIATION`, no como `PAID`. Solo `CLEARED`/`RECONCILED` cuentan como pagado.
+**Efecto en el listado:** `CLEARED` y `RECONCILED` cuentan como pagado. Un pago manual en `CLEARED` ya figura como `PAID`, porque el dinero salió.
 
 ### Nota sobre `CURRENT` bancario
 
-El flujo bancario usa `source = AUTO`, `status = CLEARED`, `createdBy = "system"`: la operación fue ejecutada por el banco y confirmada por webhook, así que el dinero ya salió. El flujo manual usa `source = MANUAL` y `status = PENDING`, porque un pago declarado aún debe conciliarse contra el extracto. Ver §20.
+El flujo bancario usa `source = AUTO`, `status = RECONCILED`, `createdBy = "system"`: la operación fue ejecutada por el banco y confirmada por el canal del proveedor, así que está verificada contra la fuente bancaria. El flujo manual usa `source = MANUAL` y `status = CLEARED`: la iglesia declara un pago ya realizado y aporta comprobante. Ver §20.
 
 ---
 
@@ -1124,7 +1124,7 @@ Conceptualmente:
 
 ```text
 source    = AUTO
-status    = CLEARED
+status    = RECONCILED
 createdBy = system
 ```
 
@@ -1132,7 +1132,7 @@ createdBy = system
 
 **`source = AUTO`** ✅ — no hubo intervención manual; el sistema ejecutó y confirmó.
 **`createdBy = system`** ✅ — no hay usuario actuando en el momento de la confirmación; el webhook es la fuente.
-**`status = CLEARED`** — la operación fue **ejecutada por el propio banco por orden de Glória** y confirmada por webhook con `providerTransferId`/`providerBillId`. El dinero ya salió, que es exactamente la semántica de `CLEARED` ("ya ocurrió físicamente"). No se usa `RECONCILED` porque esa conciliación contra extracto la produce el pipeline de conciliación bancaria, no la ejecución. El flujo manual usa `PENDING` y espera esa conciliación. Ver [ADR-004](./adr/ADR-004-financial-record-is-execution-history.md).
+**`status = RECONCILED`** — la operación fue **ejecutada por el propio banco por orden de Glória** y confirmada por el canal autoritativo del proveedor con `providerTransferId`/`providerBillId`. Está verificada contra la fuente bancaria, no solo declarada, que es lo que `RECONCILED` significa. El flujo manual nace `CLEARED` y converge a `RECONCILED` cuando el extracto confirma el movimiento. Ver [ADR-004](./adr/ADR-004-financial-record-is-execution-history.md).
 
 ### `bankingExternalReference`
 
@@ -1334,7 +1334,6 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 | `BLOCKED` | Operación bancaria activa bloqueada por el provider | `currentPayment.status === "BLOCKED"` |
 | `FAILED` | Intento bancario terminó **sin** pago | `currentPayment.status === "FAILED"` |
 | `PAID` | Existe `FinancialRecord` liquidado | `∃ FinancialRecord(recurringPaymentId, competence)` con status `CLEARED`/`RECONCILED` |
-| `AWAITING_RECONCILIATION` | Registro declarado, no liquidado | `PENDING` |
 | `INACTIVE` | Recurrencia desactivada | `RecurringPayment.status !== "ACTIVE"` |
 
 ### Orden de precedencia (verificado tras la implementación)
@@ -1344,16 +1343,15 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 ```text
 1. status !== "ACTIVE"                     → INACTIVE
 2. settledIds.has(recurringPaymentId)      → PAID
-3. registeredIds.has(recurringPaymentId)   → AWAITING_RECONCILIATION
-4. currentPayment.status (si competence coincide) → PROCESSING | BLOCKED | FAILED
-5. dueDate <= hoy                          → PENDING, si no → UPCOMING
+3. currentPayment.status (si competence coincide) → PROCESSING | BLOCKED | FAILED
+4. dueDate <= hoy                          → PENDING, si no → UPCOMING
 ```
 
-`settledIds` son los registros con status `CLEARED`/`RECONCILED`; `registeredIds` todos los registros de la competencia.
+`settledIds` son los registros con status `CLEARED`/`RECONCILED`.
 
 **`PAID` tiene precedencia sobre `currentPayment`.** Es correcto: en cuanto existe evidencia contable liquidada, el estado operativo en vuelo es irrelevante.
 
-**Un registro `PENDING` no cuenta como `PAID`.** Un pago manual se declara con comprobante pero debe conciliarse contra el extracto bancario; hasta entonces aparece como `AWAITING_RECONCILIATION`. `BankStatementReconciler` ya acepta registros `PENDING` en su filtro de matching, así que la conciliación los promueve a `RECONCILED` y el estado pasa a `PAID` sin intervención adicional.
+**Tanto `CLEARED` como `RECONCILED` cuentan como `PAID`.** Un registro `CLEARED` (manual) ya representa dinero que salió y cuenta en el flujo de caja real; un `RECONCILED` (bancario, o manual ya conciliado) está además verificado contra el banco. Un registro `VOID` no cuenta.
 
 ### Dos distinciones que deben quedar nítidas
 
