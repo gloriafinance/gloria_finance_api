@@ -74,13 +74,15 @@ export class RegisterRecurringPaymentFinancialRecord {
     )
     if (exists) return
 
-    // The month is checked here, not only inside the queued job, so a closed
-    // period is reported while the caller can still react to it.
+    // Validated on the competence, not on the payment date: the competence is the
+    // accounting period being settled, and it is exactly what the queued job will
+    // book into, so both check the same month.
     if (this.financialYearRepository) {
+      const [year, month] = competence.split("-").map(Number)
       await new FinancialMonthValidator(this.financialYearRepository).validate({
         churchId: recurring.getChurchId(),
-        year: paymentDate.getUTCFullYear(),
-        month: paymentDate.getUTCMonth() + 1,
+        year,
+        month,
       })
     }
 

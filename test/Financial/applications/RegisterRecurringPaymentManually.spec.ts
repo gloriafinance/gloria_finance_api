@@ -8,6 +8,7 @@ type SetupInput = {
   alreadyRegistered?: boolean
   providerConnected?: boolean
   inactive?: boolean
+  closedMonth?: boolean
 }
 
 function setup(input: SetupInput = {}) {
@@ -67,6 +68,15 @@ function setup(input: SetupInput = {}) {
           : []
       ),
   }
+  const financialYears = {
+    one: jest
+      .fn()
+      .mockResolvedValue(
+        input.closedMonth === true
+          ? { isClosed: () => true }
+          : { isClosed: () => false }
+      ),
+  }
   const queue = { dispatch: jest.fn() }
   const storage = {
     uploadFile: jest.fn().mockResolvedValue("voucher-key"),
@@ -79,6 +89,7 @@ function setup(input: SetupInput = {}) {
     financialConfiguration as never,
     availabilityAccounts as never,
     bankRepository as never,
+    financialYears as never,
     queue as never,
     storage as never
   )
@@ -140,6 +151,19 @@ describe("RegisterRecurringPaymentManually", () => {
     expect(ctx.recurringRepository.one).toHaveBeenCalledWith(
       expect.objectContaining({ status: "ACTIVE" })
     )
+  })
+
+  it("rejects a closed financial month before queueing the record", async () => {
+    // The month is checked before the job is dispatched, so a closed period is
+    // reported while the caller can still react instead of failing inside the job.
+    const ctx = setup({ amount: 3500, closedMonth: true })
+    await expect(
+      ctx.service.execute("church-1", "recurring-1", "user-1", {
+        ...request,
+        file: ctx.file,
+      })
+    ).rejects.toBeDefined()
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
   it("requires a voucher before touching anything else", async () => {

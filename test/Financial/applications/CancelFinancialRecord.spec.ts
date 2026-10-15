@@ -45,7 +45,9 @@ describe("CancelFinancialRecord", () => {
       getDate: () => new Date(),
       getChurchId: () => "church-1",
       getType: () => FinancialRecordType.OUTGO,
-    } as FinanceRecord)
+      // Read by the pre-transaction guard: this fixture is cancellable.
+      getStatus: () => FinancialRecordStatus.CLEARED,
+    } as unknown as FinanceRecord)
     useCase = new CancelFinancialRecord(
       financialYearRepository,
       financialRecordRepository,

@@ -73,11 +73,11 @@ function setup(input: SetupInput = {}) {
     createPixTransfer: jest.fn(async () => {
       callOrder.push("bank")
       return {
-      externalAccountId: "church-1",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-      status: "PENDING",
-      context: {},
-      amountInCents: 12345,
+        externalAccountId: "church-1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        status: "PENDING",
+        context: {},
+        amountInCents: 12345,
       }
     }),
     createBillPayment: jest.fn().mockResolvedValue({
@@ -89,7 +89,8 @@ function setup(input: SetupInput = {}) {
   }
   const concept = {
     isDisable: () => input.conceptDisabled === true,
-    getType: () => (input.conceptType === undefined ? "OUTGO" : input.conceptType),
+    getType: () =>
+      input.conceptType === undefined ? "OUTGO" : input.conceptType,
   }
   const financialConcepts = { one: jest.fn().mockResolvedValue(concept) }
   const financialConfiguration = {
@@ -101,7 +102,9 @@ function setup(input: SetupInput = {}) {
     one: jest
       .fn()
       .mockResolvedValue(
-        input.closedMonth === true ? { isClosed: () => true } : { isClosed: () => false }
+        input.closedMonth === true
+          ? { isClosed: () => true }
+          : { isClosed: () => false }
       ),
   }
   const queue = { dispatch: jest.fn() }
@@ -257,7 +260,10 @@ describe("ExecuteRecurringPayment", () => {
     })
     expect(
       ctx.repository.saveIfCurrentPaymentMatches.mock.calls[0]?.[1]
-    ).toMatchObject({ attempt: 1, externalReference: current.externalReference })
+    ).toMatchObject({
+      attempt: 1,
+      externalReference: current.externalReference,
+    })
     expect(
       ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
     ).toBe(current.externalReference)
@@ -336,9 +342,9 @@ describe("ExecuteRecurringPayment", () => {
       payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
     })
 
-    expect(
-      ctx.banking.createPixTransfer.mock.calls[0]?.[0].pixKey
-    ).toBe("key-123")
+    expect(ctx.banking.createPixTransfer.mock.calls[0]?.[0].pixKey).toBe(
+      "key-123"
+    )
     expect(
       ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
     ).toBe(current.externalReference)
@@ -404,7 +410,7 @@ describe("ExecuteRecurringPayment", () => {
         amount: 25,
         paymentMethod: "PIX" as const,
         executionDestination: "EVP:key-123",
-      executionDestination: "EVP:key-123",
+        executionDestination: "EVP:key-123",
         bankId: "bank-1",
         availabilityAccountId: "availability-1",
         status,
@@ -479,9 +485,21 @@ describe("ExecuteRecurringPayment", () => {
   })
 
   it.each([
-    ["a disabled concept", { conceptDisabled: true }, "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"],
-    ["a concept that is no longer OUTGO", { conceptType: "INCOME" }, "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"],
-    ["a cost center that cannot be resolved", { costCenterMissing: true }, "RECURRING_PAYMENT_COST_CENTER_INVALID"],
+    [
+      "a disabled concept",
+      { conceptDisabled: true },
+      "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID",
+    ],
+    [
+      "a concept that is no longer OUTGO",
+      { conceptType: "INCOME" },
+      "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID",
+    ],
+    [
+      "a cost center that cannot be resolved",
+      { costCenterMissing: true },
+      "RECURRING_PAYMENT_COST_CENTER_INVALID",
+    ],
   ] as const)(
     "refuses to move money when the recurrence points to %s",
     async (_label, overrides, expected) => {
@@ -491,7 +509,9 @@ describe("ExecuteRecurringPayment", () => {
         ...overrides,
       })
       await expect(
-        ctx.service.execute("church-1", "recurring-1", { competence: "2026-10" })
+        ctx.service.execute("church-1", "recurring-1", {
+          competence: "2026-10",
+        })
       ).rejects.toMatchObject({ name: expected })
       expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
       expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()

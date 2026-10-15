@@ -178,7 +178,8 @@ export class RecurringPaymentController {
         FinancialConceptMongoRepository.getInstance(),
         FinancialConfigurationMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
-        BankMongoRepository.getInstance()
+        BankMongoRepository.getInstance(),
+        FinancialYearMongoRepository.getInstance()
       ).execute(
         req.auth.churchId,
         recurringPaymentId,

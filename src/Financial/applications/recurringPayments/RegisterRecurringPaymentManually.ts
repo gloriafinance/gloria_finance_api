@@ -6,6 +6,7 @@ import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces
 import type { RegisterRecurringPaymentRequest } from "@/Financial/domain/requests/RecurringPayment.request"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
+import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import type { IQueueService } from "@/package/queue/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
@@ -44,6 +45,7 @@ export class RegisterRecurringPaymentManually {
     private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly bankRepository: IBankRepository,
+    private readonly financialYearRepository?: IFinancialYearRepository,
     private readonly queueService: IQueueService = QueueService.getInstance(),
     private readonly storage: IStorageService = StorageProviderService.getInstance()
   ) {
@@ -52,7 +54,10 @@ export class RegisterRecurringPaymentManually {
       availabilityAccountRepository,
       financialConceptRepository,
       financialConfigurationRepository,
-      queueService
+      queueService,
+      // Without this the registrar cannot check the financial month, so a closed
+      // period would only surface inside the job, after the voucher was uploaded.
+      financialYearRepository
     )
   }
 

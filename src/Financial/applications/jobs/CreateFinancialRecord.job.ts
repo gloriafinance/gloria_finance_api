@@ -37,10 +37,17 @@ export class CreateFinancialRecordJob implements IJob {
       jobName: CreateFinancialRecordJob.name,
     })
 
+    // A recurring execution is booked in the competence it settles, which is the
+    // period the caller already validated. Using the payment date here instead
+    // would check a different month and could reject a payment that was approved,
+    // or approve one booked into a closed period.
+    const accountingMonth = args.recurringCompetence
+      ? new Date(`${args.recurringCompetence}-01T00:00:00.000Z`)
+      : new Date(args.date)
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: args.churchId,
-      month: new Date(args.date).getUTCMonth() + 1,
-      year: new Date(args.date).getFullYear(),
+      month: accountingMonth.getUTCMonth() + 1,
+      year: accountingMonth.getUTCFullYear(),
     })
 
     if (typeof args.availabilityAccount === "object") {

@@ -9,6 +9,7 @@ import {
   ConceptType,
   FinanceRecord,
   FinancialRecordStatus,
+  ReconciledRecordCannotBeCancelled,
   TypeOperationMoney,
 } from "@/Financial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
@@ -60,6 +61,16 @@ export class UpdateFinancialRecord {
         month: date.getUTCMonth() + 1,
         year: date.getFullYear(),
       })
+    }
+
+    // The status change is the transition, so it is refused here rather than
+    // relying on every caller to check first. A reconciled record is backed by a
+    // real bank debit that cannot be undone locally.
+    if (
+      previousStatus === FinancialRecordStatus.RECONCILED &&
+      args.status === FinancialRecordStatus.VOID
+    ) {
+      throw new ReconciledRecordCannotBeCancelled()
     }
 
     financialRecord.setStatus(args.status)
