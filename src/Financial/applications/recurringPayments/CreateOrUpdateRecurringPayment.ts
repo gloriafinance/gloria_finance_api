@@ -1,4 +1,5 @@
-import type { IFinancialConceptRepository } from "@/FinanceConfig/domain"
+import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
+import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain/interfaces/FinancialConfigurationRepository.interface"
 import { ConceptType } from "@/FinanceConfig/domain/enums/ConcepType.enum"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
@@ -8,14 +9,15 @@ import type { RecurringPaymentConfigurationRequest } from "@/Financial/domain/re
 export class CreateOrUpdateRecurringPayment {
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
-    private readonly financialConceptRepository: IFinancialConceptRepository
+    private readonly financialConceptRepository: IFinancialConceptRepository,
+    private readonly financialConfigurationRepository: IFinancialConfigurationRepository
   ) {}
 
   async create(
     churchId: string,
     request: RecurringPaymentConfigurationRequest
   ): Promise<RecurringPayments> {
-    await this.validateConcept(churchId, request.financialConceptId)
+    await this.assertImputation(churchId, request)
     const payment = RecurringPayments.create({
       ...request,
       churchId,
@@ -31,13 +33,13 @@ export class CreateOrUpdateRecurringPayment {
     request: RecurringPaymentConfigurationRequest
   ): Promise<RecurringPayments> {
     const existing = await this.recurringPaymentsRepository.one({
-      recurringPaymentsId: id,
+      recurringPaymentId: id,
       churchId,
     })
     if (!existing) {
       throw new RecurringPaymentException("RECURRING_PAYMENT_NOT_FOUND")
     }
-    await this.validateConcept(churchId, request.financialConceptId)
+    await this.assertImputation(churchId, request)
 
     const expected = existing.getCurrentPayment()
     existing.updateConfiguration({
@@ -54,12 +56,16 @@ export class CreateOrUpdateRecurringPayment {
     return existing
   }
 
-  private async validateConcept(
+  /**
+   * Every expense is imputed, so both the concept (OUTGO) and the cost center
+   * must exist for this church before the permanent configuration is stored.
+   */
+  private async assertImputation(
     churchId: string,
-    financialConceptId: string
+    request: RecurringPaymentConfigurationRequest
   ): Promise<void> {
     const concept = await this.financialConceptRepository.one({
-      financialConceptId,
+      financialConceptId: request.financialConceptId,
       churchId,
       active: true,
       type: ConceptType.OUTGO,
@@ -67,6 +73,17 @@ export class CreateOrUpdateRecurringPayment {
     if (!concept) {
       throw new RecurringPaymentException(
         "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"
+      )
+    }
+
+    const costCenter =
+      await this.financialConfigurationRepository.findCostCenterByCostCenterId(
+        request.costCenterId,
+        churchId
+      )
+    if (!costCenter) {
+      throw new RecurringPaymentException(
+        "RECURRING_PAYMENT_COST_CENTER_INVALID"
       )
     }
   }

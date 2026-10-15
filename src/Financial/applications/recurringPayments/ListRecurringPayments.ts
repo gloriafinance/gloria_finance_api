@@ -1,8 +1,8 @@
+import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type {
-  IRecurringPaymentsRepository,
   RecurringPaymentConfigurationData,
   RecurringPayments,
-} from "@/Financial/domain"
+} from "@/Financial/domain/RecurringPayments"
 import { Order } from "@abejarano/ts-mongodb-criteria"
 import {
   assertCompetence,
@@ -18,6 +18,7 @@ export type RecurringPaymentCompetenceStatus =
   | "BLOCKED"
   | "FAILED"
   | "PAID"
+  | "AWAITING_RECONCILIATION"
   | "INACTIVE"
 
 export type RecurringPaymentForCompetence =
@@ -47,11 +48,16 @@ export class ListRecurringPayments {
         competence
       ),
     ])
-    const paidIds = new Set(
-      records
-        .map((record) => record.getRecurringPaymentId())
-        .filter((id): id is string => Boolean(id))
-    )
+
+    const settledIds = new Set<string>()
+    const registeredIds = new Set<string>()
+    for (const record of records) {
+      const id = record.getRecurringPaymentId()
+      if (!id) continue
+      registeredIds.add(id)
+      if (record.isSettled()) settledIds.add(id)
+    }
+
     const today = saoPauloDate()
 
     return payments.map((payment) => {
@@ -61,7 +67,8 @@ export class ListRecurringPayments {
         competenceStatus: this.competenceStatus(
           payment,
           competence,
-          paidIds,
+          settledIds,
+          registeredIds,
           today
         ),
       }
@@ -71,11 +78,19 @@ export class ListRecurringPayments {
   private competenceStatus(
     payment: RecurringPayments,
     competence: string,
-    paidIds: Set<string>,
+    settledIds: Set<string>,
+    registeredIds: Set<string>,
     today: string
   ): RecurringPaymentCompetenceStatus {
+    const id = payment.getRecurringPaymentId()
     if (payment.getStatus() !== "ACTIVE") return "INACTIVE"
-    if (paidIds.has(payment.getRecurringPaymentsId())) return "PAID"
+
+    // A settled record is the only proof the money actually left the account.
+    if (settledIds.has(id)) return "PAID"
+
+    // A manually registered payment exists but has not been matched against the
+    // bank statement yet, so it is not settled.
+    if (registeredIds.has(id)) return "AWAITING_RECONCILIATION"
 
     const currentStatus = payment.getPaymentStatusForCompetence(competence)
     if (currentStatus) return currentStatus

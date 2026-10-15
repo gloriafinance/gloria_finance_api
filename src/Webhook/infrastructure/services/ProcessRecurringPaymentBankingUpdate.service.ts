@@ -1,21 +1,20 @@
-import type {
-  IAvailabilityAccountRepository,
-  IFinancialConceptRepository,
-} from "@/FinanceConfig/domain"
-import type {
-  CurrentRecurringPayment,
-  IFinancialRecordRepository,
-  IRecurringPaymentsRepository,
-} from "@/Financial/domain"
+import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
+import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
+import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain/interfaces/FinancialConfigurationRepository.interface"
+import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces/FinancialRecordRepository.interface"
+import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConceptMongoRepository"
+import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import type { IQueueService } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
+import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/RemoteReceiptStorage.interface"
 import { AsaasReceiptStorage } from "./AsaasReceiptStorage"
 import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications/recurringPayments/RegisterRecurringPaymentFinancialRecord"
 
@@ -64,15 +63,17 @@ export class ProcessRecurringPaymentBankingUpdate {
     private readonly financialRecordRepository: IFinancialRecordRepository = FinanceRecordMongoRepository.getInstance(),
     private readonly conceptRepository: IFinancialConceptRepository = FinancialConceptMongoRepository.getInstance(),
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository = AvailabilityAccountMongoRepository.getInstance(),
+    private readonly financialConfigurationRepository: IFinancialConfigurationRepository = FinancialConfigurationMongoRepository.getInstance(),
     private readonly queueService: IQueueService = QueueService.getInstance(),
-    receiptStorage = new AsaasReceiptStorage(),
+    private readonly receiptStorage: IRemoteReceiptStorage = new AsaasReceiptStorage(),
     private readonly now: () => Date = () => new Date()
   ) {
     this.recordRegistrar = new RegisterRecurringPaymentFinancialRecord(
       financialRecordRepository,
       availabilityAccountRepository,
-      queueService,
-      receiptStorage
+      conceptRepository,
+      financialConfigurationRepository,
+      queueService
     )
   }
 
@@ -129,7 +130,7 @@ export class ProcessRecurringPaymentBankingUpdate {
       this.logger.info(
         "Recognized recurring PIX refund; accounting reversal requires a business rule",
         {
-          recurringPaymentId: recurring.getRecurringPaymentsId(),
+          recurringPaymentId: recurring.getRecurringPaymentId(),
           competence: payment.competence,
           externalReference: transfer.externalReference,
         }
@@ -192,7 +193,7 @@ export class ProcessRecurringPaymentBankingUpdate {
       return
     }
     if (bill.status === "REFUNDED") {
-      this.logRefund(recurring.getRecurringPaymentsId(), bill.externalReference)
+      this.logRefund(recurring.getRecurringPaymentId(), bill.externalReference)
       return
     }
     await this.applyStatus(recurring, payment, {
@@ -219,11 +220,11 @@ export class ProcessRecurringPaymentBankingUpdate {
       recurring.getChurchId() !== externalAccountId ||
       payment.bankId !== accountId ||
       context.source !== "RECURRING_PAYMENT" ||
-      context.recurringPaymentId !== recurring.getRecurringPaymentsId() ||
+      context.recurringPaymentId !== recurring.getRecurringPaymentId() ||
       context.competence !== payment.competence ||
       context.attempt !== payment.attempt ||
       externalReference !==
-        `urn:recurringPayment:${recurring.getRecurringPaymentsId()}:${payment.competence}:${payment.attempt}`
+        `urn:recurringPayment:${recurring.getRecurringPaymentId()}:${payment.competence}:${payment.attempt}`
     ) {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
@@ -264,7 +265,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     providerStatus: "DONE" | "PAID"
   ): Promise<void> {
     const record = await this.financialRecordRepository.findRecurringPayment(
-      recurring.getRecurringPaymentsId(),
+      recurring.getRecurringPaymentId(),
       payment.competence
     )
     if (record) {
@@ -287,21 +288,33 @@ export class ProcessRecurringPaymentBankingUpdate {
       recurring,
       payment
     )
-    const concept = await this.conceptRepository.one({
-      financialConceptId: recurring.getFinancialConceptId(),
-    })
-    if (!concept || concept.getChurchId() !== recurring.getChurchId()) {
-      throw new RecurringPaymentException(
-        "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID"
-      )
-    }
+    // Concept and cost center are resolved inside the registrar from the
+    // recurrence, so the same rules apply to banking and manual execution.
     await this.recordRegistrar.execute({
       recurring,
-      payment: confirmed,
-      concept,
+      competence: confirmed.competence,
+      amount: confirmed.amount,
+      availabilityAccountId: confirmed.availabilityAccountId,
       paymentDate,
-      transactionReceiptUrl: receiptUrl,
+      createdBy: "system",
+      bankingExternalReference: confirmed.externalReference,
+      voucher: await this.storeReceipt(confirmed.externalReference, receiptUrl),
     })
+  }
+
+  /**
+   * The provider receipt is fetched and stored here, at the integration
+   * boundary, so the application layer only ever receives a stored voucher key.
+   */
+  private async storeReceipt(
+    externalReference: string,
+    receiptUrl: string | null
+  ): Promise<string | undefined> {
+    if (!receiptUrl) return undefined
+    return await this.receiptStorage.storeRemoteReceipt(
+      externalReference,
+      receiptUrl
+    )
   }
 
   private async applyStatus(

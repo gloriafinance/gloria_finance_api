@@ -5,34 +5,56 @@ import {
 import { Urn } from "@/Shared/adapter/Urn"
 import { RecurringPaymentException } from "./exceptions/RecurringPayment.exception"
 
-export type RecurringPaymentMethod = "PIX" | "BILL"
 export type RecurringPaymentStatus = "ACTIVE" | "INACTIVE"
 export type RecurringPaymentExecutionStatus =
   "PROCESSING" | "BLOCKED" | "FAILED"
 export type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP"
 
+const PIX_KEY_TYPES: readonly PixKeyType[] = [
+  "CPF",
+  "CNPJ",
+  "EMAIL",
+  "PHONE",
+  "EVP",
+]
+
+/**
+ * Reusable PIX destination for a recurring commitment.
+ *
+ * This is metadata about the payee, NOT a payment method. A recurrence with a
+ * `pixDestination` may still be executed as a BILL payment. See ADR-007.
+ */
+export type PixDestination = {
+  pixKey: string
+  pixKeyType: PixKeyType
+}
+
 export type RecurringPaymentConfigurationData = {
-  recurringPaymentsId: string
+  recurringPaymentId: string
   churchId: string
   financialConceptId: string
+  costCenterId: string
   name: string
   type: "FIXED" | "VARIABLE"
   amount?: number
   dayOfMonth: number
-  payment:
-    | { method: "PIX"; pixKey: string; pixKeyType: PixKeyType }
-    | { method: "BILL" }
+  pixDestination?: PixDestination
   status: RecurringPaymentStatus
 }
 
 export type RecurringPaymentConfigurationChanges = Omit<
   RecurringPaymentConfigurationData,
-  "recurringPaymentsId" | "churchId"
+  "recurringPaymentId" | "churchId"
 >
 
 export type RecurringPaymentConfiguration =
   RecurringPaymentConfigurationData & {
     currentPayment?: CurrentRecurringPayment
+    /**
+     * Set by migration on recurrences created before the cost center became
+     * mandatory. They stay readable but cannot be executed until completed.
+     */
+    requiresCostCenter?: boolean
   }
 
 export type CurrentRecurringPayment = {
@@ -40,6 +62,8 @@ export type CurrentRecurringPayment = {
   attempt: number
   externalReference: string
   amount: number
+  /** Method chosen for this execution. Never part of the permanent config. */
+  paymentMethod?: "PIX" | "BILL"
   bankId: string
   availabilityAccountId: string
   status: RecurringPaymentExecutionStatus
@@ -67,13 +91,15 @@ export class RecurringPayments extends AggregateRoot {
   static create(
     input: Omit<
       RecurringPaymentConfiguration,
-      "recurringPaymentsId" | "currentPayment"
+      "recurringPaymentId" | "currentPayment"
     >
   ): RecurringPayments {
-    return new RecurringPayments({
+    const recurring = new RecurringPayments({
       ...input,
-      recurringPaymentsId: Urn.create({ entity: "recurringPayments" }),
+      recurringPaymentId: Urn.create({ entity: "recurringPayments" }),
     })
+    recurring.assertConfiguration()
+    return recurring
   }
 
   static fromPrimitives(
@@ -82,8 +108,8 @@ export class RecurringPayments extends AggregateRoot {
     return new RecurringPayments(primitives)
   }
 
-  getRecurringPaymentsId(): string {
-    return this.props.recurringPaymentsId
+  getRecurringPaymentId(): string {
+    return this.props.recurringPaymentId
   }
 
   getChurchId(): string {
@@ -92,6 +118,10 @@ export class RecurringPayments extends AggregateRoot {
 
   getFinancialConceptId(): string {
     return this.props.financialConceptId
+  }
+
+  getCostCenterId(): string {
+    return this.props.costCenterId
   }
 
   getName(): string {
@@ -110,8 +140,12 @@ export class RecurringPayments extends AggregateRoot {
     return this.props.dayOfMonth
   }
 
-  getPayment(): RecurringPaymentConfiguration["payment"] {
-    return this.props.payment
+  /**
+   * Optional reusable PIX destination. Absence does not forbid PIX execution:
+   * the execution command may supply a key for a single payment. See ADR-001.
+   */
+  getPixDestination(): PixDestination | undefined {
+    return this.props.pixDestination
   }
 
   getStatus(): RecurringPaymentStatus {
@@ -122,18 +156,29 @@ export class RecurringPayments extends AggregateRoot {
     return this.props.currentPayment
   }
 
+  /**
+   * A recurrence migrated without a cost center cannot produce an imputed
+   * record, so execution must stop instead of writing an unallocated expense.
+   */
+  requiresCostCenterAssignment(): boolean {
+    return (
+      this.props.costCenterId === undefined || this.props.requiresCostCenter === true
+    )
+  }
+
   updateConfiguration(changes: RecurringPaymentConfigurationChanges): void {
     const currentPayment = this.props.currentPayment
     if (currentPayment && currentPayment.status !== "FAILED") {
       throw new RecurringPaymentException("RECURRING_PAYMENT_IN_PROGRESS")
     }
 
-    const updated = {
+    const updated: RecurringPaymentConfiguration = {
       ...changes,
-      recurringPaymentsId: this.props.recurringPaymentsId,
+      recurringPaymentId: this.props.recurringPaymentId,
       churchId: this.props.churchId,
       ...(currentPayment ? { currentPayment } : {}),
     }
+    this.assertConfiguration(updated)
     this.props = updated
   }
 
@@ -182,30 +227,76 @@ export class RecurringPayments extends AggregateRoot {
 
   toConfiguration(): RecurringPaymentConfigurationData {
     const {
-      recurringPaymentsId,
+      recurringPaymentId,
       churchId,
       financialConceptId,
+      costCenterId,
       name,
       type,
       amount,
       dayOfMonth,
-      payment,
+      pixDestination,
       status,
     } = this.props
     return {
-      recurringPaymentsId,
+      recurringPaymentId,
       churchId,
       financialConceptId,
+      costCenterId,
       name,
       type,
       ...(amount !== undefined ? { amount } : {}),
       dayOfMonth,
-      payment,
+      ...(pixDestination ? { pixDestination } : {}),
       status,
     }
   }
 
   toPrimitives(): RecurringPaymentConfiguration {
     return this.props
+  }
+
+  /**
+   * Single owner of the permanent-configuration invariants. The HTTP validator
+   * only enforces transport shape; these rules hold for every caller.
+   */
+  private assertConfiguration(
+    props: RecurringPaymentConfiguration = this.props
+  ): void {
+    if (
+      !Number.isInteger(props.dayOfMonth) ||
+      props.dayOfMonth < 1 ||
+      props.dayOfMonth > 31
+    ) {
+      throw new RecurringPaymentException(
+        "RECURRING_PAYMENT_DAY_OF_MONTH_INVALID"
+      )
+    }
+
+    if (props.type === "FIXED") {
+      if (
+        props.amount === undefined ||
+        !Number.isFinite(props.amount) ||
+        props.amount <= 0
+      ) {
+        throw new RecurringPaymentException(
+          "RECURRING_PAYMENT_FIXED_AMOUNT_REQUIRED"
+        )
+      }
+    } else if (props.amount !== undefined) {
+      throw new RecurringPaymentException(
+        "RECURRING_PAYMENT_VARIABLE_AMOUNT_FORBIDDEN"
+      )
+    }
+
+    if (props.pixDestination) {
+      const { pixKey, pixKeyType } = props.pixDestination
+      if (pixKey.trim() === "") {
+        throw new RecurringPaymentException("RECURRING_PAYMENT_PIX_KEY_REQUIRED")
+      }
+      if (!PIX_KEY_TYPES.includes(pixKeyType)) {
+        throw new RecurringPaymentException("RECURRING_PAYMENT_PIX_KEY_REQUIRED")
+      }
+    }
   }
 }

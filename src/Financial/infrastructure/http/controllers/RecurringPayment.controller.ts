@@ -1,11 +1,14 @@
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConceptMongoRepository"
+import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence/BankMongoRepository"
 import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
+import { AsaasReceiptStorage } from "@/Webhook/infrastructure/services/AsaasReceiptStorage"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
+import { RegisterRecurringPaymentManually } from "@/Financial/applications/recurringPayments/RegisterRecurringPaymentManually"
 import {
   ListRecurringPayments,
   type RecurringPaymentForCompetence,
@@ -14,6 +17,7 @@ import type { RecurringPaymentConfigurationData } from "@/Financial/domain/Recur
 import type {
   PayRecurringPaymentRequest,
   RecurringPaymentConfigurationRequest,
+  RegisterRecurringPaymentRequest,
 } from "@/Financial/domain/requests/RecurringPayment.request"
 import { HttpStatus } from "@/Shared/domain/enums/HttpStatus.enum"
 import domainResponse from "@/Shared/helpers/domainResponse"
@@ -36,6 +40,7 @@ import {
 import {
   validatePayRecurringPayment,
   validateRecurringPaymentConfiguration,
+  validateRegisterRecurringPayment,
 } from "../validators/RecurringPayment.validator"
 import { saoPauloDate } from "@/Financial/applications/recurringPayments/RecurringPaymentCompetence"
 
@@ -55,7 +60,8 @@ export class RecurringPaymentController {
     try {
       const payment = await new CreateOrUpdateRecurringPayment(
         RecurringPaymentsMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance()
+        FinancialConceptMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance()
       ).create(req.auth.churchId, body)
       const response: RecurringPaymentConfigurationData =
         payment.toConfiguration()
@@ -80,7 +86,8 @@ export class RecurringPaymentController {
     try {
       const payment = await new CreateOrUpdateRecurringPayment(
         RecurringPaymentsMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance()
+        FinancialConceptMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance()
       ).update(req.auth.churchId, id, body)
       const response: RecurringPaymentConfigurationData =
         payment.toConfiguration()
@@ -126,11 +133,50 @@ export class RecurringPaymentController {
       const result = await new ExecuteRecurringPayment(
         RecurringPaymentsMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
         BankMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
-        new ChurchBankingClient()
+        FinancialConceptMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance(),
+        new ChurchBankingClient(),
+        new AsaasReceiptStorage()
       ).execute(req.auth.churchId, recurringPaymentId, body)
+      res.status(HttpStatus.OK).send(result)
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
+  /**
+   * Manual registration for a commitment paid outside the bank. The voucher is
+   * required and arrives as multipart/form-data.
+   */
+  @Post("/:recurringPaymentId/register-payment")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "create"),
+    validateRegisterRecurringPayment,
+  ])
+  async registerPayment(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const body = req.body as RegisterRecurringPaymentRequest & {
+        file?: any
+      }
+      const result = await new RegisterRecurringPaymentManually(
+        RecurringPaymentsMongoRepository.getInstance(),
+        FinanceRecordMongoRepository.getInstance(),
+        FinancialConceptMongoRepository.getInstance(),
+        FinancialConfigurationMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance()
+      ).execute(
+        req.auth.churchId,
+        recurringPaymentId,
+        req.auth.userId ?? req.auth.memberId ?? "unknown",
+        body
+      )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
       domainResponse(error, res)

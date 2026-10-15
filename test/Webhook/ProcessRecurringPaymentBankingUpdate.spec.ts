@@ -1,12 +1,13 @@
 import { ProcessRecurringPaymentBankingUpdate } from "@/Webhook/infrastructure/services/ProcessRecurringPaymentBankingUpdate.service"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 
-function setup(method: "PIX" | "BILL" = "PIX") {
+function setup() {
   const currentPayment = {
     competence: "2026-10",
     attempt: 1,
     externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
     amount: 742.83,
+    paymentMethod: "PIX" as const,
     bankId: "bank-1",
     availabilityAccountId: "availability-1",
     status: "PROCESSING" as const,
@@ -14,40 +15,53 @@ function setup(method: "PIX" | "BILL" = "PIX") {
     updatedAt: new Date("2026-10-01T10:01:00Z"),
   }
   const recurrence = RecurringPayments.fromPrimitives({
-    recurringPaymentsId: "recurring-1",
+    recurringPaymentId: "recurring-1",
     churchId: "church-1",
     financialConceptId: "concept-1",
+    costCenterId: "cost-center-1",
     name: "Energy",
     type: "VARIABLE",
     dayOfMonth: 10,
-    payment:
-      method === "PIX"
-        ? { method, pixKey: "key-1", pixKeyType: "EVP" }
-        : { method },
     status: "ACTIVE",
     currentPayment,
   })
   const recurringRepository = {
     one: jest.fn().mockResolvedValue(recurrence),
-    updateCurrentPayment: jest.fn().mockResolvedValue(true),
-    confirmCurrentPayment: jest.fn().mockResolvedValue(true),
-    closeCurrentPayment: jest.fn().mockResolvedValue(true),
+    saveIfCurrentPaymentMatches: jest.fn().mockResolvedValue(true),
   }
   const financialRecords = {
     findByBankingExternalReference: jest.fn().mockResolvedValue(undefined),
     findRecurringPayment: jest.fn().mockResolvedValue(undefined),
   }
-  const concept = { getChurchId: () => "church-1" }
+  const concept = {
+    getChurchId: () => "church-1",
+    getFinancialConceptId: () => "concept-1",
+  }
   const conceptRepository = { one: jest.fn().mockResolvedValue(concept) }
-  const account = { getAvailabilityAccountId: () => "availability-1" }
+  const costCenter = {
+    getCostCenterId: () => "cost-center-1",
+    getCostCenterName: () => "Templo",
+  }
+  const financialConfiguration = {
+    findCostCenterByCostCenterId: jest.fn().mockResolvedValue(costCenter),
+  }
+  const account = {
+    getAvailabilityAccountId: () => "availability-1",
+    getAccountName: () => "Itaú",
+    getType: () => "BANK",
+    getSymbol: () => "R$",
+  }
   const availabilityAccounts = { one: jest.fn().mockResolvedValue(account) }
   const queue = { dispatch: jest.fn() }
-  const receipt = { save: jest.fn().mockResolvedValue("receipt-key") }
+  const receipt = {
+    storeRemoteReceipt: jest.fn().mockResolvedValue("receipt-key"),
+  }
   const service = new ProcessRecurringPaymentBankingUpdate(
     recurringRepository as never,
     financialRecords as never,
     conceptRepository as never,
     availabilityAccounts as never,
+    financialConfiguration as never,
     queue as never,
     receipt as never,
     () => new Date("2026-10-01T12:00:00Z")
@@ -58,6 +72,7 @@ function setup(method: "PIX" | "BILL" = "PIX") {
     currentPayment,
     recurringRepository,
     financialRecords,
+    financialConfiguration,
     availabilityAccounts,
     queue,
     receipt,
@@ -71,39 +86,49 @@ const context = {
   attempt: 1,
 }
 
-describe("ProcessRecurringPaymentBankingUpdate", () => {
-  it("updates a pending PIX operation without creating a financial record", async () => {
-    const ctx = setup()
-    await ctx.service.processPix({
-      id: "event-1",
-      type: "BANKING_PIX_TRANSFER_UPDATED",
-      occurredAt: "2026-10-01T12:00:00Z",
-      externalAccountId: "church-1",
-      accountId: "bank-1",
-      data: {
-        pixTransfer: {
-          providerTransferId: "transfer-1",
-          status: "IN_BANK_PROCESSING",
-          amountInCents: 74283,
-          externalReference: ctx.currentPayment.externalReference,
-          context,
-          transactionReceiptUrl: null,
-          failureCode: null,
-        },
+function pixEvent(ctx: ReturnType<typeof setup>, status: string) {
+  return {
+    id: `event-${status}`,
+    type: "BANKING_PIX_TRANSFER_UPDATED" as const,
+    occurredAt: "2026-10-01T12:00:00Z",
+    externalAccountId: "church-1",
+    accountId: "bank-1",
+    data: {
+      pixTransfer: {
+        providerTransferId: "transfer-1",
+        status,
+        amountInCents: 74283,
+        externalReference: ctx.currentPayment.externalReference,
+        context,
+        transactionReceiptUrl: null,
+        failureCode: null,
       },
-    })
-    expect(ctx.recurringRepository.updateCurrentPayment).toHaveBeenCalledWith(
-      "recurring-1",
-      ctx.currentPayment.externalReference,
-      ctx.currentPayment.updatedAt,
-      expect.objectContaining({
-        status: "PROCESSING",
-        providerStatus: "IN_BANK_PROCESSING",
-      })
-    )
-    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
-  })
+    },
+  }
+}
 
+function billEvent(ctx: ReturnType<typeof setup>, status: string) {
+  return {
+    id: `event-${status}`,
+    type: "BANKING_BILL_PAYMENT_UPDATED" as const,
+    occurredAt: "2026-10-01T12:00:00Z",
+    externalAccountId: "church-1",
+    accountId: "bank-1",
+    data: {
+      billPayment: {
+        providerBillId: "bill-1",
+        status,
+        externalReference: ctx.currentPayment.externalReference,
+        context,
+        paymentDate: null,
+        transactionReceiptUrl: null,
+        failureCode: null,
+      },
+    },
+  }
+}
+
+describe("ProcessRecurringPaymentBankingUpdate", () => {
   it.each([
     ["IN_BANK_PROCESSING", "PROCESSING"],
     ["BLOCKED", "BLOCKED"],
@@ -113,30 +138,12 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     "maps PIX provider status %s to %s without creating a record",
     async (providerStatus, expectedStatus) => {
       const ctx = setup()
-      await ctx.service.processPix({
-        id: `event-${providerStatus}`,
-        type: "BANKING_PIX_TRANSFER_UPDATED",
-        occurredAt: "2026-10-01T12:00:00Z",
-        externalAccountId: "church-1",
-        accountId: "bank-1",
-        data: {
-          pixTransfer: {
-            providerTransferId: "transfer-1",
-            status: providerStatus,
-            amountInCents: 74283,
-            externalReference: ctx.currentPayment.externalReference,
-            context,
-            transactionReceiptUrl: null,
-            failureCode: null,
-          },
-        },
+      await ctx.service.processPix(pixEvent(ctx, providerStatus))
+
+      expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+        status: expectedStatus,
+        providerStatus,
       })
-      expect(ctx.recurringRepository.updateCurrentPayment).toHaveBeenCalledWith(
-        "recurring-1",
-        ctx.currentPayment.externalReference,
-        ctx.currentPayment.updatedAt,
-        expect.objectContaining({ status: expectedStatus })
-      )
       expect(ctx.queue.dispatch).not.toHaveBeenCalled()
     }
   )
@@ -149,101 +156,72 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
   ] as const)(
     "maps bill provider status %s to %s without creating a record",
     async (providerStatus, expectedStatus) => {
-      const ctx = setup("BILL")
-      await ctx.service.processBill({
-        id: `event-${providerStatus}`,
-        type: "BANKING_BILL_PAYMENT_UPDATED",
-        occurredAt: "2026-10-01T12:00:00Z",
-        externalAccountId: "church-1",
-        accountId: "bank-1",
-        data: {
-          billPayment: {
-            providerBillId: "bill-1",
-            status: providerStatus,
-            externalReference: ctx.currentPayment.externalReference,
-            context,
-            paymentDate: null,
-            transactionReceiptUrl: null,
-            failureCode: null,
-          },
-        },
+      const ctx = setup()
+      await ctx.service.processBill(billEvent(ctx, providerStatus))
+
+      expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+        status: expectedStatus,
+        providerStatus,
       })
-      expect(ctx.recurringRepository.updateCurrentPayment).toHaveBeenCalledWith(
-        "recurring-1",
-        ctx.currentPayment.externalReference,
-        ctx.currentPayment.updatedAt,
-        expect.objectContaining({ status: expectedStatus })
-      )
       expect(ctx.queue.dispatch).not.toHaveBeenCalled()
     }
   )
 
-  it("creates one reconciled OUTGO record for a confirmed PIX transfer", async () => {
+  it("creates one settled OUTGO record with cost center for a confirmed PIX transfer", async () => {
     const ctx = setup()
     await ctx.service.processPix({
-      id: "event-2",
-      type: "BANKING_PIX_TRANSFER_UPDATED",
-      occurredAt: "2026-10-01T12:00:00Z",
-      externalAccountId: "church-1",
-      accountId: "bank-1",
+      ...pixEvent(ctx, "DONE"),
       data: {
         pixTransfer: {
-          providerTransferId: "transfer-1",
-          status: "DONE",
-          amountInCents: 74283,
-          externalReference: ctx.currentPayment.externalReference,
-          context,
+          ...pixEvent(ctx, "DONE").data.pixTransfer,
           transactionReceiptUrl: "https://www.asaas.com/receipt/1",
-          failureCode: null,
         },
       },
     })
+
     const [, args, options] = ctx.queue.dispatch.mock.calls[0]!
     expect(args).toMatchObject({
       amount: 742.83,
       churchId: "church-1",
       financialRecordType: "OUTGO",
       source: "AUTO",
-      status: "RECONCILED",
+      status: "CLEARED",
+      createdBy: "system",
       recurringPaymentId: "recurring-1",
       recurringCompetence: "2026-10",
       bankingExternalReference: ctx.currentPayment.externalReference,
       voucher: "receipt-key",
     })
+    // The cost center and concept are real domain entities resolved from the
+    // recurrence, not the caller's payload.
+    expect(args.costCenter.getCostCenterId()).toBe("cost-center-1")
+    expect(args.financialConcept.getFinancialConceptId()).toBe("concept-1")
     expect(options).toMatchObject({
       jobId: expect.stringMatching(/^recurring-/),
     })
-    expect(ctx.receipt.save).toHaveBeenCalledWith(
+    expect(ctx.receipt.storeRemoteReceipt).toHaveBeenCalledWith(
       ctx.currentPayment.externalReference,
       "https://www.asaas.com/receipt/1"
     )
   })
 
   it("uses the persisted amount for a confirmed bill without webhook amount", async () => {
-    const ctx = setup("BILL")
+    const ctx = setup()
     await ctx.service.processBill({
-      id: "event-3",
-      type: "BANKING_BILL_PAYMENT_UPDATED",
-      occurredAt: "2026-10-01T12:00:00Z",
-      externalAccountId: "church-1",
-      accountId: "bank-1",
+      ...billEvent(ctx, "PAID"),
       data: {
         billPayment: {
-          providerBillId: "bill-1",
-          status: "PAID",
-          externalReference: ctx.currentPayment.externalReference,
-          context,
+          ...billEvent(ctx, "PAID").data.billPayment,
           paymentDate: "2026-10-01T11:00:00Z",
-          transactionReceiptUrl: null,
-          failureCode: null,
         },
       },
     })
     expect(ctx.queue.dispatch.mock.calls[0]?.[1]).toMatchObject({
       amount: 742.83,
       financialRecordType: "OUTGO",
+      status: "CLEARED",
     })
-    expect(ctx.receipt.save).not.toHaveBeenCalled()
+    expect(ctx.receipt.storeRemoteReceipt).not.toHaveBeenCalled()
   })
 
   it("acknowledges a duplicate confirmation already represented in FinancialRecord", async () => {
@@ -256,24 +234,8 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
         entityId: "recurring-1",
       }),
     })
-    await ctx.service.processPix({
-      id: "event-4",
-      type: "BANKING_PIX_TRANSFER_UPDATED",
-      occurredAt: "2026-10-01T12:00:00Z",
-      externalAccountId: "church-1",
-      accountId: "bank-1",
-      data: {
-        pixTransfer: {
-          providerTransferId: "transfer-1",
-          status: "DONE",
-          amountInCents: 74283,
-          externalReference: ctx.currentPayment.externalReference,
-          context,
-          transactionReceiptUrl: null,
-          failureCode: null,
-        },
-      },
-    })
+    await ctx.service.processPix(pixEvent(ctx, "DONE"))
+
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
     expect(ctx.recurringRepository.one).not.toHaveBeenCalled()
   })
@@ -282,20 +244,12 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     const ctx = setup()
     await expect(
       ctx.service.processPix({
-        id: "event-5",
-        type: "BANKING_PIX_TRANSFER_UPDATED",
-        occurredAt: "2026-10-01T12:00:00Z",
-        externalAccountId: "church-1",
+        ...pixEvent(ctx, "DONE"),
         accountId: "wrong-bank",
         data: {
           pixTransfer: {
-            providerTransferId: "transfer-1",
-            status: "DONE",
-            amountInCents: 74283,
-            externalReference: ctx.currentPayment.externalReference,
+            ...pixEvent(ctx, "DONE").data.pixTransfer,
             context: { ...context, competence: "2026-11" },
-            transactionReceiptUrl: null,
-            failureCode: null,
           },
         },
       })
@@ -305,38 +259,37 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
-  it("recognizes bill refunds without changing the original financial record", async () => {
-    const ctx = setup("BILL")
-    const record = {
+  it("rejects an event whose amount does not match the reserved operation", async () => {
+    const ctx = setup()
+    await expect(
+      ctx.service.processPix({
+        ...pixEvent(ctx, "DONE"),
+        data: {
+          pixTransfer: {
+            ...pixEvent(ctx, "DONE").data.pixTransfer,
+            amountInCents: 99999,
+          },
+        },
+      })
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH",
+    })
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("recognizes bill refunds without creating another financial record", async () => {
+    const ctx = setup()
+    ctx.financialRecords.findByBankingExternalReference.mockResolvedValue({
       getChurchId: () => "church-1",
       getRecurringPaymentId: () => "recurring-1",
       getReference: () => ({
         type: "RECURRING_PAYMENT",
         entityId: "recurring-1",
       }),
-    }
-    ctx.financialRecords.findByBankingExternalReference.mockResolvedValue(
-      record
-    )
-    await ctx.service.processBill({
-      id: "event-6",
-      type: "BANKING_BILL_PAYMENT_UPDATED",
-      occurredAt: "2026-10-02T12:00:00Z",
-      externalAccountId: "church-1",
-      accountId: "bank-1",
-      data: {
-        billPayment: {
-          providerBillId: "bill-1",
-          status: "REFUNDED",
-          externalReference: ctx.currentPayment.externalReference,
-          context,
-          paymentDate: null,
-          transactionReceiptUrl: null,
-          failureCode: null,
-        },
-      },
     })
+    await ctx.service.processBill(billEvent(ctx, "REFUNDED"))
+
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
-    expect(ctx.recurringRepository.closeCurrentPayment).not.toHaveBeenCalled()
+    expect(ctx.recurringRepository.one).not.toHaveBeenCalled()
   })
 })

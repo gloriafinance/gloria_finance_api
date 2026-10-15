@@ -35,7 +35,7 @@ export class RecurringPaymentsMongoRepository
       : { currentPayment: { $exists: false } }
     const result = await collection.replaceOne(
       {
-        recurringPaymentsId: recurringPayment.getRecurringPaymentsId(),
+        recurringPaymentId: recurringPayment.getRecurringPaymentId(),
         churchId: recurringPayment.getChurchId(),
         ...currentPaymentFilter,
       },
@@ -46,7 +46,7 @@ export class RecurringPaymentsMongoRepository
 
   protected async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex(
-      { recurringPaymentsId: 1 },
+      { recurringPaymentId: 1 },
       { unique: true, name: "idx_recurring_payments_id_unique" }
     )
     await collection.createIndex(

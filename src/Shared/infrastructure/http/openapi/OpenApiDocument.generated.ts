@@ -9697,6 +9697,9 @@ export const openApiDocument = {
                   financialConceptId: {
                     type: "string",
                   },
+                  costCenterId: {
+                    type: "string",
+                  },
                   type: {
                     type: "string",
                     enum: ["FIXED", "VARIABLE"],
@@ -9707,12 +9710,21 @@ export const openApiDocument = {
                   dayOfMonth: {
                     type: "number",
                   },
+                  pixDestination: {
+                    description: "TypeScript type: PixDestination",
+                  },
                   status: {
                     description:
                       'TypeScript type: RecurringPaymentConfiguration["status"]',
                   },
                 },
-                required: ["name", "financialConceptId", "type", "dayOfMonth"],
+                required: [
+                  "name",
+                  "financialConceptId",
+                  "costCenterId",
+                  "type",
+                  "dayOfMonth",
+                ],
                 additionalProperties: false,
               },
             },
@@ -9732,17 +9744,17 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      recurringPaymentsId:
+                      recurringPaymentId:
                         "00000000-0000-0000-0000-000000000001",
                       churchId: "00000000-0000-0000-0000-000000000001",
                       financialConceptId:
                         "00000000-0000-0000-0000-000000000001",
+                      costCenterId: "00000000-0000-0000-0000-000000000001",
                       name: "Gloria Finance",
                       type: "FIXED",
                       amount: 0,
                       dayOfMonth: 0,
-                      payment: {
-                        method: "PIX",
+                      pixDestination: {
                         pixKey: "Gloria Finance",
                         pixKeyType: "CNPJ",
                       },
@@ -9801,6 +9813,9 @@ export const openApiDocument = {
                   financialConceptId: {
                     type: "string",
                   },
+                  costCenterId: {
+                    type: "string",
+                  },
                   type: {
                     type: "string",
                     enum: ["FIXED", "VARIABLE"],
@@ -9811,12 +9826,21 @@ export const openApiDocument = {
                   dayOfMonth: {
                     type: "number",
                   },
+                  pixDestination: {
+                    description: "TypeScript type: PixDestination",
+                  },
                   status: {
                     description:
                       'TypeScript type: RecurringPaymentConfiguration["status"]',
                   },
                 },
-                required: ["name", "financialConceptId", "type", "dayOfMonth"],
+                required: [
+                  "name",
+                  "financialConceptId",
+                  "costCenterId",
+                  "type",
+                  "dayOfMonth",
+                ],
                 additionalProperties: false,
               },
             },
@@ -9836,17 +9860,17 @@ export const openApiDocument = {
                   success: {
                     summary: "Successful response",
                     value: {
-                      recurringPaymentsId:
+                      recurringPaymentId:
                         "00000000-0000-0000-0000-000000000001",
                       churchId: "00000000-0000-0000-0000-000000000001",
                       financialConceptId:
                         "00000000-0000-0000-0000-000000000001",
+                      costCenterId: "00000000-0000-0000-0000-000000000001",
                       name: "Gloria Finance",
                       type: "FIXED",
                       amount: 0,
                       dayOfMonth: 0,
-                      payment: {
-                        method: "PIX",
+                      pixDestination: {
                         pixKey: "Gloria Finance",
                         pixKeyType: "CNPJ",
                       },
@@ -9875,7 +9899,7 @@ export const openApiDocument = {
         },
       },
     },
-    "/api/v1/recurring-payments/{id}/pay": {
+    "/api/v1/recurring-payments/{recurringPaymentId}/pay": {
       post: {
         tags: ["RecurringPayment"],
         summary: "pay",
@@ -9884,7 +9908,7 @@ export const openApiDocument = {
         operationId: "post_RecurringPayment_pay",
         parameters: [
           {
-            name: "id",
+            name: "recurringPaymentId",
             in: "path",
             required: true,
             schema: {
@@ -9905,7 +9929,23 @@ export const openApiDocument = {
                   amount: {
                     type: "number",
                   },
-                  identificationField: {
+                  payment: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        description: 'TypeScript type: "PIX"',
+                      },
+                      pixKey: {
+                        type: "string",
+                      },
+                      pixKeyType: {
+                        description: "TypeScript type: PixKeyType",
+                      },
+                    },
+                    required: ["type", "pixKey", "pixKeyType"],
+                    additionalProperties: false,
+                  },
+                  availabilityAccountId: {
                     type: "string",
                   },
                 },
@@ -9931,10 +9971,64 @@ export const openApiDocument = {
                     value: {
                       status: "ALREADY_PAID",
                       competence: "Gloria Finance",
-                      attempt: 0,
-                      externalReference: "Gloria Finance",
-                      providerStatus: "Gloria Finance",
                       failureCode: "Gloria Finance",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/register-payment": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "register payment",
+        description:
+          "Implemented by RecurringPaymentController.registerPayment. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_registerPayment",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_REGISTERED",
+                      competence: "Gloria Finance",
                     },
                   },
                 },

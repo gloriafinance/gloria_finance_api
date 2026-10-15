@@ -245,7 +245,8 @@ export class ChurchBankingClient implements IChurchBankingClient {
       result.externalAccountId !== expected.externalAccountId ||
       result.externalReference !== expected.externalReference ||
       (expected.amountInCents !== undefined &&
-        result.amountInCents !== expected.amountInCents) ||
+        (!isRecord(result) ||
+          result.amountInCents !== expected.amountInCents)) ||
       typeof result.status !== "string" ||
       ![
         "RESERVED",

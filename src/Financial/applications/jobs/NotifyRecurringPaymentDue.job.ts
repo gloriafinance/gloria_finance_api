@@ -72,7 +72,7 @@ export class NotifyRecurringPaymentDue implements IJob {
               reminderDate
             )
               continue
-            if (paidIds.has(payment.getRecurringPaymentsId())) continue
+            if (paidIds.has(payment.getRecurringPaymentId())) continue
             const current = payment.getCurrentPayment()
             if (
               current?.competence === competence &&
@@ -80,7 +80,7 @@ export class NotifyRecurringPaymentDue implements IJob {
             )
               continue
 
-            const lockKey = `recurring-payment-reminder:${payment.getRecurringPaymentsId()}:${competence}:${offset}`
+            const lockKey = `recurring-payment-reminder:${payment.getRecurringPaymentId()}:${competence}:${offset}`
             if (await this.cacheService.get<boolean>(lockKey)) continue
             const message = reminderText(
               church.getLang(),
@@ -96,11 +96,11 @@ export class NotifyRecurringPaymentDue implements IJob {
                 body: message.body,
                 data: {
                   type: NotificationsTopic.RECURRING_PAYMENT_DUE,
-                  id: payment.getRecurringPaymentsId(),
+                  id: payment.getRecurringPaymentId(),
                 },
               },
               {
-                jobId: `recurring-reminder-${payment.getRecurringPaymentsId()}-${competence}-${offset}`,
+                jobId: `recurring-reminder-${payment.getRecurringPaymentId()}-${competence}-${offset}`,
               }
             )
             await this.cacheService.set(lockKey, true, 60 * 60 * 48)

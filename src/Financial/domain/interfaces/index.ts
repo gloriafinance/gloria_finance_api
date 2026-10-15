@@ -3,3 +3,4 @@ export { type IOnlineContributionsRepository } from "./ContributionRepository.in
 export { type IAvailabilityAccountMasterRepository } from "./AvailabilityAccountMasterRepository.interface"
 export { type ICostCenterMasterRepository } from "./CostCenterMasterRepository.interface"
 export { type IRecurringPaymentsRepository } from "./RecurringPaymentsRepository.interface"
+export { type IRemoteReceiptStorage } from "./RemoteReceiptStorage.interface"

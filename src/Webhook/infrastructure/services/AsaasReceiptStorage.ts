@@ -1,19 +1,25 @@
 import { StorageProviderService } from "@/Shared/infrastructure/services/StorageProvider.service"
 import type { IStorageService } from "@/Shared/domain"
+import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/RemoteReceiptStorage.interface"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 
-export class AsaasReceiptStorage {
+/**
+ * Adapter for the `IRemoteReceiptStorage` port. It owns the Asaas-specific
+ * detail of turning a receipt reference into a downloadable PDF, so the
+ * application layer never has to know how Asaas exposes receipts.
+ */
+export class AsaasReceiptStorage implements IRemoteReceiptStorage {
   private readonly logger = Logger(AsaasReceiptStorage.name)
 
   constructor(
     private readonly storage: IStorageService = StorageProviderService.getInstance()
   ) {}
 
-  async save(
+  async storeRemoteReceipt(
     id: string,
-    transactionReceiptUrl: string
+    receiptUrl: string
   ): Promise<string | undefined> {
-    const pdfUrl = await this.getAsaasReceiptPdfUrl(transactionReceiptUrl)
+    const pdfUrl = await this.getAsaasReceiptPdfUrl(receiptUrl)
     const response = await fetch(pdfUrl)
     if (!response.ok) {
       this.logger.error("Error downloading Asaas receipt", {

@@ -258,6 +258,17 @@ export class FinanceRecord extends AggregateRoot {
     return this.status
   }
 
+  /**
+   * The money actually left (or entered) the account. `PENDING` means the fact
+   * was declared but not yet confirmed, so it is not settled.
+   */
+  isSettled(): boolean {
+    return (
+      this.status === FinancialRecordStatus.CLEARED ||
+      this.status === FinancialRecordStatus.RECONCILED
+    )
+  }
+
   update() {
     this.updatedAt = DateBR()
   }

@@ -1,8 +1,8 @@
 //import { Minister, Region } from "../../OrganizacionalStructure/domain";
-import { IdentifyEntity } from "@/Shared/adapter"
+import { IdentifyEntity } from "@/Shared/adapter/IdentifyEntity.adapter"
 import { ChurchStatus } from "./enums/ChurchStatus.enum"
-import { Minister } from "./Minister"
-import { DateBR } from "@/Shared/helpers"
+import type { Minister } from "./Minister"
+import { DateBR } from "@/Shared/helpers/date"
 import {
   AggregateRoot,
   type AggregateRelations,

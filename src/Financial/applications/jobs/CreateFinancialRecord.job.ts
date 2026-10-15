@@ -84,7 +84,7 @@ export class CreateFinancialRecordJob implements IJob {
 
       if (args.recurringPaymentId && args.bankingExternalReference) {
         const recurring = await this.recurringPaymentsRepository?.one({
-          recurringPaymentsId: args.recurringPaymentId,
+          recurringPaymentId: args.recurringPaymentId,
         })
         const currentPayment = recurring?.getCurrentPayment()
         if (

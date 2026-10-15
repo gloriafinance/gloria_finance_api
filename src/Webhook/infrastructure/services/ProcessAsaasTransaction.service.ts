@@ -338,6 +338,6 @@ export class ProcessAsaasTransactionService {
     id: string,
     transactionReceiptUrl: string
   ): Promise<string | undefined> {
-    return new AsaasReceiptStorage().save(id, transactionReceiptUrl)
+    return new AsaasReceiptStorage().storeRemoteReceipt(id, transactionReceiptUrl)
   }
 }
