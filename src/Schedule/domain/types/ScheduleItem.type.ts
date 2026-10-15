@@ -1,10 +1,10 @@
 import {
-  DayOfWeek,
   RecurrenceType,
   ScheduleEventStatus,
   ScheduleEventType,
   ScheduleEventVisibility,
 } from "@/Schedule/domain"
+import type { DayOfWeek } from "@/Shared/domain/types"
 
 export type LocationDTO = {
   name: string

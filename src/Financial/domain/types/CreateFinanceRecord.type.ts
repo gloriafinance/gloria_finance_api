@@ -25,4 +25,7 @@ export type CreateFinanceRecord = {
     type: string
     entityId: string
   }
+  recurringPaymentId?: string
+  recurringCompetence?: string
+  bankingExternalReference?: string
 }

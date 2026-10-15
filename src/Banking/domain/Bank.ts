@@ -1,10 +1,11 @@
-import { Church } from "@/Church/domain"
-import { Urn } from "@/Shared/adapter"
+import type { Church } from "@/Church/domain/Church"
+import { Urn } from "@/Shared/adapter/Urn"
 import {
   AggregateRoot,
   type AggregateRelations,
 } from "@abejarano/ts-mongodb-criteria"
-import { TypeBankAccount } from "@/Banking/domain"
+import { TypeBankAccount } from "@/Banking/domain/enums/TypeBankAccount.enum"
+import { Provider } from "@/Banking/domain/enums/Provider.enum"
 
 export class Bank extends AggregateRoot {
   static collectionName(): string {
@@ -22,6 +23,8 @@ export class Bank extends AggregateRoot {
   private tag: string
   private addressInstancePayment: string
   private bankInstruction: any
+  /** Payment provider this account is connected to, if any. Empty when manual. */
+  private provider?: Provider
   private churchId: string
 
   static create(
@@ -59,6 +62,7 @@ export class Bank extends AggregateRoot {
     bank.tag = plainData.tag
     bank.addressInstancePayment = plainData.addressInstancePayment
     bank.bankInstruction = plainData.bankInstruction
+    bank.provider = plainData.provider ?? undefined
     bank.churchId = plainData.churchId ?? undefined
     return bank
   }
@@ -87,6 +91,15 @@ export class Bank extends AggregateRoot {
     return this.active
   }
 
+  /**
+   * Banking execution must debit the account connected to the provider. Without
+   * this the church's other banks are indistinguishable and a payment could be
+   * recorded against an account the provider never touched.
+   */
+  isConnectedTo(provider: Provider): boolean {
+    return this.provider === provider
+  }
+
   setInstancePaymentAddress(address: string): void {
     this.addressInstancePayment = address
   }
@@ -107,6 +120,10 @@ export class Bank extends AggregateRoot {
     this.accountType = accountType
   }
 
+  setProvider(provider: Provider | undefined): void {
+    this.provider = provider
+  }
+
   toPrimitives(): any {
     return {
       accountType: this.accountType,
@@ -116,6 +133,7 @@ export class Bank extends AggregateRoot {
       tag: this.tag,
       addressInstancePayment: this.addressInstancePayment,
       bankInstruction: this.bankInstruction,
+      provider: this.provider,
       churchId: this.churchId,
     }
   }

@@ -3,7 +3,8 @@ import {
   MongoRepository,
   type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
-import { type IPermissionRepository, Permission } from "@/SecuritySystem/domain"
+import { Permission } from "@/SecuritySystem/domain/Permission"
+import type { IPermissionRepository } from "@/SecuritySystem/domain/interfaces/rbac"
 import { Collection } from "mongodb"
 
 export class PermissionMongoRepository

@@ -15,6 +15,7 @@ import {
   TypeOperationMoney,
 } from "@/Financial/domain"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface.ts"
 import type { IJob, IQueueService } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter"
 import type { IStorageService } from "@/Shared/domain"
@@ -26,7 +27,8 @@ export class CreateFinancialRecordJob implements IJob {
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly store: IStorageService,
-    private readonly queueService: IQueueService
+    private readonly queueService: IQueueService,
+    private readonly recurringPaymentsRepository?: IRecurringPaymentsRepository
   ) {}
 
   async handle(args: FinancialRecordCreateQueue): Promise<void> {
@@ -35,10 +37,17 @@ export class CreateFinancialRecordJob implements IJob {
       jobName: CreateFinancialRecordJob.name,
     })
 
+    // A recurring execution is booked in the competence it settles, which is the
+    // period the caller already validated. Using the payment date here instead
+    // would check a different month and could reject a payment that was approved,
+    // or approve one booked into a closed period.
+    const accountingMonth = args.recurringCompetence
+      ? new Date(`${args.recurringCompetence}-01T00:00:00.000Z`)
+      : new Date(args.date)
     await new FinancialMonthValidator(this.financialYearRepository).validate({
       churchId: args.churchId,
-      month: new Date(args.date).getUTCMonth() + 1,
-      year: new Date(args.date).getFullYear(),
+      month: accountingMonth.getUTCMonth() + 1,
+      year: accountingMonth.getUTCFullYear(),
     })
 
     if (typeof args.availabilityAccount === "object") {
@@ -74,8 +83,28 @@ export class CreateFinancialRecordJob implements IJob {
         source: args.source,
         createdBy: args.createdBy,
         reference: args.reference,
+        recurringPaymentId: args.recurringPaymentId,
+        recurringCompetence: args.recurringCompetence,
+        bankingExternalReference: args.bankingExternalReference,
       })
       await this.financialRecordRepository.upsert(financialRecord)
+
+      if (args.recurringPaymentId && args.bankingExternalReference) {
+        const recurring = await this.recurringPaymentsRepository?.one({
+          recurringPaymentId: args.recurringPaymentId,
+        })
+        const currentPayment = recurring?.getCurrentPayment()
+        if (
+          recurring &&
+          currentPayment?.externalReference === args.bankingExternalReference
+        ) {
+          recurring.closeCurrentPayment(args.bankingExternalReference)
+          await this.recurringPaymentsRepository?.saveIfCurrentPaymentMatches(
+            recurring,
+            currentPayment
+          )
+        }
+      }
 
       this.logger.info(`CreateFinancialRecord committed`, {
         jobName: CreateFinancialRecordJob.name,

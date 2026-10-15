@@ -8,6 +8,7 @@ import {
   FinancialRecordSource,
   FinancialRecordStatus,
   FinancialRecordType,
+  ReconciledRecordCannotBeCancelled,
   TypeOperationMoney,
 } from "@/Financial/domain"
 import { Logger } from "@/Shared/adapter"
@@ -62,6 +63,18 @@ export class CancelFinancialRecord {
     this.logger.info(`Execute financial recordId:`, params)
 
     const { financialRecordId, churchId, createdBy } = params
+
+    // Checked before opening the transaction: a reconciled record is backed by a
+    // real bank debit, so the reversal is refused outright and there is no reason
+    // to start a transaction to discover it.
+    const existing = await this.financialRecordRepository.one({
+      financialRecordId,
+      churchId,
+    })
+    if (existing?.getStatus() === FinancialRecordStatus.RECONCILED) {
+      this.logger.error(`Reconciled movement cannot be cancelled`, params)
+      throw new ReconciledRecordCannotBeCancelled()
+    }
 
     try {
       const cancellationSideEffects = await DatabaseTransaction.run(

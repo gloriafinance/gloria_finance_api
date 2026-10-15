@@ -1,6 +1,6 @@
 import Redis from "ioredis"
 
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { type ICacheService } from "@/Shared/domain"
 import { readRedisConnectionOptions } from "@/Shared/helpers/ReadRedisConnectionOptions.helper"
 

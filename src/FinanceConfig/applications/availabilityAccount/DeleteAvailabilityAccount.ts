@@ -4,8 +4,8 @@ import type {
   IAvailabilityAccountFinancialMovementChecker,
   IAvailabilityAccountRepository,
 } from "@/FinanceConfig/domain"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "./FindAvailabilityAccountByAvailabilityAccountId"
 import { AvailabilityAccountHasMovements } from "@/FinanceConfig/domain"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
 
 export class DeleteAvailabilityAccount {
   private logger = Logger(DeleteAvailabilityAccount.name)

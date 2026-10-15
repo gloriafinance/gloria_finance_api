@@ -1,4 +1,3 @@
-import { type IFinancialConceptRepository } from "@/Financial/domain/interfaces"
 import { Church, ChurchNotFound, type IChurchRepository } from "@/Church/domain"
 import {
   FinancialConcept,
@@ -8,6 +7,7 @@ import { FindChurchById } from "@/Church/applications"
 import { Logger } from "@/Shared/adapter"
 import {
   FinancialConceptNotFound,
+  type IFinancialConceptRepository,
   NotPossibleUpdateConcept,
 } from "@/FinanceConfig/domain"
 

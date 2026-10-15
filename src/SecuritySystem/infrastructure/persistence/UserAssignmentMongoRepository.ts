@@ -1,9 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
-import { DateBR } from "@/Shared/helpers"
-import {
-  IUserAssignmentRepository,
-  UserAssignment,
-} from "@/SecuritySystem/domain"
+import { DateBR } from "@/Shared/helpers/date"
+import { UserAssignment } from "@/SecuritySystem/domain/UserAssignment"
+import type { IUserAssignmentRepository } from "@/SecuritySystem/domain/interfaces/rbac"
 import { Collection } from "mongodb"
 
 export class UserAssignmentMongoRepository

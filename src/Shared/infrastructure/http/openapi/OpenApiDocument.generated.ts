@@ -1811,6 +1811,7 @@ export const openApiDocument = {
                       tag: "Gloria Finance",
                       addressInstancePayment: "Gloria Finance",
                       bankInstruction: "Gloria Finance",
+                      provider: "ASAAS",
                       churchId: "00000000-0000-0000-0000-000000000001",
                     },
                   },
@@ -6043,6 +6044,15 @@ export const openApiDocument = {
                         required: ["type", "entityId"],
                         additionalProperties: false,
                       },
+                      recurringPaymentId: {
+                        type: "string",
+                      },
+                      recurringCompetence: {
+                        type: "string",
+                      },
+                      bankingExternalReference: {
+                        type: "string",
+                      },
                     },
                     required: [
                       "churchId",
@@ -9616,6 +9626,434 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/v1/recurring-payments": {
+      get: {
+        tags: ["RecurringPayment"],
+        summary: "list",
+        description:
+          "Implemented by RecurringPaymentController.list. The runtime endpoint validates its input and response contract.",
+        operationId: "get_RecurringPayment_list",
+        parameters: [
+          {
+            name: "competence",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: [{}],
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "create",
+        description:
+          "Implemented by RecurringPaymentController.create. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_create",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                  },
+                  financialConceptId: {
+                    type: "string",
+                  },
+                  costCenterId: {
+                    type: "string",
+                  },
+                  type: {
+                    type: "string",
+                    enum: ["FIXED", "VARIABLE"],
+                  },
+                  amount: {
+                    type: "number",
+                  },
+                  dayOfMonth: {
+                    type: "number",
+                  },
+                  pixDestination: {
+                    description: "TypeScript type: PixDestination",
+                  },
+                  status: {
+                    description:
+                      'TypeScript type: RecurringPaymentConfiguration["status"]',
+                  },
+                },
+                required: [
+                  "name",
+                  "financialConceptId",
+                  "costCenterId",
+                  "type",
+                  "dayOfMonth",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "201": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      recurringPaymentId:
+                        "00000000-0000-0000-0000-000000000001",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      financialConceptId:
+                        "00000000-0000-0000-0000-000000000001",
+                      costCenterId: "00000000-0000-0000-0000-000000000001",
+                      name: "Gloria Finance",
+                      type: "FIXED",
+                      amount: 0,
+                      dayOfMonth: 0,
+                      pixDestination: {
+                        pixKey: "Gloria Finance",
+                        pixKeyType: "CNPJ",
+                      },
+                      status: "ACTIVE",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{id}": {
+      put: {
+        tags: ["RecurringPayment"],
+        summary: "update",
+        description:
+          "Implemented by RecurringPaymentController.update. The runtime endpoint validates its input and response contract.",
+        operationId: "put_RecurringPayment_update",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                  },
+                  financialConceptId: {
+                    type: "string",
+                  },
+                  costCenterId: {
+                    type: "string",
+                  },
+                  type: {
+                    type: "string",
+                    enum: ["FIXED", "VARIABLE"],
+                  },
+                  amount: {
+                    type: "number",
+                  },
+                  dayOfMonth: {
+                    type: "number",
+                  },
+                  pixDestination: {
+                    description: "TypeScript type: PixDestination",
+                  },
+                  status: {
+                    description:
+                      'TypeScript type: RecurringPaymentConfiguration["status"]',
+                  },
+                },
+                required: [
+                  "name",
+                  "financialConceptId",
+                  "costCenterId",
+                  "type",
+                  "dayOfMonth",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      recurringPaymentId:
+                        "00000000-0000-0000-0000-000000000001",
+                      churchId: "00000000-0000-0000-0000-000000000001",
+                      financialConceptId:
+                        "00000000-0000-0000-0000-000000000001",
+                      costCenterId: "00000000-0000-0000-0000-000000000001",
+                      name: "Gloria Finance",
+                      type: "FIXED",
+                      amount: 0,
+                      dayOfMonth: 0,
+                      pixDestination: {
+                        pixKey: "Gloria Finance",
+                        pixKeyType: "CNPJ",
+                      },
+                      status: "ACTIVE",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/pay": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "pay",
+        description:
+          "Implemented by RecurringPaymentController.pay. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_pay",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  competence: {
+                    type: "string",
+                  },
+                  amount: {
+                    type: "number",
+                  },
+                  payment: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        description: 'TypeScript type: "PIX"',
+                      },
+                      pixKey: {
+                        type: "string",
+                      },
+                      pixKeyType: {
+                        description: "TypeScript type: PixKeyType",
+                      },
+                    },
+                    required: ["type", "pixKey", "pixKeyType"],
+                    additionalProperties: false,
+                  },
+                  availabilityAccountId: {
+                    type: "string",
+                  },
+                },
+                required: ["competence"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_PAID",
+                      competence: "Gloria Finance",
+                      failureCode: "Gloria Finance",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/register-payment": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "register payment",
+        description:
+          "Implemented by RecurringPaymentController.registerPayment. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_registerPayment",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "202": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_REGISTERED",
+                      competence: "Gloria Finance",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
     "/api/v1/reports/cash-flow": {
       get: {
         tags: ["CashFlow"],
@@ -11880,7 +12318,7 @@ export const openApiDocument = {
           content: {
             "application/json": {
               schema: {
-                description: "TypeScript type: payloadWebhook",
+                description: "TypeScript type: ChurchBankingWebhookEvent",
               },
             },
           },

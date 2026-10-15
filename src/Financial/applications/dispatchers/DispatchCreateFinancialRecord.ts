@@ -1,5 +1,5 @@
 import type { FinancialRecordCreateQueue } from "../../domain"
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 
 export class DispatchCreateFinancialRecord {
@@ -7,12 +7,16 @@ export class DispatchCreateFinancialRecord {
 
   constructor(private readonly queueService: IQueueService) {}
 
-  async execute(financialRecord: FinancialRecordCreateQueue): Promise<void> {
+  async execute(
+    financialRecord: FinancialRecordCreateQueue,
+    options?: { jobId?: string }
+  ): Promise<void> {
     this.logger.info(`DispatchFinancialRecord`, financialRecord)
 
     this.queueService.dispatch(
       QueueName.CreateFinancialRecordJob,
-      financialRecord
+      financialRecord,
+      options
     )
   }
 }

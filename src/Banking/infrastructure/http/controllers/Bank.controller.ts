@@ -7,13 +7,11 @@ import {
 import {
   type BankRequest,
   type ConnectExternalAccountRequest,
+  ChurchBankingClientError,
   CreateStaticPixForOfferingsDomainEvent,
 } from "@/Banking/domain"
 import { CreateAvailabilityAccountDomainEvent } from "@/Banking/domain/events/CreateAvailabilityAccount.event.ts"
-import {
-  ChurchBankingClient,
-  ChurchBankingClientError,
-} from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
+import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
 import bankValidator from "@/Banking/infrastructure/http/validators/Bank.validator"
 import connectAsaasAccountValidator from "@/Banking/infrastructure/http/validators/ConnectAsaasAccount.validator"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence"

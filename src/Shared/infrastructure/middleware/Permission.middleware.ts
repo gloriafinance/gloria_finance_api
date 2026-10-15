@@ -1,10 +1,8 @@
 import jwt from "jsonwebtoken"
 import { AuthorizationService } from "@/SecuritySystem/applications/rbac/AuthorizationService"
-import {
-  PermissionMongoRepository,
-  RolePermissionMongoRepository,
-  UserAssignmentMongoRepository,
-} from "@/SecuritySystem/infrastructure"
+import { PermissionMongoRepository } from "@/SecuritySystem/infrastructure/persistence/PermissionMongoRepository"
+import { RolePermissionMongoRepository } from "@/SecuritySystem/infrastructure/persistence/RolePermissionMongoRepository"
+import { UserAssignmentMongoRepository } from "@/SecuritySystem/infrastructure/persistence/UserAssignmentMongoRepository"
 import { type AuthTokenPayload } from "@/SecuritySystem/infrastructure/adapters/AuthToken.adapter"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 import type {
@@ -12,7 +10,7 @@ import type {
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
-import { Logger } from "@/Shared/adapter"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 
 const authorizationService = AuthorizationService.getInstance(
   UserAssignmentMongoRepository.getInstance(),

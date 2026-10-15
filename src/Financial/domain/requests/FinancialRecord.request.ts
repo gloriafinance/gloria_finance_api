@@ -26,6 +26,9 @@ export type FinancialRecordCreateQueue = {
     type: string
     entityId: string
   }
+  recurringPaymentId?: string
+  recurringCompetence?: string
+  bankingExternalReference?: string
 }
 
 export type FinancialRecordRequest = {

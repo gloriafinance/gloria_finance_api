@@ -1,10 +1,10 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import {
-  DayOfWeek,
   type IScheduleItemRepository,
   ScheduleEvent,
   ScheduleEventStatus,
 } from "@/Schedule/domain"
+import { DayOfWeek } from "@/Shared/domain/types"
 import { Collection } from "mongodb"
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"

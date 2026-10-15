@@ -19,6 +19,7 @@ export { CostCenterNotFound } from "./exceptions/CostCenterNotFound.exception"
 export { FinancialConceptDisable } from "./exceptions/FinancialConceptDisable.exception"
 export { CostCenterExists } from "./exceptions/CostCenterExists.exception"
 export * from "./exceptions/FinancialMovementNotFound.exception"
+export * from "./exceptions/ReconciledRecordCannotBeCancelled.exception"
 export * from "./exceptions/FinanceRecordNotFound.exception"
 
 export * from "./enums/MemberContributionType.enum"
@@ -51,7 +52,12 @@ export type { FinancialConceptRequest } from "../../FinanceConfig/domain/request
 export type { FilterFinancialConceptRequest } from "../../FinanceConfig/domain/requests/FilterFinancialConcept.request"
 
 export type { IFinanceRecordDTO } from "./interfaces/FinanceRecordDTO.interface"
+export type { IRecurringPaymentsRepository } from "./interfaces/RecurringPaymentsRepository.interface"
 
 export type * from "./types/CreateFinanceRecord.type"
 export type { StatementCategorySummary } from "./types/StatementCategorySummary.type"
 export type { MemberGenerositySummary } from "./types/MemberGenerositySummary.type"
+
+export * from "./RecurringPayments"
+export * from "./exceptions/RecurringPayment.exception"
+export type * from "./requests/RecurringPayment.request"

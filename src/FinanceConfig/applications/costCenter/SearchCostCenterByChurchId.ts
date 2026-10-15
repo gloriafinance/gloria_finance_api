@@ -1,5 +1,5 @@
 import { CostCenter } from "../../../Financial/domain"
-import { IFinancialConfigurationRepository } from "../../../Financial/domain/interfaces"
+import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain"
 
 export class SearchCostCenterByChurchId {
   constructor(

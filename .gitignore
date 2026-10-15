@@ -41,3 +41,6 @@ upload
 backups
 ai-providers.yaml
 .codex-oauth
+
+# Auditoría interna (no versionada)
+docs/recurring-payments-audit.md

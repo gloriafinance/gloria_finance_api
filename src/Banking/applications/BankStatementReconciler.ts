@@ -1,15 +1,13 @@
 import { Logger } from "@/Shared/adapter/CustomLogger"
+import { BankStatement } from "@/Banking/domain/BankStatement"
+import { BankStatementDirection } from "@/Banking/domain/enums/BankStatementDirection.enum"
+import type { IBankStatementRepository } from "@/Banking/domain/interfaces/BankStatementRepository.interface"
+import { FinanceRecord } from "@/Financial/domain/FinanceRecord"
 import {
-  BankStatement,
-  BankStatementDirection,
-  type IBankStatementRepository,
-} from "@/Banking/domain"
-import {
-  FinanceRecord,
   FinancialRecordStatus,
   FinancialRecordType,
-} from "@/Financial/domain"
-import { DispatchUpdateStatusFinancialRecord } from "@/Financial/applications"
+} from "@/Financial/domain/enums/FinancialRecordType.enum"
+import { DispatchUpdateStatusFinancialRecord } from "@/Financial/applications/dispatchers/DispatchUpdateStatusFinancialRecord"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import type { IQueueService } from "@/package/queue/domain"
 

@@ -1,4 +1,4 @@
-import { AccountType } from "@/FinanceConfig/domain"
+import type { AccountType } from "@/FinanceConfig/domain/enums/AccountType.enum"
 import type { DomainEvent } from "@/package/events"
 
 type request = {

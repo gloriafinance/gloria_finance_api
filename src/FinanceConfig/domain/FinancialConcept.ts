@@ -1,7 +1,7 @@
-import { Church } from "@/Church/domain"
-import { StatementCategory } from "@/Financial/domain"
-import { IdentifyEntity } from "@/Shared/adapter"
-import { DateBR } from "@/Shared/helpers"
+import type { Church } from "@/Church/domain/Church"
+import { StatementCategory } from "@/Financial/domain/enums/StatementCategory.enum"
+import { IdentifyEntity } from "@/Shared/adapter/IdentifyEntity.adapter"
+import { DateBR } from "@/Shared/helpers/date"
 import {
   AggregateRoot,
   type AggregateRelations,

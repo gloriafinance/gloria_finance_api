@@ -1,4 +1,4 @@
-import { PermissionMongoRepository } from "@/SecuritySystem/infrastructure"
+import { PermissionMongoRepository } from "@/SecuritySystem/infrastructure/persistence/PermissionMongoRepository"
 import { type ICacheService } from "@/Shared/domain"
 import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 

@@ -3,10 +3,8 @@ import {
   MongoRepository,
   type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
-import {
-  AvailabilityAccount,
-  type IAvailabilityAccountRepository,
-} from "@/FinanceConfig/domain"
+import { AvailabilityAccount } from "@/FinanceConfig/domain/AvailabilityAccount"
+import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
 import { Collection } from "mongodb"
 
 export class AvailabilityAccountMongoRepository

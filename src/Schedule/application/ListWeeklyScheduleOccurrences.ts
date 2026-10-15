@@ -13,28 +13,17 @@ import {
 import dayjs, { type Dayjs } from "dayjs"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
+import { type DayOfWeekIndex, DayOfWeekNumber } from "@/Shared/domain/types"
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
 const DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
-type DayOfWeekIndex = {
-  [key: string]: number
-}
-
 export class ListWeeklyScheduleOccurrences {
   private readonly logger = Logger(ListWeeklyScheduleOccurrences.name)
 
-  private readonly dayOfWeekIndex: DayOfWeekIndex = {
-    SUNDAY: 0,
-    MONDAY: 1,
-    TUESDAY: 2,
-    WEDNESDAY: 3,
-    THURSDAY: 4,
-    FRIDAY: 5,
-    SATURDAY: 6,
-  }
+  private readonly dayOfWeekIndex: DayOfWeekIndex = DayOfWeekNumber
 
   constructor(
     private readonly scheduleItemRepository: IScheduleItemRepository

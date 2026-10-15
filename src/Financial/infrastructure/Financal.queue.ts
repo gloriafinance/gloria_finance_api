@@ -2,6 +2,7 @@ import {
   AvailabilityAccountMongoRepository,
   CostCenterMasterMongoRepository,
   FinanceRecordMongoRepository,
+  RecurringPaymentsMongoRepository,
 } from "./persistence"
 import {
   RebuildAvailabilityMasterAccountJob,
@@ -19,6 +20,13 @@ import { AvailabilityAccountMasterMongoRepository } from "@/Financial/infrastruc
 import { UpdateAvailabilityAccountBalanceJob } from "@/Financial/applications/jobs/UpdateAvailabilityAccountBalance.job"
 import type { IListQueue } from "@/package/queue/domain"
 import { CloseFinancialMonth } from "@/Financial/infrastructure/jobs"
+import { NotifyRecurringPaymentDue } from "@/Financial/applications/jobs/NotifyRecurringPaymentDue.job"
+import { ChurchMongoRepository } from "@/Church/infrastructure"
+import {
+  UserAssignmentMongoRepository,
+  UserMongoRepository,
+} from "@/SecuritySystem/infrastructure"
+import { CacheProviderService } from "@/Shared/infrastructure/services/CacheProvider.service"
 
 export const FinancialQueue = (): IListQueue[] => [
   {
@@ -48,6 +56,7 @@ export const FinancialQueue = (): IListQueue[] => [
       FinanceRecordMongoRepository.getInstance(),
       StorageProviderService.getInstance(),
       QueueService.getInstance(),
+      RecurringPaymentsMongoRepository.getInstance(),
     ],
   },
   {
@@ -74,6 +83,23 @@ export const FinancialQueue = (): IListQueue[] => [
     useClass: CloseFinancialMonth,
     scheduler: {
       pattern: "30 23 * * *",
+      tz: "America/Sao_Paulo",
+    },
+  },
+  {
+    name: NotifyRecurringPaymentDue.name,
+    useClass: NotifyRecurringPaymentDue,
+    inject: [
+      ChurchMongoRepository.getInstance(),
+      RecurringPaymentsMongoRepository.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      UserAssignmentMongoRepository.getInstance(),
+      UserMongoRepository.getInstance(),
+      QueueService.getInstance(),
+      CacheProviderService.getInstance(),
+    ],
+    scheduler: {
+      pattern: "0 9 * * *",
       tz: "America/Sao_Paulo",
     },
   },

@@ -1,4 +1,5 @@
 export * from "./exceptions/BankNotFound.exception"
+export * from "./exceptions/ChurchBankingClient.exception"
 
 export * from "./enums/TypeBankAccount.enum"
 export * from "./enums/TypeBankingOperation.enum"
