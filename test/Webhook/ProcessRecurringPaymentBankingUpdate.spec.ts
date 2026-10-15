@@ -241,6 +241,46 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     expect(ctx.recurringRepository.one).not.toHaveBeenCalled()
   })
 
+  it("re-applies a status that lost the CAS race instead of dropping it", async () => {
+    const ctx = setup()
+    // The first write loses; the reload must still land the terminal outcome.
+    ctx.recurringRepository.saveIfCurrentPaymentMatches
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+
+    await ctx.service.processPix(pixEvent(ctx, "FAILED"))
+
+    expect(
+      ctx.recurringRepository.saveIfCurrentPaymentMatches
+    ).toHaveBeenCalledTimes(2)
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "FAILED",
+      providerStatus: "FAILED",
+    })
+  })
+
+  it("does not let a late non-terminal event undo a terminal outcome", async () => {
+    const ctx = setup()
+    ctx.recurringRepository.saveIfCurrentPaymentMatches.mockResolvedValue(false)
+    const settled = {
+      ...ctx.currentPayment,
+      status: "PROCESSING" as const,
+      providerStatus: "DONE",
+    }
+    const settledRecurrence = RecurringPayments.fromPrimitives({
+      ...ctx.recurrence.toPrimitives(),
+      currentPayment: settled,
+    })
+    ctx.recurringRepository.one.mockResolvedValue(settledRecurrence)
+
+    await ctx.service.processPix(pixEvent(ctx, "IN_BANK_PROCESSING"))
+
+    // The durable terminal state survives untouched.
+    expect(settledRecurrence.getCurrentPayment()).toMatchObject({
+      providerStatus: "DONE",
+    })
+  })
+
   it("rejects events with a mismatched competence or account binding", async () => {
     const ctx = setup()
     await expect(

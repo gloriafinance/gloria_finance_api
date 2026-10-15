@@ -54,6 +54,15 @@ export type BillPaymentUpdatedEvent = {
   }
 }
 
+/** Provider outcomes that must never be undone by a later, earlier-looking event. */
+const RECURRING_TERMINAL_PROVIDER_STATUSES = new Set([
+  "DONE",
+  "PAID",
+  "FAILED",
+  "CANCELLED",
+  "CREATION_FAILED",
+])
+
 export class ProcessRecurringPaymentBankingUpdate {
   private readonly logger = Logger(ProcessRecurringPaymentBankingUpdate.name)
   private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord
@@ -356,10 +365,64 @@ export class ProcessRecurringPaymentBankingUpdate {
       status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
       updatedAt: this.now(),
     })
-    await this.recurringRepository.saveIfCurrentPaymentMatches(
+    const saved = await this.recurringRepository.saveIfCurrentPaymentMatches(
       recurring,
       current
     )
+    if (saved) return
+
+    // Another writer won the race. Dropping the update could lose a terminal
+    // outcome with no further event to correct it, so the durable state is
+    // reloaded and the change re-applied unless it is already superseded.
+    await this.reapplyAfterLostCas(recurring.getRecurringPaymentId(), {
+      ...update,
+      status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
+    })
+  }
+
+  /**
+   * Re-applies a status update that lost a CAS race.
+   *
+   * Precedence is monotonic: a terminal provider outcome is never overwritten by
+   * a non-terminal one, so a late PENDING cannot undo a DONE or a FAILED.
+   */
+  private async reapplyAfterLostCas(
+    recurringPaymentId: string,
+    update: Pick<
+      CurrentRecurringPayment,
+      | "providerStatus"
+      | "status"
+      | "failureCode"
+      | "paymentDate"
+      | "transactionReceiptUrl"
+    >
+  ): Promise<void> {
+    const winner = await this.recurringRepository.one({ recurringPaymentId })
+    const current = winner?.getCurrentPayment()
+    if (!winner || !current) {
+      throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
+    }
+    if (
+      RECURRING_TERMINAL_PROVIDER_STATUSES.has(current.providerStatus) &&
+      !RECURRING_TERMINAL_PROVIDER_STATUSES.has(update.providerStatus)
+    ) {
+      return
+    }
+    winner.updateCurrentPayment({
+      ...current,
+      ...update,
+      updatedAt: this.now(),
+    } as CurrentRecurringPayment)
+    const applied = await this.recurringRepository.saveIfCurrentPaymentMatches(
+      winner,
+      current
+    )
+    if (!applied) {
+      this.logger.error("Recurring payment status lost the CAS twice", {
+        recurringPaymentId,
+        providerStatus: update.providerStatus,
+      })
+    }
   }
 
   private logRefund(
