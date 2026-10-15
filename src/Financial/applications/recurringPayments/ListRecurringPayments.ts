@@ -77,10 +77,16 @@ export class ListRecurringPayments {
     settledIds: Set<string>,
     today: string
   ): RecurringPaymentCompetenceStatus {
-    if (payment.getStatus() !== "ACTIVE") return "INACTIVE"
-
-    // A settled record is the only proof the money actually left the account.
+    // History outranks configuration: a competence that has a settled record is
+    // PAID even if the recurrence was deactivated afterwards. Deactivating
+    // stops future commitments, it does not erase what was already paid. The
+    // real history is the financial record itself.
     if (settledIds.has(payment.getRecurringPaymentId())) return "PAID"
+
+    // Before the recurrence existed there was no commitment, but the month still
+    // has to be readable; it simply has nothing paid, so it falls through to the
+    // usual pending/upcoming decision rather than pretending to be inactive.
+    if (payment.getStatus() !== "ACTIVE") return "INACTIVE"
 
     const currentStatus = payment.getPaymentStatusForCompetence(competence)
     if (currentStatus) return currentStatus

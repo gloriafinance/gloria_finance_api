@@ -93,14 +93,33 @@ describe("ListRecurringPayments", () => {
     expect(result[0]?.competenceStatus).toBe("BLOCKED")
   })
 
-  it("marks an inactive recurrence as inactive even when it has a record", async () => {
+  it("keeps a settled competence PAID after the recurrence is deactivated", async () => {
+    // History outranks configuration: deactivating stops future commitments, it
+    // does not erase a payment already made.
     const service = build(
       [recurrence({ status: "INACTIVE" })],
       [record("RECONCILED")]
     )
     const result = await service.execute("church-1", "2026-10")
 
+    expect(result[0]?.competenceStatus).toBe("PAID")
+  })
+
+  it("marks an inactive recurrence as inactive when nothing was paid", async () => {
+    const service = build([recurrence({ status: "INACTIVE" })], [])
+    const result = await service.execute("church-1", "2026-10")
+
     expect(result[0]?.competenceStatus).toBe("INACTIVE")
+  })
+
+  it("shows a recurrence in a competence before it was ever created", async () => {
+    // The month view lists every recurrence with its state for that competence,
+    // even months predating the commitment. There is simply no settlement for
+    // it, so it reads as pending/upcoming rather than as if it did not exist.
+    const service = build([recurrence({ dayOfMonth: 10 })], [])
+    const result = await service.execute("church-1", "2026-09")
+
+    expect(result[0]?.competenceStatus).toBe("PENDING")
   })
 
   it("derives upcoming for a future due date", async () => {

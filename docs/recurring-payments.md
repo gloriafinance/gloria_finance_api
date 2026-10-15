@@ -1334,22 +1334,24 @@ Este es **exactamente** el enum ya implementado como `RecurringPaymentCompetence
 | `BLOCKED` | Operación bancaria activa bloqueada por el provider | `currentPayment.status === "BLOCKED"` |
 | `FAILED` | Intento bancario terminó **sin** pago | `currentPayment.status === "FAILED"` |
 | `PAID` | Existe `FinancialRecord` liquidado | `∃ FinancialRecord(recurringPaymentId, competence)` con status `CLEARED`/`RECONCILED` |
-| `INACTIVE` | Recurrencia desactivada | `RecurringPayment.status !== "ACTIVE"` |
+| `INACTIVE` | Recurrencia desactivada y **sin** registro liquidado en esa competencia | `RecurringPayment.status !== "ACTIVE"` |
 
 ### Orden de precedencia (verificado tras la implementación)
 
 `ListRecurringPayments.competenceStatus`:
 
 ```text
-1. status !== "ACTIVE"                     → INACTIVE
-2. settledIds.has(recurringPaymentId)      → PAID
+1. settledIds.has(recurringPaymentId)      → PAID
+2. status !== "ACTIVE"                     → INACTIVE
 3. currentPayment.status (si competence coincide) → PROCESSING | BLOCKED | FAILED
 4. dueDate <= hoy                          → PENDING, si no → UPCOMING
 ```
 
 `settledIds` son los registros con status `CLEARED`/`RECONCILED`.
 
-**`PAID` tiene precedencia sobre `currentPayment`.** Es correcto: en cuanto existe evidencia contable liquidada, el estado operativo en vuelo es irrelevante.
+**El histórico manda sobre la configuración: `PAID` tiene precedencia sobre `INACTIVE`.** Desactivar una recurrencia detiene compromisos futuros, no borra lo que ya se pagó. El histórico real es el `FinancialRecord`; la configuración solo describe el compromiso. Por eso una competencia liquidada sigue siendo `PAID` aunque la recurrencia esté desactivada.
+
+**`PAID` también tiene precedencia sobre `currentPayment`**: en cuanto existe evidencia contable liquidada, el estado operativo en vuelo es irrelevante.
 
 **Tanto `CLEARED` como `RECONCILED` cuentan como `PAID`.** Un registro `CLEARED` (manual) ya representa dinero que salió y cuenta en el flujo de caja real; un `RECONCILED` (bancario, o manual ya conciliado) está además verificado contra el banco. Un registro `VOID` no cuenta.
 
