@@ -1,8 +1,8 @@
 import { FinancialConcept } from "@/FinanceConfig/domain/FinancialConcept"
 import { AccountType } from "@/FinanceConfig/domain/enums/AccountType.enum"
 import {
-  AggregateRoot,
   type AggregateRelations,
+  AggregateRoot,
 } from "@abejarano/ts-mongodb-criteria"
 import { Urn } from "@/Shared/adapter/Urn"
 import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
@@ -12,16 +12,9 @@ import {
   FinancialRecordType,
 } from "./enums/FinancialRecordType.enum"
 import { DateBR, StringToDate } from "@/Shared/helpers/date"
+import { FinancialConceptRequired } from "@/Financial/domain/exceptions/FinancialConceptRequired.exception.ts"
 
 export class FinanceRecord extends AggregateRoot {
-  static collectionName(): string {
-    return "financial_records"
-  }
-
-  static relations(): AggregateRelations {
-    return {}
-  }
-
   private costCenter?: {
     costCenterId: string
     name: string
@@ -54,6 +47,14 @@ export class FinanceRecord extends AggregateRoot {
   private updatedAt: Date
   private clearedAt?: Date
   private reconciledAt?: Date
+
+  static collectionName(): string {
+    return "financial_records"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
 
   static create(params: CreateFinanceRecord): FinanceRecord {
     const {
@@ -144,9 +145,14 @@ export class FinanceRecord extends AggregateRoot {
   static fromPrimitives(plainData: any): FinanceRecord {
     const financialRecord: FinanceRecord = new FinanceRecord()
     financialRecord.financialRecordId = plainData.financialRecordId
-    financialRecord.financialConcept = FinancialConcept.fromPrimitives(
-      plainData.financialConcept
-    )
+    if (plainData.financialConcept !== undefined) {
+      financialRecord.financialConcept = FinancialConcept.fromPrimitives(
+        plainData.financialConcept
+      )
+    } else if (plainData.type !== FinancialRecordType.REVERSAL) {
+      throw new FinancialConceptRequired()
+    }
+
     financialRecord.churchId = plainData.churchId
     financialRecord.amount = plainData.amount
     financialRecord.date = StringToDate(plainData.date)
