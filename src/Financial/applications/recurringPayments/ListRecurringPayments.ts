@@ -1,5 +1,6 @@
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type {
+  CurrentRecurringPayment,
   RecurringPaymentConfigurationData,
   RecurringPayments,
 } from "@/Financial/domain/RecurringPayments"
@@ -11,6 +12,8 @@ import {
   saoPauloDate,
 } from "./RecurringPaymentCompetence"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type { FinanceRecord } from "@/Financial/domain/FinanceRecord"
+import type { FinancialRecordStatus } from "@/Financial/domain/enums/FinancialRecordType.enum"
 
 export type RecurringPaymentCompetenceStatus =
   | "PENDING"
@@ -21,10 +24,33 @@ export type RecurringPaymentCompetenceStatus =
   | "PAID"
   | "INACTIVE"
 
+/**
+ * The settled accounting entry that makes a competence PAID. It belongs to the
+ * financial record (the real history), so the competence response only exposes
+ * the summary the screen needs to explain how it was paid.
+ */
+export type RecurringPaymentSettlement = {
+  financialRecordId: string
+  amount: number
+  date: Date | string
+  /** CLEARED for a manual registration, RECONCILED for a bank execution. */
+  status: FinancialRecordStatus
+  availabilityAccountId: string
+  voucher?: string
+}
+
 export type RecurringPaymentForCompetence =
   RecurringPaymentConfigurationData & {
     competence: string
     competenceStatus: RecurringPaymentCompetenceStatus
+    /**
+     * Execution state of THIS competence, when one was started. Without it the
+     * screen would only know that something is PROCESSING/BLOCKED/FAILED, not
+     * the amount, the method, the reference or when it was last updated.
+     */
+    currentPayment?: CurrentRecurringPayment
+    /** Present only when the competence is PAID. */
+    settlement?: RecurringPaymentSettlement
   }
 
 /**
@@ -72,12 +98,26 @@ export class ListRecurringPayments {
       ),
     ])
 
-    const settledIds = new Set(
-      records
-        .filter((record) => record.isSettled())
-        .map((record) => record.getRecurringPaymentId())
-        .filter((id): id is string => Boolean(id))
-    )
+    // The record itself is kept, not just its id: PAID has to be able to explain
+    // the date, the amount, the origin account and the voucher, and those live in
+    // the settlement. A competence can accumulate more than one record over time
+    // (a cancelled one plus the real one), so the most recent settled one wins.
+    const settledByRecurrence = new Map<string, FinanceRecord>()
+    for (const record of records) {
+      if (!record.isSettled()) continue
+      const recurringPaymentId = record.getRecurringPaymentId()
+      if (!recurringPaymentId) continue
+
+      const previous = settledByRecurrence.get(recurringPaymentId)
+      if (
+        !previous ||
+        new Date(record.getDate()).getTime() >=
+          new Date(previous.getDate()).getTime()
+      ) {
+        settledByRecurrence.set(recurringPaymentId, record)
+      }
+    }
+    const settledIds = new Set(settledByRecurrence.keys())
 
     const today = saoPauloDate()
 
@@ -90,17 +130,45 @@ export class ListRecurringPayments {
           const created = createdCompetenceOf(payment.getId())
           return created === null || competence >= created
         })
-        .map((payment) => ({
-          ...payment.toConfiguration(),
-          competence,
-          competenceStatus: this.competenceStatus(
-            payment,
+        .map((payment) => {
+          const currentPayment = payment.getCurrentPayment()
+          const settlement = settledByRecurrence.get(
+            payment.getRecurringPaymentId()
+          )
+
+          return {
+            ...payment.toConfiguration(),
             competence,
-            settledIds,
-            today
-          ),
-        }))
+            competenceStatus: this.competenceStatus(
+              payment,
+              competence,
+              settledIds,
+              today
+            ),
+            // Only the execution of the requested month is meaningful here; a
+            // failed attempt from another competence must not be shown.
+            ...(currentPayment && currentPayment.competence === competence
+              ? { currentPayment }
+              : {}),
+            ...(settlement
+              ? { settlement: this.settlementOf(settlement) }
+              : {}),
+          }
+        })
     )
+  }
+
+  private settlementOf(record: FinanceRecord): RecurringPaymentSettlement {
+    const voucher = record.getVoucher()
+
+    return {
+      financialRecordId: record.getFinancialRecordId(),
+      amount: record.getAmount(),
+      date: record.getDate(),
+      status: record.getStatus(),
+      availabilityAccountId: record.getAvailabilityAccountId(),
+      ...(voucher ? { voucher } : {}),
+    }
   }
 
   private competenceStatus(

@@ -61,7 +61,19 @@ export type CurrentRecurringPayment = {
   competence: string
   attempt: number
   externalReference: string
-  amount: number
+  /**
+   * Amount for this execution. Absent while a BILL execution has not read the
+   * boleto yet: the boleto carries its own amount, so the caller is not asked
+   * for one and the value read from the line becomes authoritative. See
+   * `providerValueInCents`.
+   */
+  amount?: number
+  /**
+   * Amount the boleto charges, read from the line itself by church-banking.
+   * Present for BILL executions once a line was accepted; it is what the payer
+   * actually owes, independently of any amount declared by the caller.
+   */
+  providerValueInCents?: number
   /** Method chosen for this execution. Never part of the permanent config. */
   paymentMethod?: "PIX" | "BILL"
   /**

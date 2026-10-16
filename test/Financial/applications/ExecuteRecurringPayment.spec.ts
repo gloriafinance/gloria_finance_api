@@ -145,7 +145,11 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
     })
 
-    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(result).toEqual({
+      status: "PROCESSING",
+      competence: "2026-10",
+      amount: 123.45,
+    })
     expect(ctx.callOrder.slice(0, 2)).toEqual(["reserve", "bank"])
     expect(ctx.banking.createPixTransfer).toHaveBeenCalledWith({
       externalAccountId: "church-1",
@@ -172,10 +176,20 @@ describe("ExecuteRecurringPayment", () => {
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_FORBIDDEN" })
 
+    const noMethod = setup({ type: "VARIABLE" })
+    await expect(
+      noMethod.service.execute("church-1", "recurring-1", {
+        competence: "2026-10",
+      })
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_INVALID" })
+
+    // Con un método elegido, un VARIABLE sin importe sigue siendo inválido: el
+    // único caso donde el importe puede faltar es un boleto, que trae el suyo.
     const variable = setup({ type: "VARIABLE" })
     await expect(
       variable.service.execute("church-1", "recurring-1", {
         competence: "2026-10",
+        payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_REQUIRED" })
     expect(variable.banking.createPixTransfer).not.toHaveBeenCalled()
@@ -360,7 +374,11 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
     })
 
-    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(result).toEqual({
+      status: "PROCESSING",
+      competence: "2026-10",
+      amount: 25,
+    })
     expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
       status: "PROCESSING",
       providerStatus: "CREATION_UNKNOWN",
@@ -620,7 +638,7 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
-  it("rejects a bill whose answered amount differs from the reserved one", async () => {
+  it("fails a bill whose answered amount differs, reporting both amounts", async () => {
     const ctx = setup({ amount: 742.83 })
     ctx.banking.createBillPayment.mockResolvedValue({
       externalAccountId: "church-1",
@@ -630,13 +648,55 @@ describe("ExecuteRecurringPayment", () => {
       valueInCents: 78243,
     })
 
-    await expect(
-      ctx.service.execute("church-1", "recurring-1", {
-        competence: "2026-10",
-        payment: { type: "BILL", identificationField: "34191..." },
-      })
-    ).rejects.toMatchObject({
-      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // The boleto charges what it charges; the execution is refused, not paid,
+    // and the UI is given both amounts to explain the difference.
+    expect(result).toMatchObject({
+      status: "FAILED",
+      competence: "2026-10",
+      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      amount: 742.83,
+      providerValueInCents: 78243,
+    })
+    // Persisted as FAILED instead of left in PROCESSING: a mismatch that blocks
+    // the competence forever would be worse than the mismatch itself.
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "FAILED",
+      providerValueInCents: 78243,
+    })
+  })
+
+  it("reads a variable bill amount from the boleto instead of asking the payer", async () => {
+    const ctx = setup({ type: "VARIABLE" })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PENDING",
+      context: {},
+      valueInCents: 78243,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // Nothing to compare against, so no expectation travels: the boleto's own
+    // amount is what gets charged and booked.
+    const payload = ctx.banking.createBillPayment.mock.calls[0]?.[0]
+    expect(payload).not.toHaveProperty("expectedAmountInCents")
+    expect(result).toMatchObject({
+      status: "PROCESSING",
+      amount: 782.43,
+      providerValueInCents: 78243,
+    })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      amount: 782.43,
+      providerValueInCents: 78243,
     })
   })
 
