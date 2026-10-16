@@ -673,6 +673,30 @@ describe("ExecuteRecurringPayment", () => {
     })
   })
 
+  it("keeps a bill under risk analysis in PROCESSING instead of failing it", async () => {
+    // church-banking relays Asaas' inconclusive status. Reading it as a creation
+    // failure would offer a retry while the operation is alive.
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "AWAITING_CHECKOUT_RISK_ANALYSIS_REQUEST",
+      context: {},
+      valueInCents: 74283,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    expect(result.status).toBe("PROCESSING")
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      providerStatus: "AWAITING_CHECKOUT_RISK_ANALYSIS_REQUEST",
+    })
+  })
+
   it("does not create a second bill after a mismatched active attempt", async () => {
     const ctx = setup({ amount: 742.83 })
     ctx.banking.createBillPayment.mockResolvedValue({

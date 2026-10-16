@@ -76,6 +76,11 @@ export type ChurchBankingOutgoingStatus =
   | "CREATING"
   | "CREATION_UNKNOWN"
   | "CREATION_FAILED"
+  /**
+   * Asaas is analysing the operation's risk. Non-conclusive like PENDING: the
+   * payment is alive, so it must not be read as a creation failure.
+   */
+  | "AWAITING_CHECKOUT_RISK_ANALYSIS_REQUEST"
   | "PENDING"
   | "IN_BANK_PROCESSING"
   | "BANK_PROCESSING"
