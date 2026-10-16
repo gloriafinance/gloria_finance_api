@@ -1,9 +1,6 @@
-import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConceptMongoRepository"
-import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence/BankMongoRepository"
 import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
-import { AsaasReceiptStorage } from "@/Webhook/infrastructure/services/AsaasReceiptStorage"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
@@ -64,7 +61,6 @@ export class RecurringPaymentController {
     try {
       const payment = await new CreateOrUpdateRecurringPayment(
         RecurringPaymentsMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
         FinancialConfigurationMongoRepository.getInstance()
       ).create(req.auth.churchId, body)
       const response: RecurringPaymentConfigurationData =
@@ -90,7 +86,6 @@ export class RecurringPaymentController {
     try {
       const payment = await new CreateOrUpdateRecurringPayment(
         RecurringPaymentsMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
         FinancialConfigurationMongoRepository.getInstance()
       ).update(req.auth.churchId, id, body)
       const response: RecurringPaymentConfigurationData =
@@ -139,11 +134,8 @@ export class RecurringPaymentController {
         FinanceRecordMongoRepository.getInstance(),
         BankMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        FinancialConfigurationMongoRepository.getInstance(),
         FinancialYearMongoRepository.getInstance(),
-        new ChurchBankingClient(),
-        new AsaasReceiptStorage()
+        new ChurchBankingClient()
       ).execute(req.auth.churchId, recurringPaymentId, body)
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
@@ -175,8 +167,6 @@ export class RecurringPaymentController {
       const result = await new RegisterRecurringPaymentManually(
         RecurringPaymentsMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        FinancialConfigurationMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
         BankMongoRepository.getInstance(),
         FinancialYearMongoRepository.getInstance()

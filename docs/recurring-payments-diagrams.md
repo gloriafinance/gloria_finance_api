@@ -223,7 +223,7 @@ sequenceDiagram
 
     U->>FE: Clic en [ PAGAR R$ 3.500,00 ]
     FE->>API: POST /api/v1/recurring-payments/:id/pay<br/>{ "competence": "2026-10" }
-    Note over FE,API: NO se envía amount (FIXED)<br/>NO se envía payment (hay pixDestination)
+    Note over FE,API: `competence` = competencia contable de la recurrencia (`YYYY-MM`):<br/>mes al que corresponde el pago recurrente, **no** fecha de pago ni vencimiento<br/>NO se envía amount (FIXED)<br/>NO se envía payment (hay pixDestination)
 
     API->>API: assertCompetence()
     API->>DB: findRecurringPayment(id, "2026-10")

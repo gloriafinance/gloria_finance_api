@@ -98,15 +98,15 @@ export class FinanceRecordMongoRepository
     return documents.map((document) => FinanceRecord.fromPrimitives(document))
   }
 
-  async findByBankingExternalReference(
-    reference: string
-  ): Promise<FinanceRecord | undefined> {
-    const collection = await this.collection()
-    const document = await collection.findOne({
-      bankingExternalReference: reference,
-    })
-    return document ? FinanceRecord.fromPrimitives(document) : undefined
-  }
+  // async findByBankingExternalReference(
+  //   reference: string
+  // ): Promise<FinanceRecord | undefined> {
+  //   const collection = await this.collection()
+  //   const document = await collection.findOne({
+  //     bankingExternalReference: reference,
+  //   })
+  //   return document ? FinanceRecord.fromPrimitives(document) : undefined
+  // }
 
   async titheList(filter: object): Promise<{
     records: {

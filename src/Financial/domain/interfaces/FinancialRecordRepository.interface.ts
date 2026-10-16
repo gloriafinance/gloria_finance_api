@@ -17,9 +17,7 @@ export interface IFinancialRecordRepository extends IRepository<FinanceRecord> {
     recurringPaymentId: string,
     competence: string
   ): Promise<number>
-  findByBankingExternalReference(
-    reference: string
-  ): Promise<FinanceRecord | undefined>
+
   listRecurringPaymentsForChurch(
     churchId: string,
     competence: string

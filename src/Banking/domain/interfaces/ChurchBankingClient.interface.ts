@@ -76,9 +76,14 @@ export type ChurchBankingOutgoingStatus =
   | "CREATING"
   | "CREATION_UNKNOWN"
   | "CREATION_FAILED"
+  /**
+   * The operation is alive but not conclusive (the provider is still processing
+   * it or analysing its risk). church-banking normalizes its provider's
+   * vocabulary, so a PSP rename is not this contract's problem.
+   */
+  | "PROCESSING"
   | "PENDING"
   | "IN_BANK_PROCESSING"
-  | "BANK_PROCESSING"
   | "BLOCKED"
   | "DONE"
   | "PAID"

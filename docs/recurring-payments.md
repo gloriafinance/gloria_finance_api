@@ -614,6 +614,8 @@ Ver secuencia 3 en [`recurring-payments-diagrams.md`](./recurring-payments-diagr
 
 `POST /api/v1/recurring-payments/:id/pay` con `{ "competence": "2026-10" }` y **nada más**. El `amount` y el destino PIX provienen de la configuración.
 
+> `competence` es la competencia contable de la recurrencia (`YYYY-MM`): el mes al que corresponde ese pago recurrente. **No** es la fecha del pago ni la fecha de vencimiento. Ver §16 Competencia.
+
 ---
 
 ## 13. Caso 4 — FIXED + Asaas sin PIX conocido
@@ -873,6 +875,27 @@ dayOfMonth = 31, competence = 2026-04  →  2026-04-30
 ```
 
 El "hoy" del sistema se calcula en zona `America/Sao_Paulo` (`saoPauloDate`, `:19-31`). **Toda la lógica de `PENDING` / `UPCOMING` depende de esta zona horaria.**
+
+### En `POST /api/v1/recurring-payments/{recurringPaymentId}/pay`
+
+El campo `competence` de este endpoint indica el **mes al que corresponde ese pago recurrente**, en formato `YYYY-MM`:
+
+```text
+YYYY-MM
+```
+
+Es la **competencia contable/mensual** de esa recurrencia. **No** es la fecha del pago ni la fecha de vencimiento.
+
+Ejemplos:
+
+| Recurrencia | Vencimiento | Pago realizado | `competence` |
+| ----------- | ----------- | -------------- | ------------ |
+| Conta de Luz | día 20 | 17/10/2026 | `2026-10` |
+| Conta de setembro | — | 05/10/2026 (pago atrasado) | `2026-09` |
+
+Incluso si la factura se paga atrasada, la competencia sigue siendo la del mes al que corresponde el recibo (ej. `2026-09`), no el mes en que se efectúa el pago.
+
+La validación es `assertCompetence`: patrón `^\d{4}-(0[1-9]|1[0-2])$`, error `RECURRING_PAYMENT_INVALID` (`src/Financial/applications/recurringPayments/RecurringPaymentCompetence.ts:3-7`).
 
 ### `CURRENT` vs TARGET
 
@@ -2144,6 +2167,8 @@ VARIABLE + PIX:
   { "competence": "2026-10", "amount": 742.83,
     "payment": { "type": "PIX", "pixKey": "...", "pixKeyType": "CNPJ" } }
 ```
+
+> `competence` es la competencia contable de la recurrencia (`YYYY-MM`): el mes al que corresponde ese pago recurrente, **no** la fecha del pago ni el vencimiento. Ejemplo: una `Conta de Luz` con vencimiento día 20 pagada el 17/10/2026 lleva `competence: "2026-10"`; si se paga atrasada el 05/10/2026 la competencia de septiembre, lleva `"2026-09"`.
 
 ### Feedback de estado al usuario
 
