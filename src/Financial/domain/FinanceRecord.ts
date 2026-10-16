@@ -1,8 +1,8 @@
 import { FinancialConcept } from "@/FinanceConfig/domain/FinancialConcept"
 import { AccountType } from "@/FinanceConfig/domain/enums/AccountType.enum"
 import {
-  AggregateRoot,
   type AggregateRelations,
+  AggregateRoot,
 } from "@abejarano/ts-mongodb-criteria"
 import { Urn } from "@/Shared/adapter/Urn"
 import { type CreateFinanceRecord } from "@/Financial/domain/types/CreateFinanceRecord.type"
@@ -12,16 +12,9 @@ import {
   FinancialRecordType,
 } from "./enums/FinancialRecordType.enum"
 import { DateBR, StringToDate } from "@/Shared/helpers/date"
+import { FinancialConceptRequired } from "@/Financial/domain/exceptions/FinancialConceptRequired.exception.ts"
 
 export class FinanceRecord extends AggregateRoot {
-  static collectionName(): string {
-    return "financial_records"
-  }
-
-  static relations(): AggregateRelations {
-    return {}
-  }
-
   private costCenter?: {
     costCenterId: string
     name: string
@@ -54,6 +47,14 @@ export class FinanceRecord extends AggregateRoot {
   private updatedAt: Date
   private clearedAt?: Date
   private reconciledAt?: Date
+
+  static collectionName(): string {
+    return "financial_records"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
 
   static create(params: CreateFinanceRecord): FinanceRecord {
     const {
@@ -144,9 +145,14 @@ export class FinanceRecord extends AggregateRoot {
   static fromPrimitives(plainData: any): FinanceRecord {
     const financialRecord: FinanceRecord = new FinanceRecord()
     financialRecord.financialRecordId = plainData.financialRecordId
-    financialRecord.financialConcept = FinancialConcept.fromPrimitives(
-      plainData.financialConcept
-    )
+    if (plainData.financialConcept !== undefined) {
+      financialRecord.financialConcept = FinancialConcept.fromPrimitives(
+        plainData.financialConcept
+      )
+    } else if (plainData.type !== FinancialRecordType.REVERSAL) {
+      throw new FinancialConceptRequired()
+    }
+
     financialRecord.churchId = plainData.churchId
     financialRecord.amount = plainData.amount
     financialRecord.date = StringToDate(plainData.date)
@@ -224,6 +230,15 @@ export class FinanceRecord extends AggregateRoot {
     return this.availabilityAccount
   }
 
+  /**
+   * Competence (YYYY-MM) the record belongs to when it comes from a recurring
+   * payment. `date` is when the money moved, which for a recurring payment can
+   * fall in a different month than the one the expense is reported in.
+   */
+  getRecurringCompetence(): string | undefined {
+    return this.recurringCompetence
+  }
+
   getDate() {
     return this.date
   }
@@ -242,6 +257,14 @@ export class FinanceRecord extends AggregateRoot {
 
   setVoucher(voucher: string) {
     this.voucher = voucher
+  }
+
+  /**
+   * Stored voucher of the fact. For a manual registration it is the mandatory
+   * receipt; for a bank execution it is the provider receipt, when there is one.
+   */
+  getVoucher(): string | undefined {
+    return this.voucher
   }
 
   setStatus(status: FinancialRecordStatus) {

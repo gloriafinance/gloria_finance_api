@@ -33,10 +33,25 @@ function recurrence(
   })
 }
 
-function record(status: "PENDING" | "CLEARED" | "RECONCILED" | "VOID") {
+function record(
+  status: "PENDING" | "CLEARED" | "RECONCILED" | "VOID",
+  overrides: {
+    date?: Date
+    amount?: number
+    voucher?: string
+    availabilityAccountId?: string
+  } = {}
+) {
   return {
     getRecurringPaymentId: () => "recurring-1",
     isSettled: () => status === "CLEARED" || status === "RECONCILED",
+    getFinancialRecordId: () => "record-1",
+    getAmount: () => overrides.amount ?? 742.83,
+    getDate: () => overrides.date ?? new Date("2026-10-10T12:00:00Z"),
+    getStatus: () => status,
+    getAvailabilityAccountId: () =>
+      overrides.availabilityAccountId ?? "availability-1",
+    getVoucher: () => overrides.voucher,
   }
 }
 
@@ -195,5 +210,110 @@ describe("ListRecurringPayments", () => {
     const result = await service.execute("church-1", "2999-12")
 
     expect(result[0]?.competenceStatus).toBe("UPCOMING")
+  })
+
+  it("exposes the settlement summary of a paid competence", async () => {
+    const service = build(
+      [recurrence()],
+      [
+        record("RECONCILED", {
+          amount: 742.83,
+          voucher: "https://storage/receipt.pdf",
+          date: new Date("2026-10-10T12:00:00Z"),
+        }),
+      ]
+    )
+
+    const result = await service.execute("church-1", "2026-10")
+
+    // The screen explains how it was paid: amount, date, origin account, status
+    // and the voucher. History belongs to the financial record.
+    expect(result[0]?.settlement).toMatchObject({
+      financialRecordId: "record-1",
+      amount: 742.83,
+      status: "RECONCILED",
+      availabilityAccountId: "availability-1",
+      voucher: "https://storage/receipt.pdf",
+    })
+  })
+
+  it("keeps the most recent settled record when a competence has several", async () => {
+    const service = build(
+      [recurrence()],
+      [
+        record("CLEARED", {
+          amount: 100,
+          date: new Date("2026-10-02T12:00:00Z"),
+        }),
+        record("RECONCILED", {
+          amount: 742.83,
+          date: new Date("2026-10-09T12:00:00Z"),
+        }),
+      ]
+    )
+
+    const result = await service.execute("church-1", "2026-10")
+
+    expect(result[0]?.settlement).toMatchObject({
+      amount: 742.83,
+      status: "RECONCILED",
+    })
+  })
+
+  it("exposes the execution state of the requested competence only", async () => {
+    const inFlight = {
+      competence: "2026-10",
+      attempt: 1,
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      amount: 742.83,
+      paymentMethod: "BILL" as const,
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "PROCESSING" as const,
+      providerStatus: "PENDING",
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    }
+
+    const service = build([recurrence({ currentPayment: inFlight })], [])
+
+    const same = await service.execute("church-1", "2026-10")
+    expect(same[0]?.currentPayment).toMatchObject({
+      paymentMethod: "BILL",
+      amount: 742.83,
+      status: "PROCESSING",
+    })
+    expect(same[0]?.competenceStatus).toBe("PROCESSING")
+
+    // A failed attempt from another month must not leak into this one.
+    const other = await service.execute("church-1", "2026-11")
+    expect(other[0]?.currentPayment).toBeUndefined()
+  })
+
+  it("sends both amounts when the boleto charges a different value", async () => {
+    const mismatched = {
+      competence: "2026-10",
+      attempt: 1,
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      amount: 742.83,
+      providerValueInCents: 78243,
+      paymentMethod: "BILL" as const,
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "FAILED" as const,
+      providerStatus: "CREATION_FAILED",
+      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    }
+
+    const service = build([recurrence({ currentPayment: mismatched })], [])
+    const result = await service.execute("church-1", "2026-10")
+
+    expect(result[0]?.currentPayment).toMatchObject({
+      status: "FAILED",
+      amount: 742.83,
+      providerValueInCents: 78243,
+      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+    })
+    expect(result[0]?.competenceStatus).toBe("FAILED")
   })
 })

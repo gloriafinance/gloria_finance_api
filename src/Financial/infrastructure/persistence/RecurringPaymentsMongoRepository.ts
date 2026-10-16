@@ -2,6 +2,7 @@ import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments.ts"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface.ts"
 import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments.ts"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 import type { Collection } from "mongodb"
 
 export class RecurringPaymentsMongoRepository
@@ -21,7 +22,8 @@ export class RecurringPaymentsMongoRepository
 
   async saveIfCurrentPaymentMatches(
     recurringPayment: RecurringPayments,
-    expected: CurrentRecurringPayment | undefined
+    expected: CurrentRecurringPayment | undefined,
+    transaction?: MongoTransaction
   ): Promise<boolean> {
     const collection = await this.collection()
     const currentPaymentFilter = expected
@@ -39,7 +41,8 @@ export class RecurringPaymentsMongoRepository
         churchId: recurringPayment.getChurchId(),
         ...currentPaymentFilter,
       },
-      recurringPayment.toPrimitives()
+      recurringPayment.toPrimitives(),
+      { session: MongoTransaction.sessionFor(transaction) }
     )
     return result.matchedCount === 1
   }

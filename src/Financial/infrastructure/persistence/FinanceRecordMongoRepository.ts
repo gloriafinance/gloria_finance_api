@@ -165,23 +165,19 @@ export class FinanceRecordMongoRepository
 
     const collection = await this.collection()
 
-    const startDate = month
-      ? new Date(Date.UTC(year, month - 1, 1))
-      : new Date(Date.UTC(year, 0, 1))
-    const endDate = month
-      ? new Date(Date.UTC(year, month, 1))
-      : new Date(Date.UTC(year + 1, 0, 1))
-
+    // The result period of a recurring payment is its competence, not the day the
+    // money moved; everything else keeps selecting by `date`.
     const matchFilter: Record<string, unknown> = {
       churchId,
-      date: {
-        $gte: startDate,
-        $lt: endDate,
-      },
       status: { $in: REALIZED_STATUSES },
-      $or: [
-        { "financialConcept.affectsResult": true },
-        { "financialConcept.affectsBalance": true }, // incluye movimientos patrimoniales/balance
+      $and: [
+        {
+          $or: [
+            { "financialConcept.affectsResult": true },
+            { "financialConcept.affectsBalance": true }, // incluye movimientos patrimoniales/balance
+          ],
+        },
+        statementPeriodFilter({ year, month }),
       ],
     }
 

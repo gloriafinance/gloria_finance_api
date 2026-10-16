@@ -1266,7 +1266,25 @@ export const openApiDocument = {
                     type: "string",
                   },
                   analysisTarget: {
-                    description: "TypeScript type: SupportAnalysisTarget",
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        enum: ["report", "text"],
+                      },
+                      title: {
+                        type: "string",
+                      },
+                      data: {
+                        type: "array",
+                        items: {
+                          description:
+                            "TypeScript type: string | Record<string, unknown> | unknown",
+                        },
+                      },
+                    },
+                    required: ["type", "title", "data"],
+                    additionalProperties: false,
                   },
                 },
                 required: ["question"],
@@ -1334,52 +1352,7 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: [
-                      {
-                        conversationId: "00000000-0000-0000-0000-000000000001",
-                        churchId: "00000000-0000-0000-0000-000000000001",
-                        userId: "00000000-0000-0000-0000-000000000001",
-                        question: "Gloria Finance",
-                        answer: "Gloria Finance",
-                        intent: {
-                          conversationId:
-                            "00000000-0000-0000-0000-000000000001",
-                          answer: "Gloria Finance",
-                          intent: "Gloria Finance",
-                          confidence: "Gloria Finance",
-                          recommendedRoute: "Gloria Finance",
-                          recommendedScreen: "Gloria Finance",
-                          recommendedConcept: {
-                            financialConceptId:
-                              "00000000-0000-0000-0000-000000000001",
-                            name: "Gloria Finance",
-                          },
-                          steps: ["Gloria Finance"],
-                          warnings: ["Gloria Finance"],
-                          extractedData: {
-                            documentType: "Gloria Finance",
-                            vendor: "Gloria Finance",
-                            amount: "Gloria Finance",
-                            currency: "Gloria Finance",
-                            documentDate: "2026-01-01T00:00:00.000Z",
-                            summary: "Gloria Finance",
-                          },
-                          sources: ["Gloria Finance"],
-                        },
-                        response: "Gloria Finance",
-                        analysisTarget: "Gloria Finance",
-                        attachments: [
-                          {
-                            name: "Gloria Finance",
-                            mimeType: "Gloria Finance",
-                            size: 0,
-                            dataBase64: "Gloria Finance",
-                          },
-                        ],
-                        sources: ["Gloria Finance"],
-                        createdAt: "2026-01-01T00:00:00.000Z",
-                      },
-                    ],
+                    value: [{}],
                   },
                 },
               },
@@ -5228,7 +5201,48 @@ export const openApiDocument = {
           content: {
             "application/json": {
               schema: {
-                description: "TypeScript type: FinancialConceptRequest",
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                  },
+                  description: {
+                    type: "string",
+                  },
+                  type: {
+                    type: "string",
+                    enum: ["INCOME", "OUTGO", "PURCHASE", "REVERSAL"],
+                  },
+                  statementCategory: {
+                    type: "string",
+                    enum: [
+                      "REVENUE",
+                      "COGS",
+                      "OPEX",
+                      "MINISTRY_TRANSFERS",
+                      "CAPEX",
+                      "OTHER",
+                    ],
+                  },
+                  active: {
+                    type: "boolean",
+                  },
+                  churchId: {
+                    type: "string",
+                  },
+                  financialConceptId: {
+                    type: "string",
+                  },
+                },
+                required: [
+                  "name",
+                  "description",
+                  "type",
+                  "statementCategory",
+                  "active",
+                  "churchId",
+                ],
+                additionalProperties: false,
               },
             },
           },
@@ -5980,92 +5994,8 @@ export const openApiDocument = {
                 type: "object",
                 properties: {
                   bankingOperation: {
-                    type: "object",
-                    properties: {
-                      financialRecordId: {
-                        type: "string",
-                      },
-                      churchId: {
-                        type: "string",
-                      },
-                      amount: {
-                        type: "number",
-                      },
-                      description: {
-                        type: "string",
-                      },
-                      date: {
-                        type: "string",
-                        format: "date-time",
-                      },
-                      financialRecordType: {
-                        type: "string",
-                        enum: [
-                          "INCOME",
-                          "OUTGO",
-                          "PURCHASE",
-                          "TRANSFER",
-                          "REVERSAL",
-                        ],
-                      },
-                      source: {
-                        type: "string",
-                        enum: ["MANUAL", "AUTO", "IMPORTED"],
-                      },
-                      status: {
-                        type: "string",
-                        enum: ["PENDING", "CLEARED", "RECONCILED", "VOID"],
-                      },
-                      costCenter: {
-                        description: "TypeScript type: CostCenter",
-                      },
-                      financialConcept: {
-                        description: "TypeScript type: FinancialConcept",
-                      },
-                      availabilityAccount: {
-                        description: "TypeScript type: any",
-                      },
-                      createdBy: {
-                        type: "string",
-                      },
-                      voucher: {
-                        type: "string",
-                      },
-                      reference: {
-                        type: "object",
-                        properties: {
-                          type: {
-                            type: "string",
-                          },
-                          entityId: {
-                            type: "string",
-                          },
-                        },
-                        required: ["type", "entityId"],
-                        additionalProperties: false,
-                      },
-                      recurringPaymentId: {
-                        type: "string",
-                      },
-                      recurringCompetence: {
-                        type: "string",
-                      },
-                      bankingExternalReference: {
-                        type: "string",
-                      },
-                    },
-                    required: [
-                      "churchId",
-                      "amount",
-                      "description",
-                      "date",
-                      "financialRecordType",
-                      "source",
-                      "status",
-                      "financialConcept",
-                      "createdBy",
-                    ],
-                    additionalProperties: false,
+                    type: "string",
+                    enum: ["DEPOSIT", "WITHDRAWAL", "INTEREST"],
                   },
                   financialConceptId: {
                     type: "string",
@@ -6275,7 +6205,25 @@ export const openApiDocument = {
         description:
           "Implemented by FinancialRecordController.export. The runtime endpoint validates its input and response contract.",
         operationId: "get_FinancialRecord_export",
-        parameters: [],
+        parameters: [
+          {
+            name: "format",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["csv", "pdf"],
+            },
+          },
+          {
+            name: "lang",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
         security: [
           {
             bearerAuth: [],
@@ -8198,7 +8146,43 @@ export const openApiDocument = {
           content: {
             "application/json": {
               schema: {
-                description: "TypeScript type: DisposeAssetRequest",
+                type: "object",
+                properties: {
+                  assetId: {
+                    type: "string",
+                  },
+                  status: {
+                    description:
+                      "TypeScript type: AssetStatus.DONATED | AssetStatus.SOLD | AssetStatus.LOST",
+                  },
+                  reason: {
+                    type: "string",
+                  },
+                  disposedAt: {
+                    type: "string",
+                  },
+                  observations: {
+                    type: "string",
+                  },
+                  performedByDetails: {
+                    type: "object",
+                    properties: {
+                      memberId: {
+                        type: "string",
+                      },
+                      name: {
+                        type: "string",
+                      },
+                      email: {
+                        type: "string",
+                      },
+                    },
+                    required: ["memberId", "name", "email"],
+                    additionalProperties: false,
+                  },
+                },
+                required: ["assetId", "status", "reason", "performedByDetails"],
+                additionalProperties: false,
               },
             },
           },
@@ -9656,7 +9640,56 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: [{}],
+                    value: [
+                      {
+                        recurringPaymentId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        financialConceptId:
+                          "00000000-0000-0000-0000-000000000001",
+                        costCenterId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        type: "FIXED",
+                        amount: 0,
+                        dayOfMonth: 0,
+                        pixDestination: {
+                          pixKey: "Gloria Finance",
+                          pixKeyType: "CPF",
+                        },
+                        status: "ACTIVE",
+                        competence: "Gloria Finance",
+                        competenceStatus: "PENDING",
+                        currentPayment: {
+                          competence: "Gloria Finance",
+                          attempt: 0,
+                          externalReference: "Gloria Finance",
+                          amount: 0,
+                          providerValueInCents: 0,
+                          paymentMethod: "PIX",
+                          executionDestination: "Gloria Finance",
+                          bankId: "00000000-0000-0000-0000-000000000001",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          status: "PROCESSING",
+                          providerStatus: "Gloria Finance",
+                          failureCode: "Gloria Finance",
+                          identificationField: "Gloria Finance",
+                          paymentDate: "2026-01-01T00:00:00.000Z",
+                          transactionReceiptUrl: "https://example.com",
+                          updatedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                        settlement: {
+                          financialRecordId:
+                            "00000000-0000-0000-0000-000000000001",
+                          amount: 0,
+                          date: "2026-01-01T00:00:00.000Z",
+                          status: "PENDING",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          voucher: "Gloria Finance",
+                        },
+                      },
+                    ],
                   },
                 },
               },
@@ -9712,7 +9745,18 @@ export const openApiDocument = {
                     type: "number",
                   },
                   pixDestination: {
-                    description: "TypeScript type: PixDestination",
+                    type: "object",
+                    properties: {
+                      pixKey: {
+                        type: "string",
+                      },
+                      pixKeyType: {
+                        type: "string",
+                        enum: ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"],
+                      },
+                    },
+                    required: ["pixKey", "pixKeyType"],
+                    additionalProperties: false,
                   },
                   status: {
                     description:
@@ -9828,7 +9872,18 @@ export const openApiDocument = {
                     type: "number",
                   },
                   pixDestination: {
-                    description: "TypeScript type: PixDestination",
+                    type: "object",
+                    properties: {
+                      pixKey: {
+                        type: "string",
+                      },
+                      pixKeyType: {
+                        type: "string",
+                        enum: ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"],
+                      },
+                    },
+                    required: ["pixKey", "pixKeyType"],
+                    additionalProperties: false,
                   },
                   status: {
                     description:
@@ -9934,13 +9989,15 @@ export const openApiDocument = {
                     type: "object",
                     properties: {
                       type: {
-                        description: 'TypeScript type: "PIX"',
+                        type: "string",
+                        enum: ["PIX"],
                       },
                       pixKey: {
                         type: "string",
                       },
                       pixKeyType: {
-                        description: "TypeScript type: PixKeyType",
+                        type: "string",
+                        enum: ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"],
                       },
                     },
                     required: ["type", "pixKey", "pixKeyType"],
@@ -9972,6 +10029,8 @@ export const openApiDocument = {
                     value: {
                       status: "ALREADY_PAID",
                       competence: "Gloria Finance",
+                      amount: 0,
+                      providerValueInCents: 0,
                       failureCode: "Gloria Finance",
                     },
                   },
@@ -10061,7 +10120,94 @@ export const openApiDocument = {
         description:
           "Implemented by CashFlowController.report. The runtime endpoint validates its input and response contract.",
         operationId: "get_CashFlow_report",
-        parameters: [],
+        parameters: [
+          {
+            name: "churchId",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "startDate",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          {
+            name: "endDate",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          {
+            name: "groupBy",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              enum: ["day", "week", "month"],
+            },
+          },
+          {
+            name: "symbol",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "method",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "availabilityAccountId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "array",
+              items: {
+                description: "TypeScript type: string | string",
+              },
+            },
+          },
+          {
+            name: "costCenterId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "includeProjection",
+            in: "query",
+            required: false,
+            schema: {
+              type: "boolean",
+            },
+          },
+          {
+            name: "projectionBuckets",
+            in: "query",
+            required: false,
+            schema: {
+              type: "number",
+            },
+          },
+        ],
         security: [
           {
             bearerAuth: [],
@@ -10153,19 +10299,89 @@ export const openApiDocument = {
         operationId: "get_CashFlow_details",
         parameters: [
           {
-            name: "format",
-            in: "query",
-            required: true,
-            schema: {
-              description: "TypeScript type: CashFlowExportFormat",
-            },
-          },
-          {
-            name: "lang",
+            name: "churchId",
             in: "query",
             required: true,
             schema: {
               type: "string",
+            },
+          },
+          {
+            name: "startDate",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          {
+            name: "endDate",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          {
+            name: "groupBy",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              enum: ["day", "week", "month"],
+            },
+          },
+          {
+            name: "symbol",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "method",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "availabilityAccountId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "array",
+              items: {
+                description: "TypeScript type: string | string",
+              },
+            },
+          },
+          {
+            name: "costCenterId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "includeProjection",
+            in: "query",
+            required: false,
+            schema: {
+              type: "boolean",
+            },
+          },
+          {
+            name: "projectionBuckets",
+            in: "query",
+            required: false,
+            schema: {
+              type: "number",
             },
           },
         ],
@@ -10232,7 +10448,17 @@ export const openApiDocument = {
         description:
           "Implemented by CashFlowController.export. The runtime endpoint validates its input and response contract.",
         operationId: "get_CashFlow_export",
-        parameters: [],
+        parameters: [
+          {
+            name: "format",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              enum: ["csv", "pdf"],
+            },
+          },
+        ],
         security: [
           {
             bearerAuth: [],

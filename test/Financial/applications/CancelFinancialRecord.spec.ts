@@ -1,3 +1,4 @@
+import { DatabaseTransaction } from "@/Shared/adapter/DatabaseTransaction.adapter"
 import { CancelFinancialRecord } from "@/Financial/applications/financeRecord/CancelFinancialRecord"
 import { UpdateFinancialRecord } from "@/Financial/applications/financeRecord/UpdateFinancialRecord"
 import {
@@ -40,11 +41,14 @@ describe("CancelFinancialRecord", () => {
     jest.clearAllMocks()
     financialYearRepository.one.mockResolvedValue({
       isClosed: () => false,
+      // The validator also refuses a month that is being closed.
+      isClosing: () => false,
     } as any)
     financialRecordRepository.one.mockResolvedValue({
       getDate: () => new Date(),
       getChurchId: () => "church-1",
       getType: () => FinancialRecordType.OUTGO,
+      getRecurringCompetence: () => undefined,
       // Read by the pre-transaction guard: this fixture is cancellable.
       getStatus: () => FinancialRecordStatus.CLEARED,
     } as unknown as FinanceRecord)
@@ -127,6 +131,71 @@ describe("CancelFinancialRecord", () => {
       }
     )
     transactionRun.mockRestore()
+  })
+
+  it("validates the competence of a recurring record, not its payment date", async () => {
+    // Competence October, paid on November 2nd. The record belongs to October's
+    // result, so cancelling it must check October: validating November would pass
+    // with November open and drop the entry out of a closed October.
+    financialRecordRepository.one.mockResolvedValue({
+      getDate: () => new Date("2026-11-02T00:00:00.000Z"),
+      getChurchId: () => "church-1",
+      getType: () => FinancialRecordType.OUTGO,
+      getStatus: () => FinancialRecordStatus.CLEARED,
+      getRecurringCompetence: () => "2026-10",
+    } as unknown as FinanceRecord)
+    jest
+      .spyOn(DatabaseTransaction, "run")
+      .mockImplementation((async (callback: never) =>
+        (callback as unknown as (context: unknown) => Promise<unknown>)(
+          {}
+        )) as never)
+
+    await useCase.execute({
+      financialRecordId: "financial-record-1",
+      churchId: "church-1",
+      createdBy: "user-1",
+    })
+
+    expect(financialYearRepository.one).toHaveBeenCalledWith(
+      expect.objectContaining({ month: 10, year: 2026, churchId: "church-1" })
+    )
+  })
+
+  it("rechecks reconciliation inside the transaction and refuses the race", async () => {
+    // Bank reconciliation can set RECONCILED between the preliminary read and the
+    // instance the transaction mutates, so the guard is repeated there. Without
+    // it the cancellation would revert a settled bank debit.
+    const record = (status: FinancialRecordStatus) =>
+      ({
+        getDate: () => new Date(),
+        getChurchId: () => "church-1",
+        getType: () => FinancialRecordType.OUTGO,
+        getRecurringCompetence: () => undefined,
+        getStatus: () => status,
+      }) as unknown as FinanceRecord
+    financialRecordRepository.one
+      .mockResolvedValueOnce(record(FinancialRecordStatus.CLEARED))
+      .mockResolvedValueOnce(record(FinancialRecordStatus.RECONCILED))
+    // The transaction is opened for real in production; here it only has to hand
+    // the callback a context so the in-transaction guard runs.
+    jest
+      .spyOn(DatabaseTransaction, "run")
+      .mockImplementation((async (callback: never) =>
+        (callback as unknown as (context: unknown) => Promise<unknown>)(
+          {}
+        )) as never)
+
+    await expect(
+      useCase.execute({
+        financialRecordId: "financial-record-1",
+        churchId: "church-1",
+        createdBy: "user-1",
+      })
+    ).rejects.toMatchObject({
+      name: "RECONCILED_RECORD_CANNOT_BE_CANCELLED",
+    })
+    expect(useCase["cancelOutgoRecord"]).not.toHaveBeenCalled()
   })
 
   it("preserves the original financial concept in the reversal", async () => {

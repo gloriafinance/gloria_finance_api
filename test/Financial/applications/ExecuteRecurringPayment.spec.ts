@@ -1,4 +1,5 @@
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
 
@@ -99,14 +100,27 @@ function setup(input: SetupInput = {}) {
       .mockResolvedValue(input.costCenterMissing === true ? undefined : {}),
   }
   const financialYears = {
-    one: jest
+    one: jest.fn().mockResolvedValue(
+      input.closedMonth === true
+        ? { isClosed: () => true, isClosing: () => false }
+        : {
+            isClosed: () => false,
+            isClosing: () => input.closingMonth === true,
+          }
+    ),
+    // The reservation bumps the month sequence inside the transaction; returning
+    // false means the month was closed or is being closed.
+    markReservation: jest
       .fn()
-      .mockResolvedValue(
-        input.closedMonth === true
-          ? { isClosed: () => true }
-          : { isClosed: () => false }
-      ),
+      .mockResolvedValue(input.monthRefusesReservation !== true),
   }
+  // The reservation runs inside a MongoDB transaction; the spec supplies the
+  // context so the two writes share one unit of work.
+  jest
+    .spyOn(MongoTransaction, "run")
+    .mockImplementation((async (callback: (transaction: unknown) => unknown) =>
+      callback({})) as never)
+
   const queue = { dispatch: jest.fn() }
   const receipt = {
     storeRemoteReceipt: jest.fn().mockResolvedValue("stored-receipt"),
@@ -145,7 +159,11 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
     })
 
-    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(result).toEqual({
+      status: "PROCESSING",
+      competence: "2026-10",
+      amount: 123.45,
+    })
     expect(ctx.callOrder.slice(0, 2)).toEqual(["reserve", "bank"])
     expect(ctx.banking.createPixTransfer).toHaveBeenCalledWith({
       externalAccountId: "church-1",
@@ -172,10 +190,20 @@ describe("ExecuteRecurringPayment", () => {
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_FORBIDDEN" })
 
+    const noMethod = setup({ type: "VARIABLE" })
+    await expect(
+      noMethod.service.execute("church-1", "recurring-1", {
+        competence: "2026-10",
+      })
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_INVALID" })
+
+    // Con un método elegido, un VARIABLE sin importe sigue siendo inválido: el
+    // único caso donde el importe puede faltar es un boleto, que trae el suyo.
     const variable = setup({ type: "VARIABLE" })
     await expect(
       variable.service.execute("church-1", "recurring-1", {
         competence: "2026-10",
+        payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_REQUIRED" })
     expect(variable.banking.createPixTransfer).not.toHaveBeenCalled()
@@ -224,7 +252,9 @@ describe("ExecuteRecurringPayment", () => {
 
     expect(ctx.repository.saveIfCurrentPaymentMatches).toHaveBeenCalledWith(
       ctx.recurrence,
-      failed
+      failed,
+      // The reservation shares the transaction with the month it belongs to.
+      expect.anything()
     )
     expect(
       ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
@@ -360,7 +390,11 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
     })
 
-    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(result).toEqual({
+      status: "PROCESSING",
+      competence: "2026-10",
+      amount: 25,
+    })
     expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
       status: "PROCESSING",
       providerStatus: "CREATION_UNKNOWN",
@@ -620,7 +654,7 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
-  it("rejects a bill whose answered amount differs from the reserved one", async () => {
+  it("keeps a mismatched active bill non-retriable and reports both amounts", async () => {
     const ctx = setup({ amount: 742.83 })
     ctx.banking.createBillPayment.mockResolvedValue({
       externalAccountId: "church-1",
@@ -630,13 +664,135 @@ describe("ExecuteRecurringPayment", () => {
       valueInCents: 78243,
     })
 
-    await expect(
-      ctx.service.execute("church-1", "recurring-1", {
-        competence: "2026-10",
-        payment: { type: "BILL", identificationField: "34191..." },
-      })
-    ).rejects.toMatchObject({
-      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // The boleto charges what it charges; the execution is refused, not paid,
+    // and the UI is given both amounts to explain the difference.
+    expect(result).toMatchObject({
+      status: "PROCESSING",
+      competence: "2026-10",
+      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      amount: 742.83,
+      providerValueInCents: 78243,
+    })
+    // The provider answered PENDING, so an operation may already exist: the
+    // attempt stays in flight instead of becoming retriable, otherwise the next
+    // request would reserve attempt 2 and create a second bill at the bank.
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      providerStatus: "PENDING",
+      attempt: 1,
+      providerValueInCents: 78243,
+    })
+  })
+
+  it("keeps a bill the provider is still processing in PROCESSING", async () => {
+    // church-banking normalizes its provider's in-flight states into PROCESSING.
+    // Reading it as a creation failure would offer a retry while the operation is
+    // alive.
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PROCESSING",
+      context: {},
+      valueInCents: 74283,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    expect(result.status).toBe("PROCESSING")
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      providerStatus: "PROCESSING",
+    })
+  })
+
+  it("does not create a second bill after a mismatched active attempt", async () => {
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PENDING",
+      context: {},
+      valueInCents: 78243,
+    })
+
+    await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+    ctx.banking.createBillPayment.mockClear()
+
+    const second = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // No second provider call and no new attempt: the operation may already
+    // exist at the bank, so only its status can change from here.
+    expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
+    expect(second.status).toBe("PROCESSING")
+    expect(ctx.recurrence.getCurrentPayment()?.attempt).toBe(1)
+  })
+
+  it("treats a mismatch confirmed as rejected as retriable", async () => {
+    const ctx = setup({ amount: 742.83 })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "CREATION_FAILED",
+      context: {},
+      valueInCents: 78243,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // The provider confirmed it created nothing, so a new attempt is safe.
+    expect(result).toMatchObject({
+      status: "FAILED",
+      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      providerValueInCents: 78243,
+    })
+    expect(ctx.recurrence.getCurrentPayment()?.status).toBe("FAILED")
+  })
+
+  it("reads a variable bill amount from the boleto instead of asking the payer", async () => {
+    const ctx = setup({ type: "VARIABLE" })
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      status: "PENDING",
+      context: {},
+      valueInCents: 78243,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
+    })
+
+    // Nothing to compare against, so no expectation travels: the boleto's own
+    // amount is what gets charged and booked.
+    const payload = ctx.banking.createBillPayment.mock.calls[0]?.[0]
+    expect(payload).not.toHaveProperty("expectedAmountInCents")
+    expect(result).toMatchObject({
+      status: "PROCESSING",
+      amount: 782.43,
+      providerValueInCents: 78243,
+    })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      amount: 782.43,
+      providerValueInCents: 78243,
     })
   })
 

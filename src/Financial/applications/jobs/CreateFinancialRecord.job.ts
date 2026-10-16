@@ -19,6 +19,8 @@ import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces
 import type { IJob, IQueueService } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter"
 import type { IStorageService } from "@/Shared/domain"
+import type { IDRERepository } from "@/Reports/domain/interfaces/DRERepository.interface"
+import { DREMongoRepository } from "@/Reports/infrastructure/persistence/DREMongoRepository"
 
 export class CreateFinancialRecordJob implements IJob {
   private logger = Logger(CreateFinancialRecordJob.name)
@@ -28,7 +30,15 @@ export class CreateFinancialRecordJob implements IJob {
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly store: IStorageService,
     private readonly queueService: IQueueService,
-    private readonly recurringPaymentsRepository?: IRecurringPaymentsRepository
+    private readonly recurringPaymentsRepository?: IRecurringPaymentsRepository,
+    /**
+     * A late booking invalidates the period's materialized report so it is
+     * recomputed instead of staying wrong.
+     */
+    private readonly dreRepository: Pick<
+      IDRERepository,
+      "invalidate"
+    > = DREMongoRepository.getInstance()
   ) {}
 
   async handle(args: FinancialRecordCreateQueue): Promise<void> {
@@ -44,11 +54,58 @@ export class CreateFinancialRecordJob implements IJob {
     const accountingMonth = args.recurringCompetence
       ? new Date(`${args.recurringCompetence}-01T00:00:00.000Z`)
       : new Date(args.date)
-    await new FinancialMonthValidator(this.financialYearRepository).validate({
-      churchId: args.churchId,
-      month: accountingMonth.getUTCMonth() + 1,
-      year: accountingMonth.getUTCFullYear(),
-    })
+    // A banking external reference means the money already moved: the operation
+    // was accepted while its month was open and the bank only confirmed it later
+    // (a PIX or boleto can stay pending until a webhook arrives). Refusing the
+    // record would lose an irreversible debit and leave the competence stuck in
+    // PROCESSING, so the debit is always booked.
+    //
+    // It is not a silent bypass: booking into a month that is already closed
+    // changes a result period whose DRE was materialized by CloseFinancialMonth,
+    // so it is reported as a warning that the month's DRE has to be regenerated.
+    // The pending policy decision is to refuse closing a month while it still has
+    // recurring operations in flight, which keeps this path exceptional.
+    const moneyAlreadyMoved = args.bankingExternalReference !== undefined
+    if (moneyAlreadyMoved) {
+      const closed = await this.isAccountingMonthClosed({
+        churchId: args.churchId,
+        month: accountingMonth.getUTCMonth() + 1,
+        year: accountingMonth.getUTCFullYear(),
+      })
+      if (closed) {
+        // The bank already debited, and the webhook answered 200 to church-banking
+        // when it enqueued this job: nothing is going to be re-sent. Refusing the
+        // record here would make the financial fact disappear, which is worse than
+        // a late booking, so the debit is recorded and the period's materialized
+        // DRE is dropped: the report recomputes it instead of staying wrong.
+        this.logger.error(`Settlement into a closed accounting month`, {
+          churchId: args.churchId,
+          competence: args.recurringCompetence,
+          bankingExternalReference: args.bankingExternalReference,
+          month: accountingMonth.getUTCMonth() + 1,
+          year: accountingMonth.getUTCFullYear(),
+          dreInvalidated: true,
+        })
+        await this.dreRepository.invalidate({
+          churchId: args.churchId,
+          month: accountingMonth.getUTCMonth() + 1,
+          year: accountingMonth.getUTCFullYear(),
+        })
+      }
+      this.logger.info(`Booking a confirmed bank payment`, {
+        churchId: args.churchId,
+        competence: args.recurringCompetence,
+        bankingExternalReference: args.bankingExternalReference,
+        month: accountingMonth.getUTCMonth() + 1,
+        year: accountingMonth.getUTCFullYear(),
+      })
+    } else {
+      await new FinancialMonthValidator(this.financialYearRepository).validate({
+        churchId: args.churchId,
+        month: accountingMonth.getUTCMonth() + 1,
+        year: accountingMonth.getUTCFullYear(),
+      })
+    }
 
     if (typeof args.availabilityAccount === "object") {
       const aggregateId = args.availabilityAccount.aggregateId
@@ -179,5 +236,19 @@ export class CreateFinancialRecordJob implements IJob {
       status === FinancialRecordStatus.CLEARED ||
       status === FinancialRecordStatus.RECONCILED
     )
+  }
+
+  /**
+   * Whether the accounting month is already closed. It does not block the
+   * booking: it only decides how loud the log is, because a debit that already
+   * happened cannot be dropped.
+   */
+  private async isAccountingMonthClosed(input: {
+    churchId: string
+    month: number
+    year: number
+  }): Promise<boolean> {
+    const financialMonth = await this.financialYearRepository.one(input)
+    return financialMonth?.isClosed() === true
   }
 }

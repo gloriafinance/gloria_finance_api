@@ -10,6 +10,20 @@ const PIX_TYPES = new Set(["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"])
 const COMPETENCE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
 const PAYMENT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
+/**
+ * Whether the string is the day it says it is. JavaScript normalizes impossible
+ * dates — `2026-02-31` parses as a March day — so the parsed UTC date has to
+ * round-trip to the same day before the payload is accepted. Otherwise the
+ * endpoint's strict YYYY-MM-DD contract would silently store another date.
+ */
+function isCalendarDate(value: string): boolean {
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
+  )
+}
+
 function invalid(res: ServerResponse, code: string): void {
   res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({ code })
 }
@@ -145,7 +159,7 @@ export async function validateRegisterRecurringPayment(
   const paymentDateValid =
     typeof paymentDate === "string" &&
     PAYMENT_DATE_PATTERN.test(paymentDate) &&
-    !Number.isNaN(new Date(`${paymentDate}T00:00:00.000Z`).getTime())
+    isCalendarDate(paymentDate)
   if (!paymentDateValid) {
     invalid(res, "RECURRING_PAYMENT_REGISTER_PAYLOAD_INVALID")
     return

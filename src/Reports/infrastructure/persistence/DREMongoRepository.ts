@@ -20,6 +20,19 @@ export class DREMongoRepository
     return DREMongoRepository.instance
   }
 
+  async invalidate(input: {
+    churchId: string
+    month: number
+    year: number
+  }): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({
+      churchId: input.churchId,
+      month: input.month,
+      year: input.year,
+    })
+  }
+
   protected ensureIndexes(collection: Collection): Promise<void> {
     return Promise.resolve(undefined)
   }

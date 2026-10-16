@@ -36,7 +36,10 @@ export class FinancialMonthValidator {
       throw new GenericException("Financial month not found")
     }
 
-    if (financialMonth.isClosed()) {
+    // A month that is being closed is already shut for new executions: letting
+    // one start while the close counts what is in flight is exactly the race that
+    // leaves a settlement in a period whose DRE was reported.
+    if (financialMonth.isClosing() || financialMonth.isClosed()) {
       this.logger.info(`Financial month is closed`, financialMonth)
       throw new FinancialMonthIsClosed()
     }

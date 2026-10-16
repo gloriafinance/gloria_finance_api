@@ -64,9 +64,10 @@ export class CancelFinancialRecord {
 
     const { financialRecordId, churchId, createdBy } = params
 
-    // Checked before opening the transaction: a reconciled record is backed by a
-    // real bank debit, so the reversal is refused outright and there is no reason
-    // to start a transaction to discover it.
+    // Fast path: a reconciled record is backed by a real bank debit, so the
+    // reversal is refused before paying for a transaction. It is not the
+    // authority though — reconciliation can land between this read and the one
+    // inside the transaction, so the guard is repeated there.
     const existing = await this.financialRecordRepository.one({
       financialRecordId,
       churchId,
@@ -92,14 +93,37 @@ export class CancelFinancialRecord {
             throw new FinancialMovementNotFound()
           }
 
-          const date = financialRecord.getDate()
+          // Rechecked on the instance the transaction will actually mutate: bank
+          // reconciliation may have set RECONCILED after the preliminary read,
+          // and cancelling it would corrupt settled history.
+          if (
+            financialRecord.getStatus() === FinancialRecordStatus.RECONCILED
+          ) {
+            this.logger.error(`Reconciled movement cannot be cancelled`, params)
+            throw new ReconciledRecordCannotBeCancelled()
+          }
+
+          // A recurring record belongs to the month of its competence, which is
+          // the period the result reports use. Cancelling it by the payment date
+          // would validate a different month: a competence from October paid on
+          // November 2nd would pass with November open and then disappear from
+          // October's already reported result.
+          const competence = financialRecord.getRecurringCompetence()
+          const period = competence
+            ? {
+                month: Number(competence.slice(5, 7)),
+                year: Number(competence.slice(0, 4)),
+              }
+            : {
+                month: financialRecord.getDate().getUTCMonth() + 1,
+                year: financialRecord.getDate().getFullYear(),
+              }
 
           await new FinancialMonthValidator(
             this.financialYearRepository
           ).validate({
             churchId: financialRecord.getChurchId(),
-            month: date.getUTCMonth() + 1,
-            year: date.getFullYear(),
+            ...period,
           })
 
           switch (financialRecord.getType()) {

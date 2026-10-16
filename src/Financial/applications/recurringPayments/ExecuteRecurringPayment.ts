@@ -20,15 +20,22 @@ import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/Remote
 import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { assertCompetence } from "./RecurringPaymentCompetence"
+import { instrumentDeterminesAmount } from "@/Financial/domain/requests/RecurringPayment.request"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import { ConceptType } from "@/FinanceConfig/domain/enums/ConcepType.enum"
+import { MongoTransaction } from "@abejarano/ts-mongodb-criteria"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
+import { FinancialMonthIsClosed } from "@/ConsolidatedFinancial/domain/exceptions"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 
 export type ExecuteRecurringPaymentResult = {
   status: "PROCESSING" | "BLOCKED" | "FAILED" | "ALREADY_PAID"
   competence: string
+  /** Amount charged by this execution. Comes from the boleto for BILL. */
+  amount?: number
+  /** Amount the boleto charges, read from the line by church-banking. */
+  providerValueInCents?: number
   failureCode?: string
 }
 
@@ -98,8 +105,8 @@ export class ExecuteRecurringPayment {
     if (alreadyPaid)
       return { status: "ALREADY_PAID", competence: request.competence }
 
-    const amount = this.resolveAmount(recurring, request)
     const method = this.resolveMethod(recurring, request)
+    const amount = this.resolveAmount(recurring, request, method)
     // Everything that could make the payment unbookable is checked before the
     // provider is called: after the debit there is no way back, and a rejected
     // accounting entry would leave real money moved with no record of it.
@@ -129,11 +136,30 @@ export class ExecuteRecurringPayment {
     }
 
     recurring.reserveCurrentPayment(currentPayment)
-    const reserved =
-      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
-        recurring,
-        existing
+    const [reservationYear, reservationMonth] = request.competence
+      .split("-")
+      .map(Number)
+    // Reserving is what starts a payment, so it is also what has to prove the
+    // month still accepts it. The sequence bump and the reservation share the
+    // transaction, and the close only finishes when that sequence did not move:
+    // a payment can no longer slip between the in-flight count and the close.
+    const reserved = await MongoTransaction.run(async (transaction) => {
+      const monthAccepts = await this.financialYearRepository.markReservation(
+        {
+          churchId: recurring.getChurchId(),
+          month: reservationMonth!,
+          year: reservationYear!,
+        },
+        transaction
       )
+      if (!monthAccepts) throw new FinancialMonthIsClosed()
+
+      return await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
+        recurring,
+        existing,
+        transaction
+      )
+    })
     if (!reserved) {
       const winner = await this.recurringPaymentsRepository.one({
         recurringPaymentId,
@@ -218,18 +244,26 @@ export class ExecuteRecurringPayment {
 
   /**
    * FIXED amount comes from the configuration and must not be supplied again;
-   * VARIABLE requires the amount for this competence. One owner for the rule.
+   * The recurrence supplies the amount when it is fixed. Otherwise the payer does,
+   * unless the instrument determines it: a boleto carries its own amount, so the
+   * caller is not asked and the value read from the line becomes authoritative.
+   * One owner for the rule.
    */
   private resolveAmount(
     recurring: RecurringPayments,
-    request: PayRecurringPaymentRequest
-  ): number {
+    request: PayRecurringPaymentRequest,
+    method: PayRecurringPaymentMethod
+  ): number | undefined {
     const configuredAmount = recurring.getAmount()
     if (configuredAmount !== undefined) {
       if (request.amount !== undefined)
         throw new PaymentError("RECURRING_PAYMENT_AMOUNT_FORBIDDEN")
       return configuredAmount
     }
+    // The instrument may bring the amount with it (the boleto defines the debt),
+    // in which case nobody is asked: church-banking reads it and returns it.
+    if (instrumentDeterminesAmount(method) && request.amount === undefined)
+      return undefined
     if (
       request.amount === undefined ||
       !Number.isFinite(request.amount) ||
@@ -336,12 +370,18 @@ export class ExecuteRecurringPayment {
       attempt: payment.attempt,
     }
 
+    // A PIX transfer moves an exact amount, so it can never be undefined.
+    const declaredAmount = payment.amount
+    if (method.type === "PIX" && declaredAmount === undefined) {
+      throw new PaymentError("RECURRING_PAYMENT_AMOUNT_REQUIRED")
+    }
+
     let response: ChurchBankingOutgoingPaymentResponse
     try {
       if (method.type === "PIX") {
         response = await this.churchBankingClient.createPixTransfer({
           externalAccountId: recurring.getChurchId(),
-          amountInCents: this.toCents(payment.amount),
+          amountInCents: this.toCents(declaredAmount!),
           pixKey: method.pixKey,
           pixKeyType: method.pixKeyType,
           description: recurring.getName(),
@@ -355,8 +395,12 @@ export class ExecuteRecurringPayment {
           description: recurring.getName(),
           externalReference: payment.externalReference,
           context,
-          // Declared up front so a wrong amount is refused before the debit.
-          expectedAmountInCents: this.toCents(payment.amount),
+          // Declared only when the amount is known up front, so a wrong amount
+          // is refused before the debit. A boleto that defines its own amount
+          // has nothing to compare against.
+          ...(declaredAmount !== undefined
+            ? { expectedAmountInCents: this.toCents(declaredAmount) }
+            : {}),
         })
       }
     } catch (error) {
@@ -393,16 +437,56 @@ export class ExecuteRecurringPayment {
     payment: CurrentRecurringPayment,
     response: ChurchBankingOutgoingPaymentResponse
   ): Promise<ExecuteRecurringPaymentResult> {
-    if (
-      response.valueInCents !== undefined &&
-      response.valueInCents !== this.toCents(payment.amount)
-    ) {
-      throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
-    }
     const status = response.status
+    const providerValueInCents = response.valueInCents
+    const expectedAmountInCents =
+      payment.amount !== undefined ? this.toCents(payment.amount) : undefined
+
+    // church-banking already refuses this before reaching the provider, so a
+    // mismatch that arrives here means the amount the boleto charges differs
+    // from the declared one. It is persisted instead of thrown — a thrown error
+    // left the reservation in PROCESSING with nothing explaining it — and the UI
+    // receives both amounts.
+    //
+    // Retriability depends on what the provider answered: only a confirmed
+    // failure proves nothing was created. Any other status means an operation
+    // may already exist at the bank, so the attempt must stay non-retriable;
+    // marking it FAILED would let the next request reserve attempt 2 and create
+    // a second charge for the same boleto.
+    if (
+      expectedAmountInCents !== undefined &&
+      providerValueInCents !== undefined &&
+      providerValueInCents !== expectedAmountInCents
+    ) {
+      const confirmedRejection =
+        status === "FAILED" ||
+        status === "CANCELLED" ||
+        status === "CREATION_FAILED"
+      const mismatched: CurrentRecurringPayment = {
+        ...payment,
+        status: confirmedRejection ? "FAILED" : "PROCESSING",
+        providerStatus: confirmedRejection ? "CREATION_FAILED" : status,
+        failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+        providerValueInCents,
+        updatedAt: this.now(),
+      }
+      recurring.updateCurrentPayment(mismatched)
+      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
+        recurring,
+        payment
+      )
+      return this.result(mismatched)
+    }
+
+    const chargedAmount = this.chargedAmount(payment, response)
+    const billed =
+      providerValueInCents !== undefined ? { providerValueInCents } : {}
+
     if (status === "DONE" || status === "PAID") {
       const confirmed: CurrentRecurringPayment = {
         ...payment,
+        ...(chargedAmount !== undefined ? { amount: chargedAmount } : {}),
+        ...billed,
         status: "PROCESSING",
         providerStatus: status,
         ...(response.paymentDate ? { paymentDate: response.paymentDate } : {}),
@@ -427,6 +511,9 @@ export class ExecuteRecurringPayment {
     const blocked = status === "BLOCKED"
     const next: CurrentRecurringPayment = {
       ...payment,
+      // A boleto that defined its own amount now has a real one to carry.
+      ...(chargedAmount !== undefined ? { amount: chargedAmount } : {}),
+      ...billed,
       status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
       providerStatus: status,
       ...(response.failureCode || response.errorCode
@@ -450,10 +537,19 @@ export class ExecuteRecurringPayment {
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment
   ): Promise<void> {
+    const amount =
+      payment.amount ??
+      (payment.providerValueInCents !== undefined
+        ? payment.providerValueInCents / 100
+        : undefined)
+    if (amount === undefined) {
+      throw new PaymentError("RECURRING_PAYMENT_AMOUNT_REQUIRED")
+    }
+
     await this.recordRegistrar.execute({
       recurring,
       competence: payment.competence,
-      amount: payment.amount,
+      amount,
       availabilityAccountId: payment.availabilityAccountId,
       paymentDate: payment.paymentDate
         ? new Date(payment.paymentDate)
@@ -490,7 +586,7 @@ export class ExecuteRecurringPayment {
     request: PayRecurringPaymentRequest
   ): PayRecurringPaymentMethod {
     const method = this.resolveMethod(recurring, request)
-    const amount = this.resolveAmount(recurring, request)
+    const amount = this.resolveAmount(recurring, request, method)
     // church-banking requires byte-identical payee data for the same
     // externalReference, so a retry must repeat the exact destination.
     const sameDestination =
@@ -513,8 +609,26 @@ export class ExecuteRecurringPayment {
     return {
       status: payment.status,
       competence: payment.competence,
+      ...(payment.amount !== undefined ? { amount: payment.amount } : {}),
+      ...(payment.providerValueInCents !== undefined
+        ? { providerValueInCents: payment.providerValueInCents }
+        : {}),
       ...(payment.failureCode ? { failureCode: payment.failureCode } : {}),
     }
+  }
+
+  /**
+   * Amount this execution actually charges. A declared amount wins; otherwise
+   * the boleto's own value does, which is the only way a BILL can be booked
+   * without asking the payer to repeat what the line already says.
+   */
+  private chargedAmount(
+    payment: CurrentRecurringPayment,
+    response: ChurchBankingOutgoingPaymentResponse
+  ): number | undefined {
+    if (payment.amount !== undefined) return payment.amount
+    if (response.valueInCents === undefined) return undefined
+    return response.valueInCents / 100
   }
 
   /** The payee data that identifies this execution's target. */

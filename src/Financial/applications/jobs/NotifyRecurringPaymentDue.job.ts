@@ -63,6 +63,10 @@ export class NotifyRecurringPaymentDue implements IJob {
             )
           const paidIds = new Set(
             dueRecords
+              // The list returns every record of the competence, including
+              // VOID. A voided record is a cancelled payment, so its competence
+              // is unpaid again and must be reminded.
+              .filter((record) => record.isSettled())
               .map((record) => record.getRecurringPaymentId())
               .filter((id): id is string => Boolean(id))
           )

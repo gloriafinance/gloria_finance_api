@@ -151,6 +151,11 @@ async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer>
     if (typeName === "Date") return "2026-01-01T00:00:00.000Z"
     if (typeName === "null") return null
     if (typeName === "undefined" || typeName === "void") return {}
+    // An indexed access such as `Configuration["status"]` is a member of another
+    // declaration: resolving it through the schema path publishes its real type
+    // (an enum for a union of literals) instead of falling back to a name guess.
+    if (/^[A-Za-z0-9_]+\["[A-Za-z0-9_]+"\]$/.test(typeName))
+      return exampleFromSchema(schemaFromType(typeName), propertyName)
     if (type.isUnionType()) {
       for (const member of await type.getTypes()) {
         const memberName = await checker.typeToString(member)
@@ -165,12 +170,20 @@ async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer>
       if (itemType === "any" || itemType === "unknown") return []
       return [exampleFromSchema(schemaFromType(itemType), propertyName)]
     }
-    if (depth >= 3)
-      return propertyName ? exampleForProperty(propertyName) : {}
+    if (depth >= 3) return propertyName ? exampleForProperty(propertyName) : {}
     if (visited.has(type.id))
       return propertyName ? exampleForProperty(propertyName) : {}
     visited.add(type.id)
 
+    // Known defect, reproduced by the 200 response of `GET /recurring-payments`:
+    // the example pairs a property with the wrong member, so `competenceStatus`
+    // is rendered as the settlement object, `settlement` as a string, and a
+    // literal-union property such as `status` falls back to the `/s$/` name rule
+    // and becomes `[]`. `docs:check` cannot catch it: it only proves the file is
+    // up to date, not that the published contract is right. Fixing it needs a
+    // harness that generates an example for a fixture type and asserts the pairing
+    // before touching this loop, because the position arithmetic in
+    // `mergeObjectFields` and the union branch here are both suspects.
     const example: Record<string, OpenApiExample> = {}
     for (const property of await checker.getPropertiesOfType(type)) {
       const propertyType = await checker.getTypeOfSymbol(property)
@@ -241,13 +254,48 @@ function matchingBrace(source: string, openIndex: number): number {
   return source.length - 1
 }
 
+/** Comments carry prose that the property parser would read as members. */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "")
+}
+
+/**
+ * End of the statement that starts at `from`, used to bound an alias body. Two
+ * single-line aliases can sit next to each other with no blank line between
+ * them, so the next declaration also ends the statement.
+ */
+function statementEnd(source: string, from: number): number {
+  const candidates = [
+    source.indexOf("\n\n", from),
+    source.indexOf("\nexport ", from),
+  ].filter((index) => index !== -1)
+  return candidates.length === 0 ? source.length : Math.min(...candidates)
+}
+
+/**
+ * Body of a type alias declared without braces. It is kept as written — a union
+ * of string literals — so `schemaFromType` can publish it as an enum instead of
+ * inventing members for it.
+ */
+function aliasBody(source: string, from: number): string {
+  const statement = source.slice(from, statementEnd(source, from))
+  return statement.slice(statement.indexOf("=") + 1).trim()
+}
+
 async function loadTypeDeclarations(): Promise<void> {
   for (const file of await sourceFiles(sourceDirectory)) {
-    const source = await readFile(file, "utf8")
+    const source = stripComments(await readFile(file, "utf8"))
     const declarationPattern =
-      /export\s+(?:declare\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)[^{]*\{/g
+      /export\s+(?:declare\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)[^{=]*(?:=|\{)/g
     for (const match of source.matchAll(declarationPattern)) {
       const openIndex = source.indexOf("{", match.index)
+      // A type alias without braces is a union, a mapped type or another alias:
+      // it carries the declaration of its members, so it is kept as text until
+      // the end of the statement.
+      if (openIndex === -1 || openIndex > statementEnd(source, match.index)) {
+        typeDeclarations.set(match[1]!, aliasBody(source, match.index))
+        continue
+      }
       typeDeclarations.set(
         match[1]!,
         source.slice(openIndex, matchingBrace(source, openIndex) + 1)
@@ -281,6 +329,25 @@ function splitTopLevel(source: string): string[] {
   return values
 }
 
+/** Declared type of a member of a type declaration, without the access syntax. */
+function memberTypeOf(
+  declarationName: string,
+  memberName: string
+): string | null {
+  const declaration = typeDeclarations.get(declarationName)
+  if (!declaration) return null
+  const body = declaration.startsWith("{")
+    ? declaration.slice(1, -1)
+    : declaration
+  for (const entry of splitTopLevel(body)) {
+    const property = entry
+      .trim()
+      .match(/^([A-Za-z0-9_]+)(\?)?\s*:\s*([\s\S]+)$/)
+    if (property && property[1] === memberName) return property[3]!.trim()
+  }
+  return null
+}
+
 function schemaFromType(
   type: string,
   visited = new Set<string>()
@@ -296,11 +363,24 @@ function schemaFromType(
       items: schemaFromType(normalized.slice(0, -2), visited),
     }
   }
-  if (/^"[^"]+"(?:\s*\|\s*"[^"]+")+$/u.test(normalized)) {
+  // A union written across lines starts with `|`, and a single-literal alias has
+  // no separator at all.
+  if (/^\|?\s*"[^"]+"(?:\s*\|\s*"[^"]+")*$/u.test(normalized)) {
     return {
       type: "string",
       enum: [...normalized.matchAll(/"([^"]+)"/g)].map((match) => match[1]!),
     }
+  }
+  const indexed = normalized.match(/^([A-Za-z0-9_]+)\["([A-Za-z0-9_]+)"\]$/)
+  if (indexed) {
+    // `Configuration["status"]` is the declared type of that member, so the
+    // member is looked up instead of publishing the access expression. Members
+    // are newline-separated, so the splitter is used here too: stopping at a
+    // semicolon would swallow every member that follows.
+    const member = memberTypeOf(indexed[1]!, indexed[2]!)
+    return member
+      ? schemaFromType(member, visited)
+      : { description: `TypeScript type: ${normalized}` }
   }
   const omit = normalized.match(/^Omit<([A-Za-z0-9_]+),\s*"([A-Za-z0-9_]+)">$/)
   if (omit) {
@@ -550,8 +630,7 @@ function fallbackForResponseExpression(expression: string): OpenApiExample {
     .replace(/^await\s+/, "")
     .replace(/\/\/.*$/gm, "")
     .trim()
-  if (value === "churches")
-    return { nextPag: null, count: 0, results: [] }
+  if (value === "churches") return { nextPag: null, count: 0, results: [] }
   if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value) && /s$/i.test(value)) return []
   return null
 }
@@ -713,16 +792,16 @@ async function responseExamples(
         : /\bbuildAuthResponse\b/.test(handler) &&
             /^(?:response|authResponse)$/.test(expression.trim())
           ? authResponseExample()
-        : sourceFile.endsWith("ApiDocs.controller.ts") &&
-            /\bopenApiDocument\b/.test(expression)
-          ? { openapi: "3.1.0" }
-          : await mergeObjectFields(
-              expression,
-              await analyzer.exampleAt(sourceFile, expressionPosition),
-              sourceFile,
-              expressionPosition,
-              analyzer
-            )
+          : sourceFile.endsWith("ApiDocs.controller.ts") &&
+              /\bopenApiDocument\b/.test(expression)
+            ? { openapi: "3.1.0" }
+            : await mergeObjectFields(
+                expression,
+                await analyzer.exampleAt(sourceFile, expressionPosition),
+                sourceFile,
+                expressionPosition,
+                analyzer
+              )
       examples.set(
         status,
         generatedExample &&

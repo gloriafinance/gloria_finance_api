@@ -24,6 +24,24 @@ export type PayRecurringPaymentMethod =
   | { type: "BILL"; identificationField: string }
 
 /**
+ * Whether the instrument carries the amount by itself.
+ *
+ * This is the rule that decides who provides the amount, and it is not the
+ * recurrence type: a boleto defines the debt, so nobody is asked for it and, in a
+ * fixed recurrence, the amount read has to match the configured one as a
+ * protection. A PIX key identifies a recipient, not an amount — so a variable
+ * recurrence paid by key does ask the payer.
+ *
+ * A future PIX QR / copia e cola that brings its own amount joins this predicate
+ * without touching the recurrence model.
+ */
+export function instrumentDeterminesAmount(
+  method: PayRecurringPaymentMethod
+): boolean {
+  return method.type === "BILL"
+}
+
+/**
  * Execution command. The method describes THIS operation and is never persisted
  * as permanent configuration.
  */

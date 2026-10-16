@@ -1,12 +1,12 @@
 import { ProcessRecurringPaymentBankingUpdate } from "@/Webhook/infrastructure/services/ProcessRecurringPaymentBankingUpdate.service"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 
-function setup() {
+function setup(overrides: { omitAmount?: boolean } = {}) {
   const currentPayment = {
     competence: "2026-10",
     attempt: 1,
     externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-    amount: 742.83,
+    ...(overrides.omitAmount ? {} : { amount: 742.83 }),
     paymentMethod: "PIX" as const,
     bankId: "bank-1",
     availabilityAccountId: "availability-1",
@@ -156,7 +156,8 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
 
   it.each([
     ["PENDING", "PROCESSING"],
-    ["BANK_PROCESSING", "PROCESSING"],
+    // church-banking collapses its provider's in-flight states into PROCESSING.
+    ["PROCESSING", "PROCESSING"],
     ["FAILED", "FAILED"],
     ["CANCELLED", "FAILED"],
   ] as const)(
@@ -331,6 +332,18 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
       name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
     })
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("books the billed amount when the reservation never knew it", async () => {
+    // A reservation can exist without an amount (a variable boleto whose value
+    // arrives with the answer). The bank's value is the authoritative one, so the
+    // debit is booked instead of dropped.
+    const ctx = setup({ omitAmount: true })
+
+    await ctx.service.processBill(billEvent(ctx, "PAID", 78243))
+
+    const [, args] = ctx.queue.dispatch.mock.calls[0]!
+    expect(args).toMatchObject({ amount: 782.43 })
   })
 
   it("recognizes bill refunds without creating another financial record", async () => {
