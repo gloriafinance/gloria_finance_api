@@ -9656,7 +9656,53 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: [{}],
+                    value: [
+                      {
+                        recurringPaymentId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        financialConceptId:
+                          "00000000-0000-0000-0000-000000000001",
+                        costCenterId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        type: "Gloria Finance",
+                        amount: 0,
+                        dayOfMonth: 0,
+                        pixDestination: "Gloria Finance",
+                        status: [],
+                        competence: "Gloria Finance",
+                        competenceStatus: {
+                          financialRecordId:
+                            "00000000-0000-0000-0000-000000000001",
+                          amount: 0,
+                          date: "2026-01-01T00:00:00.000Z",
+                          status: "PENDING",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          voucher: "Gloria Finance",
+                        },
+                        currentPayment: {
+                          competence: "Gloria Finance",
+                          attempt: 0,
+                          externalReference: "Gloria Finance",
+                          amount: 0,
+                          providerValueInCents: 0,
+                          paymentMethod: "PIX",
+                          executionDestination: "Gloria Finance",
+                          bankId: "00000000-0000-0000-0000-000000000001",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          status: [],
+                          providerStatus: "Gloria Finance",
+                          failureCode: "Gloria Finance",
+                          identificationField: "Gloria Finance",
+                          paymentDate: "2026-01-01T00:00:00.000Z",
+                          transactionReceiptUrl: "https://example.com",
+                          updatedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                        settlement: "Gloria Finance",
+                      },
+                    ],
                   },
                 },
               },
@@ -9972,6 +10018,8 @@ export const openApiDocument = {
                     value: {
                       status: "ALREADY_PAID",
                       competence: "Gloria Finance",
+                      amount: 0,
+                      providerValueInCents: 0,
                       failureCode: "Gloria Finance",
                     },
                   },

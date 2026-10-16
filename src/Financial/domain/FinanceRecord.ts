@@ -244,6 +244,14 @@ export class FinanceRecord extends AggregateRoot {
     this.voucher = voucher
   }
 
+  /**
+   * Stored voucher of the fact. For a manual registration it is the mandatory
+   * receipt; for a bank execution it is the provider receipt, when there is one.
+   */
+  getVoucher(): string | undefined {
+    return this.voucher
+  }
+
   setStatus(status: FinancialRecordStatus) {
     if (this.status === status) {
       return
