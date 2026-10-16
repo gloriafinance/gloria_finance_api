@@ -195,8 +195,16 @@ export class ProcessRecurringPaymentBankingUpdate {
     if (bill.status === "PAID") {
       // A bill is executed for whatever the boleto charges, which is independent
       // of the amount the church typed. Recording the local amount without
-      // checking it would book an expense the bank never paid.
-      if (Math.round(payment.amount * 100) !== bill.valueInCents) {
+      // checking it would book an expense the bank never paid, so a declared
+      // amount that differs is refused.
+      const reservedAmountInCents =
+        payment.amount !== undefined
+          ? Math.round(payment.amount * 100)
+          : undefined
+      if (
+        reservedAmountInCents !== undefined &&
+        reservedAmountInCents !== bill.valueInCents
+      ) {
         throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
       }
       const paymentDate = bill.paymentDate
@@ -206,7 +214,9 @@ export class ProcessRecurringPaymentBankingUpdate {
         throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
       await this.recordConfirmed(
         recurring,
-        payment,
+        // The billed amount is authoritative: a reservation that never knew the
+        // amount still has to book what the bank actually paid.
+        { ...payment, amount: bill.valueInCents / 100 },
         bill.transactionReceiptUrl,
         paymentDate,
         "PAID"

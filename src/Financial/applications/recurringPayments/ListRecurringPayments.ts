@@ -39,19 +39,40 @@ export type RecurringPaymentSettlement = {
   voucher?: string
 }
 
-export type RecurringPaymentForCompetence =
-  RecurringPaymentConfigurationData & {
-    competence: string
-    competenceStatus: RecurringPaymentCompetenceStatus
-    /**
-     * Execution state of THIS competence, when one was started. Without it the
-     * screen would only know that something is PROCESSING/BLOCKED/FAILED, not
-     * the amount, the method, the reference or when it was last updated.
-     */
-    currentPayment?: CurrentRecurringPayment
-    /** Present only when the competence is PAID. */
-    settlement?: RecurringPaymentSettlement
-  }
+/**
+ * Flat on purpose: the OpenAPI example analyzer pairs a property with the wrong
+ * member of an intersection, so the published example described
+ * `competenceStatus` as a settlement and `settlement` as a string. The type
+ * assertion below keeps every configuration field present without intersecting.
+ */
+export type RecurringPaymentForCompetence = {
+  recurringPaymentId: string
+  churchId: string
+  financialConceptId: string
+  costCenterId: string
+  name: string
+  type: RecurringPaymentConfigurationData["type"]
+  amount?: number
+  dayOfMonth: number
+  pixDestination?: RecurringPaymentConfigurationData["pixDestination"]
+  status: RecurringPaymentConfigurationData["status"]
+  competence: string
+  competenceStatus: RecurringPaymentCompetenceStatus
+  /**
+   * Execution state of THIS competence, when one was started. Without it the
+   * screen would only know that something is PROCESSING/BLOCKED/FAILED, not the
+   * amount, the method, the reference or when it was last updated.
+   */
+  currentPayment?: CurrentRecurringPayment
+  /** Present only when the competence is PAID. */
+  settlement?: RecurringPaymentSettlement
+}
+
+/** Compile-time guard: a competence row always carries the whole configuration. */
+const _competenceRowKeepsConfiguration: RecurringPaymentForCompetence extends RecurringPaymentConfigurationData
+  ? true
+  : never = true
+void _competenceRowKeepsConfiguration
 
 /**
  * Creation competence of a recurrence, derived from its ObjectId.

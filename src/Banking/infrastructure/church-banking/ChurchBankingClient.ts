@@ -10,6 +10,7 @@ import type {
   IChurchBankingClient,
   StaticPixResponse,
 } from "@/Banking/domain"
+import { assertBilledValue } from "@/Banking/domain/BillPaymentValue.ts"
 import { ChurchBankingClientError } from "@/Banking/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { CompactEncrypt, importJWK, type JWK, KeyLike, SignJWT } from "jose"
@@ -62,7 +63,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
       path: "/api/bill-payments",
       payload: input,
     })
-    return this.parseOutgoingPaymentResponse(response, input)
+    return assertBilledValue(this.parseOutgoingPaymentResponse(response, input))
   }
 
   async createStaticPix(

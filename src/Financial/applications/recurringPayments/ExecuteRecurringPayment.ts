@@ -413,25 +413,35 @@ export class ExecuteRecurringPayment {
     payment: CurrentRecurringPayment,
     response: ChurchBankingOutgoingPaymentResponse
   ): Promise<ExecuteRecurringPaymentResult> {
+    const status = response.status
     const providerValueInCents = response.valueInCents
     const expectedAmountInCents =
       payment.amount !== undefined ? this.toCents(payment.amount) : undefined
 
     // church-banking already refuses this before reaching the provider, so a
     // mismatch that arrives here means the amount the boleto charges differs
-    // from the declared one. It is persisted as a terminal-for-this-attempt
-    // failure instead of thrown: a thrown error would leave the reservation in
-    // PROCESSING forever, blocking the competence, and the UI needs both amounts
-    // to explain what the boleto actually charges.
+    // from the declared one. It is persisted instead of thrown — a thrown error
+    // left the reservation in PROCESSING with nothing explaining it — and the UI
+    // receives both amounts.
+    //
+    // Retriability depends on what the provider answered: only a confirmed
+    // failure proves nothing was created. Any other status means an operation
+    // may already exist at the bank, so the attempt must stay non-retriable;
+    // marking it FAILED would let the next request reserve attempt 2 and create
+    // a second charge for the same boleto.
     if (
       expectedAmountInCents !== undefined &&
       providerValueInCents !== undefined &&
       providerValueInCents !== expectedAmountInCents
     ) {
+      const confirmedRejection =
+        status === "FAILED" ||
+        status === "CANCELLED" ||
+        status === "CREATION_FAILED"
       const mismatched: CurrentRecurringPayment = {
         ...payment,
-        status: "FAILED",
-        providerStatus: "CREATION_FAILED",
+        status: confirmedRejection ? "FAILED" : "PROCESSING",
+        providerStatus: confirmedRejection ? "CREATION_FAILED" : status,
         failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
         providerValueInCents,
         updatedAt: this.now(),
@@ -448,7 +458,6 @@ export class ExecuteRecurringPayment {
     const billed =
       providerValueInCents !== undefined ? { providerValueInCents } : {}
 
-    const status = response.status
     if (status === "DONE" || status === "PAID") {
       const confirmed: CurrentRecurringPayment = {
         ...payment,

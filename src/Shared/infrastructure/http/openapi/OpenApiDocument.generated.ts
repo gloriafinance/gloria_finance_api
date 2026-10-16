@@ -9658,6 +9658,18 @@ export const openApiDocument = {
                     summary: "Successful response",
                     value: [
                       {
+                        recurringPaymentId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        financialConceptId:
+                          "00000000-0000-0000-0000-000000000001",
+                        costCenterId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        type: "Gloria Finance",
+                        amount: 0,
+                        dayOfMonth: 0,
+                        pixDestination: "Gloria Finance",
+                        status: [],
                         competence: "Gloria Finance",
                         competenceStatus: {
                           financialRecordId:
