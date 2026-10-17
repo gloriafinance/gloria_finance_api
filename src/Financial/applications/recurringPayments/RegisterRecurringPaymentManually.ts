@@ -13,7 +13,7 @@ import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import type { IStorageService } from "@/Shared/domain/interfaces/StorageService.interface"
 import { StorageProviderService } from "@/Shared/infrastructure/services/StorageProvider.service"
 import { assertCompetence } from "./RecurringPaymentCompetence"
-import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
+import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 
 export type RegisterRecurringPaymentManuallyInput =
   RegisterRecurringPaymentRequest & {

@@ -18,7 +18,6 @@ export type RecurringPaymentErrorCode =
   | "RECURRING_PAYMENT_AVAILABILITY_ACCOUNT_UNAVAILABLE"
   | "RECURRING_PAYMENT_VOUCHER_REQUIRED"
   | "RECURRING_PAYMENT_MANUAL_NOT_ALLOWED"
-  | "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH"
 
 const messages: Record<RecurringPaymentErrorCode, string> = {
   RECURRING_PAYMENT_NOT_FOUND: "Recurring payment not found",
@@ -53,8 +52,6 @@ const messages: Record<RecurringPaymentErrorCode, string> = {
     "A voucher file is required to register a manual payment",
   RECURRING_PAYMENT_MANUAL_NOT_ALLOWED:
     "This church executes its recurring payments through the bank, so a manual registration is not allowed",
-  RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH:
-    "The bill amount differs from the amount recorded for this recurrence",
 }
 
 export class RecurringPaymentException extends DomainException {

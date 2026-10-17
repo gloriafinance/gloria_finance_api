@@ -230,6 +230,15 @@ export class FinanceRecord extends AggregateRoot {
     return this.availabilityAccount
   }
 
+  /**
+   * Competence (YYYY-MM) the record belongs to when it comes from a recurring
+   * payment. `date` is when the money moved, which for a recurring payment can
+   * fall in a different month than the one the expense is reported in.
+   */
+  getRecurringCompetence(): string | undefined {
+    return this.recurringCompetence
+  }
+
   getDate() {
     return this.date
   }
@@ -248,6 +257,14 @@ export class FinanceRecord extends AggregateRoot {
 
   setVoucher(voucher: string) {
     this.voucher = voucher
+  }
+
+  /**
+   * Stored voucher of the fact. For a manual registration it is the mandatory
+   * receipt; for a bank execution it is the provider receipt, when there is one.
+   */
+  getVoucher(): string | undefined {
+    return this.voucher
   }
 
   setStatus(status: FinancialRecordStatus) {

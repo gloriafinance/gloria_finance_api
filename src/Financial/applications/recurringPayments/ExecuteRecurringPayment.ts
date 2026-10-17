@@ -1,14 +1,17 @@
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
-import type { ChurchBankingOutgoingPaymentResponse } from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
-import type { IChurchBankingClient } from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
+import type {
+  ChurchBankingBillPaymentResponse,
+  ChurchBankingPixTransferResponse,
+  IChurchBankingClient,
+} from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
-import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
-import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain/interfaces/FinancialConfigurationRepository.interface"
 import type {
   CurrentRecurringPayment,
+  RecurringPaymentExecutionStatus,
   RecurringPayments,
 } from "@/Financial/domain/RecurringPayments"
+import { recurringPaymentExternalReference } from "@/Financial/domain/RecurringPaymentReference"
 import type {
   PayRecurringPaymentMethod,
   PayRecurringPaymentRequest,
@@ -16,46 +19,41 @@ import type {
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type { IQueueService } from "@/package/queue/domain"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
-import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/RemoteReceiptStorage.interface"
-import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { assertCompetence } from "./RecurringPaymentCompetence"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
-import { ConceptType } from "@/FinanceConfig/domain/enums/ConcepType.enum"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 
 export type ExecuteRecurringPaymentResult = {
-  status: "PROCESSING" | "BLOCKED" | "FAILED" | "ALREADY_PAID"
+  /**
+   * `PAID` is a confirmation that just arrived; `ALREADY_PAID` is a competence
+   * that already had its record before this command ran. Both are successes and
+   * the caller must not treat them the same way only if it cares about the origin.
+   */
+  status: "PROCESSING" | "BLOCKED" | "FAILED" | "PAID" | "ALREADY_PAID"
   competence: string
+  /**
+   * Provider code for the refusal, answered to the caller and never stored: the
+   * domain keeps its own states, the operator keeps the provider's reason.
+   */
   failureCode?: string
+  /** Amount the boleto charges, read from the line by church-banking. */
+  providerValueInCents?: number
 }
 
 export class ExecuteRecurringPayment {
-  private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord
-
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
     private readonly bankRepository: IBankRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
-    private readonly financialConceptRepository: IFinancialConceptRepository,
-    private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly churchBankingClient: IChurchBankingClient,
-    private readonly receiptStorage: IRemoteReceiptStorage,
     private readonly queueService: IQueueService = QueueService.getInstance(),
     private readonly now: () => Date = () => new Date()
-  ) {
-    this.recordRegistrar = new RegisterRecurringPaymentFinancialRecord(
-      financialRecordRepository,
-      availabilityAccountRepository,
-      financialConceptRepository,
-      financialConfigurationRepository,
-      queueService
-    )
-  }
+  ) {}
 
   async execute(
     churchId: string,
@@ -71,9 +69,6 @@ export class ExecuteRecurringPayment {
 
     if (!recurring) {
       throw new PaymentError("RECURRING_PAYMENT_NOT_FOUND")
-    }
-    if (recurring.requiresCostCenterAssignment()) {
-      throw new PaymentError("RECURRING_PAYMENT_COST_CENTER_INVALID")
     }
 
     const existing = recurring.getCurrentPayment()
@@ -105,15 +100,13 @@ export class ExecuteRecurringPayment {
     // accounting entry would leave real money moved with no record of it.
     await this.assertExecutionPreconditions(recurring, request.competence)
     const account = await this.resolveAccount(churchId, request)
-    const attempt = existing ? existing.attempt + 1 : 1
-    const externalReference = this.externalReference(
+
+    const externalReference = recurringPaymentExternalReference(
       recurringPaymentId,
-      request.competence,
-      attempt
+      request.competence
     )
     const currentPayment: CurrentRecurringPayment = {
       competence: request.competence,
-      attempt,
       externalReference,
       amount,
       paymentMethod: method.type,
@@ -121,7 +114,6 @@ export class ExecuteRecurringPayment {
       bankId: account.bankId,
       availabilityAccountId: account.availabilityAccountId,
       status: "PROCESSING",
-      providerStatus: "RESERVED",
       ...(method.type === "BILL"
         ? { identificationField: method.identificationField }
         : {}),
@@ -141,6 +133,7 @@ export class ExecuteRecurringPayment {
       const winningPayment = winner?.getCurrentPayment()
       if (winningPayment?.competence === request.competence)
         return this.result(winningPayment)
+
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
 
@@ -150,63 +143,42 @@ export class ExecuteRecurringPayment {
   /**
    * An operation already exists for this competence. Nothing may start a second
    * one: a confirmed failure is the only state that resumes the workflow, and
-   * even then the attempt number advances.
+   * even then the reference identifies the competence.
    */
   private async continueInFlight(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
     request: PayRecurringPaymentRequest
   ): Promise<ExecuteRecurringPaymentResult> {
-    if (payment.status === "BLOCKED") {
+    // Anything that is not a failure is left alone: an operation in flight is
+    // resolved by the confirmation webhook, which is the only writer of the
+    // financial record, and a paid one already has its record.
+    if (payment.status !== "FAILED") {
       return this.result(payment)
     }
 
-    if (
-      payment.providerStatus === "DONE" ||
-      payment.providerStatus === "PAID"
-    ) {
-      await this.registerRecord(recurring, payment)
-      return this.result(payment)
-    }
-
-    if (payment.providerStatus !== "CREATION_UNKNOWN") {
-      return this.result(payment)
-    }
-
-    const method = this.assertSameRetryPayload(recurring, payment, request)
-    return await this.submit(recurring, payment, method)
+    // A confirmed failure is retriable and the retry is free to change the method
+    // or the amount: nothing was debited, so the correction is the point of
+    // retrying. An unknown outcome is not a failure (it stays PROCESSING) and is
+    // resolved by the confirmation webhook, never by paying again.
+    return await this.submit(
+      recurring,
+      payment,
+      this.resolveMethod(recurring, request)
+    )
   }
 
   /**
-   * Validate that the payment can actually be booked once it happens: the
-   * recurrence still points to an active OUTGO concept and a resolvable cost
-   * center, and the financial month of the competence is open.
+   * The only precondition that cannot be checked when the recurrence is configured:
+   * the financial month of the competence has to be open, and that changes with
+   * time. The concept and the cost center are validated where the recurrence is
+   * configured and again where the record is written, so neither is repeated here.
    */
   private async assertExecutionPreconditions(
     recurring: RecurringPayments,
     competence: string
   ): Promise<void> {
     const churchId = recurring.getChurchId()
-    const [concept, costCenter] = await Promise.all([
-      this.financialConceptRepository.one({
-        financialConceptId: recurring.getFinancialConceptId(),
-        churchId,
-      }),
-      this.financialConfigurationRepository.findCostCenterByCostCenterId(
-        recurring.getCostCenterId(),
-        churchId
-      ),
-    ])
-    if (
-      !concept ||
-      concept.isDisable() ||
-      concept.getType() !== ConceptType.OUTGO
-    ) {
-      throw new PaymentError("RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID")
-    }
-    if (!costCenter) {
-      throw new PaymentError("RECURRING_PAYMENT_COST_CENTER_INVALID")
-    }
 
     const [year, month] = competence.split("-").map(Number)
     await new FinancialMonthValidator(this.financialYearRepository).validate({
@@ -329,14 +301,8 @@ export class ExecuteRecurringPayment {
     payment: CurrentRecurringPayment,
     method: PayRecurringPaymentMethod
   ): Promise<ExecuteRecurringPaymentResult> {
-    const context = {
-      source: "RECURRING_PAYMENT",
-      recurringPaymentId: recurring.getRecurringPaymentId(),
-      competence: payment.competence,
-      attempt: payment.attempt,
-    }
-
-    let response: ChurchBankingOutgoingPaymentResponse
+    let response:
+      ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
     try {
       if (method.type === "PIX") {
         response = await this.churchBankingClient.createPixTransfer({
@@ -346,7 +312,6 @@ export class ExecuteRecurringPayment {
           pixKeyType: method.pixKeyType,
           description: recurring.getName(),
           externalReference: payment.externalReference,
-          context,
         })
       } else {
         response = await this.churchBankingClient.createBillPayment({
@@ -354,24 +319,17 @@ export class ExecuteRecurringPayment {
           identificationField: method.identificationField,
           description: recurring.getName(),
           externalReference: payment.externalReference,
-          context,
-          // Declared up front so a wrong amount is refused before the debit.
-          expectedAmountInCents: this.toCents(payment.amount),
         })
       }
     } catch (error) {
       const bankingError =
         error instanceof ChurchBankingClientError ? error : undefined
+      // A confirmed rejection is a failure this service can retry; anything else
+      // leaves the operation in flight, where only the confirmation webhook can
+      // resolve it. The provider's own code is not persisted.
       const failure = bankingError?.isConfirmedRejection
-        ? {
-            status: "FAILED" as const,
-            providerStatus: "CREATION_FAILED" as const,
-            failureCode: bankingError.code,
-          }
-        : {
-            status: "PROCESSING" as const,
-            providerStatus: "CREATION_UNKNOWN" as const,
-          }
+        ? { status: "FAILED" as const }
+        : { status: "PROCESSING" as const }
       const next: CurrentRecurringPayment = {
         ...payment,
         ...failure,
@@ -382,7 +340,7 @@ export class ExecuteRecurringPayment {
         recurring,
         payment
       )
-      return this.result(next)
+      return this.result(next, undefined, bankingError?.code)
     }
 
     return this.applyBankingResult(recurring, payment, response)
@@ -391,51 +349,31 @@ export class ExecuteRecurringPayment {
   private async applyBankingResult(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
-    response: ChurchBankingOutgoingPaymentResponse
+    response:
+      ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
   ): Promise<ExecuteRecurringPaymentResult> {
-    if (
-      response.valueInCents !== undefined &&
-      response.valueInCents !== this.toCents(payment.amount)
-    ) {
-      throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
-    }
-    const status = response.status
-    if (status === "DONE" || status === "PAID") {
-      const confirmed: CurrentRecurringPayment = {
-        ...payment,
-        status: "PROCESSING",
-        providerStatus: status,
-        ...(response.paymentDate ? { paymentDate: response.paymentDate } : {}),
-        ...(response.transactionReceiptUrl
-          ? { transactionReceiptUrl: response.transactionReceiptUrl }
-          : {}),
-        updatedAt: this.now(),
-      }
-      recurring.updateCurrentPayment(confirmed)
-      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
-        recurring,
-        payment
-      )
-      await this.registerRecord(recurring, confirmed)
-      return this.result(confirmed)
-    }
+    const executionStatus = executionStatusOf(response.status)
+    const confirmed = executionStatus === "PAID"
+    const providerValueInCents =
+      "valueInCents" in response ? response.valueInCents : undefined
+    const paymentDate = "paymentDate" in response ? response.paymentDate : null
+    const transactionReceiptUrl =
+      "transactionReceiptUrl" in response
+        ? response.transactionReceiptUrl
+        : null
 
-    const failed =
-      status === "FAILED" ||
-      status === "CANCELLED" ||
-      status === "CREATION_FAILED"
-    const blocked = status === "BLOCKED"
     const next: CurrentRecurringPayment = {
       ...payment,
-      status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
-      providerStatus: status,
-      ...(response.failureCode || response.errorCode
-        ? { failureCode: response.failureCode ?? response.errorCode }
+      // A boleto is charged for whatever its line says, so the amount the bank
+      // reports is the authoritative amount of a confirmed execution, not the one
+      // declared locally. A PIX transfer carries its own amount, which the
+      // response does not redefine.
+      ...(confirmed && providerValueInCents !== undefined
+        ? { amount: providerValueInCents / 100 }
         : {}),
-      ...(response.paymentDate ? { paymentDate: response.paymentDate } : {}),
-      ...(response.transactionReceiptUrl
-        ? { transactionReceiptUrl: response.transactionReceiptUrl }
-        : {}),
+      status: executionStatus,
+      ...(paymentDate ? { paymentDate } : {}),
+      ...(transactionReceiptUrl ? { transactionReceiptUrl } : {}),
       updatedAt: this.now(),
     }
     recurring.updateCurrentPayment(next)
@@ -443,77 +381,22 @@ export class ExecuteRecurringPayment {
       recurring,
       payment
     )
-    return this.result(next)
-  }
-
-  private async registerRecord(
-    recurring: RecurringPayments,
-    payment: CurrentRecurringPayment
-  ): Promise<void> {
-    await this.recordRegistrar.execute({
-      recurring,
-      competence: payment.competence,
-      amount: payment.amount,
-      availabilityAccountId: payment.availabilityAccountId,
-      paymentDate: payment.paymentDate
-        ? new Date(payment.paymentDate)
-        : payment.updatedAt,
-      createdBy: "system",
-      bankingExternalReference: payment.externalReference,
-      voucher: await this.storeReceipt(payment),
-    })
-  }
-
-  /**
-   * The bank is the one that issued the receipt, so it is also the one that
-   * hands over a stored voucher. The application layer never sees the provider
-   * receipt format.
-   */
-  private async storeReceipt(
-    payment: CurrentRecurringPayment
-  ): Promise<string | undefined> {
-    if (!payment.transactionReceiptUrl) return undefined
-    return await this.receiptStorage.storeRemoteReceipt(
-      payment.externalReference,
-      payment.transactionReceiptUrl
-    )
-  }
-
-  /**
-   * A retried creation-unknown must repeat the identical attempt: same amount,
-   * same method payload and same account. A different payload would either
-   * double-charge or be deduplicated by church-banking into a confusing answer.
-   */
-  private assertSameRetryPayload(
-    recurring: RecurringPayments,
-    payment: CurrentRecurringPayment,
-    request: PayRecurringPaymentRequest
-  ): PayRecurringPaymentMethod {
-    const method = this.resolveMethod(recurring, request)
-    const amount = this.resolveAmount(recurring, request)
-    // church-banking requires byte-identical payee data for the same
-    // externalReference, so a retry must repeat the exact destination.
-    const sameDestination =
-      payment.paymentMethod === method.type &&
-      payment.executionDestination === this.destinationOf(method)
-    if (
-      amount !== payment.amount ||
-      !sameDestination ||
-      (request.availabilityAccountId !== undefined &&
-        request.availabilityAccountId !== payment.availabilityAccountId)
-    ) {
-      throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
-    }
-    return method
+    // The financial record is not created here: the confirmation webhook is its
+    // only writer, so an immediate PAID and a late confirmation take the same
+    // path.
+    return this.result(next, providerValueInCents)
   }
 
   private result(
-    payment: CurrentRecurringPayment
+    payment: CurrentRecurringPayment,
+    providerValueInCents?: number,
+    failureCode?: string
   ): ExecuteRecurringPaymentResult {
     return {
       status: payment.status,
       competence: payment.competence,
-      ...(payment.failureCode ? { failureCode: payment.failureCode } : {}),
+      ...(failureCode ? { failureCode } : {}),
+      ...(providerValueInCents !== undefined ? { providerValueInCents } : {}),
     }
   }
 
@@ -524,15 +407,31 @@ export class ExecuteRecurringPayment {
       : method.identificationField
   }
 
-  private externalReference(
-    recurringPaymentId: string,
-    competence: string,
-    attempt: number
-  ): string {
-    return `urn:recurringPayment:${recurringPaymentId}:${competence}:${attempt}`
-  }
-
   private toCents(amount: number): number {
     return Math.round(amount * 100)
   }
+}
+
+type ChurchBankingOutgoingState =
+  | ChurchBankingPixTransferResponse["status"]
+  | ChurchBankingBillPaymentResponse["status"]
+
+/**
+ * church-banking's answer translated into this service's own states. `PAID` is
+ * a domain statement, not provider vocabulary; `PROCESSING` is the service's
+ * "alive but not conclusive".
+ */
+function executionStatusOf(
+  status: ChurchBankingOutgoingState
+): RecurringPaymentExecutionStatus {
+  if (status === "DONE" || status === "PAID") return "PAID"
+  if (
+    status === "FAILED" ||
+    status === "CANCELLED" ||
+    status === "CREATION_FAILED"
+  ) {
+    return "FAILED"
+  }
+  if (status === "BLOCKED") return "BLOCKED"
+  return "PROCESSING"
 }

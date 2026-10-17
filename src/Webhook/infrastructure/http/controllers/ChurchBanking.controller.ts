@@ -152,7 +152,6 @@ function isWebhookEvent(value: unknown): value is ChurchBankingWebhookEvent {
       typeof transfer.status === "string" &&
       typeof transfer.amountInCents === "number" &&
       typeof transfer.externalReference === "string" &&
-      isRecord(transfer.context) &&
       (typeof transfer.transactionReceiptUrl === "string" ||
         transfer.transactionReceiptUrl === null) &&
       (typeof transfer.failureCode === "string" ||
@@ -167,7 +166,6 @@ function isWebhookEvent(value: unknown): value is ChurchBankingWebhookEvent {
       typeof bill.providerBillId === "string" &&
       typeof bill.status === "string" &&
       typeof bill.externalReference === "string" &&
-      isRecord(bill.context) &&
       (typeof bill.paymentDate === "string" || bill.paymentDate === null) &&
       (typeof bill.transactionReceiptUrl === "string" ||
         bill.transactionReceiptUrl === null) &&

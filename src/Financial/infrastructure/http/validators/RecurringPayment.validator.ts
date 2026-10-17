@@ -118,6 +118,33 @@ export async function validatePayRecurringPayment(
 }
 
 /**
+ * Boleto simulation. The boleto is identified by exactly one of the typed line
+ * or the barcode; no amount, account or church is accepted, because the account
+ * comes from the path and the church from the authenticated request.
+ */
+export async function validateSimulateRecurringPaymentBill(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const body: unknown = req.body
+  const hasIdentificationField =
+    isRecord(body) && nonBlankString(body.identificationField)
+  const hasBarCode = isRecord(body) && nonBlankString(body.barCode)
+  const valid =
+    isRecord(body) &&
+    hasOnlyKeys(body, ["identificationField", "barCode"]) &&
+    hasIdentificationField !== hasBarCode
+  if (!valid) {
+    res.status(HttpStatus.BAD_REQUEST).send({
+      code: "RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID",
+    })
+    return
+  }
+  next()
+}
+
+/**
  * Manual execution. The voucher file is mandatory; body fields and the uploaded
  * file arrive together as multipart/form-data. A manual payment needs bank
  * reconciliation, so it does not start as a settled record.
@@ -200,6 +227,10 @@ function optionalReference(value: unknown): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function nonBlankString(value: unknown): boolean {
+  return typeof value === "string" && value.trim() !== ""
 }
 
 function hasOnlyKeys(

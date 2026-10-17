@@ -33,10 +33,25 @@ function recurrence(
   })
 }
 
-function record(status: "PENDING" | "CLEARED" | "RECONCILED" | "VOID") {
+function record(
+  status: "PENDING" | "CLEARED" | "RECONCILED" | "VOID",
+  overrides: {
+    date?: Date
+    amount?: number
+    voucher?: string
+    availabilityAccountId?: string
+  } = {}
+) {
   return {
     getRecurringPaymentId: () => "recurring-1",
     isSettled: () => status === "CLEARED" || status === "RECONCILED",
+    getFinancialRecordId: () => "record-1",
+    getAmount: () => overrides.amount ?? 742.83,
+    getDate: () => overrides.date ?? new Date("2026-10-10T12:00:00Z"),
+    getStatus: () => status,
+    getAvailabilityAccountId: () =>
+      overrides.availabilityAccountId ?? "availability-1",
+    getVoucher: () => overrides.voucher,
   }
 }
 
@@ -88,14 +103,12 @@ describe("ListRecurringPayments", () => {
   it("lets an active payment status override the derived pending state", async () => {
     const currentPayment = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       paymentMethod: "BILL" as const,
       amount: 742.83,
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "BLOCKED" as const,
-      providerStatus: "BLOCKED",
       updatedAt: new Date("2026-10-01T10:01:00Z"),
     }
     const service = build([recurrence({ currentPayment })], [])
@@ -195,5 +208,105 @@ describe("ListRecurringPayments", () => {
     const result = await service.execute("church-1", "2999-12")
 
     expect(result[0]?.competenceStatus).toBe("UPCOMING")
+  })
+
+  it("exposes the settlement summary of a paid competence", async () => {
+    const service = build(
+      [recurrence()],
+      [
+        record("RECONCILED", {
+          amount: 742.83,
+          voucher: "https://storage/receipt.pdf",
+          date: new Date("2026-10-10T12:00:00Z"),
+        }),
+      ]
+    )
+
+    const result = await service.execute("church-1", "2026-10")
+
+    // The screen explains how it was paid: amount, date, origin account, status
+    // and the voucher. History belongs to the financial record.
+    expect(result[0]?.settlement).toMatchObject({
+      financialRecordId: "record-1",
+      amount: 742.83,
+      status: "RECONCILED",
+      availabilityAccountId: "availability-1",
+      voucher: "https://storage/receipt.pdf",
+    })
+  })
+
+  it("keeps the most recent settled record when a competence has several", async () => {
+    const service = build(
+      [recurrence()],
+      [
+        record("CLEARED", {
+          amount: 100,
+          date: new Date("2026-10-02T12:00:00Z"),
+        }),
+        record("RECONCILED", {
+          amount: 742.83,
+          date: new Date("2026-10-09T12:00:00Z"),
+        }),
+      ]
+    )
+
+    const result = await service.execute("church-1", "2026-10")
+
+    expect(result[0]?.settlement).toMatchObject({
+      amount: 742.83,
+      status: "RECONCILED",
+    })
+  })
+
+  it("exposes the execution state of the requested competence only", async () => {
+    const inFlight = {
+      competence: "2026-10",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      amount: 742.83,
+      paymentMethod: "BILL" as const,
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "PROCESSING" as const,
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    }
+
+    const service = build([recurrence({ currentPayment: inFlight })], [])
+
+    const same = await service.execute("church-1", "2026-10")
+    expect(same[0]?.currentPayment).toMatchObject({
+      paymentMethod: "BILL",
+      amount: 742.83,
+      status: "PROCESSING",
+    })
+    expect(same[0]?.competenceStatus).toBe("PROCESSING")
+
+    // A failed attempt from another month must not leak into this one.
+    const other = await service.execute("church-1", "2026-11")
+    expect(other[0]?.currentPayment).toBeUndefined()
+  })
+
+  it("exposes the failed execution of the requested competence", async () => {
+    const failed = {
+      competence: "2026-10",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      amount: 742.83,
+      paymentMethod: "BILL" as const,
+      executionDestination: "34191...",
+      identificationField: "34191...",
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      status: "FAILED" as const,
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    }
+
+    const service = build([recurrence({ currentPayment: failed })], [])
+    const result = await service.execute("church-1", "2026-10")
+
+    expect(result[0]?.currentPayment).toMatchObject({
+      status: "FAILED",
+      amount: 742.83,
+      paymentMethod: "BILL",
+    })
+    expect(result[0]?.competenceStatus).toBe("FAILED")
   })
 })

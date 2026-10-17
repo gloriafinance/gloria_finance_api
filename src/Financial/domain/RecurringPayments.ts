@@ -1,13 +1,19 @@
 import {
-  AggregateRoot,
   type AggregateRelations,
+  AggregateRoot,
 } from "@abejarano/ts-mongodb-criteria"
 import { Urn } from "@/Shared/adapter/Urn"
 import { RecurringPaymentException } from "./exceptions/RecurringPayment.exception"
 
 export type RecurringPaymentStatus = "ACTIVE" | "INACTIVE"
+/**
+ * Canonical state of an execution. `PAID` is not provider vocabulary: it is this
+ * service saying the bank confirmed the payment, which is what lets the webhook
+ * stop consulting the provider's own strings.
+ */
 export type RecurringPaymentExecutionStatus =
-  "PROCESSING" | "BLOCKED" | "FAILED"
+  "PROCESSING" | "BLOCKED" | "FAILED" | "PAID"
+
 export type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP"
 
 const PIX_KEY_TYPES: readonly PixKeyType[] = [
@@ -59,7 +65,6 @@ export type RecurringPaymentConfiguration =
 
 export type CurrentRecurringPayment = {
   competence: string
-  attempt: number
   externalReference: string
   amount: number
   /** Method chosen for this execution. Never part of the permanent config. */
@@ -72,9 +77,12 @@ export type CurrentRecurringPayment = {
   executionDestination?: string
   bankId: string
   availabilityAccountId: string
+  /**
+   * Canonical state of this execution. A provider's own status is never persisted:
+   * it is normalized at the integration boundary, so the domain only knows
+   * whether the operation is in flight, blocked, failed or paid.
+   */
   status: RecurringPaymentExecutionStatus
-  providerStatus: string
-  failureCode?: string
   identificationField?: string
   paymentDate?: string
   transactionReceiptUrl?: string
@@ -82,16 +90,16 @@ export type CurrentRecurringPayment = {
 }
 
 export class RecurringPayments extends AggregateRoot {
+  private constructor(private props: RecurringPaymentConfiguration) {
+    super()
+  }
+
   static collectionName(): string {
     return "recurringPayments"
   }
 
   static relations(): AggregateRelations {
     return {}
-  }
-
-  private constructor(private props: RecurringPaymentConfiguration) {
-    super()
   }
 
   static create(

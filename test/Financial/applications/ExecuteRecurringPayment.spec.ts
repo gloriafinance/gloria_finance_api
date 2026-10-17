@@ -16,9 +16,6 @@ type SetupInput = {
   bankCount?: number
   bankConnected?: boolean
   accounts?: number
-  conceptDisabled?: boolean
-  conceptType?: string
-  costCenterMissing?: boolean
   closedMonth?: boolean
 }
 
@@ -70,33 +67,31 @@ function setup(input: SetupInput = {}) {
     one: jest.fn().mockResolvedValue(accounts[0]),
   }
   const banking = {
-    createPixTransfer: jest.fn(async () => {
+    createPixTransfer: jest.fn(async (input: { amountInCents: number }) => {
       callOrder.push("bank")
       return {
         externalAccountId: "church-1",
-        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10",
+        amountInCents: input.amountInCents,
+        pixKey: "12345678000190",
+        pixKeyType: "CNPJ",
+        description: "Energy",
         status: "PENDING",
-        context: {},
-        amountInCents: 12345,
+        providerTransferId: "transfer-1",
+        transactionReceiptUrl: null,
       }
     }),
     createBillPayment: jest.fn().mockResolvedValue({
       externalAccountId: "church-1",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      identificationField: "34191...",
+      description: "Energy",
       status: "PENDING",
-      context: {},
+      valueInCents: 12345,
+      providerBillId: "bill-1",
+      paymentDate: null,
+      transactionReceiptUrl: null,
     }),
-  }
-  const concept = {
-    isDisable: () => input.conceptDisabled === true,
-    getType: () =>
-      input.conceptType === undefined ? "OUTGO" : input.conceptType,
-  }
-  const financialConcepts = { one: jest.fn().mockResolvedValue(concept) }
-  const financialConfiguration = {
-    findCostCenterByCostCenterId: jest
-      .fn()
-      .mockResolvedValue(input.costCenterMissing === true ? undefined : {}),
   }
   const financialYears = {
     one: jest
@@ -108,20 +103,14 @@ function setup(input: SetupInput = {}) {
       ),
   }
   const queue = { dispatch: jest.fn() }
-  const receipt = {
-    storeRemoteReceipt: jest.fn().mockResolvedValue("stored-receipt"),
-  }
 
   const service = new ExecuteRecurringPayment(
     repository as never,
     financialRecords as never,
     banks as never,
     availabilityAccounts as never,
-    financialConcepts as never,
-    financialConfiguration as never,
     financialYears as never,
     banking as never,
-    receipt as never,
     queue as never,
     () => new Date("2026-10-01T12:00:00Z")
   )
@@ -153,14 +142,11 @@ describe("ExecuteRecurringPayment", () => {
       pixKey: "12345678000190",
       pixKeyType: "CNPJ",
       description: "Energy",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-      context: {
-        source: "RECURRING_PAYMENT",
-        recurringPaymentId: "recurring-1",
-        competence: "2026-10",
-        attempt: 1,
-      },
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
     })
+    expect(ctx.banking.createPixTransfer.mock.calls[0]?.[0]).not.toHaveProperty(
+      "context"
+    )
   })
 
   it("uses the persisted amount for fixed payments and requires an amount for variable payments", async () => {
@@ -194,27 +180,26 @@ describe("ExecuteRecurringPayment", () => {
     )
   })
 
-  it("uses a new attempt and a new stable reference after a confirmed terminal failure", async () => {
+  it("retries a confirmed terminal failure with the same competence-scoped reference", async () => {
     const failed = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 123.45,
       paymentMethod: "PIX" as const,
       executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "FAILED" as const,
-      providerStatus: "FAILED",
       updatedAt: new Date("2026-09-30T12:01:00Z"),
     }
     const ctx = setup({ amount: 123.45, currentPayment: failed })
     ctx.banking.createPixTransfer.mockResolvedValue({
       externalAccountId: "church-1",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:2",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       status: "PENDING",
-      context: {},
       amountInCents: 12345,
+      providerTransferId: "transfer-1",
+      transactionReceiptUrl: null,
     })
 
     await ctx.service.execute("church-1", "recurring-1", {
@@ -228,126 +213,89 @@ describe("ExecuteRecurringPayment", () => {
     )
     expect(
       ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
-    ).toBe("urn:recurringPayment:recurring-1:2026-10:2")
-    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({ attempt: 2 })
+    ).toBe("urn:recurringPayment:recurring-1:2026-10")
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+    })
   })
 
-  it("reuses the same external reference when retrying a creation-unknown attempt", async () => {
+  it("does not start a second payment while an unknown-outcome operation is in flight", async () => {
     const current = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 123.45,
       paymentMethod: "PIX" as const,
       executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
-      providerStatus: "CREATION_UNKNOWN",
       updatedAt: new Date("2026-09-30T12:01:00Z"),
     }
     const ctx = setup({ amount: 123.45, currentPayment: current })
-    await ctx.service.execute("church-1", "recurring-1", {
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
       competence: "2026-10",
       payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
     })
 
-    // The attempt is reused verbatim: no increment, same reference, and the
-    // persisted state still belongs to attempt 1.
-    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
-      attempt: 1,
-      externalReference: current.externalReference,
-    })
-    expect(
-      ctx.repository.saveIfCurrentPaymentMatches.mock.calls[0]?.[1]
-    ).toMatchObject({
-      attempt: 1,
-      externalReference: current.externalReference,
-    })
-    expect(
-      ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
-    ).toBe(current.externalReference)
+    // An operation in flight is resolved by the confirmation webhook, never by
+    // paying again: the command is a no-op that reports the state it found.
+    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+    expect(ctx.repository.saveIfCurrentPaymentMatches).not.toHaveBeenCalled()
+    expect(ctx.recurrence.getCurrentPayment()).toBe(current)
   })
 
-  it("refuses a creation-unknown retry whose method payload differs", async () => {
+  it("ignores a different method supplied while an operation is in flight", async () => {
     const current = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 123.45,
       paymentMethod: "PIX" as const,
       executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
-      providerStatus: "CREATION_UNKNOWN",
       updatedAt: new Date("2026-09-30T12:01:00Z"),
     }
     const ctx = setup({ amount: 123.45, currentPayment: current })
-    await expect(
-      ctx.service.execute("church-1", "recurring-1", {
-        competence: "2026-10",
-        payment: {
-          type: "BILL",
-          identificationField: "8364000000744283004810080101234567890",
-        },
-      })
-    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: {
+        type: "BILL",
+        identificationField: "8364000000744283004810080101234567890",
+      },
+    })
+
+    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
     expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
-  })
-
-  it("refuses a creation-unknown retry that changes the PIX destination", async () => {
-    const current = {
-      competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-      amount: 123.45,
-      paymentMethod: "PIX" as const,
-      executionDestination: "EVP:key-123",
-      bankId: "bank-1",
-      availabilityAccountId: "availability-1",
-      status: "PROCESSING" as const,
-      providerStatus: "CREATION_UNKNOWN",
-      updatedAt: new Date("2026-09-30T12:01:00Z"),
-    }
-    const ctx = setup({ amount: 123.45, currentPayment: current })
-
-    await expect(
-      ctx.service.execute("church-1", "recurring-1", {
-        competence: "2026-10",
-        payment: { type: "PIX", pixKey: "other-key", pixKeyType: "EVP" },
-      })
-    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
-  it("accepts a creation-unknown retry that repeats the identical PIX destination", async () => {
+  it("ignores a changed PIX destination while an operation is in flight", async () => {
     const current = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 123.45,
       paymentMethod: "PIX" as const,
       executionDestination: "EVP:key-123",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
-      providerStatus: "CREATION_UNKNOWN",
       updatedAt: new Date("2026-09-30T12:01:00Z"),
     }
     const ctx = setup({ amount: 123.45, currentPayment: current })
 
-    await ctx.service.execute("church-1", "recurring-1", {
+    const result = await ctx.service.execute("church-1", "recurring-1", {
       competence: "2026-10",
-      payment: { type: "PIX", pixKey: "key-123", pixKeyType: "EVP" },
+      payment: { type: "PIX", pixKey: "other-key", pixKeyType: "EVP" },
     })
 
-    expect(ctx.banking.createPixTransfer.mock.calls[0]?.[0].pixKey).toBe(
-      "key-123"
-    )
-    expect(
-      ctx.banking.createPixTransfer.mock.calls[0]?.[0].externalReference
-    ).toBe(current.externalReference)
+    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+    expect(ctx.recurrence.getCurrentPayment()).toBe(current)
   })
 
   it("keeps creation-unknown protected and does not treat a timeout as failure", async () => {
@@ -360,10 +308,16 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
     })
 
-    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    // The provider code is surfaced to the caller but never stored: the domain
+    // keeps PROCESSING, because an unknown outcome is not a failure.
+    expect(result).toEqual({
+      status: "PROCESSING",
+      competence: "2026-10",
+      failureCode: "CREATION_UNKNOWN",
+    })
     expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
       status: "PROCESSING",
-      providerStatus: "CREATION_UNKNOWN",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
     })
   })
 
@@ -382,6 +336,9 @@ describe("ExecuteRecurringPayment", () => {
       competence: "2026-10",
       failureCode: "PIX_KEY_INVALID",
     })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "FAILED",
+    })
   })
 
   it("does not call church-banking when the competence already has a financial record", async () => {
@@ -397,24 +354,18 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
-  it.each([
-    ["PROCESSING", "PENDING"],
-    ["BLOCKED", "BLOCKED"],
-  ] as const)(
+  it.each(["PROCESSING", "BLOCKED"] as const)(
     "does not start a second bank payment for an existing %s operation",
-    async (status, providerStatus) => {
+    async (status) => {
       const currentPayment = {
         competence: "2026-10",
-        attempt: 1,
-        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10",
         amount: 25,
         paymentMethod: "PIX" as const,
-        executionDestination: "EVP:key-123",
         executionDestination: "EVP:key-123",
         bankId: "bank-1",
         availabilityAccountId: "availability-1",
         status,
-        providerStatus,
         updatedAt: new Date("2026-10-01T10:01:00Z"),
       }
       const ctx = setup({ amount: 25, currentPayment })
@@ -436,14 +387,12 @@ describe("ExecuteRecurringPayment", () => {
       ...ctx.recurrence.toPrimitives(),
       currentPayment: {
         competence: "2026-10",
-        attempt: 1,
-        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10",
         amount: 25,
         paymentMethod: "PIX",
         bankId: "bank-1",
         availabilityAccountId: "availability-1",
         status: "PROCESSING",
-        providerStatus: "PENDING",
         updatedAt: new Date(),
       },
     })
@@ -483,40 +432,6 @@ describe("ExecuteRecurringPayment", () => {
     })
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
-
-  it.each([
-    [
-      "a disabled concept",
-      { conceptDisabled: true },
-      "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID",
-    ],
-    [
-      "a concept that is no longer OUTGO",
-      { conceptType: "INCOME" },
-      "RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID",
-    ],
-    [
-      "a cost center that cannot be resolved",
-      { costCenterMissing: true },
-      "RECURRING_PAYMENT_COST_CENTER_INVALID",
-    ],
-  ] as const)(
-    "refuses to move money when the recurrence points to %s",
-    async (_label, overrides, expected) => {
-      const ctx = setup({
-        amount: 25,
-        pixDestination: PIX_DESTINATION,
-        ...overrides,
-      })
-      await expect(
-        ctx.service.execute("church-1", "recurring-1", {
-          competence: "2026-10",
-        })
-      ).rejects.toMatchObject({ name: expected })
-      expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
-      expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
-    }
-  )
 
   it("refuses to move money when the financial month of the competence is closed", async () => {
     const ctx = setup({
@@ -594,7 +509,7 @@ describe("ExecuteRecurringPayment", () => {
       expect.objectContaining({
         identificationField:
           "83640000007 4 42830048100 8 01012345678 9 00000000000 0",
-        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10",
       })
     )
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
@@ -620,34 +535,34 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
   })
 
-  it("rejects a bill whose answered amount differs from the reserved one", async () => {
+  it("sends only the bill contract church-banking accepts", async () => {
     const ctx = setup({ amount: 742.83 })
-    ctx.banking.createBillPayment.mockResolvedValue({
-      externalAccountId: "church-1",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-      status: "PENDING",
-      context: {},
-      valueInCents: 78243,
+    await ctx.service.execute("church-1", "recurring-1", {
+      competence: "2026-10",
+      payment: { type: "BILL", identificationField: "34191..." },
     })
 
-    await expect(
-      ctx.service.execute("church-1", "recurring-1", {
-        competence: "2026-10",
-        payment: { type: "BILL", identificationField: "34191..." },
-      })
-    ).rejects.toMatchObject({
-      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+    // No `context`, no declared amount and no value: the boleto owns its amount.
+    expect(ctx.banking.createBillPayment).toHaveBeenCalledWith({
+      externalAccountId: "church-1",
+      identificationField: "34191...",
+      description: "Energy",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
     })
   })
 
-  it("accepts a bill whose answered amount matches the reserved one", async () => {
+  it("adopts the provider amount when the bank already paid the bill", async () => {
     const ctx = setup({ amount: 742.83 })
     ctx.banking.createBillPayment.mockResolvedValue({
       externalAccountId: "church-1",
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
-      status: "PENDING",
-      context: {},
-      valueInCents: 74283,
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      identificationField: "34191...",
+      description: "Energy",
+      status: "PAID",
+      valueInCents: 78243,
+      providerBillId: "bill-1",
+      paymentDate: "2026-10-01",
+      transactionReceiptUrl: null,
     })
 
     const result = await ctx.service.execute("church-1", "recurring-1", {
@@ -655,33 +570,67 @@ describe("ExecuteRecurringPayment", () => {
       payment: { type: "BILL", identificationField: "34191..." },
     })
 
-    expect(result.status).toBe("PROCESSING")
+    // The boleto charged more than the declared amount; the execution records what
+    // the bank actually paid instead of refusing a debit that already happened.
+    expect(result).toMatchObject({
+      status: "PAID",
+      providerValueInCents: 78243,
+    })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PAID",
+      amount: 782.43,
+    })
   })
 
-  it("does not leak the internal amount expectation to the provider payload", async () => {
+  it("keeps the declared amount while the bank is still processing the bill", async () => {
     const ctx = setup({ amount: 742.83 })
-    await ctx.service.execute("church-1", "recurring-1", {
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      identificationField: "34191...",
+      description: "Energy",
+      status: "BANK_PROCESSING",
+      valueInCents: 78243,
+      providerBillId: "bill-1",
+      paymentDate: null,
+      transactionReceiptUrl: null,
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
       competence: "2026-10",
       payment: { type: "BILL", identificationField: "34191..." },
     })
 
-    const payload = ctx.banking.createBillPayment.mock.calls[0]?.[0]
-    expect(payload).not.toHaveProperty("expectedValueInCents")
-    expect(payload).toMatchObject({ identificationField: "34191..." })
+    expect(result).toMatchObject({
+      status: "PROCESSING",
+      providerValueInCents: 78243,
+    })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      amount: 742.83,
+    })
   })
 
-  it("declares the expected amount so the provider can refuse before debiting", async () => {
+  it("accepts a bill that church-banking is still creating", async () => {
     const ctx = setup({ amount: 742.83 })
-    await ctx.service.execute("church-1", "recurring-1", {
+    ctx.banking.createBillPayment.mockResolvedValue({
+      externalAccountId: "church-1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
+      identificationField: "34191...",
+      description: "Energy",
+      status: "CREATING",
+    })
+
+    const result = await ctx.service.execute("church-1", "recurring-1", {
       competence: "2026-10",
       payment: { type: "BILL", identificationField: "34191..." },
     })
 
-    // Sent on the request, not merely compared afterwards: church-banking must be
-    // able to abort before createBill runs.
-    expect(ctx.banking.createBillPayment).toHaveBeenCalledWith(
-      expect.objectContaining({ expectedAmountInCents: 74283 })
-    )
+    expect(result).toEqual({ status: "PROCESSING", competence: "2026-10" })
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      status: "PROCESSING",
+      amount: 742.83,
+    })
   })
 
   it("executes a variable bill using the per-competence amount and code", async () => {
@@ -698,7 +647,7 @@ describe("ExecuteRecurringPayment", () => {
     expect(ctx.banking.createBillPayment).toHaveBeenCalledWith(
       expect.objectContaining({
         identificationField: "83640000007442830048100801012345678900000000000",
-        externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+        externalReference: "urn:recurringPayment:recurring-1:2026-10",
       })
     )
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
