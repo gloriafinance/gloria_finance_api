@@ -9656,7 +9656,49 @@ export const openApiDocument = {
                 examples: {
                   success: {
                     summary: "Successful response",
-                    value: [{}],
+                    value: [
+                      {
+                        recurringPaymentId:
+                          "00000000-0000-0000-0000-000000000001",
+                        churchId: "00000000-0000-0000-0000-000000000001",
+                        financialConceptId:
+                          "00000000-0000-0000-0000-000000000001",
+                        costCenterId: "00000000-0000-0000-0000-000000000001",
+                        name: "Gloria Finance",
+                        type: "Gloria Finance",
+                        amount: 0,
+                        dayOfMonth: 0,
+                        pixDestination: "Gloria Finance",
+                        status: [],
+                        competence: "Gloria Finance",
+                        competenceStatus: {
+                          financialRecordId:
+                            "00000000-0000-0000-0000-000000000001",
+                          amount: 0,
+                          date: "2026-01-01T00:00:00.000Z",
+                          status: "PENDING",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          voucher: "Gloria Finance",
+                        },
+                        currentPayment: {
+                          competence: "Gloria Finance",
+                          externalReference: "Gloria Finance",
+                          amount: 0,
+                          paymentMethod: "PIX",
+                          executionDestination: "Gloria Finance",
+                          bankId: "00000000-0000-0000-0000-000000000001",
+                          availabilityAccountId:
+                            "00000000-0000-0000-0000-000000000001",
+                          status: [],
+                          identificationField: "Gloria Finance",
+                          paymentDate: "2026-01-01T00:00:00.000Z",
+                          transactionReceiptUrl: "https://example.com",
+                          updatedAt: "2026-01-01T00:00:00.000Z",
+                        },
+                        settlement: "Gloria Finance",
+                      },
+                    ],
                   },
                 },
               },
@@ -9900,6 +9942,102 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/v1/recurring-payments/{recurringPaymentId}/bill/simulate": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "simulate bill",
+        description:
+          "Implemented by RecurringPaymentController.simulateBill. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_simulateBill",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  identificationField: {
+                    type: "string",
+                  },
+                  barCode: {
+                    description: "TypeScript type: never",
+                  },
+                },
+                required: ["identificationField"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      minimumScheduleDate: "2026-01-01T00:00:00.000Z",
+                      feeInCents: 0,
+                      bankSlip: {
+                        identificationField: "Gloria Finance",
+                        valueInCents: 0,
+                        originalValueInCents: 0,
+                        dueDate: "2026-01-01T00:00:00.000Z",
+                        companyName: "Gloria Finance",
+                        bank: "Gloria Finance",
+                        beneficiaryCpfCnpj: "Gloria Finance",
+                        beneficiaryName: "Gloria Finance",
+                        allowChangeValue: false,
+                        minValueInCents: 0,
+                        maxValueInCents: 0,
+                        discountValueInCents: 0,
+                        interestValueInCents: 0,
+                        fineValueInCents: 0,
+                        totalDiscountValueInCents: 0,
+                        totalAdditionalValueInCents: 0,
+                        isOverdue: false,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
     "/api/v1/recurring-payments/{recurringPaymentId}/pay": {
       post: {
         tags: ["RecurringPayment"],
@@ -9926,6 +10064,8 @@ export const openApiDocument = {
                 properties: {
                   competence: {
                     type: "string",
+                    description:
+                      'Mes al que corresponde el pago recurrente, en formato YYYY-MM. Es la competencia contable/mensual de esa recurrencia, no la fecha del pago ni la fecha de vencimiento. Ejemplo: una "Conta de Luz" con vencimiento día 20 pagada el 17/10/2026 lleva "2026-10". Incluso si se paga atrasada (p. ej. Conta de setembro pagada el 05/10/2026), la competencia sigue siendo "2026-09".',
                   },
                   amount: {
                     type: "number",
@@ -9973,6 +10113,7 @@ export const openApiDocument = {
                       status: "ALREADY_PAID",
                       competence: "Gloria Finance",
                       failureCode: "Gloria Finance",
+                      providerValueInCents: 0,
                     },
                   },
                 },

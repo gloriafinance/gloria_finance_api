@@ -28,6 +28,12 @@ export type PayRecurringPaymentMethod =
  * as permanent configuration.
  */
 export type PayRecurringPaymentRequest = {
+  /**
+   * @description Mes al que corresponde el pago recurrente, en formato YYYY-MM.
+   * Es la competencia contable/mensual de esa recurrencia, no la fecha del pago ni la fecha de vencimiento.
+   * Ejemplo: una "Conta de Luz" con vencimiento día 20 pagada el 17/10/2026 lleva "2026-10".
+   * Incluso si se paga atrasada (p. ej. Conta de setembro pagada el 05/10/2026), la competencia sigue siendo "2026-09".
+   */
   competence: string
   amount?: number
   payment?: PayRecurringPaymentMethod

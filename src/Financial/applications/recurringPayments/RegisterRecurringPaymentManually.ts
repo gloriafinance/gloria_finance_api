@@ -1,19 +1,13 @@
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
-import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
-import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain/interfaces/FinancialConfigurationRepository.interface"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import type { RegisterRecurringPaymentRequest } from "@/Financial/domain/requests/RecurringPayment.request"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
-import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
-import type { IQueueService } from "@/package/queue/domain"
-import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import type { IStorageService } from "@/Shared/domain/interfaces/StorageService.interface"
-import { StorageProviderService } from "@/Shared/infrastructure/services/StorageProvider.service"
 import { assertCompetence } from "./RecurringPaymentCompetence"
-import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
+import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 
 export type RegisterRecurringPaymentManuallyInput =
   RegisterRecurringPaymentRequest & {
@@ -36,30 +30,14 @@ export type RegisterRecurringPaymentManuallyResult = {
  * index on (recurringPaymentId, recurringCompetence) is the duplicate guard.
  */
 export class RegisterRecurringPaymentManually {
-  private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord
-
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
-    financialConceptRepository: IFinancialConceptRepository,
-    private readonly financialConfigurationRepository: IFinancialConfigurationRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly bankRepository: IBankRepository,
-    private readonly financialYearRepository?: IFinancialYearRepository,
-    private readonly queueService: IQueueService = QueueService.getInstance(),
-    private readonly storage: IStorageService = StorageProviderService.getInstance()
-  ) {
-    this.recordRegistrar = new RegisterRecurringPaymentFinancialRecord(
-      financialRecordRepository,
-      availabilityAccountRepository,
-      financialConceptRepository,
-      financialConfigurationRepository,
-      queueService,
-      // Without this the registrar cannot check the financial month, so a closed
-      // period would only surface inside the job, after the voucher was uploaded.
-      financialYearRepository
-    )
-  }
+    private readonly storage: IStorageService,
+    private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord
+  ) {}
 
   async execute(
     churchId: string,

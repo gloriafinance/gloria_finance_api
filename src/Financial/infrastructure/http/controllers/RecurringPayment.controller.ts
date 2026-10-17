@@ -1,14 +1,13 @@
-import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConceptMongoRepository"
-import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { BankMongoRepository } from "@/Banking/infrastructure/persistence/BankMongoRepository"
 import { ChurchBankingClient } from "@/Banking/infrastructure/church-banking/ChurchBankingClient"
-import { AsaasReceiptStorage } from "@/Webhook/infrastructure/services/AsaasReceiptStorage"
+import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
 import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastructure"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
+import { SimulateRecurringPaymentBill } from "@/Financial/applications/recurringPayments/SimulateRecurringPaymentBill"
 import {
   RegisterRecurringPaymentManually,
   type RegisterRecurringPaymentManuallyInput,
@@ -45,8 +44,19 @@ import {
   validatePayRecurringPayment,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
+  validateSimulateRecurringPaymentBill,
 } from "../validators/RecurringPayment.validator"
+import type {
+  BillIdentificationInput,
+  BillSimulation,
+} from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
 import { saoPauloDate } from "@/Financial/applications/recurringPayments/RecurringPaymentCompetence"
+import {
+  FinancialConceptMongoRepository,
+  FinancialConfigurationMongoRepository,
+} from "@/FinanceConfig/infrastructure/presistence"
+import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
+import { StorageProviderService } from "@/Shared/infrastructure"
 
 @Controller("/api/v1/recurring-payments")
 export class RecurringPaymentController {
@@ -139,14 +149,44 @@ export class RecurringPaymentController {
         FinanceRecordMongoRepository.getInstance(),
         BankMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        FinancialConfigurationMongoRepository.getInstance(),
         FinancialYearMongoRepository.getInstance(),
-        new ChurchBankingClient(),
-        new AsaasReceiptStorage()
+        new ChurchBankingClient()
       ).execute(req.auth.churchId, recurringPaymentId, body)
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
+  /**
+   * Reads the boleto through church-banking so the payer can review it. It is a
+   * preview: no money moves, no state is written and nothing is reserved.
+   */
+  @Post("/:recurringPaymentId/bill/simulate")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "read"),
+    validateSimulateRecurringPaymentBill,
+  ])
+  async simulateBill(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: BillIdentificationInput,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const simulation: BillSimulation = await new SimulateRecurringPaymentBill(
+        RecurringPaymentsMongoRepository.getInstance(),
+        new ChurchBankingClient()
+      ).execute(req.auth.churchId, recurringPaymentId, body)
+      res.status(HttpStatus.OK).send(simulation)
+    } catch (error) {
+      // A provider outage stays an outage: it is never reported as an invalid
+      // boleto, and no internal transport detail is exposed.
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
       domainResponse(error, res)
     }
   }
@@ -175,11 +215,15 @@ export class RecurringPaymentController {
       const result = await new RegisterRecurringPaymentManually(
         RecurringPaymentsMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        FinancialConfigurationMongoRepository.getInstance(),
         AvailabilityAccountMongoRepository.getInstance(),
         BankMongoRepository.getInstance(),
-        FinancialYearMongoRepository.getInstance()
+        StorageProviderService.getInstance(),
+        new RegisterRecurringPaymentFinancialRecord(
+          FinanceRecordMongoRepository.getInstance(),
+          AvailabilityAccountMongoRepository.getInstance(),
+          FinancialConceptMongoRepository.getInstance(),
+          FinancialConfigurationMongoRepository.getInstance()
+        )
       ).execute(
         req.auth.churchId,
         recurringPaymentId,

@@ -1,7 +1,7 @@
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments.ts"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments.ts"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface.ts"
-import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments.ts"
 import type { Collection } from "mongodb"
 
 export class RecurringPaymentsMongoRepository
@@ -27,7 +27,6 @@ export class RecurringPaymentsMongoRepository
     const currentPaymentFilter = expected
       ? {
           "currentPayment.competence": expected.competence,
-          "currentPayment.attempt": expected.attempt,
           "currentPayment.externalReference": expected.externalReference,
           "currentPayment.status": expected.status,
           "currentPayment.updatedAt": expected.updatedAt,

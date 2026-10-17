@@ -106,6 +106,8 @@ const statusCodes: Record<string, number> = {
 
 const typeDeclarations = new Map<string, string>()
 const enumDeclarations = new Map<string, string[]>()
+/** Maps type name → map of property name → JSDoc description */
+const typePropertyDescriptions = new Map<string, Map<string, string>>()
 
 async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer> {
   const api = new API()
@@ -248,10 +250,28 @@ async function loadTypeDeclarations(): Promise<void> {
       /export\s+(?:declare\s+)?(?:interface|type)\s+([A-Za-z0-9_]+)[^{]*\{/g
     for (const match of source.matchAll(declarationPattern)) {
       const openIndex = source.indexOf("{", match.index)
+      const closeIndex = matchingBrace(source, openIndex)
+      const declarationEnd = closeIndex + 1
+      // Store only the body `{ ... }` (original behavior) so type resolution
+      // is not broken.
       typeDeclarations.set(
         match[1]!,
-        source.slice(openIndex, matchingBrace(source, openIndex) + 1)
+        source.slice(openIndex, declarationEnd)
       )
+      // Capture property-level JSDoc descriptions from the comment block that
+      // immediately precedes the `export type X = { ... }` declaration.
+      const beforeDeclaration = source.slice(0, match.index)
+      const lastJsdocStart = beforeDeclaration.lastIndexOf("/**")
+      if (lastJsdocStart !== -1) {
+        const between = source.slice(lastJsdocStart, match.index)
+        if (!/export\s+(?:declare\s+)?(?:interface|type)\s/.test(between)) {
+          const jsdocBlock = source.slice(lastJsdocStart, match.index)
+          const descriptions = extractPropertyDescriptions(jsdocBlock + " " + source.slice(openIndex, declarationEnd))
+          if (descriptions.size > 0) {
+            typePropertyDescriptions.set(match[1]!, descriptions)
+          }
+        }
+      }
     }
     const enumPattern =
       /export\s+(?:const\s+)?enum\s+([A-Za-z0-9_]+)\s*\{([\s\S]*?)\}/g
@@ -281,11 +301,58 @@ function splitTopLevel(source: string): string[] {
   return values
 }
 
+/**
+ * Extract property-level descriptions from JSDoc comments in a type
+ * declaration text. Matches JSDoc blocks immediately followed by a property
+ * declaration and returns a map of property name to description (using the
+ * @description tag when present, otherwise the first line of the comment).
+ */
+function extractPropertyDescriptions(fullText: string): Map<string, string> {
+  const descriptions = new Map<string, string>()
+  const pattern = /\/\*\*([\s\S]*?)\*\/\s*([A-Za-z0-9_]+)(\?)?\s*:/g
+  let match: RegExpExecArray | null
+  while ((match = pattern.exec(fullText)) !== null) {
+    const comment = match[1]
+    const propName = match[2]
+
+    let description = ""
+    const descTag = comment.match(
+      /@description\s+([\s\S]*?)(?=\s*@\w|\s*\*\/|$)/
+    )
+    if (descTag) {
+      description = descTag[1]!.trim().replace(/\s*\*\s*/g, " ").trim()
+    } else {
+      const lines = comment
+        .split("\n")
+        .map((l) => l.trim().replace(/^\*\s?/, ""))
+      description = lines.find((l) => l.length > 0) ?? ""
+    }
+
+    if (description) descriptions.set(propName, description)
+  }
+  return descriptions
+}
+
 function schemaFromType(
   type: string,
-  visited = new Set<string>()
+  visited = new Set<string>(),
+  descriptions: Map<string, string> = new Map()
 ): OpenApiSchema {
-  const normalized = type.trim()
+  let normalized = type.trim()
+
+  // Capture property-level JSDoc descriptions before stripping comments
+  const inlineDescriptions = extractPropertyDescriptions(normalized)
+  // Merge inline-extracted descriptions with any passed-in descriptions
+  for (const [key, value] of inlineDescriptions) {
+    if (!descriptions.has(key)) descriptions.set(key, value)
+  }
+
+  // Strip a leading JSDoc comment so the type expression can be parsed normally
+  const braceIndex = normalized.indexOf("{")
+  if (braceIndex > 0 && normalized.slice(0, braceIndex).includes("/**")) {
+    normalized = normalized.slice(braceIndex)
+  }
+
   if (normalized === "string") return { type: "string" }
   if (normalized === "number") return { type: "number" }
   if (normalized === "boolean") return { type: "boolean" }
@@ -293,7 +360,7 @@ function schemaFromType(
   if (normalized.endsWith("[]")) {
     return {
       type: "array",
-      items: schemaFromType(normalized.slice(0, -2), visited),
+      items: schemaFromType(normalized.slice(0, -2), visited, descriptions),
     }
   }
   if (/^"[^"]+"(?:\s*\|\s*"[^"]+")+$/u.test(normalized)) {
@@ -304,7 +371,7 @@ function schemaFromType(
   }
   const omit = normalized.match(/^Omit<([A-Za-z0-9_]+),\s*"([A-Za-z0-9_]+)">$/)
   if (omit) {
-    const schema = schemaFromType(omit[1]!, visited)
+    const schema = schemaFromType(omit[1]!, visited, descriptions)
     if (schema.properties) delete schema.properties[omit[2]!]
     if (schema.required)
       schema.required = schema.required.filter((name) => name !== omit[2])
@@ -313,7 +380,7 @@ function schemaFromType(
   if (normalized.includes(" & ")) {
     const schemas = normalized
       .split(" & ")
-      .map((entry) => schemaFromType(entry, visited))
+      .map((entry) => schemaFromType(entry, visited, descriptions))
     return schemas.reduce<OpenApiSchema>((schema, entry) => ({
       type: "object",
       properties: { ...schema.properties, ...entry.properties },
@@ -329,7 +396,10 @@ function schemaFromType(
         .trim()
         .match(/^([A-Za-z0-9_]+)(\?)?\s*:\s*([\s\S]+)$/)
       if (!property) continue
-      properties[property[1]!] = schemaFromType(property[3]!, visited)
+      const propSchema = schemaFromType(property[3]!, visited, descriptions)
+      const description = descriptions.get(property[1]!)
+      if (description) propSchema.description = description
+      properties[property[1]!] = propSchema
       if (!property[2]) required.push(property[1]!)
     }
     return { type: "object", properties, required, additionalProperties: false }
@@ -339,7 +409,8 @@ function schemaFromType(
   const declaration = typeDeclarations.get(normalized)
   if (declaration && !visited.has(normalized)) {
     visited.add(normalized)
-    return schemaFromType(declaration, visited)
+    const typeDescriptions = typePropertyDescriptions.get(normalized)
+    return schemaFromType(declaration, visited, typeDescriptions ?? new Map())
   }
   return { description: `TypeScript type: ${normalized || "unknown"}` }
 }

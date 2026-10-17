@@ -1,10 +1,11 @@
-import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
-import type { IFinancialConceptRepository } from "@/FinanceConfig/domain/interfaces/FinancialConceptRepository.interface"
-import type { IFinancialConfigurationRepository } from "@/FinanceConfig/domain/interfaces/FinancialConfigurationRepository.interface"
-import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments"
+import type {
+  CurrentRecurringPayment,
+  RecurringPaymentExecutionStatus,
+} from "@/Financial/domain/RecurringPayments"
+import { recurringPaymentExternalReference } from "@/Financial/domain/RecurringPaymentReference"
+import type { FinanceRecord } from "@/Financial/domain/FinanceRecord"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces/FinancialRecordRepository.interface"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
-import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
@@ -12,7 +13,6 @@ import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/
 import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { QueueService } from "@/package/queue/infrastructure/QueueService"
-import type { IQueueService } from "@/package/queue/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import type { IRemoteReceiptStorage } from "@/Financial/domain/interfaces/RemoteReceiptStorage.interface"
 import { AsaasReceiptStorage } from "./AsaasReceiptStorage"
@@ -29,7 +29,6 @@ export type PixTransferUpdatedEvent = {
       status: string
       amountInCents: number
       externalReference: string
-      context: Record<string, unknown>
       transactionReceiptUrl: string | null
       failureCode: string | null
     }
@@ -48,11 +47,9 @@ export type BillPaymentUpdatedEvent = {
       externalReference: string
       /**
        * Amount the boleto charges, read from the identification field by
-       * church-banking. It is the only proof of what was actually debited, so a
-       * PAID bill is rejected when it disagrees with the recorded amount.
+       * church-banking. It is the authoritative amount of the execution.
        */
       valueInCents: number
-      context: Record<string, unknown>
       paymentDate: string | null
       transactionReceiptUrl: string | null
       failureCode: string | null
@@ -61,13 +58,8 @@ export type BillPaymentUpdatedEvent = {
 }
 
 /** Provider outcomes that must never be undone by a later, earlier-looking event. */
-const RECURRING_TERMINAL_PROVIDER_STATUSES = new Set([
-  "DONE",
-  "PAID",
-  "FAILED",
-  "CANCELLED",
-  "CREATION_FAILED",
-])
+/** A paid or failed execution is terminal: nothing may undo it. */
+const RECURRING_TERMINAL_STATUSES = new Set(["PAID", "FAILED"])
 
 export class ProcessRecurringPaymentBankingUpdate {
   private readonly logger = Logger(ProcessRecurringPaymentBankingUpdate.name)
@@ -76,38 +68,29 @@ export class ProcessRecurringPaymentBankingUpdate {
   constructor(
     private readonly recurringRepository: IRecurringPaymentsRepository = RecurringPaymentsMongoRepository.getInstance(),
     private readonly financialRecordRepository: IFinancialRecordRepository = FinanceRecordMongoRepository.getInstance(),
-    private readonly conceptRepository: IFinancialConceptRepository = FinancialConceptMongoRepository.getInstance(),
-    private readonly availabilityAccountRepository: IAvailabilityAccountRepository = AvailabilityAccountMongoRepository.getInstance(),
-    private readonly financialConfigurationRepository: IFinancialConfigurationRepository = FinancialConfigurationMongoRepository.getInstance(),
-    private readonly queueService: IQueueService = QueueService.getInstance(),
     private readonly receiptStorage: IRemoteReceiptStorage = new AsaasReceiptStorage(),
     private readonly now: () => Date = () => new Date()
   ) {
     this.recordRegistrar = new RegisterRecurringPaymentFinancialRecord(
       financialRecordRepository,
-      availabilityAccountRepository,
-      conceptRepository,
-      financialConfigurationRepository,
-      queueService
+      AvailabilityAccountMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
+      FinancialConfigurationMongoRepository.getInstance(),
+      QueueService.getInstance()
     )
   }
 
   async processPix(event: PixTransferUpdatedEvent): Promise<void> {
     const transfer = event.data.pixTransfer
-    const record =
-      await this.financialRecordRepository.findByBankingExternalReference(
-        transfer.externalReference
-      )
+    const record = await this.financialRecordRepository.one({
+      bankingExternalReference: transfer.externalReference,
+    })
+
     if (record) {
-      this.assertDuplicateContext(
-        record.getChurchId(),
-        record.getRecurringPaymentId(),
-        record.getReference()?.type === "RECURRING_PAYMENT"
-          ? record.getReference()?.entityId
-          : undefined,
-        transfer.externalReference,
-        transfer.context,
-        event.externalAccountId
+      this.assertRecordIdentity(
+        record,
+        event.externalAccountId,
+        transfer.externalReference
       )
       if (transfer.status === "REFUNDED")
         this.logRefund(
@@ -118,9 +101,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     }
     const recurring = await this.findOperation(
       event.externalAccountId,
-      event.accountId,
-      transfer.externalReference,
-      transfer.context
+      transfer.externalReference
     )
     const payment = recurring.getCurrentPayment()
     if (!payment)
@@ -136,8 +117,7 @@ export class ProcessRecurringPaymentBankingUpdate {
         recurring,
         payment,
         transfer.transactionReceiptUrl,
-        paymentDate,
-        "DONE"
+        paymentDate
       )
       return
     }
@@ -153,28 +133,22 @@ export class ProcessRecurringPaymentBankingUpdate {
       return
     }
     await this.applyStatus(recurring, payment, {
-      providerStatus: transfer.status,
-      failureCode: transfer.failureCode ?? undefined,
+      status: canonicalStatusOf(transfer.status),
       transactionReceiptUrl: transfer.transactionReceiptUrl ?? undefined,
     })
   }
 
   async processBill(event: BillPaymentUpdatedEvent): Promise<void> {
     const bill = event.data.billPayment
-    const record =
-      await this.financialRecordRepository.findByBankingExternalReference(
-        bill.externalReference
-      )
+    const record = await this.financialRecordRepository.one({
+      bankingExternalReference: bill.externalReference,
+    })
+
     if (record) {
-      this.assertDuplicateContext(
-        record.getChurchId(),
-        record.getRecurringPaymentId(),
-        record.getReference()?.type === "RECURRING_PAYMENT"
-          ? record.getReference()?.entityId
-          : undefined,
-        bill.externalReference,
-        bill.context,
-        event.externalAccountId
+      this.assertRecordIdentity(
+        record,
+        event.externalAccountId,
+        bill.externalReference
       )
       if (bill.status === "REFUNDED")
         this.logRefund(
@@ -185,20 +159,12 @@ export class ProcessRecurringPaymentBankingUpdate {
     }
     const recurring = await this.findOperation(
       event.externalAccountId,
-      event.accountId,
-      bill.externalReference,
-      bill.context
+      bill.externalReference
     )
     const payment = recurring.getCurrentPayment()
     if (!payment)
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     if (bill.status === "PAID") {
-      // A bill is executed for whatever the boleto charges, which is independent
-      // of the amount the church typed. Recording the local amount without
-      // checking it would book an expense the bank never paid.
-      if (Math.round(payment.amount * 100) !== bill.valueInCents) {
-        throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
-      }
       const paymentDate = bill.paymentDate
         ? new Date(bill.paymentDate)
         : new Date(event.occurredAt)
@@ -206,10 +172,11 @@ export class ProcessRecurringPaymentBankingUpdate {
         throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
       await this.recordConfirmed(
         recurring,
-        payment,
+        // The billed amount is authoritative: a reservation that declared another
+        // amount still has to book what the bank actually paid.
+        { ...payment, amount: bill.valueInCents / 100 },
         bill.transactionReceiptUrl,
-        paymentDate,
-        "PAID"
+        paymentDate
       )
       return
     }
@@ -218,18 +185,20 @@ export class ProcessRecurringPaymentBankingUpdate {
       return
     }
     await this.applyStatus(recurring, payment, {
-      providerStatus: bill.status,
-      failureCode: bill.failureCode ?? undefined,
+      status: canonicalStatusOf(bill.status),
       paymentDate: bill.paymentDate ?? undefined,
       transactionReceiptUrl: bill.transactionReceiptUrl ?? undefined,
     })
   }
 
+  /**
+   * The persisted `externalReference` is the durable identity of the operation,
+   * so the event is resolved by it and then bound to the church that owns the
+   * recurrence. The URN shape is only re-checked as an internal invariant.
+   */
   private async findOperation(
     externalAccountId: string,
-    accountId: string,
-    externalReference: string,
-    context: Record<string, unknown>
+    externalReference: string
   ) {
     const recurring = await this.recurringRepository.one({
       "currentPayment.externalReference": externalReference,
@@ -239,42 +208,38 @@ export class ProcessRecurringPaymentBankingUpdate {
       !recurring ||
       !payment ||
       recurring.getChurchId() !== externalAccountId ||
-      // `accountId` is deliberately not compared against the stored bankId:
-      // church-banking reports its own internal account id, while Glória
-      // generates a local URN for the same connection, so the two identifiers
-      // never match. Correlation rests on the church, the external reference
-      // rebuilt below, and the competence/attempt carried in the context.
-      context.source !== "RECURRING_PAYMENT" ||
-      context.recurringPaymentId !== recurring.getRecurringPaymentId() ||
-      context.competence !== payment.competence ||
-      context.attempt !== payment.attempt ||
       externalReference !==
-        `urn:recurringPayment:${recurring.getRecurringPaymentId()}:${payment.competence}:${payment.attempt}`
+        recurringPaymentExternalReference(
+          recurring.getRecurringPaymentId(),
+          payment.competence
+        )
     ) {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
     return recurring
   }
 
-  private assertDuplicateContext(
-    churchId: string,
-    recurringPaymentId: string | undefined,
-    referenceEntityId: string | undefined,
-    externalReference: string,
-    context: Record<string, unknown>,
-    eventChurchId: string
+  /**
+   * A duplicate confirmation must belong to the same operation: the record
+   * already stored is the evidence, so its church, recurrence and competence
+   * have to reproduce the event reference.
+   */
+  private assertRecordIdentity(
+    record: FinanceRecord,
+    eventChurchId: string,
+    externalReference: string
   ): void {
-    const competence = context.competence
+    const recurringPaymentId = record.getRecurringPaymentId()
+    const competence = record.getRecurringCompetence()
+    const reference = record.getReference()
     if (
       !recurringPaymentId ||
-      referenceEntityId !== recurringPaymentId ||
-      churchId !== eventChurchId ||
-      context.source !== "RECURRING_PAYMENT" ||
-      context.recurringPaymentId !== recurringPaymentId ||
-      typeof competence !== "string" ||
-      !new RegExp(
-        `^urn:recurringPayment:${escapeRegExp(recurringPaymentId)}:${escapeRegExp(competence)}:\\d+$`
-      ).test(externalReference)
+      !competence ||
+      record.getChurchId() !== eventChurchId ||
+      reference?.type !== "RECURRING_PAYMENT" ||
+      reference.entityId !== recurringPaymentId ||
+      externalReference !==
+        recurringPaymentExternalReference(recurringPaymentId, competence)
     ) {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
@@ -286,8 +251,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     >,
     payment: CurrentRecurringPayment,
     receiptUrl: string | null,
-    paymentDate: Date,
-    providerStatus: "DONE" | "PAID"
+    paymentDate: Date
   ): Promise<void> {
     const record = await this.financialRecordRepository.findRecurringPayment(
       recurring.getRecurringPaymentId(),
@@ -303,8 +267,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     }
     const confirmed: CurrentRecurringPayment = {
       ...payment,
-      status: "PROCESSING",
-      providerStatus,
+      status: "PAID",
       ...(receiptUrl ? { transactionReceiptUrl: receiptUrl } : {}),
       updatedAt: this.now(),
     }
@@ -347,34 +310,16 @@ export class ProcessRecurringPaymentBankingUpdate {
       Awaited<ReturnType<IRecurringPaymentsRepository["one"]>>
     >,
     current: CurrentRecurringPayment,
-    update: Pick<CurrentRecurringPayment, "providerStatus"> &
+    update: Pick<CurrentRecurringPayment, "status"> &
       Partial<
-        Pick<
-          CurrentRecurringPayment,
-          "failureCode" | "paymentDate" | "transactionReceiptUrl"
-        >
+        Pick<CurrentRecurringPayment, "paymentDate" | "transactionReceiptUrl">
       >
   ): Promise<void> {
-    if (current.providerStatus === "DONE" || current.providerStatus === "PAID")
-      return
-    const failed = ["FAILED", "CANCELLED", "CREATION_FAILED"].includes(
-      update.providerStatus
-    )
-    const blocked = update.providerStatus === "BLOCKED"
-    const processing = [
-      "PENDING",
-      "IN_BANK_PROCESSING",
-      "BANK_PROCESSING",
-      "CREATING",
-      "CREATION_UNKNOWN",
-    ].includes(update.providerStatus)
-    if (!failed && !blocked && !processing) {
-      throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
-    }
+    // A paid execution is final: a late in-flight event cannot undo it.
+    if (current.status === "PAID") return
     recurring.updateCurrentPayment({
       ...current,
       ...update,
-      status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
       updatedAt: this.now(),
     })
     const saved = await this.recurringRepository.saveIfCurrentPaymentMatches(
@@ -386,10 +331,9 @@ export class ProcessRecurringPaymentBankingUpdate {
     // Another writer won the race. Dropping the update could lose a terminal
     // outcome with no further event to correct it, so the durable state is
     // reloaded and the change re-applied unless it is already superseded.
-    await this.reapplyAfterLostCas(recurring.getRecurringPaymentId(), {
-      ...update,
-      status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
-    })
+    // The caller already hands over the canonical status, so the lost-CAS retry
+    // re-applies exactly the same update.
+    await this.reapplyAfterLostCas(recurring.getRecurringPaymentId(), update)
   }
 
   /**
@@ -402,11 +346,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     recurringPaymentId: string,
     update: Pick<
       CurrentRecurringPayment,
-      | "providerStatus"
-      | "status"
-      | "failureCode"
-      | "paymentDate"
-      | "transactionReceiptUrl"
+      "status" | "paymentDate" | "transactionReceiptUrl"
     >
   ): Promise<void> {
     const winner = await this.recurringRepository.one({ recurringPaymentId })
@@ -415,8 +355,8 @@ export class ProcessRecurringPaymentBankingUpdate {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
     if (
-      RECURRING_TERMINAL_PROVIDER_STATUSES.has(current.providerStatus) &&
-      !RECURRING_TERMINAL_PROVIDER_STATUSES.has(update.providerStatus)
+      RECURRING_TERMINAL_STATUSES.has(current.status) &&
+      !RECURRING_TERMINAL_STATUSES.has(update.status)
     ) {
       return
     }
@@ -432,7 +372,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     if (!applied) {
       this.logger.error("Recurring payment status lost the CAS twice", {
         recurringPaymentId,
-        providerStatus: update.providerStatus,
+        status: update.status,
       })
     }
   }
@@ -451,6 +391,15 @@ export class ProcessRecurringPaymentBankingUpdate {
   }
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+/**
+ * church-banking already normalizes its provider's vocabulary. This is the last
+ * step that turns its answer into this service's own states, so the domain never
+ * sees a provider string.
+ */
+function canonicalStatusOf(status: string): RecurringPaymentExecutionStatus {
+  if (status === "PAID" || status === "DONE") return "PAID"
+  if (status === "BLOCKED") return "BLOCKED"
+  if (["FAILED", "CANCELLED", "REFUNDED", "CREATION_FAILED"].includes(status))
+    return "FAILED"
+  return "PROCESSING"
 }
