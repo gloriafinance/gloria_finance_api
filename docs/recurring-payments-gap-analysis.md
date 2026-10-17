@@ -1,7 +1,7 @@
 # Pagamentos Recorrentes — Análisis de gaps y tabla de casos funcionales
 
 > Comparación **TARGET** contra **CURRENT**, verificada contra el código.
-> Base: `gloria_finance_api` rama `chore/recurring-payments`, commit `8f415387` (PR #146) y `church-banking` `main`, commit `0f2089d`.
+> Base: `gloria_finance_api` PR #150 (`feat/recurring-payments-execution-from-main`) y `church-banking` `main`, commit `a3240cc`.
 > Documento principal: [`recurring-payments.md`](./recurring-payments.md)
 
 ---
@@ -71,7 +71,9 @@ Leyenda de severidad:
 
 ---
 
-### GAP-01 — `payment.method` obligatorio dentro de `RecurringPayment` — **ALTO**
+### GAP-01 — `payment.method` obligatorio dentro de `RecurringPayment` — **RESUELTO**
+
+> Resuelto en PR #150: el método vive en el comando de ejecución (`payment`), no en la configuración (ADR-001).
 
 > **GAP: Payment method incorrectly belongs to permanent recurring configuration.**
 
@@ -109,7 +111,9 @@ export type RecurringPaymentConfigurationData = {
 
 ---
 
-### GAP-01b — No existe flujo de registro manual — **BLOQUEANTE**
+### GAP-01b — No existe flujo de registro manual — **RESUELTO**
+
+> Resuelto: `POST .../register-payment` con voucher obligatorio.
 
 El gap más severo. Una iglesia **sin Asaas no puede usar pagamentos recorrentes en absoluto**.
 
@@ -125,7 +129,9 @@ El gap más severo. Una iglesia **sin Asaas no puede usar pagamentos recorrentes
 
 ---
 
-### GAP-02 — `costCenterId` ausente en `RecurringPayment` — **ALTO**
+### GAP-02 — `costCenterId` ausente en `RecurringPayment` — **RESUELTO**
+
+> Resuelto: `costCenterId` es obligatorio en la configuración y se copia al `FinancialRecord`.
 
 **CURRENT:** `costCenter` no aparece en ninguna ruta de recurrencia (agregado, request, validator, casos de uso). Verificado por búsqueda exhaustiva.
 
@@ -140,7 +146,9 @@ Consecuencias:
 
 ---
 
-### GAP-03 — Comprobante (voucher) no obligatorio; sin upload en flujo manual — **ALTO**
+### GAP-03 — Comprobante (voucher) no obligatorio; sin upload en flujo manual — **RESUELTO**
+
+> Resuelto: el registro manual exige `file` (multipart) y almacena el voucher.
 
 **CURRENT:** el voucher es opcional y solo existe en el camino bancario, derivado del recibo de Asaas:
 
@@ -159,7 +167,9 @@ No existe ningún endpoint que reciba archivos.
 
 ---
 
-### GAP-04 — PIX no puede informarse en la ejecución; método no elegible — **ALTO**
+### GAP-04 — PIX no puede informarse en la ejecución; método no elegible — **RESUELTO**
+
+> Resuelto en PR #150: `POST .../pay` acepta `payment: { type: "PIX" | "BILL", ... }` y el método ya no se deriva de la configuración.
 
 **CURRENT:** el validator de ejecución solo acepta tres campos:
 
@@ -229,7 +239,7 @@ Esto contradice:
 
 ---
 
-### GAP-07 — No existe registro manual del `FinancialRecord` (mismo que GAP-01b, detalle de datos)
+### GAP-07 — No existe registro manual del `FinancialRecord` (mismo que GAP-01b, detalle de datos) — **RESUELTO**
 
 Se documenta por separado porque el pedido (§38) exige revisar "creación del FinancialRecord con CostCenter".
 
@@ -254,62 +264,75 @@ Se documenta por separado porque el pedido (§38) exige revisar "creación del F
 **CURRENT** (`RegisterRecurringPaymentFinancialRecord.ts:63-68`):
 
 ```ts
-const digest = createHash("sha256").update(payment.externalReference).digest("hex")
+const digest = createHash("sha256")
+  .update(`${recurringPaymentId}:${competence}:${sequence}`)
+  .digest("hex")
 // ...
 financialRecordId: `urn:financialRecord:${digest}`
+jobId: `recurring-${digest}`
 ```
 
-Es **idempotente para el camino bancario** (mismo `externalReference` → mismo id).
-
-**Riesgo en el camino manual (TARGET):** un registro manual **no** tiene `externalReference`. Debe definirse el esquema de id determinístico para el manual — candidato natural:
-
-```text
-urn:financialRecord:{sha256(recurringPaymentId + ":" + recurringCompetence)}
-```
-
-Esto refuerza la idempotencia a nivel de `financialRecordId` (que ya tiene índice único, `idx_financialRecordId`).
-
-**Requerido (TARGET):** definir y documentar el esquema de `financialRecordId` para el flujo manual.
+Es determinístico para ambos caminos (bancario y manual): la identidad es
+`recurringPaymentId + competence + sequence`, y `sequence` proviene de los
+registros previos (incluidos los anulados). La unicidad contable sigue
+garantizada por `idx_financial_record_recurring_competence_unique`.
 
 ---
 
-### GAP-09 — `church-banking` no acepta `value` en bill payment — **ALTO** (`PENDING` P-02)
+### GAP-09 — `church-banking` y el monto del boleto — **RESUELTO**
 
-**Verificado en `church-banking`:**
+**Estado actual (`church-banking@main`):**
 
 ```ts
-// apps/api/src/http/validations/bill-payment.validation.ts:5-11
+// apps/api/src/http/validations/bill-payment.validation.ts
 export type CreateBillPaymentHttpPayload = {
   readonly externalAccountId: string
   readonly identificationField: string
   readonly description: string
   readonly externalReference: string
-  readonly context: Record<string, unknown>
 }
 ```
 
-Reglas con `exactKeys` — no se aceptan campos extra. **No hay `value` ni `dueDate`.**
+`exactKeys` — sin `value`, `dueDate`, `context` ni monto esperado. Asaas lee el
+boleto y `church-banking` devuelve `valueInCents` en la creación (estados
+confirmados) y en `BANKING_BILL_PAYMENT_UPDATED`.
 
-Asaas deriva el valor del boleto, y `church-banking` **no lo devuelve** al integrador (el snapshot público expone solo `providerBillId, paymentDate, transactionReceiptUrl, failureCode|errorCode` — `apps/api/src/services/bill-payment.service.ts:45-74`).
+**Resolución implementada:** `valueInCents` es el monto autoritativo.
+`currentPayment.amount` pasa a `valueInCents / 100` cuando el pago se confirma y
+el `FinancialRecord` registra ese monto. Se eliminó la comparación
+local-vs-proveedor y `RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH`.
 
-**Impacto:** en una ejecución `BILL`, el `amount` que Glória registra es el **informado por el usuario**, no verificable contra lo que Asaas debitó. El webhook **no** puede validar el monto para BILL (a diferencia de PIX, donde sí se valida `amountInCents`).
+---
 
-**Requerido:** decisión de producto (`PENDING` P-02) antes de implementar el caso 4b/5b definitivamente.
+### GAP-09b — No existía simulación de boleto — **RESUELTO**
+
+Se agregó `POST /api/v1/recurring-payments/:recurringPaymentId/bill/simulate`
+(`SimulateRecurringPaymentBill`) que reenvía `identificationField` o `barCode` a
+`POST /api/bill-payments/simulate`. Es una lectura: 1 read + 1 llamada, 0
+writes, sin persistencia, sin token de simulación y sin re-simular en `/pay`.
 
 ---
 
 ### GAP-10 — Fan-out de webhooks de `church-banking` — **MEDIO**
 
-`church-banking` hace fan-out a **todos** los bindings activos de la cuenta (`create-banking-outgoing-money-outbound-events.use-case.ts:32-35`). Glória puede recibir un evento cuyo `externalAccountId` provenga de un binding distinto del que originó la operación.
+`church-banking` hace fan-out a **todos** los bindings activos de la cuenta.
+Glória puede recibir un evento cuyo `externalAccountId` provenga de otro binding.
 
-**CURRENT:** la correlación ya es defensiva:
+**CURRENT:** la correlación es defensiva y no usa `context` (que ya no existe):
 
-- `findOperation(externalAccountId, accountId, externalReference, context)`;
-- `assertDuplicateContext(churchId, recurringPaymentId, externalReference, context, externalAccountId)`.
+- `findOperation(externalAccountId, externalReference)` busca por la referencia
+  persistida y exige `recurring.getChurchId() === externalAccountId`;
+- `assertRecordIdentity(...)` reconstruye la identidad desde el `FinancialRecord`
+  persistido en el camino de duplicados;
+- la invariante del URN se re-verifica con
+  `recurringPaymentExternalReference(recurringPaymentId, competence)`.
 
-**Riesgo residual:** el tipo del webhook en Glória **no declara** `clientId` ni `requestId`, que `church-banking` **sí envía** (`banking-webhook-event.ts:96-115`). `clientId` es justamente el campo que permitiría defender el fan-out.
+**Riesgo residual:** el tipo del webhook en Glória **no declara** `clientId` ni
+`requestId`, que `church-banking` **sí envía**. `clientId` permitiría defender el
+fan-out con más precisión.
 
-**Requerido (TARGET):** declarar `clientId` y `requestId` en el tipo del webhook y usarlos en la correlación.
+**Requerido (futuro):** declarar `clientId` y `requestId` en el tipo del webhook
+si se necesita esa defensa adicional.
 
 ---
 
@@ -346,7 +369,7 @@ Asaas deriva el valor del boleto, y `church-banking` **no lo devuelve** al integ
 | `FinancialRecord` `reference.entityId` | contiene un id plural |
 | `ListRecurringPayments` | usa `getRecurringPaymentsId()` |
 | URL del endpoint | `/api/v1/recurring-payments/:recurringPaymentId/pay` |
-| `context.recurringPaymentId` (hacia `church-banking`) | singular |
+| `externalReference` (hacia `church-banking`) | contiene `recurringPaymentId` |
 
 **Impacto:** confusión para implementadores y frontend; riesgo de errores en la correlación.
 
@@ -386,13 +409,13 @@ Revisión explícita de cada punto solicitado:
 
 | # | Punto a revisar | Resultado | Gap |
 |---|---|---|---|
-| 1 | ¿Existe `payment: PIX \| BILL` obligatorio dentro de `RecurringPayment`? | **SÍ** — `RecurringPayments.ts:22-24` + `"payment.method": "required\|string\|in:PIX,BILL"` | **GAP-01** |
+| 1 | ¿El método vive en la configuración? | **NO** — vive en el comando de ejecución (`payment`) | Resuelto |
 | 2 | `costCenterId` | **AUSENTE** en todo el flujo de recurrencias; el `FinancialRecord` se crea sin centro de costo | **GAP-02** |
-| 3 | Registro manual | **NO EXISTE** endpoint; `RegisterRecurringPaymentFinancialRecord` sin entrypoint HTTP | **GAP-01b** |
+| 3 | Registro manual | **SÍ** — `POST .../register-payment` con voucher | Resuelto |
 | 4 | Voucher manual | **NO EXISTE** upload; voucher opcional y solo desde recibo de Asaas | **GAP-03** |
 | 5 | Ejecución variable | **SÍ FUNCIONA** — `resolveAmount` exige `amount` y valida centavos (`:170-189`) | Sin gap |
-| 6 | PIX informado al momento del pago | **IMPOSIBLE** — el validator de ejecución no acepta `pixKey`/`pixKeyType` | **GAP-04** |
-| 7 | Boleto informado al momento del pago | **PARCIAL** — solo si la configuración ya es `BILL`; no elegible por el usuario | **GAP-04** |
+| 6 | PIX informado al momento del pago | **SÍ** — `payment.pixKey` + `payment.pixKeyType` | Resuelto |
+| 7 | Boleto informado al momento del pago | **SÍ** — `payment.identificationField` | Resuelto |
 | 8 | Creación del `FinancialRecord` con `CostCenter` | **NO** — no se propaga `costCenter` | **GAP-02**, **GAP-07** |
 
 ### Lo que el PR #146 **sí** implementa correctamente (y debe preservarse)
@@ -470,9 +493,9 @@ Ambos tocan el payload de creación y los mismos documentos → **un solo cambio
 2. Despacho exhaustivo de eventos.
 3. Patrón de inyección consistente.
 4. Política de `REFUNDED` (P-04).
-5. Validación / conciliación del valor del boleto (P-02, P-05).
+5. ~~Validación / conciliación del valor del boleto~~ — resuelto: `valueInCents` del proveedor es la autoridad (GAP-09).
 
-**Bloqueado por:** P-02, P-04, P-05.
+**Bloqueado por:** P-04, P-05 (P-02 resuelto por GAP-09).
 **Riesgo:** bajo — mejoras incrementales.
 
 ---
@@ -486,6 +509,7 @@ La feature se considera correctamente implementada cuando:
 - [ ] Una iglesia **sin** Asaas completa el ciclo: crear recurrencia → registrar 12 competencias → 12 `FinancialRecord` con comprobante.
 - [ ] Una iglesia **con** Asaas paga por PIX con `pixDestination` en **una** confirmación.
 - [ ] Una iglesia **con** Asaas paga el **mismo** compromiso por PIX un mes y por BILL el siguiente, **sin editar la recurrencia**.
+- [ ] El flujo de boleto permite `scan → simulate → display → confirm → pay`, y la simulación no escribe nada.
 - [ ] Una recurrencia `VARIABLE` exige el monto en cada ejecución.
 - [ ] Una recurrencia `FIXED` **rechaza** un `amount` en el comando.
 - [ ] Toda ejecución (manual o bancaria) produce un `FinancialRecord` con el `costCenterId` de la recurrencia.

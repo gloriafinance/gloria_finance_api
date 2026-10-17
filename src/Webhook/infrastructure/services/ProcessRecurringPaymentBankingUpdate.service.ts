@@ -2,6 +2,8 @@ import type {
   CurrentRecurringPayment,
   RecurringPaymentExecutionStatus,
 } from "@/Financial/domain/RecurringPayments"
+import { recurringPaymentExternalReference } from "@/Financial/domain/RecurringPaymentReference"
+import type { FinanceRecord } from "@/Financial/domain/FinanceRecord"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces/FinancialRecordRepository.interface"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
@@ -27,7 +29,6 @@ export type PixTransferUpdatedEvent = {
       status: string
       amountInCents: number
       externalReference: string
-      context: Record<string, unknown>
       transactionReceiptUrl: string | null
       failureCode: string | null
     }
@@ -46,11 +47,9 @@ export type BillPaymentUpdatedEvent = {
       externalReference: string
       /**
        * Amount the boleto charges, read from the identification field by
-       * church-banking. It is the only proof of what was actually debited, so a
-       * PAID bill is rejected when it disagrees with the recorded amount.
+       * church-banking. It is the authoritative amount of the execution.
        */
       valueInCents: number
-      context: Record<string, unknown>
       paymentDate: string | null
       transactionReceiptUrl: string | null
       failureCode: string | null
@@ -88,15 +87,10 @@ export class ProcessRecurringPaymentBankingUpdate {
     })
 
     if (record) {
-      this.assertDuplicateContext(
-        record.getChurchId(),
-        record.getRecurringPaymentId(),
-        record.getReference()?.type === "RECURRING_PAYMENT"
-          ? record.getReference()?.entityId
-          : undefined,
-        transfer.externalReference,
-        transfer.context,
-        event.externalAccountId
+      this.assertRecordIdentity(
+        record,
+        event.externalAccountId,
+        transfer.externalReference
       )
       if (transfer.status === "REFUNDED")
         this.logRefund(
@@ -107,8 +101,7 @@ export class ProcessRecurringPaymentBankingUpdate {
     }
     const recurring = await this.findOperation(
       event.externalAccountId,
-      transfer.externalReference,
-      transfer.context
+      transfer.externalReference
     )
     const payment = recurring.getCurrentPayment()
     if (!payment)
@@ -152,15 +145,10 @@ export class ProcessRecurringPaymentBankingUpdate {
     })
 
     if (record) {
-      this.assertDuplicateContext(
-        record.getChurchId(),
-        record.getRecurringPaymentId(),
-        record.getReference()?.type === "RECURRING_PAYMENT"
-          ? record.getReference()?.entityId
-          : undefined,
-        bill.externalReference,
-        bill.context,
-        event.externalAccountId
+      this.assertRecordIdentity(
+        record,
+        event.externalAccountId,
+        bill.externalReference
       )
       if (bill.status === "REFUNDED")
         this.logRefund(
@@ -171,27 +159,12 @@ export class ProcessRecurringPaymentBankingUpdate {
     }
     const recurring = await this.findOperation(
       event.externalAccountId,
-      bill.externalReference,
-      bill.context
+      bill.externalReference
     )
     const payment = recurring.getCurrentPayment()
     if (!payment)
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     if (bill.status === "PAID") {
-      // A bill is executed for whatever the boleto charges, which is independent
-      // of the amount the church typed. Recording the local amount without
-      // checking it would book an expense the bank never paid, so a declared
-      // amount that differs is refused.
-      const reservedAmountInCents =
-        payment.amount !== undefined
-          ? Math.round(payment.amount * 100)
-          : undefined
-      if (
-        reservedAmountInCents !== undefined &&
-        reservedAmountInCents !== bill.valueInCents
-      ) {
-        throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
-      }
       const paymentDate = bill.paymentDate
         ? new Date(bill.paymentDate)
         : new Date(event.occurredAt)
@@ -199,7 +172,7 @@ export class ProcessRecurringPaymentBankingUpdate {
         throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
       await this.recordConfirmed(
         recurring,
-        // The billed amount is authoritative: a reservation that never knew the
+        // The billed amount is authoritative: a reservation that declared another
         // amount still has to book what the bank actually paid.
         { ...payment, amount: bill.valueInCents / 100 },
         bill.transactionReceiptUrl,
@@ -218,10 +191,14 @@ export class ProcessRecurringPaymentBankingUpdate {
     })
   }
 
+  /**
+   * The persisted `externalReference` is the durable identity of the operation,
+   * so the event is resolved by it and then bound to the church that owns the
+   * recurrence. The URN shape is only re-checked as an internal invariant.
+   */
   private async findOperation(
     externalAccountId: string,
-    externalReference: string,
-    context: Record<string, unknown>
+    externalReference: string
   ) {
     const recurring = await this.recurringRepository.one({
       "currentPayment.externalReference": externalReference,
@@ -231,38 +208,38 @@ export class ProcessRecurringPaymentBankingUpdate {
       !recurring ||
       !payment ||
       recurring.getChurchId() !== externalAccountId ||
-      context.source !== "RECURRING_PAYMENT" ||
-      context.recurringPaymentId !== recurring.getRecurringPaymentId() ||
-      context.competence !== payment.competence ||
       externalReference !==
-        `urn:recurringPayment:${recurring.getRecurringPaymentId()}:${payment.competence}`
+        recurringPaymentExternalReference(
+          recurring.getRecurringPaymentId(),
+          payment.competence
+        )
     ) {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
     return recurring
   }
 
-  private assertDuplicateContext(
-    churchId: string,
-    recurringPaymentId: string | undefined,
-    referenceEntityId: string | undefined,
-    externalReference: string,
-    context: Record<string, unknown>,
-    eventChurchId: string
+  /**
+   * A duplicate confirmation must belong to the same operation: the record
+   * already stored is the evidence, so its church, recurrence and competence
+   * have to reproduce the event reference.
+   */
+  private assertRecordIdentity(
+    record: FinanceRecord,
+    eventChurchId: string,
+    externalReference: string
   ): void {
-    const competence = context.competence
+    const recurringPaymentId = record.getRecurringPaymentId()
+    const competence = record.getRecurringCompetence()
+    const reference = record.getReference()
     if (
       !recurringPaymentId ||
-      referenceEntityId !== recurringPaymentId ||
-      churchId !== eventChurchId ||
-      context.source !== "RECURRING_PAYMENT" ||
-      context.recurringPaymentId !== recurringPaymentId ||
-      typeof competence !== "string" ||
-      // The reference is stable per competence now, so a duplicate confirmation
-      // has to match it exactly: requiring a suffix would reject every duplicate.
-      !new RegExp(
-        `^urn:recurringPayment:${escapeRegExp(recurringPaymentId)}:${escapeRegExp(competence)}$`
-      ).test(externalReference)
+      !competence ||
+      record.getChurchId() !== eventChurchId ||
+      reference?.type !== "RECURRING_PAYMENT" ||
+      reference.entityId !== recurringPaymentId ||
+      externalReference !==
+        recurringPaymentExternalReference(recurringPaymentId, competence)
     ) {
       throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
     }
@@ -412,10 +389,6 @@ export class ProcessRecurringPaymentBankingUpdate {
       }
     )
   }
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 /**

@@ -233,11 +233,11 @@ sequenceDiagram
     DB-->>API: concept
     API->>API: findConnectedAccount(churchId)<br/>→ HAS_CONNECTED_BANK_ACCOUNT
 
-    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10:1
+    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10
     API->>DB: reserveCurrentPayment + saveIfCurrentPaymentMatches<br/>(CAS: currentPayment ausente → presente)
     Note over DB: idx_recurring_payments_active_reference_unique<br/>solo un ganador
 
-    API->>CB: POST /api/pix-transfers<br/>{ externalAccountId, amountInCents: 350000,<br/>pixKey, pixKeyType: "CNPJ", description,<br/>externalReference, context }
+    API->>CB: POST /api/pix-transfers<br/>{ externalAccountId, amountInCents: 350000,<br/>pixKey, pixKeyType: "CNPJ", description,<br/>externalReference }
     Note over API,CB: JWE (ECDH-ES/A256GCM) +<br/>JWT ES256 con method/path/bodyHash
 
     CB->>ASAAS: POST /v3/transfers<br/>{ value, pixAddressKey, pixAddressKeyType,<br/>description, externalReference: UUID propio }
@@ -281,7 +281,7 @@ sequenceDiagram
         Note over DB: Actualiza pixDestination.<br/>NO cambia ningún "method".
     end
 
-    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10:1
+    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10
     API->>DB: reserveCurrentPayment (CAS)
 
     API->>CB: POST /api/pix-transfers<br/>{ amountInCents: 350000,<br/>pixKey: "11987654321", pixKeyType: "PHONE", ... }
@@ -313,7 +313,7 @@ sequenceDiagram
     FE->>API: POST .../pay<br/>{ "competence": "2026-10", "amount": 742.83,<br/>  "payment": { "type": "PIX",<br/>    "pixKey": "...", "pixKeyType": "CNPJ" } }
 
     API->>API: resolveAmount()<br/>VARIABLE → amount REQUERIDO<br/>valida > 0 y precisión de centavos
-    API->>API: externalReference = urn:...:2026-10:1
+    API->>API: externalReference = urn:...:2026-10
     API->>DB: reserveCurrentPayment<br/>amount = 742.83 congelado en currentPayment
     API->>DB: saveIfCurrentPaymentMatches (CAS)
 
@@ -351,11 +351,11 @@ sequenceDiagram
     FE->>API: POST .../pay<br/>{ "competence": "2026-10", "amount": 742.83,<br/>  "payment": { "type": "BILL",<br/>    "identificationField": "34191..." } }
 
     API->>API: resolveAmount() → 742.83 (VARIABLE)
-    API->>API: externalReference = urn:...:2026-10:1
+    API->>API: externalReference = urn:...:2026-10
     API->>DB: reserveCurrentPayment<br/>amount = 742.83, identificationField congelado
     API->>DB: saveIfCurrentPaymentMatches (CAS)
 
-    API->>CB: POST /api/bill-payments<br/>{ externalAccountId, identificationField,<br/>description, externalReference, context }
+    API->>CB: POST /api/bill-payments<br/>{ externalAccountId, identificationField,<br/>description, externalReference }
     Note over API,CB: NO se envía value ni dueDate.<br/>church-banking NO los acepta.
 
     CB->>ASAAS: POST /v3/bill<br/>{ identificationField, description,<br/>externalReference: UUID propio }
@@ -366,7 +366,45 @@ sequenceDiagram
     API->>DB: currentPayment.status = PROCESSING
     API-->>FE: 200 { status: "PROCESSING" }
 
-    Note over API,DB: PENDING: el amount del FinancialRecord sale del<br/>valor informado por el usuario, porque church-banking<br/>NO expone el value real del boleto. Ver §14.
+    Note over API,DB: El valueInCents que devuelve church-banking es el<br/>monto autoritativo; el amount local sólo reserva.<br/>Ver §14.
+```
+
+### 2.6b Secuencia — simulación del boleto (UX)
+
+**CURRENT.** `POST /api/v1/recurring-payments/:recurringPaymentId/bill/simulate`
+es una lectura: no mueve dinero y no escribe nada.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant FE as Frontend
+    participant API as gloria_finance_api
+    participant CB as church-banking
+    participant ASAAS as Asaas
+    participant DB as MongoDB
+
+    U->>FE: escanea linha digitável / código de barras
+    FE->>API: POST .../bill/simulate<br/>{ "barCode": "033918..." }<br/>o { "identificationField": "033992..." }
+    Note over FE,API: exactamente uno de los dos.<br/>Sin amount, churchId ni externalAccountId.
+
+    API->>API: validateSimulateRecurringPaymentBill
+    API->>DB: one({ recurringPaymentId, churchId, status: "ACTIVE" })
+    DB-->>API: recurring | undefined
+    Note over API,DB: inexistente / otra iglesia / inactiva<br/>→ RECURRING_PAYMENT_NOT_FOUND
+
+    API->>CB: POST /api/bill-payments/simulate<br/>{ externalAccountId, barCode }
+    CB->>ASAAS: POST /v3/bill/simulate
+    ASAAS-->>CB: bankSlipInfo + fee + minimumScheduleDate
+    CB-->>API: { data: snapshot, code: "OK" }
+
+    API-->>FE: 200 snapshot
+    Note over API: 0 writes: sin currentPayment,<br/>sin FinancialRecord, sin reserva,
+    FE-->>U: muestra beneficiario, valor,<br/>vencimiento, fee, descuentos,<br/>intereses, multa, condiciones
+
+    U->>FE: confirma
+    FE->>API: POST .../pay<br/>{ competence, payment: { type: "BILL",<br/>  identificationField: bankSlip.identificationField } }
+    Note over FE,API: el pago NO vuelve a simular
 ```
 
 ### 2.7 Secuencia 7 — banking webhook success
@@ -385,7 +423,7 @@ sequenceDiagram
     participant JOB as CreateFinancialRecord.job
     participant DB as MongoDB
 
-    CB->>WH: POST { id, occurredAt, externalAccountId,<br/>accountId, data: { pixTransfer: {<br/>  providerTransferId, status: "DONE",<br/>  amountInCents, externalReference, context,<br/>  transactionReceiptUrl, failureCode } } }
+    CB->>WH: POST { id, occurredAt, externalAccountId,<br/>accountId, data: { pixTransfer: {<br/>  providerTransferId, status: "DONE",<br/>  amountInCents, externalReference,<br/>  transactionReceiptUrl, failureCode } } }
 
     WH->>V: authenticate (JWT + bodyHash)
     V-->>WH: ok
@@ -395,13 +433,13 @@ sequenceDiagram
     H->>DB: findByBankingExternalReference(externalReference)
     alt Ya existe FinancialRecord
         DB-->>H: record
-        H->>H: assertDuplicateContext(churchId,<br/>recurringPaymentId, externalReference,<br/>context, externalAccountId)
+        H->>H: assertRecordIdentity(record,<br/>externalAccountId, externalReference)
         Note over H: IDEMPOTENTE — no se hace nada<br/>(excepto log si REFUNDED)
         H-->>WH: return
     else No existe
         DB-->>H: undefined
 
-        H->>DB: findOperation(externalAccountId, accountId,<br/>externalReference, context)
+        H->>DB: findOperation(externalAccountId, externalReference)
         DB-->>H: recurringPayment (currentPayment)
 
         H->>H: validar Math.round(payment.amount*100)<br/>=== transfer.amountInCents
@@ -443,21 +481,19 @@ sequenceDiagram
     participant WH as Webhook
     participant DB as MongoDB
 
-    Note over API: currentPayment.status = PROCESSING<br/>providerStatus = "PENDING"
+    Note over API: currentPayment.status = PROCESSING
 
     CB->>WH: { data: { pixTransfer: {<br/>  status: "FAILED",<br/>  failureCode: "..." } } }
-    WH->>DB: findOperation(...)
+    WH->>DB: findOperation(externalAccountId, externalReference)
     DB-->>WH: recurring + currentPayment
 
-    WH->>WH: applyStatus(recurring, payment,<br/>{ providerStatus: "FAILED" })
-
-    WH->>DB: currentPayment.status = "FAILED"<br/>providerStatus = "FAILED"<br/>failureCode = event.failureCode<br/>INTENTO CONSERVADO (attempt sigue siendo 1)
+    WH->>DB: currentPayment.status = "FAILED"<br/>referencia conservada
     DB-->>WH: ok
 
     Note over DB: NO se crea FinancialRecord<br/>competenceStatus = FAILED
 
     U->>API: GET /api/v1/recurring-payments?competence=2026-10
-    API-->>U: { competenceStatus: "FAILED",<br/>  currentPayment: { failureCode } }
+    API-->>U: { competenceStatus: "FAILED", currentPayment }
     Note over U: UI muestra "O pagamento falhou"<br/>+ [ TENTAR NOVAMENTE ]
 
     Note over U,API: El retry se documenta en §2.10.<br/>BLOCKED (no-terminal) != FAILED (terminal).
@@ -477,14 +513,14 @@ sequenceDiagram
     participant WH as Webhook
     participant DB as MongoDB
 
-    Note over API: currentPayment.status = PROCESSING<br/>attempt = 1
+    Note over API: currentPayment.status = PROCESSING
 
     ASAAS->>CB: TRANSFER_BLOCKED
     CB->>WH: { data: { pixTransfer: { status: "BLOCKED" } } }
-    WH->>DB: findOperation(...)
+    WH->>DB: findOperation(externalAccountId, externalReference)
     DB-->>WH: recurring + currentPayment
 
-    WH->>DB: currentPayment.status = "BLOCKED"<br/>providerStatus = "BLOCKED"<br/>externalReference CONSERVADO<br/>attempt NO incrementado
+    WH->>DB: currentPayment.status = "BLOCKED"<br/>externalReference CONSERVADO
     Note over DB: NO se crea FinancialRecord
 
     U->>API: GET ...?competence=2026-10
@@ -492,15 +528,14 @@ sequenceDiagram
     Note over U: "O banco está retendo esta operação.<br/>NÃO tente novamente."
 
     U->>API: POST .../pay (reintento del usuario)
-    API->>API: existing.status === "BLOCKED"
+    API->>API: existing.status !== "FAILED"
     API-->>U: 200 { status: "BLOCKED" }
-    Note over API: RETORNO TEMPRANO — no se llama a church-banking<br/>ExecuteRecurringPayment.ts:106-108
+    Note over API: RETORNO TEMPRANO — no se llama a church-banking
 
     Note over ASAAS,API: Espera indefinida.<br/>No hay timeout del lado de Glória.
 
     ASAAS->>CB: TRANSFER_DONE (o TRANSFER_FAILED / TRANSFER_CANCELLED)
     CB->>WH: { data: { pixTransfer: { status: "DONE" } } }
-    WH->>DB: status = PROCESSING, providerStatus = "DONE"
     WH->>DB: crear FinancialRecord + closeCurrentPayment
     Note over DB: BLOCKED → PAID
 ```
@@ -518,75 +553,61 @@ sequenceDiagram
     participant DB as MongoDB
 
     rect rgb(255, 245, 245)
-    Note over API,CB: CASO A — INTENTO 1 FALLÓ CONFIRMADO
-    Note over API: attempt = 1, status = FAILED<br/>providerStatus = CREATION_FAILED
+    Note over API,CB: CASO A — LA OPERACIÓN ANTERIOR FALLÓ CONFIRMADA
+    Note over API: status = FAILED
 
     U->>API: POST .../pay { competence: "2026-10", ... }
-    API->>API: existing.status === "FAILED" → permite nuevo intento
-    API->>API: attempt = existing.attempt + 1 = 2
-    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10:2
-    Note over API: REFERENCIA NUEVA → church-banking<br/>la trata como operación lógica distinta
+    API->>API: existing.status === "FAILED" → permite nuevo envío
+    API->>API: externalReference =<br/>urn:recurringPayment:{id}:2026-10
 
-    API->>DB: reserveCurrentPayment (attempt = 2) + CAS
-    API->>CB: POST /api/pix-transfers<br/>{ externalReference: "...:2" }
+    API->>DB: reserveCurrentPayment + CAS
+    API->>CB: POST /api/pix-transfers<br/>{ externalReference: "...:2026-10" }
     CB-->>API: { status: "PENDING" }
     API->>DB: status = PROCESSING
+    Note over CB: La misma competencia reutiliza la misma<br/>referencia: church-banking la deduplica.
     end
 
     rect rgb(255, 250, 230)
-    Note over API,CB: CASO B — INTENTO 1 QUEDÓ INDETERMINADO
-    Note over API: attempt = 1, status = PROCESSING<br/>providerStatus = CREATION_UNKNOWN
+    Note over API,CB: CASO B — RESULTADO INDETERMINADO
+    Note over API: status = PROCESSING
     Note over API: NO sabemos si Asaas creó la operación
 
-    U->>API: POST .../pay (o reintento automático)
-    API->>API: providerStatus === "CREATION_UNKNOWN"
-    API->>API: assertSameRetryPayload()<br/>mismo amount y mismo identificationField
-    Note over API: Payload distinto → RECURRING_PAYMENT_IN_PROGRESS
+    U->>API: POST .../pay
+    API-->>U: 200 { status: "PROCESSING" }
+    Note over API: NO se llama a church-banking.<br/>Solo el webhook puede resolver la operación.
 
-    API->>API: MISMO attempt = 1<br/>MISMO externalReference = "...:1"
-    Note over API: NO se crea intento nuevo.<br/>Esto evita un segundo débito real.
-
-    API->>CB: POST /api/pix-transfers<br/>{ externalReference: "...:1" (idéntico) }
-    CB->>CB: identity() {clientId, externalAccountId,<br/>externalReference} ya existe
-    CB->>CB: continueExisting(winner, input)<br/>o reconcileUnknown por providerExternalReference
-    CB-->>API: snapshot de la operación ORIGINAL
-    Note over CB: NO se crea una segunda operación en Asaas
-    API->>DB: updateCurrentPayment
+    CB->>API: BANKING_PIX_TRANSFER_UPDATED (DONE | FAILED)
+    API->>DB: confirmar la operación existente
     end
 
     rect rgb(230, 255, 250)
-    Note over API,CB: CASO C — ESTADOS QUE NO PERMITEN RETRY
+    Note over API,CB: CASO C — ESTADOS QUE NO PERMITEN UN NUEVO ENVÍO
     Note over API: PROCESSING  → retorno temprano, sin llamada
     Note over API: BLOCKED     → retorno temprano, sin llamada
     Note over API: PAID        → ALREADY_PAID, sin llamada
     end
 ```
 
-### 2.11 Resumen de las transiciones de retry
+### 2.11 Resumen de las transiciones
 
 ```mermaid
 flowchart LR
-    P["PROCESSING<br/>attempt = N"] -->|webhook FAILED| F["FAILED<br/>terminal"]
-    F -->|retry| P2["PROCESSING<br/>attempt = N+1<br/>REFERENCIA NUEVA"]
+    P["PROCESSING"] -->|webhook FAILED| F["FAILED<br/>terminal"]
+    F -->|retry| P2["PROCESSING<br/>MISMA referencia"]
 
-    P -->|error de red / ambiguo| CU["PROCESSING<br/>CREATION_UNKNOWN<br/>attempt = N"]
-    CU -->|retry con payload IDÉNTICO| P3["MISMA referencia<br/>attempt = N<br/>dedup en church-banking"]
-
+    P -->|error de red / ambiguo| P
     P -->|webhook BLOCKED| B["BLOCKED"]
     B -->|webhook posterior| P
-    B -->|webhook posterior| PAID["PAID"]
+    B -->|webhook DONE| PAID["PAID"]
 
     P -->|webhook DONE/PAID| PAID
-
-    CU -.->|PROHIBIDO crear intento nuevo| P2
-    B -.->|PROHIBIDO crear intento nuevo| P2
 
     classDef ok fill:#e6fffa,stroke:#2c7a7b
     classDef bad fill:#fff5f5,stroke:#c53030
     classDef warn fill:#fffaf0,stroke:#c05621
     class PAID ok
     class F bad
-    class CU,B warn
+    class B warn
 ```
 
 ---
@@ -615,7 +636,7 @@ stateDiagram-v2
     BLOCKED --> PAID: webhook DONE
     BLOCKED --> FAILED: webhook FAILED / CANCELLED
 
-    FAILED --> PROCESSING: retry<br/>attempt + 1<br/>nueva externalReference
+    FAILED --> PROCESSING: retry<br/>misma externalReference
 
     PAID --> [*]
     INACTIVE --> [*]
@@ -631,7 +652,7 @@ stateDiagram-v2
         BLOCKED != FAILED
         No crea FinancialRecord
         No permite otro pago
-        No incrementa attempt
+        Conserva la referencia
         Conserva externalReference
         Espera estado de church-banking
     end note
@@ -667,7 +688,7 @@ flowchart LR
     end
 
     subgraph Operativo["currentPayment (en vuelo, NO histórico)"]
-        CP["competence, attempt<br/>externalReference<br/>amount, bankId<br/>availabilityAccountId<br/>status: PROCESSING|BLOCKED|FAILED<br/>providerStatus<br/>failureCode?, identificationField?<br/>paymentDate?, transactionReceiptUrl?"]
+        CP["competence<br/>externalReference<br/>amount, bankId<br/>availabilityAccountId<br/>paymentMethod, executionDestination<br/>status: PROCESSING|BLOCKED|FAILED|PAID<br/>identificationField?<br/>paymentDate?, transactionReceiptUrl?"]
     end
 
     subgraph Contable["FinancialRecord (histórico)"]
@@ -814,28 +835,24 @@ flowchart TD
     class RESULT ok
 ```
 
-### 5.2 El papel de `attempt` en la idempotencia
+### 5.2 Una referencia estable por competencia
 
 ```mermaid
 flowchart LR
-    E1["externalReference<br/>urn:...:2026-10:1"]
-    E2["externalReference<br/>urn:...:2026-10:2"]
+    E["externalReference<br/>urn:recurringPayment:{id}:{competence}"]
 
-    E1 --> D1["church-banking:<br/>operación lógica A"]
-    E2 --> D2["church-banking:<br/>operación lógica B"]
+    E --> D["church-banking:<br/>una sola operación lógica"]
 
-    D1 --> N1["Reintentos de red del MISMO intento<br/>→ deduplicados por identidad"]
-    D2 --> N2["Intento distinto<br/>→ operación distinta"]
+    D --> N["Reintentos de red / retry de un FAILED<br/>→ deduplicados por identidad"]
 
-    N1 --> C1["Sin doble débito DENTRO del intento"]
-    N2 --> C2["La dedup bancaria NO protege ENTRE intentos"]
+    N --> C["Sin doble débito para la competencia"]
 
-    C2 --> RULE["Por eso: SOLO un fallo CONFIRMADO<br/>habilita un attempt nuevo.<br/>CREATION_UNKNOWN reutiliza el attempt."]
+    C --> RULE["CREATION_UNKNOWN no se reintenta:<br/>permanece PROCESSING hasta el webhook."]
 
     classDef ok fill:#e6fffa,stroke:#2c7a7b
     classDef warn fill:#fffaf0,stroke:#c05621
-    class C1 ok
-    class C2,RULE warn
+    class C ok
+    class RULE warn
 ```
 
 **Esta es la invariante más importante del sistema y debe tener un test explícito.**
@@ -848,7 +865,7 @@ flowchart LR
 | Una `currentPayment` con referencia activa | índice único sparse | `RecurringPaymentsMongoRepository` |
 | Un solo ganador al reservar | CAS `replaceOne` con estado esperado | `saveIfCurrentPaymentMatches` |
 | Webhook procesado una vez | cortocircuito por `bankingExternalReference` + `findRecurringPayment` | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
-| Encolado una sola vez | `jobId` determinista = `recurring-` + `sha256(externalReference)` | `RegisterRecurringPaymentFinancialRecord.ts:88` |
+| Encolado una sola vez | `jobId` determinista = `recurring-` + `sha256(recurringPaymentId:competence:sequence)` | `RegisterRecurringPaymentFinancialRecord` |
 | Una operación lógica en el banco | índice único `{clientId, externalAccountId, externalReference}` | `church-banking` |
-| Sin intento nuevo tras duda | `CREATION_UNKNOWN` reutiliza `attempt` y exige payload idéntico | `ExecuteRecurringPayment.ts:124-128, 353-366` |
+| Sin nuevo envío tras duda | `CREATION_UNKNOWN` permanece `PROCESSING` | `ExecuteRecurringPayment` |
 | Cero registros manuales duplicados | índice único + `findRecurringPayment` (sin `currentPayment`) | §22 del documento principal |

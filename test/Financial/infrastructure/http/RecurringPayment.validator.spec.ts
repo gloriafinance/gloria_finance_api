@@ -2,6 +2,7 @@ import {
   validatePayRecurringPayment,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
+  validateSimulateRecurringPaymentBill,
 } from "@/Financial/infrastructure/http/validators/RecurringPayment.validator"
 
 function makeResponse() {
@@ -239,6 +240,58 @@ describe("recurring payment HTTP validation", () => {
       )
 
       expect(response.status).toHaveBeenCalledWith(422)
+      expect(next).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("bill/simulate", () => {
+    it("accepts exactly one of the typed line or the barcode", async () => {
+      for (const body of [
+        { identificationField: "0339920159510052904014760030102388844" },
+        { barCode: "03391815100000029909777729900000000475110101" },
+      ]) {
+        const response = makeResponse()
+        const next = jest.fn()
+        await validateSimulateRecurringPaymentBill(
+          { body } as never,
+          response as never,
+          next
+        )
+
+        expect(next).toHaveBeenCalledTimes(1)
+        expect(response.send).not.toHaveBeenCalled()
+      }
+    })
+
+    it.each([
+      ["both identifiers", { identificationField: "line", barCode: "code" }],
+      ["neither identifier", {}],
+      ["a blank typed line", { identificationField: "  " }],
+      ["a blank barcode", { barCode: "" }],
+      ["an amount", { identificationField: "line", amount: 742.83 }],
+      [
+        "an amount in cents",
+        { identificationField: "line", amountInCents: 74283 },
+      ],
+      ["a church", { identificationField: "line", churchId: "church-2" }],
+      [
+        "an external account",
+        { identificationField: "line", externalAccountId: "church-2" },
+      ],
+      ["an unknown field", { identificationField: "line", foo: "bar" }],
+    ])("rejects %s", async (_case, body) => {
+      const response = makeResponse()
+      const next = jest.fn()
+      await validateSimulateRecurringPaymentBill(
+        { body } as never,
+        response as never,
+        next
+      )
+
+      expect(response.status).toHaveBeenCalledWith(400)
+      expect(response.send).toHaveBeenCalledWith({
+        code: "RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID",
+      })
       expect(next).not.toHaveBeenCalled()
     })
   })

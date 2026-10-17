@@ -1,8 +1,5 @@
 import { ProcessRecurringPaymentBankingUpdate } from "@/Webhook/infrastructure/services/ProcessRecurringPaymentBankingUpdate.service"
-import {
-  type CurrentRecurringPayment,
-  RecurringPayments,
-} from "@/Financial/domain/RecurringPayments"
+import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 import { FinancialConceptMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConceptMongoRepository"
 import { FinancialConfigurationMongoRepository } from "@/FinanceConfig/infrastructure/presistence/FinancialConfigurationMongoRepository"
@@ -17,20 +14,17 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
-function setup(overrides: { omitAmount?: boolean } = {}) {
+function setup() {
   const currentPayment = {
     competence: "2026-10",
     externalReference: "urn:recurringPayment:recurring-1:2026-10",
-    ...(overrides.omitAmount ? {} : { amount: 742.83 }),
+    amount: 742.83,
     paymentMethod: "PIX" as const,
     bankId: "bank-1",
     availabilityAccountId: "availability-1",
     status: "PROCESSING" as const,
     updatedAt: new Date("2026-10-01T10:01:00Z"),
-    // A reservation can exist before its amount is known (a variable boleto
-    // whose value arrives with the answer), which the domain type still models
-    // as required.
-  } as unknown as CurrentRecurringPayment
+  }
   const recurrence = RecurringPayments.fromPrimitives({
     recurringPaymentId: "recurring-1",
     churchId: "church-1",
@@ -105,12 +99,6 @@ function setup(overrides: { omitAmount?: boolean } = {}) {
   }
 }
 
-const context = {
-  source: "RECURRING_PAYMENT",
-  recurringPaymentId: "recurring-1",
-  competence: "2026-10",
-}
-
 function pixEvent(ctx: ReturnType<typeof setup>, status: string) {
   return {
     id: `event-${status}`,
@@ -124,7 +112,6 @@ function pixEvent(ctx: ReturnType<typeof setup>, status: string) {
         status,
         amountInCents: 74283,
         externalReference: ctx.currentPayment.externalReference,
-        context,
         transactionReceiptUrl: null,
         failureCode: null,
       },
@@ -149,7 +136,6 @@ function billEvent(
         status,
         valueInCents,
         externalReference: ctx.currentPayment.externalReference,
-        context,
         paymentDate: null,
         transactionReceiptUrl: null,
         failureCode: null,
@@ -179,8 +165,9 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
 
   it.each([
     ["PENDING", "PROCESSING"],
-    // church-banking collapses its provider's in-flight states into PROCESSING.
-    ["PROCESSING", "PROCESSING"],
+    // church-banking reports the provider's bank-processing state as-is; the
+    // domain keeps its own PROCESSING vocabulary.
+    ["BANK_PROCESSING", "PROCESSING"],
     ["FAILED", "FAILED"],
     ["CANCELLED", "FAILED"],
   ] as const)(
@@ -234,19 +221,15 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     )
   })
 
-  it("uses the persisted amount for a confirmed bill without webhook amount", async () => {
+  it("books the amount the boleto charged, not the reserved one", async () => {
     const ctx = setup()
-    await ctx.service.processBill({
-      ...billEvent(ctx, "PAID"),
-      data: {
-        billPayment: {
-          ...billEvent(ctx, "PAID").data.billPayment,
-          paymentDate: "2026-10-01T11:00:00Z",
-        },
-      },
-    })
+
+    await ctx.service.processBill(billEvent(ctx, "PAID", 78243))
+
+    // The provider's value is the authority once the debit exists: the record
+    // reports what the bank actually paid, never the locally declared amount.
     expect(ctx.queue.dispatch.mock.calls[0]?.[1]).toMatchObject({
-      amount: 742.83,
+      amount: 782.43,
       financialRecordType: "OUTGO",
       status: "RECONCILED",
     })
@@ -258,6 +241,7 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     ctx.financialRecords.one.mockResolvedValue({
       getChurchId: () => "church-1",
       getRecurringPaymentId: () => "recurring-1",
+      getRecurringCompetence: () => "2026-10",
       getReference: () => ({
         type: "RECURRING_PAYMENT",
         entityId: "recurring-1",
@@ -307,16 +291,31 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     })
   })
 
-  it("rejects events with a mismatched competence or account binding", async () => {
+  it("rejects an event for another church even when the reference exists", async () => {
     const ctx = setup()
+
     await expect(
       ctx.service.processPix({
         ...pixEvent(ctx, "DONE"),
-        accountId: "wrong-bank",
+        externalAccountId: "church-2",
+      })
+    ).rejects.toMatchObject({
+      name: "RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH",
+    })
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+  })
+
+  it("rejects an event whose reference matches no operation", async () => {
+    const ctx = setup()
+    ctx.recurringRepository.one.mockResolvedValue(undefined)
+
+    await expect(
+      ctx.service.processPix({
+        ...pixEvent(ctx, "DONE"),
         data: {
           pixTransfer: {
             ...pixEvent(ctx, "DONE").data.pixTransfer,
-            context: { ...context, competence: "2026-11" },
+            externalReference: "urn:recurringPayment:other:2026-10",
           },
         },
       })
@@ -344,26 +343,42 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
-  it("rejects a paid bill whose amount differs from the recorded one", async () => {
+  it("rejects a duplicate confirmation that belongs to another church", async () => {
     const ctx = setup()
+    ctx.financialRecords.one.mockResolvedValue({
+      getChurchId: () => "church-2",
+      getRecurringPaymentId: () => "recurring-1",
+      getRecurringCompetence: () => "2026-10",
+      getReference: () => ({
+        type: "RECURRING_PAYMENT",
+        entityId: "recurring-1",
+      }),
+    })
+
     await expect(
-      ctx.service.processBill(billEvent(ctx, "PAID", 78243))
+      ctx.service.processBill(billEvent(ctx, "PAID"))
     ).rejects.toMatchObject({
-      name: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      name: "RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH",
     })
     expect(ctx.queue.dispatch).not.toHaveBeenCalled()
   })
 
-  it("books the billed amount when the reservation never knew it", async () => {
-    // A reservation can exist without an amount (a variable boleto whose value
-    // arrives with the answer). The bank's value is the authoritative one, so the
-    // debit is booked instead of dropped.
-    const ctx = setup({ omitAmount: true })
+  it("acknowledges a duplicate bill confirmation without booking it again", async () => {
+    const ctx = setup()
+    ctx.financialRecords.one.mockResolvedValue({
+      getChurchId: () => "church-1",
+      getRecurringPaymentId: () => "recurring-1",
+      getRecurringCompetence: () => "2026-10",
+      getReference: () => ({
+        type: "RECURRING_PAYMENT",
+        entityId: "recurring-1",
+      }),
+    })
 
-    await ctx.service.processBill(billEvent(ctx, "PAID", 78243))
+    await ctx.service.processBill(billEvent(ctx, "PAID"))
 
-    const [, args] = ctx.queue.dispatch.mock.calls[0]!
-    expect(args).toMatchObject({ amount: 782.43 })
+    expect(ctx.queue.dispatch).not.toHaveBeenCalled()
+    expect(ctx.recurringRepository.one).not.toHaveBeenCalled()
   })
 
   it("recognizes bill refunds without creating another financial record", async () => {
@@ -371,6 +386,7 @@ describe("ProcessRecurringPaymentBankingUpdate", () => {
     ctx.financialRecords.one.mockResolvedValue({
       getChurchId: () => "church-1",
       getRecurringPaymentId: () => "recurring-1",
+      getRecurringCompetence: () => "2026-10",
       getReference: () => ({
         type: "RECURRING_PAYMENT",
         entityId: "recurring-1",

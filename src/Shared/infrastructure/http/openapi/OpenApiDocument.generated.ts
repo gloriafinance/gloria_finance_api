@@ -9942,6 +9942,102 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/v1/recurring-payments/{recurringPaymentId}/bill/simulate": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "simulate bill",
+        description:
+          "Implemented by RecurringPaymentController.simulateBill. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_simulateBill",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  identificationField: {
+                    type: "string",
+                  },
+                  barCode: {
+                    description: "TypeScript type: never",
+                  },
+                },
+                required: ["identificationField"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      minimumScheduleDate: "2026-01-01T00:00:00.000Z",
+                      feeInCents: 0,
+                      bankSlip: {
+                        identificationField: "Gloria Finance",
+                        valueInCents: 0,
+                        originalValueInCents: 0,
+                        dueDate: "2026-01-01T00:00:00.000Z",
+                        companyName: "Gloria Finance",
+                        bank: "Gloria Finance",
+                        beneficiaryCpfCnpj: "Gloria Finance",
+                        beneficiaryName: "Gloria Finance",
+                        allowChangeValue: false,
+                        minValueInCents: 0,
+                        maxValueInCents: 0,
+                        discountValueInCents: 0,
+                        interestValueInCents: 0,
+                        fineValueInCents: 0,
+                        totalDiscountValueInCents: 0,
+                        totalAdditionalValueInCents: 0,
+                        isOverdue: false,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
     "/api/v1/recurring-payments/{recurringPaymentId}/pay": {
       post: {
         tags: ["RecurringPayment"],
@@ -10017,7 +10113,6 @@ export const openApiDocument = {
                       status: "ALREADY_PAID",
                       competence: "Gloria Finance",
                       failureCode: "Gloria Finance",
-                      amount: 0,
                       providerValueInCents: 0,
                     },
                   },

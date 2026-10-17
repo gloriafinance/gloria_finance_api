@@ -1,7 +1,7 @@
 # Pagamentos Recorrentes — Flujo funcional y arquitectónico definitivo
 
 > **Estado del documento:** fuente de verdad (source of truth) para backend, frontend, integración con `church-banking`, QA y evoluciones futuras.
-> **Alcance:** `gloriafinance/gloria_finance_api` (PR #146, rama `chore/recurring-payments`, commit `8f415387`) y `gloriafinance/church-banking` (`main`, `0f2089d`).
+> **Alcance:** `gloriafinance/gloria_finance_api` (PR #150, rama `feat/recurring-payments-execution-from-main`) y `gloriafinance/church-banking` (`main`, `a3240cc`).
 > **Naturaleza:** documentación de diseño. **No** describe código implementado salvo donde se marca explícitamente como `CURRENT`.
 
 ## 0. Convención CURRENT / TARGET
@@ -664,18 +664,28 @@ El usuario puede ejecutar el pago **sin modificar la configuración permanente**
 
 **`PENDING`:** decisión de producto sobre si esta casilla se ofrece. Requiere además un contrato de escritura de `pixDestination` (probablemente `PUT /api/v1/recurring-payments/:id`).
 
-### `CURRENT` — este caso no es representable
+### `CURRENT` — el método pertenece al comando
 
-`ExecuteRecurringPayment` decide el método **exclusivamente** desde la configuración:
+`ExecuteRecurringPayment` resuelve el método desde `request.payment`; solo si el
+comando no lo trae usa el `pixDestination` guardado (ADR-001). El validator
+acepta `competence`, `amount`, `payment` y `availabilityAccountId`:
 
-```ts
-const configuration = recurring.getPayment()          // :228
-if (configuration.method === "PIX") { ...createPixTransfer... } else { ...createBillPayment... }  // :243-261
+```json
+{
+  "competence": "2026-10",
+  "payment": { "type": "PIX", "pixKey": "12345678000190", "pixKeyType": "CNPJ" }
+}
 ```
 
-Y el validator de ejecución solo acepta `competence`, `amount`, `identificationField` — **no** acepta `pixKey`/`pixKeyType` (`src/Financial/infrastructure/http/validators/RecurringPayment.validator.ts`, `validatePayRecurringPayment`). Por tanto una recurrencia `BILL` **nunca** puede pagarse por PIX, y una recurrencia `PIX` **nunca** puede cambiarse a boleto. **GAP-04.**
+```json
+{
+  "competence": "2026-10",
+  "payment": { "type": "BILL", "identificationField": "34191..." }
+}
+```
 
-El único gesto delegado a la ejecución es `identificationField` (`PayRecurringPaymentRequest.identificationField`), y solo cuando la configuración ya es `BILL`.
+Una recurrencia `BILL` puede pagarse por PIX y viceversa, sin editar la
+configuración permanente.
 
 ---
 
@@ -718,9 +728,9 @@ identificationField
 
 La decisión pertenece **exclusivamente a esa ejecución**. No se persiste como configuración (salvo la optimización de §13, y solo para el destino PIX).
 
-### `PENDING` crítico — el monto de un boleto
+### El monto de un boleto pertenece al proveedor
 
-En `church-banking`, `POST /api/bill-payments` **no acepta `value` ni `dueDate`**:
+`POST /api/bill-payments` de `church-banking` recibe **exactamente**:
 
 ```ts
 export type CreateBillPaymentHttpPayload = {
@@ -728,29 +738,119 @@ export type CreateBillPaymentHttpPayload = {
   readonly identificationField: string
   readonly description: string
   readonly externalReference: string
-  readonly context: Record<string, unknown>
 }
 ```
 
-(`apps/api/src/http/validations/bill-payment.validation.ts:5-11`; el validador usa `exactKeys` con esa lista exacta, `:15-22`.)
+No acepta `value`, `dueDate`, `context` ni un monto esperado (`exactKeys`,
+`apps/api/src/http/validations/bill-payment.validation.ts`). Asaas lee el boleto
+y `church-banking` devuelve ese valor como `valueInCents` en los estados
+confirmados por el proveedor (`PENDING`, `BANK_PROCESSING`, `PAID`, `FAILED`,
+`CANCELLED`, `REFUNDED`) y en el webhook `BANKING_BILL_PAYMENT_UPDATED`.
 
-Asaas **deriva** el valor del propio boleto y `church-banking` **no lo devuelve** al integrador (el snapshot público expone solo `providerBillId, paymentDate, transactionReceiptUrl, failureCode|errorCode` — `apps/api/src/services/bill-payment.service.ts:45-74`).
+Consecuencias definitivas:
 
-**Consecuencia para TARGET:** en una ejecución `BILL`, el `amount` informado por el usuario es — para Glória — **conocido** y se usa para reservar y para construir el `FinancialRecord`, pero **no viaja a `church-banking`** y **no es verificable** contra lo que Asaas efectivamente debitó. Esto obliga a decidir:
+1. `valueInCents` es el monto **autoritativo** de esa ejecución. Una vez que el
+   pago existe, Glória **nunca** rechaza la operación porque el valor difiera
+   del monto que el usuario había informado.
+2. `currentPayment.amount` pasa a `valueInCents / 100` cuando el pago queda
+   confirmado, y el `FinancialRecord` registra ese mismo monto.
+3. El `amount` local (FIXED desde la configuración, VARIABLE desde el comando)
+   sirve para reservar y para la UX, pero **no viaja** a `church-banking` ni es
+   evidencia de lo debitado.
+
+Ya no existe `expectedAmountInCents` ni la comparación local-vs-proveedor que
+rechazaba un boleto ya pagado. Tampoco existe `RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH`.
+
+### Flujo de boleto en la app (SCAN → SIMULATE → DISPLAY → CONFIRM → PAY)
 
 ```text
-PENDING (decisión de producto/backend requerida)
-  ¿El FinancialRecord de un BILL usa el amount informado por el usuario?
-  ¿O depende de un dato de valor que church-banking debe empezar a exponer?
+scan da linha digitável / código de barras
+        ↓
+POST /api/v1/recurring-payments/:recurringPaymentId/bill/simulate
+        ↓
+SimulateRecurringPaymentBill
+        ↓
+church-banking POST /api/bill-payments/simulate
+        ↓
+Asaas valida el boleto
+        ↓
+Glória devuelve el snapshot (sin escribir nada)
+        ↓
+usuario revisa y confirma
+        ↓
+POST /api/v1/recurring-payments/:recurringPaymentId/pay
 ```
 
-Opciones:
+#### Request de simulación
 
-1. **Usar el `amount` informado** y asumir el riesgo de divergencia (más simple, sin cambios en `church-banking`).
-2. **Extender `church-banking`** para exponer el `value` del boleto en la respuesta de creación y en `BANKING_BILL_PAYMENT_UPDATED`, y conciliar.
-3. **Hacer `amount` obligatorio** en el comando BILL y usar la confirmación del webhook (`paymentDate`) como evidencia de pago, manteniendo el valor informado.
+Exactamente **uno** de los dos identificadores:
 
-**No implementar sin cerrar esta decisión.**
+```json
+{ "identificationField": "03399201595100529040147600301023888440000421177" }
+```
+
+```json
+{ "barCode": "03391815100000029909777729900000000475110101" }
+```
+
+Rechaza (400 `RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID`): ambos,
+ninguno, un identificador en blanco, y cualquier campo extra (`amount`,
+`amountInCents`, `churchId`, `externalAccountId`, `recurringPaymentId`,
+`competence`, `availabilityAccountId`, `context`). `churchId` sale del request
+autenticado y `recurringPaymentId` del path.
+
+#### Response de simulación
+
+El snapshot de `church-banking`, sin recálculos locales:
+
+```ts
+{
+  minimumScheduleDate?: string | null
+  feeInCents?: number | null
+  bankSlip?: {
+    identificationField?: string | null
+    valueInCents?: number | null
+    originalValueInCents?: number | null
+    dueDate?: string | null
+    companyName?: string | null
+    bank?: string | null
+    beneficiaryCpfCnpj?: string | null
+    beneficiaryName?: string | null
+    allowChangeValue?: boolean | null
+    minValueInCents?: number | null
+    maxValueInCents?: number | null
+    discountValueInCents?: number | null
+    interestValueInCents?: number | null
+    fineValueInCents?: number | null
+    totalDiscountValueInCents?: number | null
+    totalAdditionalValueInCents?: number | null
+    isOverdue?: boolean | null
+  } | null
+}
+```
+
+No se devuelven credenciales, JWT/JWE, ids internos ni el payload crudo de
+Asaas. No hay parsing local de la línea, ni algoritmo FEBRABAN, ni cálculo de
+descuentos/intereses/multa: eso pertenece a Asaas / `church-banking`.
+
+#### Qué hace y qué no hace
+
+Runtime esperado:
+
+```text
+1 read  RecurringPayment (churchId + status ACTIVE)
+1 call  church-banking
+0 writes
+```
+
+La simulación **no** valida mes financiero, no elige cuenta de disponibilidad,
+no reserva `currentPayment`, no crea `FinancialRecord`, no publica jobs, no
+persiste el boleto ni el beneficiario, y no emite ningún token/reserva. Tampoco
+se vuelve a simular dentro de `/pay`: el pago ejecuta el contrato real.
+
+Errores: reutiliza `RECURRING_PAYMENT_NOT_FOUND` (recurrencia inexistente, de
+otra iglesia o inactiva) y `ChurchBankingClientError` para el transporte. Un
+`503` del proveedor no se convierte en "boleto inválido".
 
 ---
 
@@ -785,7 +885,7 @@ porque describe **la operación concreta**.
 
 **Regla:** ningún dato permanente puede viajar en el comando de ejecución, y ningún dato de ejecución puede escribirse en la configuración.
 
-### Ejemplo PIX (TARGET)
+### Ejemplo PIX
 
 ```json
 {
@@ -799,7 +899,7 @@ porque describe **la operación concreta**.
 }
 ```
 
-### Ejemplo boleto (TARGET)
+### Ejemplo boleto
 
 ```json
 {
@@ -823,18 +923,16 @@ porque describe **la operación concreta**.
 
 El validador de `amount` exige además precisión de centavos: `Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7` → rechazo (`:184`). **Mantener esta regla.**
 
-### `CURRENT` vs TARGET del comando
+### Reglas del comando
 
-| Aspecto                        | CURRENT                                             | TARGET                                                  |
-| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
-| Objeto `payment` en el comando | No existe                                           | `{ type: "PIX" \| "BILL", ... }`                        |
-| `amount` en `FIXED`            | Prohibido (`AMOUNT_FORBIDDEN`)                      | Prohibido — **se mantiene**                             |
-| `amount` en `VARIABLE`         | Obligatorio                                         | Obligatorio — **se mantiene**                           |
-| PIX informado en ejecución     | **Imposible**                                       | `payment.pixKey` + `payment.pixKeyType`                 |
-| BILL informado en ejecución    | `identificationField` (solo si config ya es `BILL`) | `payment.identificationField` (independiente de config) |
-| Método                         | Derivado de la configuración                        | Decidido por el comando                                 |
-
-**GAP-04** cubre esta divergencia.
+| Aspecto                        | Regla                                                        |
+| ------------------------------ | ------------------------------------------------------------ |
+| Objeto `payment` en el comando | `{ type: "PIX" \| "BILL", ... }`                                 |
+| `amount` en `FIXED`            | Prohibido (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`)             |
+| `amount` en `VARIABLE`         | Obligatorio (`RECURRING_PAYMENT_AMOUNT_REQUIRED`)            |
+| PIX informado en ejecución     | `payment.pixKey` + `payment.pixKeyType`                      |
+| BILL informado en ejecución    | `payment.identificationField` (independiente de config)      |
+| Método                         | Decidido por el comando; `pixDestination` solo como default  |
 
 ---
 
@@ -1026,24 +1124,27 @@ Can("financial_records", "create")
 
 ### `CURRENT`
 
-**No existe endpoint de registro manual.** El único endpoint de ejecución es:
+El registro manual existe:
 
 ```http
-POST /api/v1/recurring-payments/:recurringPaymentId/pay
+POST /api/v1/recurring-payments/:recurringPaymentId/register-payment
 ```
 
-(`src/Financial/infrastructure/http/controllers/RecurringPayment.controller.ts:113-138`), y su único camino genera operación bancaria. `RegisterRecurringPaymentFinancialRecord` **no tiene entrypoint HTTP**: solo lo invocan `ExecuteRecurringPayment` y el webhook.
-
-Por tanto, una iglesia **sin Asaas no puede usar recurrencias en absoluto**. **GAP-01 — el gap más severo.**
+`multipart/form-data` con `competence`, `amount?`, `paymentDate`,
+`availabilityAccountId` y el archivo `file` obligatorio. Está prohibido mientras
+la iglesia tenga una conexión bancaria activa
+(`RECURRING_PAYMENT_MANUAL_NOT_ALLOWED`); no crea `currentPayment` (ADR-008).
 
 ### Endpoints `CURRENT` completos
 
-| Método | Ruta                                                 | Propósito                         |
-| ------ | ---------------------------------------------------- | --------------------------------- |
-| `POST` | `/api/v1/recurring-payments`                         | Crear configuración               |
-| `PUT`  | `/api/v1/recurring-payments/:id`                     | Actualizar configuración          |
-| `GET`  | `/api/v1/recurring-payments?competence=YYYY-MM`      | Listar con estado por competencia |
-| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay` | Ejecutar pago bancario            |
+| Método | Ruta                                                             | Propósito                          |
+| ------ | ---------------------------------------------------------------- | ---------------------------------- |
+| `POST` | `/api/v1/recurring-payments`                                     | Crear configuración                |
+| `PUT`  | `/api/v1/recurring-payments/:id`                                 | Actualizar configuración           |
+| `GET`  | `/api/v1/recurring-payments?competence=YYYY-MM`                  | Listar con estado por competencia  |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay`             | Ejecutar pago bancario             |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/bill/simulate`   | Simular boleto (lectura, 0 writes) |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/register-payment`| Registrar pago manual con voucher  |
 
 ---
 
@@ -1159,15 +1260,15 @@ createdBy = system
 
 ### `bankingExternalReference`
 
-`CURRENT` guarda aquí **el `externalReference` que Glória envió a `church-banking`** (`RegisterRecurringPaymentFinancialRecord.ts:86`, desde `payment.externalReference`), con la forma:
+`CURRENT` guarda aquí **el `externalReference` que Glória envió a `church-banking`** (`RegisterRecurringPaymentFinancialRecord.ts`, desde `payment.externalReference`), con la forma:
 
 ```text
-urn:recurringPayment:{recurringPaymentsId}:{competence}:{attempt}
+urn:recurringPayment:{recurringPaymentId}:{competence}
 ```
 
-(`ExecuteRecurringPayment.ts:134`.)
+La construye una única función pura: `recurringPaymentExternalReference(recurringPaymentId, competence)` (`src/Financial/domain/RecurringPaymentReference.ts`). Una competencia tiene exactamente una referencia.
 
-**Este es el identificador correcto para la correlación de webhooks**, porque `church-banking` lo recibe en el body y lo **devuelve intacto** en el webhook (`banking-webhook-event.ts` → `data.pixTransfer.externalReference` / `data.billPayment.externalReference`).
+**Este es el identificador correcto para la correlación de webhooks**, porque `church-banking` lo recibe en el body y lo **devuelve intacto** en el webhook (`data.pixTransfer.externalReference` / `data.billPayment.externalReference`).
 
 > **Advertencia importante:** `church-banking` usa internamente un **UUID propio** (`providerExternalReference`) como `externalReference` hacia Asaas y para reconciliación. Ese UUID **no** es lo que llega a Glória. Glória correlaciona por **su propio** `externalReference` (el URN), que `church-banking` copia en el evento. No confundir ambos. Ver §26.
 
@@ -1181,29 +1282,27 @@ urn:recurringPayment:{recurringPaymentsId}:{competence}:{attempt}
 
 - evitar doble pago;
 - guardar competencia;
-- guardar intento (`attempt`);
 - guardar `externalReference`;
 - correlacionar webhook;
-- representar `PROCESSING` / `BLOCKED` / `FAILED`;
+- representar `PROCESSING` / `BLOCKED` / `FAILED` / `PAID`;
 - conservar información necesaria para completar el `FinancialRecord`.
 
 ### **NO es historial.**
 
-En cuanto se crea el `FinancialRecord`, `currentPayment` se cierra (`closeCurrentPayment`, `RecurringPayments.ts:163-173`).
+En cuanto se crea el `FinancialRecord`, `currentPayment` se cierra (`closeCurrentPayment`, `RecurringPayments.ts`).
 
 ### Estructura `CURRENT` (verificada)
 
 ```ts
 export type CurrentRecurringPayment = {
   competence: string
-  attempt: number
   externalReference: string
   amount: number
+  paymentMethod?: "PIX" | "BILL"
+  executionDestination?: string
   bankId: string
   availabilityAccountId: string
-  status: RecurringPaymentExecutionStatus // PROCESSING | BLOCKED | FAILED
-  providerStatus: string
-  failureCode?: string
+  status: RecurringPaymentExecutionStatus // PROCESSING | BLOCKED | FAILED | PAID
   identificationField?: string
   paymentDate?: string
   transactionReceiptUrl?: string
@@ -1211,22 +1310,22 @@ export type CurrentRecurringPayment = {
 }
 ```
 
-(`src/Financial/domain/RecurringPayments.ts:38-52`.)
+(`src/Financial/domain/RecurringPayments.ts`.) No hay `attempt` ni `providerStatus`: el vocabulario del proveedor no se persiste.
 
 ### Invariantes de dominio `CURRENT` (verificadas)
 
-| Operación               | Regla                                                                                  | Código     |
-| ----------------------- | -------------------------------------------------------------------------------------- | ---------- |
-| `reserveCurrentPayment` | Falla si `status !== "ACTIVE"` o si ya hay `currentPayment` cuyo status `!== "FAILED"` | `:140-149` |
-| `updateCurrentPayment`  | Falla si no hay `currentPayment` o si `externalReference` no coincide                  | `:151-161` |
-| `closeCurrentPayment`   | Falla si `externalReference` no coincide                                               | `:163-173` |
-| `updateConfiguration`   | Falla si hay `currentPayment` no-`FAILED`                                              | `:125-138` |
+| Operación               | Regla                                                                                  | Código              |
+| ----------------------- | -------------------------------------------------------------------------------------- | ------------------- |
+| `reserveCurrentPayment` | Falla si `status !== "ACTIVE"` o si ya hay `currentPayment` cuyo status `!== "FAILED"` | `RecurringPayments` |
+| `updateCurrentPayment`  | Falla si no hay `currentPayment` o si `externalReference` no coincide                  | `RecurringPayments` |
+| `closeCurrentPayment`   | Falla si `externalReference` no coincide                                               | `RecurringPayments` |
+| `updateConfiguration`   | Falla si hay `currentPayment` no-`FAILED`                                              | `RecurringPayments` |
 
 Todas lanzan `RECURRING_PAYMENT_IN_PROGRESS` o `RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH`.
 
 ### Concurrencia: compare-and-swap real
 
-`saveIfCurrentPaymentMatches` hace un `replaceOne` con un filtro que incluye el estado esperado completo, y devuelve si hubo match (`RecurringPaymentsMongoRepository.ts:22-45`):
+`saveIfCurrentPaymentMatches` hace un `replaceOne` con un filtro que incluye el estado esperado completo, y devuelve si hubo match (`RecurringPaymentsMongoRepository.ts`):
 
 ```ts
 const result = await collection.replaceOne(
@@ -1234,7 +1333,6 @@ const result = await collection.replaceOne(
     recurringPaymentsId: ...,
     churchId: ...,
     "currentPayment.competence": expected.competence,
-    "currentPayment.attempt": expected.attempt,
     "currentPayment.externalReference": expected.externalReference,
     "currentPayment.status": expected.status,
     "currentPayment.updatedAt": expected.updatedAt,
@@ -1244,7 +1342,7 @@ const result = await collection.replaceOne(
 return result.matchedCount === 1
 ```
 
-Más un índice único que impide dos referencias activas simultáneas (`RecurringPaymentsMongoRepository.ts:56-63`):
+Más un índice único que impide dos referencias activas simultáneas (`RecurringPaymentsMongoRepository.ts`):
 
 ```text
 idx_recurring_payments_active_reference_unique
@@ -1411,21 +1509,22 @@ BLOCKED ≠ FAILED
 
 - **no** crear `FinancialRecord`;
 - **no** permitir otro pago;
-- **no** incrementar `attempt`;
 - conservar `externalReference`;
 - esperar nuevo estado de `church-banking`.
 
 ### `CURRENT` — verificado
 
-El retorno temprano para `BLOCKED` **no** incrementa `attempt` ni reenvía a `church-banking`:
+El retorno temprano para `BLOCKED` no reenvía a `church-banking`
+(`continueInFlight` devuelve el estado encontrado para todo lo que no sea
+`FAILED`):
 
 ```ts
-if (existing.status === "BLOCKED") {
-  return this.result(existing) // ExecuteRecurringPayment.ts:106-108
+if (payment.status !== "FAILED") {
+  return this.result(payment)
 }
 ```
 
-✅ Cumple las cinco reglas.
+✅ Cumple las cuatro reglas.
 
 ### Puede evolucionar a
 
@@ -1445,12 +1544,12 @@ export type PixTransferProviderStatus =
   "PENDING" | "IN_BANK_PROCESSING" | "BLOCKED" | "DONE" | "FAILED" | "CANCELLED"
 ```
 
-(`packages/modules/src/pix-transfer/pix-transfer.entity.ts:6-7`.)
+(`packages/modules/src/pix-transfer/pix-transfer.entity.ts`.)
 
-- `BLOCKED` **solo existe para PIX**. No existe para BILL (`BillPaymentProviderStatus = "PENDING" | "BANK_PROCESSING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED"`, `bill-payment.entity.ts:6-7`).
-- `BLOCKED` **no es terminal** en `church-banking`: `isPixTransferTerminal` = `DONE | FAILED | CANCELLED | CREATION_FAILED` (`pix-transfer.entity.ts:211-220`).
-- La transición de salida llega por Asaas (`TRANSFER_BLOCKED` está en la lista de eventos suscritos) y **no** por polling.
-- Asaas `BLOCKED` se mapea **por identidad** a `BLOCKED` (`create-asaas-pix-transfer.use-case.ts:311-328`).
+- `BLOCKED` **solo existe para PIX**. No existe para BILL (`BillPaymentProviderStatus = "PENDING" | "BANK_PROCESSING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED"`, `bill-payment.entity.ts`).
+- `BLOCKED` **no es terminal** en `church-banking`: `isPixTransferTerminal` = `DONE | FAILED | CANCELLED | CREATION_FAILED`.
+- La transición de salida llega por Asaas (evento suscrito) y **no** por polling.
+- Asaas `BLOCKED` se mapea **por identidad** a `BLOCKED`.
 
 ### Implicación de diseño
 
@@ -1462,25 +1561,25 @@ export type PixTransferProviderStatus =
 
 ## 25. Retry
 
-**Solo estados terminales fallidos permiten nuevo intento.**
+**Solo un fallo confirmado permite un nuevo envío.**
 
 ```text
-attempt 1
 FAILED
     ↓ retry
-attempt 2
 PROCESSING
 ```
 
-### Referencia externa conceptual
+### Referencia externa
 
 ```text
-urn:recurringPayment:{id}:{competence}:{attempt}
+urn:recurringPayment:{recurringPaymentId}:{competence}
 ```
 
-**`CURRENT` lo implementa exactamente así** (`ExecuteRecurringPayment.ts:134`).
+Una competencia tiene una sola referencia, y por tanto una sola operación
+lógica en `church-banking`. El retry de un `FAILED` **reutiliza la misma
+referencia**: es la misma competencia, no una operación nueva.
 
-### No crear nuevo intento para
+### No reintentar nunca
 
 ```text
 PROCESSING
@@ -1490,43 +1589,34 @@ CREATION_UNKNOWN
 
 ### `CURRENT` — verificado
 
-El cálculo del intento (`:132-133`):
-
-```ts
-const attempt =
-  existing?.competence === request.competence ? existing.attempt + 1 : 1
-```
-
-Se alcanza **solo** si se superó el early-return de `:101-129`, que devuelve sin incrementar para `PROCESSING`/`BLOCKED` y trata `CREATION_UNKNOWN` de forma especial.
+`continueInFlight` devuelve el estado existente para todo lo que no sea
+`FAILED`. Solo un `FAILED` vuelve a llamar a `church-banking` (`submit`).
 
 ### Manejo de `CREATION_UNKNOWN` — el caso más delicado
 
-`CREATION_UNKNOWN` significa: **no sabemos si la operación se creó en el banco.** Es el estado más peligroso, porque un ciego podría pagar dos veces.
-
-`CURRENT` lo maneja con una regla notable (`:124-128`):
+`CREATION_UNKNOWN` significa: **no sabemos si la operación se creó en el banco.**
+Glória **no lo convierte en `FAILED`** ni reintenta: el `ChurchBankingClientError`
+no es un rechazo confirmado, así que el `currentPayment` permanece en
+`PROCESSING` y solo el webhook puede resolverlo.
 
 ```ts
-if (existing.providerStatus !== "CREATION_UNKNOWN") {
-  return this.result(existing)
-}
-this.assertSameRetryPayload(existing, recurring, request, amount)
-return await this.submit(recurring, existing, concept)
+const failure = bankingError?.isConfirmedRejection
+  ? { status: "FAILED" as const }
+  : { status: "PROCESSING" as const }
 ```
 
-Es decir: **reintenta reutilizando el mismo `attempt` y el mismo `externalReference`** (no crea intento nuevo), pero **exige que el payload sea idéntico** (`assertSameRetryPayload`, `:353-366`: mismo `amount`, y mismo `identificationField` si es BILL).
-
-Esta es la decisión correcta: como el `externalReference` es estable, `church-banking` lo deduplica por su índice único `{clientId, externalAccountId, externalReference}` y recupera la operación existente en lugar de crear una segunda. **Un reintento de `CREATION_UNKNOWN` no puede generar doble débito.**
-
-⚠️ **Requisito de contrato que esto impone:** con `CURRENT`, `recurring.getPayment().method` decidía el payload. Al pasar a TARGET (método en el comando, §15), `assertSameRetryPayload` **debe extenderse** para comparar también el objeto `payment` (tipo, `pixKey`, `pixKeyType`, `identificationField`). Si no, un usuario podría reintentar un `CREATION_UNKNOWN` con un destino PIX distinto y la deduplicación de `church-banking` respondería con la operación **original** (409 `PIX_TRANSFER_IDENTITY_CONFLICT` o el snapshot original), produciendo un comportamiento confuso.
+Como el `externalReference` es estable, un reenvío de red del mismo intento está
+deduplicado por el índice único de `church-banking`
+(`{clientId, externalAccountId, externalReference}`). **Un resultado ambiguo no
+se reintenta automáticamente.**
 
 ### Fallo confirmado vs no confirmado
 
-`CURRENT` distingue correctamente (`:262-286`):
+| Situación                                                                | `currentPayment.status` |
+| ------------------------------------------------------------------------ | ----------------------- |
+| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED`                |
+| Cualquier otro error (red, 5xx, respuesta ambigua)                       | `PROCESSING`            |
 
-| Situación                                                                | `status`     | `providerStatus`   |
-| ------------------------------------------------------------------------ | ------------ | ------------------ |
-| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED`     | `CREATION_FAILED`  |
-| Cualquier otro error (red, 5xx, respuesta ambigua)                       | `PROCESSING` | `CREATION_UNKNOWN` |
 
 **Regla:** solo un rechazo **confirmado** habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
 
@@ -1555,7 +1645,7 @@ church-banking
 Asaas
 ```
 
-### Contratos ACTUALES (`church-banking@main`, `0f2089d`)
+### Contratos ACTUALES (`church-banking@main`, `a3240cc`)
 
 #### PIX transfer
 
@@ -1563,7 +1653,7 @@ Asaas
 POST /api/pix-transfers
 ```
 
-Request (`apps/api/src/http/validations/pix-transfer.validation.ts:5-26`):
+Request (`apps/api/src/http/validations/pix-transfer.validation.ts`):
 
 ```ts
 {
@@ -1573,11 +1663,10 @@ Request (`apps/api/src/http/validations/pix-transfer.validation.ts:5-26`):
   pixKeyType: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP"
   description: string // max 500
   externalReference: string // max 100
-  context: Record<string, unknown>
 }
 ```
 
-`exactKeys` — no se aceptan campos extra. `clientId` se toma del token, **nunca** del body.
+`exactKeys` — no se aceptan campos extra. `clientId` se toma del token, **nunca** del body. **No existe `context`.**
 
 #### Bill payment
 
@@ -1585,19 +1674,37 @@ Request (`apps/api/src/http/validations/pix-transfer.validation.ts:5-26`):
 POST /api/bill-payments
 ```
 
-Request (`apps/api/src/http/validations/bill-payment.validation.ts:5-22`):
+Request (`apps/api/src/http/validations/bill-payment.validation.ts`):
 
 ```ts
 {
   externalAccountId: string
-  identificationField: string // solo required|string|notBlank
+  identificationField: string // max 60
   description: string // max 500
   externalReference: string // max 100
-  context: Record<string, unknown>
 }
 ```
 
-> ⚠️ **No acepta `value` ni `dueDate`.** Asaas los deriva del boleto. Ver el `PENDING` crítico de §14.
+`exactKeys` — no se aceptan `value`, `dueDate`, `context` ni monto esperado. Asaas deriva el valor del boleto y lo devuelve como `valueInCents`. Ver §14.
+
+#### Bill simulation
+
+```http
+POST /api/bill-payments/simulate
+```
+
+Request (`apps/api/src/http/validations/bill-payment.validation.ts`):
+
+```ts
+{
+  externalAccountId: string
+} & (
+  | { identificationField: string; barCode?: never } // max 60
+  | { barCode: string; identificationField?: never } // max 60
+)
+```
+
+`onlyKeys` + `oneOfKeys` — exactamente uno de los dos identificadores. La respuesta es el snapshot de §14 (`minimumScheduleDate`, `feeInCents`, `bankSlip`). No escribe nada.
 
 #### Autenticación
 
@@ -1606,7 +1713,7 @@ Request (`apps/api/src/http/validations/bill-payment.validation.ts:5-22`):
 - `bodyHash` = SHA-256 base64url del body **crudo**. Debe cubrir el body exacto enviado.
 - El body va cifrado como JWE compacto `ECDH-ES` + `A256GCM` (`{ "jwe": "<...>" }`).
 - **Anti-replay:** Redis `SET NX PXAT` por `sha256(clientId \0 jti)`. Un reintento byte-idéntico **debe** llevar un `jti` nuevo.
-- Glória ya implementa este esquema en `src/Banking/infrastructure/church-banking/ChurchBankingClient.ts` (`execute()`: JWE con `CompactEncrypt`, JWT `ES256` con `method`/`path`/`bodyHash`, `randomUUID()` como `jti`).
+- Glória ya implementa este esquema en `src/Banking/infrastructure/church-banking/ChurchBankingClient.ts` (`execute()`: JWE con `CompactEncrypt`, JWT `ES256` con `method`/`path`/`bodyHash`, `randomUUID()` como `jti`). La simulación **reutiliza** ese mismo transporte.
 
 #### Respuesta
 
@@ -1614,7 +1721,7 @@ Request (`apps/api/src/http/validations/bill-payment.validation.ts:5-22`):
 { "data": { ... }, "code": "OK" }  +  header X-Request-Id
 ```
 
-Mapeo de status HTTP (`create-pix-transfer.service.ts:43-49`, `bill-payment.service.ts:37-43`):
+Mapeo de status HTTP (`create-pix-transfer.service.ts`, `bill-payment.service.ts`):
 
 ```text
 PENDING          → 201
@@ -1626,29 +1733,43 @@ resto            → 200
 
 ⚠️ Las ramas 422/503 provienen de un `Result` **exitoso** (`code: "OK"`), así que el body es `{data:{...errorCode},code:"OK"}`. **Un consumidor no puede clasificar el resultado por el status HTTP solo: debe inspeccionar `data.status`.**
 
-Glória lo hace correctamente: `parseOutgoingPaymentResponse` valida `result.status` contra la lista completa y lanza `CHURCH_BANKING_INVALID_RESPONSE` (502) si no coincide.
+Glória lo hace correctamente: los parsers de `ChurchBankingClient` validan el estado contra la lista del caso concreto y lanzan `CHURCH_BANKING_INVALID_RESPONSE` (502) si no coincide.
 
 #### Estados de salida
 
+Cada operación tiene su propio conjunto; no se mezclan en una unión genérica.
+
 ```ts
-type ChurchBankingOutgoingStatus =
-  // contrato del cliente de Glória
+// PIX transfer
+type ChurchBankingPixTransferStatus =
   | "RESERVED"
   | "CREATING"
   | "CREATION_UNKNOWN"
   | "CREATION_FAILED"
   | "PENDING"
   | "IN_BANK_PROCESSING"
-  | "BANK_PROCESSING"
   | "BLOCKED"
   | "DONE"
+  | "FAILED"
+  | "CANCELLED"
+
+// Bill payment
+type ChurchBankingBillPaymentStatus =
+  | "RESERVED"
+  | "CREATING"
+  | "CREATION_UNKNOWN"
+  | "CREATION_FAILED"
+  | "PENDING"
+  | "BANK_PROCESSING"
   | "PAID"
   | "FAILED"
   | "CANCELLED"
   | "REFUNDED"
 ```
 
-(`src/Banking/domain/interfaces/ChurchBankingClient.interface.ts:68-81`.) Coincide con la unión real de `church-banking` (PIX + BILL + estados internos). **Sin gap.**
+`BLOCKED` **solo** existe para PIX. `PROCESSING` no existe en `church-banking`: es un estado **interno** de Glória (`PROCESSING | BLOCKED | FAILED | PAID`), y la transformación es explícita.
+
+(`src/Banking/domain/interfaces/ChurchBankingClient.interface.ts`.) **Sin gap.**
 
 #### Idempotencia del lado bancario
 
@@ -1666,13 +1787,25 @@ Algoritmo: buscar por identidad → si existe, continuar; si no, `insert` y capt
 
 ⚠️ **El `externalReference` que `church-banking` envía a Asaas es un UUID propio** (`providerExternalReference = randomUUID()`, `create-asaas-pix-transfer.use-case.ts:72,144`), **no** el de Glória. La reconciliación interna también matchea por ese UUID. Esto significa que **la idempotencia de `church-banking` hacia Asaas está anclada en su propio UUID**, mientras que la de Glória hacia `church-banking` está anclada en el URN.
 
-**No confundir ambos identificadores.** En el webhook, el campo `externalReference` que llega a Glória es **el URN de Glória**, porque `church-banking` lo reenvía desde el `context`/input almacenado.
+**No confundir ambos identificadores.** En el webhook, el campo `externalReference` que llega a Glória es **el URN de Glória**, porque `church-banking` lo persiste y lo devuelve intacto.
 
 #### Correlación y fan-out — advertencia
 
-`church-banking` hace **fan-out a todos los bindings activos** de la cuenta (`create-banking-outgoing-money-outbound-events.use-case.ts:32-35`). Es posible que Glória reciba un evento cuyo `externalAccountId` corresponda a un binding distinto del que originó la operación.
+`church-banking` hace **fan-out a todos los bindings activos** de la cuenta (`create-banking-outgoing-money-outbound-events.use-case.ts`). Es posible que Glória reciba un evento cuyo `externalAccountId` corresponda a otro binding.
 
-**Consecuencia:** la correlación en Glória **no puede** basarse solo en `externalReference`. Debe validarse el conjunto `context + externalReference` (y coherencia con `churchId`). `CURRENT` ya lo hace parcialmente: `assertDuplicateContext` valida `churchId`, `recurringPaymentId`, `externalAccountId` y `context` en el camino de duplicados, y `findOperation` correlaciona por `externalAccountId` + `accountId` + `externalReference` + `context`.
+**Consecuencia:** el `externalReference` persistido es la identidad durable de la operación, no confiar solo en su formato.
+
+```text
+event.externalReference
+        ↓
+recurringRepository.one({ "currentPayment.externalReference": reference })
+        ↓
+recurring.getChurchId() === event.externalAccountId
+        ↓
+reference === recurringPaymentExternalReference(recurringPaymentId, competence)
+```
+
+`recurringPaymentExternalReference(...)` es una función pura con un solo dueño del formato URN. En el camino de duplicados, la identidad se reconstruye desde el `FinancialRecord` ya persistido (`churchId`, `recurringPaymentId`, `recurringCompetence`), nunca desde el evento.
 
 #### Documentación de `church-banking` y drift detectado
 
@@ -1720,7 +1853,7 @@ PixTransferUpdatedEvent = {
   accountId: string
   data: { pixTransfer: {
     providerTransferId, status, amountInCents,
-    externalReference, context,
+    externalReference,
     transactionReceiptUrl: string | null,
     failureCode: string | null
   } }
@@ -1732,8 +1865,8 @@ BillPaymentUpdatedEvent = {
   externalAccountId: string
   accountId: string
   data: { billPayment: {
-    providerBillId, status,
-    externalReference, context,
+    providerBillId, status, valueInCents,
+    externalReference,
     paymentDate: string | null,
     transactionReceiptUrl: string | null,
     failureCode: string | null
@@ -1741,9 +1874,11 @@ BillPaymentUpdatedEvent = {
 }
 ```
 
-(`src/Webhook/infrastructure/services/ProcessRecurringPaymentBankingUpdate.service.ts:22-52`.)
+(`src/Webhook/infrastructure/services/ProcessRecurringPaymentBankingUpdate.service.ts`.)
 
-⚠️ **GAP menor:** `church-banking` **también** envía `clientId` y `requestId` en el envelope (`banking-webhook-event.ts:96-115`); el tipo de Glória no los declara. La validación `isWebhookEvent` no es estricta respecto a claves extra, así que no rompe, pero el contrato debería declararlos — `clientId` es útil para defender el fan-out descrito en §26.
+**No existe `context`.** `church-banking` lo eliminó de ambos eventos; la correlación usa `externalReference` + `externalAccountId`. `valueInCents` del boleto es el monto autoritativo del débito.
+
+⚠️ `church-banking` **también** envía `clientId` y `requestId` en el envelope; el tipo de Glória no los declara. La validación `isWebhookEvent` no es estricta respecto a claves extra, así que no rompe.
 
 ### Flujo
 
@@ -1752,11 +1887,9 @@ webhook
    ↓
 authenticate                         (ChurchBankingWebhookVerifier)
    ↓
-identify recurring payment           (findOperation: externalAccountId + accountId + externalReference + context)
+identify recurring payment           (findOperation: externalReference + externalAccountId)
    ↓
 identify competence                  (payment.competence)
-   ↓
-identify attempt                     (payment.attempt)
    ↓
 update currentPayment                (CAS vía saveIfCurrentPaymentMatches)
    ↓
@@ -1765,6 +1898,10 @@ if terminal success                  (PIX: DONE | BILL: PAID)
    ↓
 close operational payment            (closeCurrentPayment)
 ```
+
+Para `BILL` con `status = PAID`, el `FinancialRecord` registra
+`bill.valueInCents / 100`. No hay comparación contra un monto local: el pago ya
+existe y el valor del proveedor es la única autoridad.
 
 ### **Debe ser idempotente.**
 
@@ -1790,11 +1927,12 @@ Esto hace que el encolado sea idempotente a nivel de Bull.
 
 Además de la idempotencia, el webhook valida:
 
-- `Math.round(payment.amount * 100) === transfer.amountInCents` — si no, `RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH` (`:105-107`).
-- Coherencia de `churchId`, `recurringPaymentId`, `externalAccountId` y `context` en el camino de duplicados (`assertDuplicateContext`).
-- `paymentDate` parseable para PIX (`:110-112`).
+- `Math.round(payment.amount * 100) === transfer.amountInCents` para PIX — si no, `RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH`.
+- `recurring.getChurchId() === event.externalAccountId` y `externalReference === recurringPaymentExternalReference(recurringPaymentId, competence)`.
+- En el camino de duplicados, la identidad se reconstruye desde el `FinancialRecord` persistido (`churchId`, `recurringPaymentId`, `recurringCompetence`), no desde el evento.
+- `paymentDate` parseable.
 
-**Mantener estas validaciones.** Un webhook que no coincide en monto debe ser tratado como error de correlación, no como éxito.
+**Mantener estas validaciones.** Un webhook que no coincide en identidad debe ser tratado como error de correlación, no como éxito. Un `BILL` con `valueInCents` distinto del monto local **no** es un error: el valor del proveedor es la autoridad.
 
 ### PENDING — `REFUNDED`
 
@@ -1901,7 +2039,7 @@ Más CAS `replaceOne({_id, ...expected})` y reconciliación de `CREATING` estanc
 ```text
 Reintento HTTP de Glória a church-banking
    ↓
-mismo externalReference (URN con attempt)
+mismo externalReference (URN por competencia)
    ↓
 church-banking: identity() ya existe → continueExisting()
    ↓
@@ -1911,28 +2049,28 @@ NO se crea segunda operación en Asaas
 Y si la respuesta anterior nunca llegó:
 
 ```text
-Glória recibe error/ambigüedad → CREATION_UNKNOWN
+Glória recibe error/ambigüedad → PROCESSING (resultado desconocido)
    ↓
-reintento con MISMO attempt y MISMO externalReference
+NO se reintenta automáticamente
    ↓
-church-banking recupera por identidad, o reconcilia por providerExternalReference
-   ↓
-NO hay doble débito
+el webhook confirma o falla la operación existente
 ```
 
-### Punto crítico: `attempt` en el `externalReference` vs idempotencia bancaria
+### Punto crítico: `externalReference` por competencia
 
-El `externalReference` incluye `attempt`:
+El `externalReference` es **estable por competencia**:
 
 ```text
-urn:recurringPayment:{id}:{competence}:{attempt}
+urn:recurringPayment:{recurringPaymentId}:{competence}
 ```
 
-Esto significa que **el intento 2 tiene un `externalReference` distinto del intento 1**. Por tanto, para `church-banking` son **operaciones lógicas distintas**.
+Un retry de un `FAILED` reutiliza esa misma referencia, de modo que
+`church-banking` la recupera por identidad en lugar de abrir una segunda
+operación. El precio deliberado es que **no hay dos operaciones simultáneas
+para una competencia**: el `currentPayment` y su índice único impiden el doble
+pago, y un `CREATION_UNKNOWN` nunca se reintenta.
 
-**Consecuencia:** la idempotencia bancaria **no** protege entre intentos. Protege **dentro** de un intento (reintentos de red del mismo intento). Si el intento 1 falló confirmadamente y se crea el intento 2, es correcto que `church-banking` las trate como operaciones separadas — la de intento 1 ya está en estado terminal fallido.
-
-**Por eso es esencial la regla de §25:** **solo** un fallo **confirmado** habilita el intento nuevo. Si `CREATION_UNKNOWN` creara un `attempt` nuevo, se podría crear una segunda operación bancaria real para la misma competencia. `CURRENT` respeta esto correctamente reutilizando el `attempt` en `CREATION_UNKNOWN`.
+**Por eso es esencial la regla de §25:** **solo** un fallo **confirmado** habilita un nuevo envío. Un `CREATION_UNKNOWN` permanece en `PROCESSING`: reintentarlo podría crear una segunda operación bancaria real para la misma competencia.
 
 **Esta es la invariante más importante de todo el sistema.** Debe tener un test explícito.
 
@@ -1944,9 +2082,9 @@ Esto significa que **el intento 2 tiene un `externalReference` distinto del inte
 | Una `currentPayment` con referencia activa       | índice único sparse                                                   | `RecurringPaymentsMongoRepository`                                                |
 | Un solo ganador al reservar                      | CAS `replaceOne` con estado esperado                                  | `saveIfCurrentPaymentMatches`                                                     |
 | Webhook procesado una sola vez                   | cortocircuito por `bankingExternalReference` + `findRecurringPayment` | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
-| Encolado de `FinancialRecord` una sola vez       | `jobId` determinista (`sha256(externalReference)`)                    | `RegisterRecurringPaymentFinancialRecord.ts:88`                                   |
+| Encolado de `FinancialRecord` una sola vez       | `jobId` determinista (`sha256(recurringPaymentId:competence:sequence)`) | `RegisterRecurringPaymentFinancialRecord`                                       |
 | Una operación lógica en el banco                 | índice único `{clientId, externalAccountId, externalReference}`       | `church-banking`                                                                  |
-| Sin intento nuevo tras duda                      | `CREATION_UNKNOWN` reutiliza `attempt` y exige payload idéntico       | `ExecuteRecurringPayment.ts:124-128, 353-366`                                     |
+| Sin nuevo envío tras duda                        | `CREATION_UNKNOWN` permanece `PROCESSING`; solo el webhook lo resuelve | `ExecuteRecurringPayment`                                                         |
 
 ---
 
@@ -2040,16 +2178,17 @@ amount                  required|numeric si FIXED; debe ser > 0
 
 `payment: { method: "BILL" }` es obligatorio y **excluyente** con PIX: no se puede tener una recurrencia sin método, ni con destino PIX disponible para fallback.
 
-### Efecto combinado de los gaps
+### Estado actual del flujo
 
 ```text
 Una iglesia con Asaas:
-  debe fijar PIX o BILL para siempre     → no puede elegir por mes       (GAP-01/04)
-  debe fijar la chave PIX si elige PIX   → no puede informarla al pagar  (GAP-04)
-  no puede guardar su centro de costo    → FinancialRecord sin costCenter (GAP-02)
+  elige PIX o BILL en cada competencia   (payment en el comando)
+  puede informar una chave PIX puntual    (payment.pixKey)
+  el boleto se simula antes de pagar      (bill/simulate)
+  el costCenter es obligatorio            (configuración → FinancialRecord)
 
 Una iglesia sin Asaas:
-  no puede usar recurrencias en absoluto                                  (GAP-01-mayor)
+  registra el pago manualmente con voucher (register-payment)
 ```
 
 ---
@@ -2195,22 +2334,40 @@ Código de barras / linha digitável
 ```
 
 - La cámara pertenece al **frontend**.
-- El resultado termina siendo `identificationField` para la ejecución bancaria.
-- Se envía como `payment.identificationField` (TARGET) o `identificationField` (CURRENT).
+- El resultado es `identificationField` (linha digitável) **o** `barCode`, nunca ambos.
+- `POST /api/v1/recurring-payments/:id/bill/simulate` devuelve el snapshot del
+  boleto para que el usuario revise beneficiario, valor, vencimiento, fee,
+  descuentos, intereses, multa y condiciones.
+- La simulación **no mueve dinero ni escribe**: no reserva `currentPayment`, no
+  crea `FinancialRecord`, no emite token de simulación.
+- Al confirmar, el pago usa:
 
-### Validación — `PENDING` relevante
+```json
+{
+  "competence": "2026-10",
+  "payment": {
+    "type": "BILL",
+    "identificationField": "<bankSlip.identificationField>"
+  }
+}
+```
 
-`church-banking` **no** valida el `identificationField` más allá de `required|string|notBlank`:
+Para `VARIABLE`, la UI puede prellenar el `amount` desde
+`simulation.bankSlip.valueInCents`; ese monto se usa para reservar, pero **no**
+viaja a `church-banking` como monto esperado.
 
-> No existe en el repositorio ninguna validación de dígito verificador, código de barras ni linha digitável. Un `identificationField` malformado llega a Asaas y vuelve como `CREATION_FAILED` (si Asaas responde 4xx confirmado) o `CREATION_UNKNOWN`.
+`/pay` **no** vuelve a simular el boleto: ejecuta el contrato real de
+`church-banking`.
 
-Opciones para TARGET:
+### Validación
 
-1. **Validar en Glória** (frontend + backend) el dígito verificador de la linha digitável / código de barras. Evita un viaje inútil y un posible `CREATION_UNKNOWN`.
-2. **No validar** y confiar en `church-banking`/Asaas.
-3. **Validar en `church-banking`** (fuente de verdad del contrato bancario) y devolver un error tipado.
+`church-banking` **no** valida el `identificationField` más allá de
+`required|string|notBlank|max 60`. Un identificador malformado llega a Asaas y
+vuelve como `CREATION_FAILED` (rechazo confirmado) o `CREATION_UNKNOWN` (resultado
+desconocido), y la UI debe tolerar ambos.
 
-`PENDING`: elegir. **Recomendación:** (3) como fuente de verdad + (1) como validación de UX temprana, evitando duplicar reglas divergentes entre capas. Mientras no se cierre, documentar que **un `identificationField` inválido puede producir `FAILED` o `BLOCKED`(no) / `CREATION_UNKNOWN`(sí)**, y que la UI debe tolerar ambos.
+La validación de la línea (dígito verificador / FEBRABAN) pertenece a
+`church-banking`/Asaas. Glória **no** la reimplementa.
 
 ---
 
@@ -2224,7 +2381,7 @@ El diagrama de decisión completo, desarrollado con **todos** los casos (`FIXED`
 
 ## 35. Diagramas de secuencia obligatorios
 
-Los 10 diagramas están en:
+Los diagramas están en:
 
 [`recurring-payments-diagrams.md` → §2 Diagramas de secuencia](./recurring-payments-diagrams.md#2-diagramas-de-secuencia)
 
@@ -2240,6 +2397,7 @@ Los 10 diagramas están en:
 | 8   | banking failure         |
 | 9   | BLOCKED                 |
 | 10  | retry                   |
+| —   | simulate boleto (UX)    |
 
 ---
 
@@ -2293,9 +2451,9 @@ PAID = FinancialRecord exists
 | ¿Cuándo se crea el `FinancialRecord`? | Bancario: al confirmar webhook terminal (`DONE`/`PAID`). Manual: al registrar con comprobante                                | §19, §20      |
 | ¿Cómo se evita el **doble pago**?     | Índice único `recurringPaymentId + recurringCompetence` + `currentPayment` CAS + idempotencia de `church-banking`            | §22, §29      |
 | ¿Cómo funciona **PIX**?               | `POST /api/pix-transfers` con `pixKey` + `pixKeyType`; se paga al recibir `DONE`                                             | §12, §13, §26 |
-| ¿Cómo funciona **boleto**?            | `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. **El valor no viaja**                        | §14, §26, §33 |
+| ¿Cómo funciona **boleto**?            | `simulate` muestra el snapshot; `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. El monto autoritativo es `valueInCents` | §14, §26, §33 |
 | ¿Cómo funciona **manual**?            | `POST .../register-payment` multipart con comprobante obligatorio; crea `FinancialRecord` sin referencia bancaria            | §18, §19      |
 | ¿Cómo funciona **CostCenter**?        | Obligatorio en la configuración; se copia al `FinancialRecord` en toda ejecución                                             | §4            |
 | ¿Cómo funciona el **comprobante**?    | Obligatorio en manual; vía `StorageProviderService`; en bancario deriva del recibo de Asaas                                  | §10, §20      |
-| ¿Cómo funciona **retry**?             | Solo desde estado terminal fallido confirmado; `attempt` nuevo; `CREATION_UNKNOWN` reutiliza el intento                      | §25           |
-| ¿Cómo funciona **BLOCKED**?           | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago, no incrementa `attempt`                       | §24           |
+| ¿Cómo funciona **retry**?             | Solo desde `FAILED` confirmado; reutiliza la misma referencia. `CREATION_UNKNOWN` no se reintenta                            | §25           |
+| ¿Cómo funciona **BLOCKED**?           | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago                                               | §24           |

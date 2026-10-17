@@ -1,16 +1,21 @@
 import type {
+  BillSimulation,
+  BillSimulationBankSlip,
+  ChurchBankingBillPaymentResponse,
+  ChurchBankingBillPaymentStatus,
+  ChurchBankingPixTransferResponse,
+  ChurchBankingPixTransferStatus,
   ConnectExternalAccountInput,
   ConnectExternalAccountResponse,
   CreatePaymentInput,
   CreatePaymentResponse,
   CreateBillPaymentInput,
   CreatePixTransferInput,
-  ChurchBankingOutgoingPaymentResponse,
   CreateStaticPixInput,
   IChurchBankingClient,
+  SimulateBillInput,
   StaticPixResponse,
 } from "@/Banking/domain"
-import { assertBilledValue } from "@/Banking/domain/BillPaymentValue.ts"
 import { ChurchBankingClientError } from "@/Banking/domain"
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { CompactEncrypt, importJWK, type JWK, KeyLike, SignJWT } from "jose"
@@ -48,22 +53,30 @@ export class ChurchBankingClient implements IChurchBankingClient {
 
   async createPixTransfer(
     input: CreatePixTransferInput
-  ): Promise<ChurchBankingOutgoingPaymentResponse> {
+  ): Promise<ChurchBankingPixTransferResponse> {
     const response = await this.execute<CreatePixTransferInput>({
       path: "/api/pix-transfers",
       payload: input,
     })
-    return this.parseOutgoingPaymentResponse(response, input)
+    return this.parsePixTransferResponse(response, input)
   }
 
   async createBillPayment(
     input: CreateBillPaymentInput
-  ): Promise<ChurchBankingOutgoingPaymentResponse> {
+  ): Promise<ChurchBankingBillPaymentResponse> {
     const response = await this.execute<CreateBillPaymentInput>({
       path: "/api/bill-payments",
       payload: input,
     })
-    return assertBilledValue(this.parseOutgoingPaymentResponse(response, input))
+    return this.parseBillPaymentResponse(response, input)
+  }
+
+  async simulateBill(input: SimulateBillInput): Promise<BillSimulation> {
+    const response = await this.execute<SimulateBillInput>({
+      path: "/api/bill-payments/simulate",
+      payload: input,
+    })
+    return this.parseBillSimulationResponse(response)
   }
 
   async createStaticPix(
@@ -222,61 +235,124 @@ export class ChurchBankingClient implements IChurchBankingClient {
     }
   }
 
-  private parseOutgoingPaymentResponse(
+  private parsePixTransferResponse(
     value: unknown,
-    expected: {
-      externalAccountId: string
-      externalReference: string
-      context: Record<string, unknown>
-      amountInCents?: number
-    }
-  ): ChurchBankingOutgoingPaymentResponse {
-    const result =
-      typeof value === "object" && value !== null && "data" in value
-        ? value.data
-        : undefined
+    expected: CreatePixTransferInput
+  ): ChurchBankingPixTransferResponse {
+    const result = responseData(value)
     if (
-      typeof result !== "object" ||
-      result === null ||
-      Array.isArray(result) ||
-      !("externalAccountId" in result) ||
-      !("externalReference" in result) ||
-      !("status" in result) ||
-      !("context" in result) ||
       result.externalAccountId !== expected.externalAccountId ||
       result.externalReference !== expected.externalReference ||
-      (expected.amountInCents !== undefined &&
-        (!isRecord(result) ||
-          result.amountInCents !== expected.amountInCents)) ||
-      typeof result.status !== "string" ||
-      ![
-        "RESERVED",
-        "CREATING",
-        "CREATION_UNKNOWN",
-        "CREATION_FAILED",
-        "PENDING",
-        // PIX still reports its provider state; bill payments are normalized by
-        // church-banking into PROCESSING.
-        "IN_BANK_PROCESSING",
-        "PROCESSING",
-        "BLOCKED",
-        "DONE",
-        "PAID",
-        "FAILED",
-        "CANCELLED",
-        "REFUNDED",
-      ].includes(result.status) ||
-      !isRecord(result.context) ||
-      result.context.source !== expected.context.source ||
-      result.context.recurringPaymentId !==
-        expected.context.recurringPaymentId ||
-      result.context.competence !== expected.context.competence ||
-      result.context.attempt !== expected.context.attempt
+      result.amountInCents !== expected.amountInCents ||
+      result.pixKey !== expected.pixKey ||
+      result.pixKeyType !== expected.pixKeyType ||
+      result.description !== expected.description
     ) {
-      throw new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
+      throw invalidResponse()
     }
 
-    return result as ChurchBankingOutgoingPaymentResponse
+    const base = {
+      externalAccountId: expected.externalAccountId,
+      externalReference: expected.externalReference,
+      amountInCents: expected.amountInCents,
+      pixKey: expected.pixKey,
+      pixKeyType: expected.pixKeyType,
+      description: expected.description,
+    }
+    const status = result.status
+    if (status === "RESERVED" || status === "CREATING") {
+      return { ...base, status }
+    }
+    if (status === "CREATION_FAILED" || status === "CREATION_UNKNOWN") {
+      if (!isNonBlankString(result.errorCode)) throw invalidResponse()
+      return { ...base, status, errorCode: result.errorCode }
+    }
+    if (!isPixTransferStatus(status)) throw invalidResponse()
+    if (
+      !isNonBlankString(result.providerTransferId) ||
+      !isNullableString(result.transactionReceiptUrl) ||
+      !isOptionalString(result.failureCode)
+    ) {
+      throw invalidResponse()
+    }
+
+    return {
+      ...base,
+      status,
+      providerTransferId: result.providerTransferId,
+      transactionReceiptUrl: result.transactionReceiptUrl,
+      ...(typeof result.failureCode === "string"
+        ? { failureCode: result.failureCode }
+        : {}),
+    }
+  }
+
+  private parseBillPaymentResponse(
+    value: unknown,
+    expected: CreateBillPaymentInput
+  ): ChurchBankingBillPaymentResponse {
+    const result = responseData(value)
+    if (
+      result.externalAccountId !== expected.externalAccountId ||
+      result.externalReference !== expected.externalReference ||
+      result.identificationField !== expected.identificationField ||
+      result.description !== expected.description
+    ) {
+      throw invalidResponse()
+    }
+
+    const base = {
+      externalAccountId: expected.externalAccountId,
+      externalReference: expected.externalReference,
+      identificationField: expected.identificationField,
+      description: expected.description,
+    }
+    const status = result.status
+    if (status === "RESERVED" || status === "CREATING") {
+      return { ...base, status }
+    }
+    if (status === "CREATION_FAILED" || status === "CREATION_UNKNOWN") {
+      if (!isNonBlankString(result.errorCode)) throw invalidResponse()
+      return { ...base, status, errorCode: result.errorCode }
+    }
+    if (!isBillPaymentStatus(status)) throw invalidResponse()
+    // The amount is provider-owned, so a confirmed bill must carry the value
+    // Asaas read. Without it the debit could never be booked.
+    if (
+      !isPositiveInteger(result.valueInCents) ||
+      !isNonBlankString(result.providerBillId) ||
+      !isNullableString(result.paymentDate) ||
+      !isNullableString(result.transactionReceiptUrl) ||
+      !isOptionalString(result.failureCode)
+    ) {
+      throw invalidResponse()
+    }
+
+    return {
+      ...base,
+      status,
+      valueInCents: result.valueInCents,
+      providerBillId: result.providerBillId,
+      paymentDate: result.paymentDate,
+      transactionReceiptUrl: result.transactionReceiptUrl,
+      ...(typeof result.failureCode === "string"
+        ? { failureCode: result.failureCode }
+        : {}),
+    }
+  }
+
+  private parseBillSimulationResponse(value: unknown): BillSimulation {
+    const result = responseData(value)
+    const bankSlip = result.bankSlip
+
+    return {
+      minimumScheduleDate: optionalString(result.minimumScheduleDate),
+      feeInCents: optionalInteger(result.feeInCents),
+      bankSlip:
+        bankSlip === undefined || bankSlip === null
+          ? bankSlip
+          : parseBankSlip(bankSlip),
+    }
   }
 
   private config() {
@@ -358,4 +434,109 @@ export class ChurchBankingClient implements IChurchBankingClient {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function responseData(value: unknown): Record<string, unknown> {
+  const data = isRecord(value) && "data" in value ? value.data : undefined
+  if (!isRecord(data)) throw invalidResponse()
+  return data
+}
+
+function invalidResponse(): ChurchBankingClientError {
+  return new ChurchBankingClientError(502, "CHURCH_BANKING_INVALID_RESPONSE")
+}
+
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === "string" && value.trim() !== ""
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string"
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string"
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+}
+
+function optionalString(value: unknown): string | null | undefined {
+  if (value === undefined || value === null || typeof value === "string")
+    return value
+  throw invalidResponse()
+}
+
+function optionalInteger(value: unknown): number | null | undefined {
+  if (value === undefined || value === null) return value
+  if (typeof value === "number" && Number.isSafeInteger(value)) return value
+  throw invalidResponse()
+}
+
+function optionalBoolean(value: unknown): boolean | null | undefined {
+  if (value === undefined || value === null || typeof value === "boolean")
+    return value
+  throw invalidResponse()
+}
+
+function parseBankSlip(value: unknown): BillSimulationBankSlip {
+  if (!isRecord(value)) throw invalidResponse()
+  return {
+    identificationField: optionalString(value.identificationField),
+    valueInCents: optionalInteger(value.valueInCents),
+    originalValueInCents: optionalInteger(value.originalValueInCents),
+    dueDate: optionalString(value.dueDate),
+    companyName: optionalString(value.companyName),
+    bank: optionalString(value.bank),
+    beneficiaryCpfCnpj: optionalString(value.beneficiaryCpfCnpj),
+    beneficiaryName: optionalString(value.beneficiaryName),
+    allowChangeValue: optionalBoolean(value.allowChangeValue),
+    minValueInCents: optionalInteger(value.minValueInCents),
+    maxValueInCents: optionalInteger(value.maxValueInCents),
+    discountValueInCents: optionalInteger(value.discountValueInCents),
+    interestValueInCents: optionalInteger(value.interestValueInCents),
+    fineValueInCents: optionalInteger(value.fineValueInCents),
+    totalDiscountValueInCents: optionalInteger(value.totalDiscountValueInCents),
+    totalAdditionalValueInCents: optionalInteger(
+      value.totalAdditionalValueInCents
+    ),
+    isOverdue: optionalBoolean(value.isOverdue),
+  }
+}
+
+const PIX_TRANSFER_STATUSES: readonly ChurchBankingPixTransferStatus[] = [
+  "PENDING",
+  "IN_BANK_PROCESSING",
+  "BLOCKED",
+  "DONE",
+  "FAILED",
+  "CANCELLED",
+]
+
+function isPixTransferStatus(
+  value: unknown
+): value is ChurchBankingPixTransferStatus {
+  return (
+    typeof value === "string" &&
+    (PIX_TRANSFER_STATUSES as readonly string[]).includes(value)
+  )
+}
+
+const BILL_PAYMENT_STATUSES: readonly ChurchBankingBillPaymentStatus[] = [
+  "PENDING",
+  "BANK_PROCESSING",
+  "PAID",
+  "FAILED",
+  "CANCELLED",
+  "REFUNDED",
+]
+
+function isBillPaymentStatus(
+  value: unknown
+): value is ChurchBankingBillPaymentStatus {
+  return (
+    typeof value === "string" &&
+    (BILL_PAYMENT_STATUSES as readonly string[]).includes(value)
+  )
 }

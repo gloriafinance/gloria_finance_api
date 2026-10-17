@@ -103,14 +103,12 @@ describe("ListRecurringPayments", () => {
   it("lets an active payment status override the derived pending state", async () => {
     const currentPayment = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       paymentMethod: "BILL" as const,
       amount: 742.83,
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "BLOCKED" as const,
-      providerStatus: "BLOCKED",
       updatedAt: new Date("2026-10-01T10:01:00Z"),
     }
     const service = build([recurrence({ currentPayment })], [])
@@ -263,14 +261,12 @@ describe("ListRecurringPayments", () => {
   it("exposes the execution state of the requested competence only", async () => {
     const inFlight = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 742.83,
       paymentMethod: "BILL" as const,
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "PROCESSING" as const,
-      providerStatus: "PENDING",
       updatedAt: new Date("2026-10-01T12:00:00Z"),
     }
 
@@ -289,30 +285,27 @@ describe("ListRecurringPayments", () => {
     expect(other[0]?.currentPayment).toBeUndefined()
   })
 
-  it("sends both amounts when the boleto charges a different value", async () => {
-    const mismatched = {
+  it("exposes the failed execution of the requested competence", async () => {
+    const failed = {
       competence: "2026-10",
-      attempt: 1,
-      externalReference: "urn:recurringPayment:recurring-1:2026-10:1",
+      externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 742.83,
-      providerValueInCents: 78243,
       paymentMethod: "BILL" as const,
+      executionDestination: "34191...",
+      identificationField: "34191...",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
       status: "FAILED" as const,
-      providerStatus: "CREATION_FAILED",
-      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
       updatedAt: new Date("2026-10-01T12:00:00Z"),
     }
 
-    const service = build([recurrence({ currentPayment: mismatched })], [])
+    const service = build([recurrence({ currentPayment: failed })], [])
     const result = await service.execute("church-1", "2026-10")
 
     expect(result[0]?.currentPayment).toMatchObject({
       status: "FAILED",
       amount: 742.83,
-      providerValueInCents: 78243,
-      failureCode: "RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH",
+      paymentMethod: "BILL",
     })
     expect(result[0]?.competenceStatus).toBe("FAILED")
   })

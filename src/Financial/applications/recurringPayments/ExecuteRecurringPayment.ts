@@ -1,14 +1,17 @@
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
 import type {
-  ChurchBankingOutgoingPaymentResponse,
+  ChurchBankingBillPaymentResponse,
+  ChurchBankingPixTransferResponse,
   IChurchBankingClient,
 } from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
 import type {
   CurrentRecurringPayment,
+  RecurringPaymentExecutionStatus,
   RecurringPayments,
 } from "@/Financial/domain/RecurringPayments"
+import { recurringPaymentExternalReference } from "@/Financial/domain/RecurringPaymentReference"
 import type {
   PayRecurringPaymentMethod,
   PayRecurringPaymentRequest,
@@ -36,8 +39,6 @@ export type ExecuteRecurringPaymentResult = {
    * domain keeps its own states, the operator keeps the provider's reason.
    */
   failureCode?: string
-  /** Amount charged by this execution. Comes from the boleto for BILL. */
-  amount?: number
   /** Amount the boleto charges, read from the line by church-banking. */
   providerValueInCents?: number
 }
@@ -100,7 +101,7 @@ export class ExecuteRecurringPayment {
     await this.assertExecutionPreconditions(recurring, request.competence)
     const account = await this.resolveAccount(churchId, request)
 
-    const externalReference = this.externalReference(
+    const externalReference = recurringPaymentExternalReference(
       recurringPaymentId,
       request.competence
     )
@@ -300,13 +301,8 @@ export class ExecuteRecurringPayment {
     payment: CurrentRecurringPayment,
     method: PayRecurringPaymentMethod
   ): Promise<ExecuteRecurringPaymentResult> {
-    const context = {
-      source: "RECURRING_PAYMENT",
-      recurringPaymentId: recurring.getRecurringPaymentId(),
-      competence: payment.competence,
-    }
-
-    let response: ChurchBankingOutgoingPaymentResponse
+    let response:
+      ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
     try {
       if (method.type === "PIX") {
         response = await this.churchBankingClient.createPixTransfer({
@@ -316,7 +312,6 @@ export class ExecuteRecurringPayment {
           pixKeyType: method.pixKeyType,
           description: recurring.getName(),
           externalReference: payment.externalReference,
-          context,
         })
       } else {
         response = await this.churchBankingClient.createBillPayment({
@@ -324,9 +319,6 @@ export class ExecuteRecurringPayment {
           identificationField: method.identificationField,
           description: recurring.getName(),
           externalReference: payment.externalReference,
-          context,
-          // Declared up front so a wrong amount is refused before the debit.
-          expectedAmountInCents: this.toCents(payment.amount),
         })
       }
     } catch (error) {
@@ -357,56 +349,31 @@ export class ExecuteRecurringPayment {
   private async applyBankingResult(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
-    response: ChurchBankingOutgoingPaymentResponse
+    response:
+      ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
   ): Promise<ExecuteRecurringPaymentResult> {
-    const providerValueInCents = response.valueInCents
-    if (
-      providerValueInCents !== undefined &&
-      providerValueInCents !== this.toCents(payment.amount)
-    ) {
-      throw new PaymentError("RECURRING_PAYMENT_BILL_AMOUNT_MISMATCH")
-    }
-    const status = response.status
-    if (status === "DONE" || status === "PAID") {
-      const confirmed: CurrentRecurringPayment = {
-        ...payment,
-        // A boleto is charged for whatever its line says, so what the bank reports
-        // is the authoritative amount of that execution, not the declared one. A
-        // PIX transfer carries its own amount, which the response does not define.
-        ...(providerValueInCents !== undefined &&
-        payment.identificationField !== undefined
-          ? { amount: providerValueInCents / 100 }
-          : {}),
-        status: "PAID",
-        ...(response.paymentDate ? { paymentDate: response.paymentDate } : {}),
-        ...(response.transactionReceiptUrl
-          ? { transactionReceiptUrl: response.transactionReceiptUrl }
-          : {}),
-        updatedAt: this.now(),
-      }
-      recurring.updateCurrentPayment(confirmed)
-      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
-        recurring,
-        payment
-      )
-      // The financial record is not created here: the confirmation webhook is its
-      // only writer, so an immediate PAID and a late confirmation take the same
-      // path.
-      return this.result(confirmed, providerValueInCents)
-    }
+    const executionStatus = executionStatusOf(response.status)
+    const confirmed = executionStatus === "PAID"
+    const providerValueInCents =
+      "valueInCents" in response ? response.valueInCents : undefined
+    const paymentDate = "paymentDate" in response ? response.paymentDate : null
+    const transactionReceiptUrl =
+      "transactionReceiptUrl" in response
+        ? response.transactionReceiptUrl
+        : null
 
-    const failed =
-      status === "FAILED" ||
-      status === "CANCELLED" ||
-      status === "CREATION_FAILED"
-    const blocked = status === "BLOCKED"
     const next: CurrentRecurringPayment = {
       ...payment,
-      status: failed ? "FAILED" : blocked ? "BLOCKED" : "PROCESSING",
-      ...(response.paymentDate ? { paymentDate: response.paymentDate } : {}),
-      ...(response.transactionReceiptUrl
-        ? { transactionReceiptUrl: response.transactionReceiptUrl }
+      // A boleto is charged for whatever its line says, so the amount the bank
+      // reports is the authoritative amount of a confirmed execution, not the one
+      // declared locally. A PIX transfer carries its own amount, which the
+      // response does not redefine.
+      ...(confirmed && providerValueInCents !== undefined
+        ? { amount: providerValueInCents / 100 }
         : {}),
+      status: executionStatus,
+      ...(paymentDate ? { paymentDate } : {}),
+      ...(transactionReceiptUrl ? { transactionReceiptUrl } : {}),
       updatedAt: this.now(),
     }
     recurring.updateCurrentPayment(next)
@@ -414,7 +381,10 @@ export class ExecuteRecurringPayment {
       recurring,
       payment
     )
-    return this.result(next)
+    // The financial record is not created here: the confirmation webhook is its
+    // only writer, so an immediate PAID and a late confirmation take the same
+    // path.
+    return this.result(next, providerValueInCents)
   }
 
   private result(
@@ -437,14 +407,31 @@ export class ExecuteRecurringPayment {
       : method.identificationField
   }
 
-  private externalReference(
-    recurringPaymentId: string,
-    competence: string
-  ): string {
-    return `urn:recurringPayment:${recurringPaymentId}:${competence}`
-  }
-
   private toCents(amount: number): number {
     return Math.round(amount * 100)
   }
+}
+
+type ChurchBankingOutgoingState =
+  | ChurchBankingPixTransferResponse["status"]
+  | ChurchBankingBillPaymentResponse["status"]
+
+/**
+ * church-banking's answer translated into this service's own states. `PAID` is
+ * a domain statement, not provider vocabulary; `PROCESSING` is the service's
+ * "alive but not conclusive".
+ */
+function executionStatusOf(
+  status: ChurchBankingOutgoingState
+): RecurringPaymentExecutionStatus {
+  if (status === "DONE" || status === "PAID") return "PAID"
+  if (
+    status === "FAILED" ||
+    status === "CANCELLED" ||
+    status === "CREATION_FAILED"
+  ) {
+    return "FAILED"
+  }
+  if (status === "BLOCKED") return "BLOCKED"
+  return "PROCESSING"
 }
