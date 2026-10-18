@@ -105,12 +105,12 @@ export class ExecuteRecurringPayment {
       return { status: "ALREADY_PAID", competence: request.competence }
 
     const method = this.resolveMethod(recurring, request)
-    const amount = await this.resolveAmount(recurring, request, method)
     // Everything that could make the payment unbookable is checked before the
     // debit is requested: after moving money there is no way back, and a rejected
     // accounting entry would leave real money moved with no record of it.
     await this.assertExecutionPreconditions(recurring, request.competence)
     const account = await this.resolveAccount(churchId, request)
+    const amount = await this.resolveAmount(recurring, request, method)
 
     const externalReference = recurringPaymentExternalReference(
       recurringPaymentId,

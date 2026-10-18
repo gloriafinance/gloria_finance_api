@@ -163,6 +163,10 @@ export class RecurringPaymentController {
       )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
       domainResponse(error, res)
     }
   }
@@ -188,6 +192,10 @@ export class RecurringPaymentController {
       )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
       domainResponse(error, res)
     }
   }

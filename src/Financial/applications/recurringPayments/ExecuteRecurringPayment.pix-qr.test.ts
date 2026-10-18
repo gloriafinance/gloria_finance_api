@@ -17,6 +17,8 @@ const REFERENCE = "urn:recurringPayment:recurring-1:2026-10"
 function build(
   options: {
     type?: "FIXED" | "VARIABLE"
+    closedMonth?: boolean
+    accountAvailable?: boolean
     decodedAmountInCents?: number
     decodeError?: unknown
     qrResponses?: PayPixQrResponse[]
@@ -118,9 +120,15 @@ function build(
       ]),
     } as never,
     {
-      list: jest.fn(async () => [account]),
+      list: jest.fn(async () =>
+        options.accountAvailable === false ? [] : [account]
+      ),
     } as never,
-    { one: jest.fn(async () => ({ isClosed: () => false })) } as never,
+    {
+      one: jest.fn(async () => ({
+        isClosed: () => options.closedMonth === true,
+      })),
+    } as never,
     {
       createPixTransfer: banking.createPixTransfer,
       createBillPayment: banking.createBillPayment,
@@ -489,6 +497,25 @@ describe("ExecuteRecurringPayment PIX QR", () => {
       expect.objectContaining({ amount: 150 })
     )
   })
+
+  it.each([
+    ["the financial month is closed", { closedMonth: true }],
+    ["the account is unavailable", { accountAvailable: false }],
+  ] as const)(
+    "does not decode a variable QR when %s",
+    async (_reason, options) => {
+      const ctx = build({ type: "VARIABLE", ...options })
+      await expect(
+        ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+      ).rejects.toBeDefined()
+      expect(ctx.banking.decodePixQr).not.toHaveBeenCalled()
+      expect(
+        ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches
+      ).not.toHaveBeenCalled()
+      expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+      expect(ctx.recurring.getCurrentPayment()).toBeUndefined()
+    }
+  )
 
   it("does not reserve or send money if variable QR decoding fails", async () => {
     const error = new ChurchBankingClientError(422, "PIX_QR_INVALID")

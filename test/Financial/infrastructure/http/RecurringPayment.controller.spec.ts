@@ -156,6 +156,96 @@ describe("RecurringPaymentController.simulateBill", () => {
   })
 })
 
+describe.each(["pay", "payPixQr"] as const)(
+  "RecurringPaymentController.%s PIX QR",
+  (endpoint) => {
+    it.each([
+      [422, "PIX_QR_INVALID"],
+      [503, "CHURCH_BANKING_UNAVAILABLE"],
+    ] as const)(
+      "preserves decode HTTP %s without reserving or paying",
+      async (status, code) => {
+        const recurring = RecurringPayments.fromPrimitives(
+          recurrence.toPrimitives()
+        )
+        const save = jest.fn()
+        jest
+          .spyOn(RecurringPaymentsMongoRepository, "getInstance")
+          .mockReturnValue({
+            one: jest.fn().mockResolvedValue(recurring),
+            saveIfCurrentPaymentMatches: save,
+          } as never)
+        jest
+          .spyOn(FinanceRecordMongoRepository, "getInstance")
+          .mockReturnValue({
+            findRecurringPayment: jest.fn().mockResolvedValue(undefined),
+          } as never)
+        jest.spyOn(BankMongoRepository, "getInstance").mockReturnValue({
+          all: jest.fn().mockResolvedValue([
+            {
+              getBankId: () => "bank-1",
+              isActive: () => true,
+              isConnectedTo: () => true,
+            },
+          ]),
+        } as never)
+        jest
+          .spyOn(AvailabilityAccountMongoRepository, "getInstance")
+          .mockReturnValue({
+            list: jest.fn().mockResolvedValue([
+              {
+                getAvailabilityAccountId: () => "availability-1",
+                getSource: () => ({ bankId: "bank-1" }),
+              },
+            ]),
+          } as never)
+        jest
+          .spyOn(FinancialYearMongoRepository, "getInstance")
+          .mockReturnValue({
+            one: jest.fn().mockResolvedValue({ isClosed: () => false }),
+          } as never)
+        jest
+          .spyOn(FinancialConceptMongoRepository, "getInstance")
+          .mockReturnValue({} as never)
+        jest
+          .spyOn(FinancialConfigurationMongoRepository, "getInstance")
+          .mockReturnValue({} as never)
+        const dispatch = jest.fn()
+        jest
+          .spyOn(QueueService, "getInstance")
+          .mockReturnValue({ dispatch } as never)
+        const decode = jest
+          .spyOn(ChurchBankingClient.prototype, "decodePixQr")
+          .mockRejectedValue(new ChurchBankingClientError(status, code))
+        const pay = jest.spyOn(ChurchBankingClient.prototype, "payPixQr")
+        const response = makeResponse()
+
+        await new RecurringPaymentController()[endpoint](
+          "recurring-1",
+          {
+            competence: "2026-10",
+            payment: { type: "PIX_QR", payload: "invalid-qr" },
+            availabilityAccountId: "availability-1",
+          },
+          { auth: { churchId: "church-1", userId: "user-1" } } as never,
+          response as never
+        )
+
+        expect(decode).toHaveBeenCalledWith({
+          externalAccountId: "church-1",
+          payload: "invalid-qr",
+        })
+        expect(response.status).toHaveBeenCalledWith(status)
+        expect(response.send).toHaveBeenCalledWith({ code })
+        expect(save).not.toHaveBeenCalled()
+        expect(pay).not.toHaveBeenCalled()
+        expect(recurring.getCurrentPayment()).toBeUndefined()
+        expect(dispatch).not.toHaveBeenCalled()
+      }
+    )
+  }
+)
+
 describe("RecurringPaymentController.registerPayment", () => {
   const churchId = "church-1"
   const recurringPaymentId = "recurring-1"
