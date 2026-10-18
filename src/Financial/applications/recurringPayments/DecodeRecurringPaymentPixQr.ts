@@ -9,13 +9,15 @@ import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import { AccountType } from "@/FinanceConfig/domain/enums/AccountType.enum"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 
+type PixQrDecodeClient = Pick<IChurchBankingClient, "decodePixQr">
+
 /** Reads a PIX QR payload through the banking service without moving money. */
 export class DecodeRecurringPaymentPixQr {
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly bankRepository: IBankRepository,
-    private readonly churchBankingClient: IChurchBankingClient
+    private readonly churchBankingClient: PixQrDecodeClient
   ) {}
 
   async execute(

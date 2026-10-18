@@ -6,6 +6,7 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
+import { RecurringPixQrExecution } from "@/Financial/applications/recurringPayments/RecurringPixQrExecution"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
 import { SimulateRecurringPaymentBill } from "@/Financial/applications/recurringPayments/SimulateRecurringPaymentBill"
 import { DecodeRecurringPaymentPixQr } from "@/Financial/applications/recurringPayments/DecodeRecurringPaymentPixQr"
@@ -383,20 +384,25 @@ export class RecurringPaymentController {
   }
 
   private paymentExecutor(): ExecuteRecurringPayment {
+    const bankingClient = new ChurchBankingClient()
     return new ExecuteRecurringPayment(
       RecurringPaymentsMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
       BankMongoRepository.getInstance(),
       AvailabilityAccountMongoRepository.getInstance(),
       FinancialYearMongoRepository.getInstance(),
-      new ChurchBankingClient(),
-      new RegisterRecurringPaymentFinancialRecord(
-        FinanceRecordMongoRepository.getInstance(),
-        AvailabilityAccountMongoRepository.getInstance(),
-        FinancialConceptMongoRepository.getInstance(),
-        FinancialConfigurationMongoRepository.getInstance(),
-        undefined,
-        FinancialYearMongoRepository.getInstance()
+      bankingClient,
+      new RecurringPixQrExecution(
+        RecurringPaymentsMongoRepository.getInstance(),
+        bankingClient,
+        new RegisterRecurringPaymentFinancialRecord(
+          FinanceRecordMongoRepository.getInstance(),
+          AvailabilityAccountMongoRepository.getInstance(),
+          FinancialConceptMongoRepository.getInstance(),
+          FinancialConfigurationMongoRepository.getInstance(),
+          undefined,
+          FinancialYearMongoRepository.getInstance()
+        )
       )
     )
   }

@@ -14,7 +14,7 @@
 | No | VARIABLE | N/A | Registrar pagamento | **valor**, fecha, cuenta, comprobante |
 | Sí | FIXED | Sí | Pagar | confirmación |
 | Sí | FIXED | No | Pagar | PIX o boleto + datos destino |
-| Sí | VARIABLE | No/Sí | Pagar | valor + PIX o boleto |
+| Sí | VARIABLE | No/Sí | Pagar | valor + PIX por clave o boleto; PIX QR sin amount |
 
 ### 1.1 Desglose detallado por caso
 
@@ -428,7 +428,7 @@ Revisión explícita de cada punto solicitado:
 | Ajuste al último día del mes | `dueDateForCompetence`, `:9-17` | Correcto |
 | Zona horaria `America/Sao_Paulo` | `saoPauloDate`, `:19-31` | Correcto |
 | `amount` prohibido en FIXED | `ExecuteRecurringPayment.ts:174-179` | `RECURRING_PAYMENT_AMOUNT_FORBIDDEN` |
-| `amount` requerido en VARIABLE + precisión de centavos | `:180-188` | Correcto |
+| `amount` requerido en VARIABLE con PIX por clave / BILL + precisión de centavos; PIX QR lo obtiene del decode | `ExecuteRecurringPayment.resolveAmount()` | Correcto |
 | Índice único `recurringPaymentId + recurringCompetence` | `FinanceRecordMongoRepository.ts:258-267` | **La base de la idempotencia** |
 | `currentPayment` con CAS real | `RecurringPaymentsMongoRepository.ts:22-45` | Correcto (ADR-008) |
 | Índice único de referencia bancaria activa | `RecurringPaymentsMongoRepository.ts:56-63` | Correcto |
@@ -510,7 +510,7 @@ La feature se considera correctamente implementada cuando:
 - [ ] Una iglesia **con** Asaas paga por PIX con `pixDestination` en **una** confirmación.
 - [ ] Una iglesia **con** Asaas paga el **mismo** compromiso por PIX un mes y por BILL el siguiente, **sin editar la recurrencia**.
 - [ ] El flujo de boleto permite `scan → simulate → display → confirm → pay`, y la simulación no escribe nada.
-- [ ] Una recurrencia `VARIABLE` exige el monto en cada ejecución.
+- [ ] Una recurrencia `VARIABLE` exige el monto informado para PIX por clave, BILL y registro manual; PIX QR lo obtiene de Church Banking antes de reservar.
 - [ ] Una recurrencia `FIXED` **rechaza** un `amount` en el comando.
 - [ ] Toda ejecución (manual o bancaria) produce un `FinancialRecord` con el `costCenterId` de la recurrencia.
 

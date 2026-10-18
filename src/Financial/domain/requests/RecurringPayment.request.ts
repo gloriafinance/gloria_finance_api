@@ -26,7 +26,8 @@ export type PayRecurringPaymentMethod =
 
 /**
  * Execution command. The method describes THIS operation and is never persisted
- * as permanent configuration.
+ * as permanent configuration. FIXED and PIX QR forbid amount; VARIABLE PIX
+ * by key and BILL require it.
  */
 export type PayRecurringPaymentRequest = {
   /**
@@ -43,7 +44,6 @@ export type PayRecurringPaymentRequest = {
 
 export type PayRecurringPaymentPixQrRequest = {
   competence: string
-  amount?: number
   payment: { type: "PIX_QR"; payload: string }
   availabilityAccountId?: string
 }

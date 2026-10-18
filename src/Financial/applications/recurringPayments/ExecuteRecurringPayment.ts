@@ -3,7 +3,6 @@ import type {
   ChurchBankingBillPaymentResponse,
   ChurchBankingPixTransferResponse,
   IChurchBankingClient,
-  PayPixQrResponse,
 } from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
@@ -25,7 +24,12 @@ import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import { createHash } from "node:crypto"
-import type { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
+import type { RecurringPixQrExecution } from "./RecurringPixQrExecution"
+
+type RecurringBankingClient = Pick<
+  IChurchBankingClient,
+  "createPixTransfer" | "createBillPayment" | "decodePixQr"
+>
 
 export type ExecuteRecurringPaymentResult = {
   /**
@@ -40,7 +44,7 @@ export type ExecuteRecurringPaymentResult = {
    * domain keeps its own states, the operator keeps the provider's reason.
    */
   failureCode?: string
-  /** Amount the boleto charges, read from the line by church-banking. */
+  /** Authoritative amount reported by church-banking for boleto or PIX QR. */
   providerValueInCents?: number
 }
 
@@ -51,8 +55,8 @@ export class ExecuteRecurringPayment {
     private readonly bankRepository: IBankRepository,
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly financialYearRepository: IFinancialYearRepository,
-    private readonly churchBankingClient: IChurchBankingClient,
-    private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord,
+    private readonly churchBankingClient: RecurringBankingClient,
+    private readonly pixQrExecution: RecurringPixQrExecution,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -100,10 +104,10 @@ export class ExecuteRecurringPayment {
     if (alreadyPaid)
       return { status: "ALREADY_PAID", competence: request.competence }
 
-    const amount = this.resolveAmount(recurring, request)
     const method = this.resolveMethod(recurring, request)
+    const amount = await this.resolveAmount(recurring, request, method)
     // Everything that could make the payment unbookable is checked before the
-    // provider is called: after the debit there is no way back, and a rejected
+    // debit is requested: after moving money there is no way back, and a rejected
     // accounting entry would leave real money moved with no record of it.
     await this.assertExecutionPreconditions(recurring, request.competence)
     const account = await this.resolveAccount(churchId, request)
@@ -144,7 +148,15 @@ export class ExecuteRecurringPayment {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
 
-    return await this.submit(recurring, currentPayment, method, createdBy)
+    if (method.type === "PIX_QR") {
+      return await this.pixQrExecution.submit(
+        recurring,
+        currentPayment,
+        method,
+        createdBy
+      )
+    }
+    return await this.submit(recurring, currentPayment, method)
   }
 
   async reconcilePixQr(
@@ -171,95 +183,26 @@ export class ExecuteRecurringPayment {
     ) {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
-    // A terminal outcome is reported as-is. Every other state is resolved
-    // through the read-only status read, including one where the creation
-    // response was lost: Church Banking may hold the payment even when this
-    // service never saw the answer.
-    if (payment.status !== "PROCESSING") {
-      return this.result(payment)
-    }
-
-    return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+    return await this.pixQrExecution.reconcile(recurring, payment, createdBy)
   }
 
-  /**
-   * Resolves an in-flight PIX QR operation through the read-only status read.
-   *
-   * It never issues `/qr/pay`. That endpoint legitimately retries a previously
-   * confirmed refusal under the same reference, so re-sending it from a state
-   * this service still reports as `PROCESSING` could move money again without
-   * the operator ever seeing the refusal. `/qr/pay` stays reserved for the first
-   * attempt and for a new attempt confirmed after `FAILED` was persisted.
-   *
-   * A failed read — including a `404` for a reference Church Banking does not
-   * know — proves nothing about the payment, so the outcome is preserved as
-   * `PROCESSING`: it is never turned into a new payment nor inferred `FAILED`.
-   */
-  private async reconcilePixQrStatus(
-    recurring: RecurringPayments,
-    payment: CurrentRecurringPayment,
-    createdBy: string
-  ): Promise<ExecuteRecurringPaymentResult> {
-    let response: PayPixQrResponse
-    try {
-      response = await this.churchBankingClient.getPixQrStatus({
-        externalAccountId: recurring.getChurchId(),
-        externalReference: payment.externalReference,
-      })
-    } catch (error) {
-      if (error instanceof ChurchBankingClientError) {
-        return this.result(payment)
-      }
-      throw error
-    }
-
-    return await this.applyPixQrResult(recurring, payment, response, createdBy)
-  }
-
-  /**
-   * An operation already exists for this competence. Nothing may start a second
-   * one: a confirmed failure is the only state that resumes the workflow, and
-   * even then the reference identifies the competence.
-   */
+  /** Existing operations are read back; FAILED takes the normal reservation path. */
   private async continueInFlight(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
     request: PayRecurringPaymentRequest,
     createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
-    // Anything that is not a failure is left alone: a paid one already has its
-    // record, and an operation in flight is only ever read back. A PIX QR has no
-    // webhook, so its outcome is resolved by the read-only status read, never by
-    // paying again.
-    if (payment.status !== "FAILED") {
-      if (payment.paymentMethod === "PIX_QR") {
-        const method = this.resolveMethod(recurring, request)
-        if (
-          method.type !== "PIX_QR" ||
-          payment.executionDestination !== this.qrFingerprint(method.payload)
-        ) {
-          throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
-        }
-        // A repeated command for an in-flight PIX QR only reads its outcome.
-        // `/qr/pay` is reserved for the first attempt and for a new attempt
-        // confirmed after this service has persisted FAILED.
-        if (payment.status === "PROCESSING") {
-          return await this.reconcilePixQrStatus(recurring, payment, createdBy)
-        }
-      }
-      return this.result(payment)
-    }
+    if (payment.paymentMethod !== "PIX_QR") return this.result(payment)
 
-    // A confirmed failure is retriable and the retry is free to change the method
-    // or the amount: nothing was debited, so the correction is the point of
-    // retrying. An unknown outcome is not a failure (it stays PROCESSING) and is
-    // resolved by the confirmation webhook, never by paying again.
-    return await this.submit(
-      recurring,
-      payment,
-      this.resolveMethod(recurring, request),
-      createdBy
-    )
+    const method = this.resolveMethod(recurring, request)
+    if (
+      method.type !== "PIX_QR" ||
+      payment.executionDestination !== this.qrFingerprint(method.payload)
+    ) {
+      throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
+    }
+    return await this.pixQrExecution.reconcile(recurring, payment, createdBy)
   }
 
   /**
@@ -282,19 +225,33 @@ export class ExecuteRecurringPayment {
     })
   }
 
-  /**
-   * FIXED amount comes from the configuration and must not be supplied again;
-   * VARIABLE requires the amount for this competence. One owner for the rule.
-   */
-  private resolveAmount(
+  /** FIXED starts from config; VARIABLE QR is decoded before the CAS reservation. */
+  private async resolveAmount(
     recurring: RecurringPayments,
-    request: PayRecurringPaymentRequest
-  ): number {
+    request: PayRecurringPaymentRequest,
+    method: PayRecurringPaymentMethod
+  ): Promise<number> {
     const configuredAmount = recurring.getAmount()
-    if (configuredAmount !== undefined) {
-      if (request.amount !== undefined)
-        throw new PaymentError("RECURRING_PAYMENT_AMOUNT_FORBIDDEN")
-      return configuredAmount
+    if (
+      request.amount !== undefined &&
+      (configuredAmount !== undefined || method.type === "PIX_QR")
+    ) {
+      throw new PaymentError("RECURRING_PAYMENT_AMOUNT_FORBIDDEN")
+    }
+    if (configuredAmount !== undefined) return configuredAmount
+
+    if (method.type === "PIX_QR") {
+      const { amountInCents } = await this.churchBankingClient.decodePixQr({
+        externalAccountId: recurring.getChurchId(),
+        payload: method.payload,
+      })
+      if (!Number.isSafeInteger(amountInCents) || amountInCents <= 0) {
+        throw new ChurchBankingClientError(
+          502,
+          "CHURCH_BANKING_INVALID_RESPONSE"
+        )
+      }
+      return amountInCents / 100
     }
     if (
       request.amount === undefined ||
@@ -393,12 +350,8 @@ export class ExecuteRecurringPayment {
   private async submit(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
-    method: PayRecurringPaymentMethod,
-    createdBy: string
+    method: Exclude<PayRecurringPaymentMethod, { type: "PIX_QR" }>
   ): Promise<ExecuteRecurringPaymentResult> {
-    if (method.type === "PIX_QR") {
-      return await this.submitPixQr(recurring, payment, method, createdBy)
-    }
     let response:
       ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
     try {
@@ -424,7 +377,7 @@ export class ExecuteRecurringPayment {
       // Only a confirmed rejection proves no debit happened, so it is the only
       // status that releases the reservation as FAILED. Anything else is
       // ambiguous and stays PROCESSING: a retry could double the debit.
-      if (!isConfirmedBankingRejection(error)) {
+      if (error.status !== 422) {
         return this.result(payment, undefined, error.code)
       }
 
@@ -442,84 +395,6 @@ export class ExecuteRecurringPayment {
     }
 
     return this.applyBankingResult(recurring, payment, response)
-  }
-
-  private async submitPixQr(
-    recurring: RecurringPayments,
-    payment: CurrentRecurringPayment,
-    method: Extract<PayRecurringPaymentMethod, { type: "PIX_QR" }>,
-    createdBy: string
-  ): Promise<ExecuteRecurringPaymentResult> {
-    // QR execution has no webhook. If the transport fails, keep PROCESSING so a
-    // repeat with the same payload/reference asks church-banking for its durable
-    // result instead of creating a new payment.
-    let response: PayPixQrResponse
-    try {
-      response = await this.churchBankingClient.payPixQr({
-        externalAccountId: recurring.getChurchId(),
-        externalReference: payment.externalReference,
-        payload: method.payload,
-        description: recurring.getName(),
-      })
-    } catch (error) {
-      if (!(error instanceof ChurchBankingClientError)) throw error
-      // church-banking answers 422 for a creation its provider confirmed was
-      // refused, which proves no money moved: the reservation is released as
-      // FAILED. Every other status (409, 5xx, transport) is ambiguous and stays
-      // PROCESSING, because re-sending the payment could create a second debit.
-      if (!isConfirmedBankingRejection(error)) {
-        return this.result(payment, undefined, error.code)
-      }
-
-      const failed: CurrentRecurringPayment = {
-        ...payment,
-        status: "FAILED",
-        updatedAt: this.now(),
-      }
-      recurring.updateCurrentPayment(failed)
-      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
-        recurring,
-        payment
-      )
-      return this.result(failed, undefined, error.code)
-    }
-
-    return await this.applyPixQrResult(recurring, payment, response, createdBy)
-  }
-
-  private async applyPixQrResult(
-    recurring: RecurringPayments,
-    payment: CurrentRecurringPayment,
-    response: PayPixQrResponse,
-    createdBy: string
-  ): Promise<ExecuteRecurringPaymentResult> {
-    const status = qrExecutionStatus(response.status)
-    const next: CurrentRecurringPayment = {
-      ...payment,
-      amount: response.amountInCents / 100,
-      status,
-      providerPaymentReserved: true,
-      updatedAt: this.now(),
-    }
-
-    if (status === "PAID") {
-      await this.recordRegistrar.execute({
-        recurring,
-        competence: payment.competence,
-        amount: response.amountInCents / 100,
-        availabilityAccountId: payment.availabilityAccountId,
-        paymentDate: this.now(),
-        createdBy,
-        bankingExternalReference: payment.externalReference,
-      })
-    }
-
-    recurring.updateCurrentPayment(next)
-    await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
-      recurring,
-      payment
-    )
-    return this.result(next, response.amountInCents, pixQrErrorCode(response))
   }
 
   private async applyBankingResult(
@@ -615,31 +490,4 @@ function executionStatusOf(
   }
   if (status === "BLOCKED") return "BLOCKED"
   return "PROCESSING"
-}
-
-function qrExecutionStatus(
-  status: PayPixQrResponse["status"]
-): RecurringPaymentExecutionStatus {
-  if (status === "DONE") return "PAID"
-  if (
-    status === "REFUSED" ||
-    status === "CANCELLED" ||
-    status === "CREATION_FAILED"
-  )
-    return "FAILED"
-  if (status === "CREATION_UNKNOWN") return "BLOCKED"
-  return "PROCESSING"
-}
-
-/**
- * church-banking answers 422 for an outgoing payment its provider definitively
- * refused, which proves no money moved. Every other status is ambiguous and must
- * never be treated as a confirmed failure, or a retry could double the debit.
- */
-function isConfirmedBankingRejection(error: ChurchBankingClientError): boolean {
-  return error.status === 422
-}
-
-function pixQrErrorCode(response: PayPixQrResponse): string | undefined {
-  return "errorCode" in response ? response.errorCode : undefined
 }

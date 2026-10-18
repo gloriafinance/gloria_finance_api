@@ -162,13 +162,14 @@ Aluguel do templo — FIXED — R$ 3.500
 
 #### `VARIABLE`
 
-**NO tiene monto permanente.** El monto se informa **al ejecutar el pago**.
+**NO tiene monto permanente.** El monto se obtiene **al ejecutar el pago** según el método.
 
 ```text
 Energia elétrica — VARIABLE
 ```
 
-- El comando de ejecución **debe** enviar `amount`.
+- PIX por clave, boleto y registro manual **deben** enviar `amount`. Para boleto se usa el importe simulado.
+- PIX QR **no debe** enviar `amount`: el backend obtiene el importe inicial de Church Banking antes de reservar.
 - Enviar `amount` en la creación de una `VARIABLE` es un error de contrato.
 
 ### Nota de nomenclatura
@@ -389,9 +390,9 @@ CON ASAAS
 │
 └── VARIABLE
       │
-      ├── usuario informa valor
+      ├── PIX por clave / BOLETO: usuario informa valor
       │
-      └── usuario elige PIX o BOLETO
+      └── PIX QR: Church Banking determina el importe
 ```
 
 **La diferencia determinante no es el tipo (`FIXED`/`VARIABLE`) sino la capacidad bancaria.** El tipo determina _qué datos_ se piden; la capacidad bancaria determina _si Glória ejecuta el pago o solo lo registra_.
@@ -712,6 +713,12 @@ pixKey
 pixKeyType
 ```
 
+### PIX QR
+
+Solicitar únicamente el payload del QR, sin `amount`. El backend decodifica el
+importe con Church Banking antes de la reserva; al confirmar `DONE`, usa el
+importe devuelto por `/qr/pay` o `/qr/status`. Ver §15.
+
 ### BILL
 
 Solicitar:
@@ -873,7 +880,7 @@ porque describe **la operación concreta**.
 | Qué describe            | **Qué** compromiso existe         | **Cómo** se paga este mes                          |
 | Frecuencia de escritura | Una vez (y cambios excepcionales) | Una vez por competencia ejecutada                  |
 | Contiene método de pago | **NO**                            | **SÍ**                                             |
-| Contiene valor          | Solo si `FIXED`                   | **Solo si `VARIABLE`**                             |
+| Contiene valor          | Solo si `FIXED`                   | **Solo si `VARIABLE` y no es PIX QR**              |
 | Contiene destino PIX    | Opcional (`pixDestination`)       | Opcional (override puntual)                        |
 | Contiene `costCenterId` | **SÍ (obligatorio)**              | **NO**                                             |
 | Contiene `competence`   | **NO**                            | **SÍ**                                             |
@@ -924,8 +931,16 @@ mostrar el importe, la app ejecuta
 ```
 
 Glória envía el payload original al servicio bancario; no lo interpreta ni lo
-convierte en una clave PIX. Church Banking vuelve a resolver el importe con
-Asaas al pagar; el importe enviado por el cliente nunca es la fuente del débito.
+convierte en una clave PIX. El comando PIX QR prohíbe `amount`, tanto en FIXED
+como en VARIABLE. Para VARIABLE, el backend llama a `decodePixQr()` de Church
+Banking antes de reservar mediante CAS y exige `amountInCents` entero positivo
+seguro. Si el decode falla o devuelve un importe inválido, no crea la reserva ni
+llama a `/qr/pay`. La vista previa del frontend no sustituye esa lectura.
+
+FIXED conserva el importe configurado como valor inicial y no necesita decode
+previo en el backend. En ambos tipos, el `amountInCents` que devuelven `/qr/pay`
+o `/qr/status` es autoritativo para actualizar la ejecución y, al confirmar
+`DONE`, registrar el movimiento contable.
 El payload no queda persistido: solo se guarda su hash para repetir el mismo
 intento de forma idempotente. Una respuesta `DONE` registra el `FinancialRecord`
 porque este flujo no recibe webhook.
@@ -942,12 +957,13 @@ mantiene el resultado incierto y no vuelve a enviar el pago.
 
 **`amount` no debe enviarse** si puede obtenerse de la configuración.
 
-`CURRENT` ya implementa esta regla correctamente y la defiende con dos errores:
+El caso de uso aplica estas reglas:
 
-- `RECURRING_PAYMENT_AMOUNT_FORBIDDEN` si `FIXED` + `request.amount !== undefined` (`ExecuteRecurringPayment.ts:174-179`)
-- `RECURRING_PAYMENT_AMOUNT_REQUIRED` si `VARIABLE` sin `amount` válido (`:180-188`)
+- `RECURRING_PAYMENT_AMOUNT_FORBIDDEN` si se suministra `amount` para FIXED o PIX QR.
+- `RECURRING_PAYMENT_AMOUNT_REQUIRED` si VARIABLE con PIX por clave o BILL no tiene un `amount` válido.
+- Ambos endpoints de pago rechazan un campo `amount` en PIX QR con `RECURRING_PAYMENT_PAY_PAYLOAD_INVALID` en la validación HTTP.
 
-El validador de `amount` exige además precisión de centavos: `Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7` → rechazo (`:184`). **Mantener esta regla.**
+El importe informado para PIX por clave o BILL sigue exigiendo precisión de centavos: `Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7` → rechazo.
 
 ### Reglas del comando
 
@@ -955,7 +971,7 @@ El validador de `amount` exige además precisión de centavos: `Math.abs(amount 
 | ------------------------------ | ----------------------------------------------------------- |
 | Objeto `payment` en el comando | `{ type: "PIX" \| "PIX_QR" \| "BILL", ... }`                |
 | `amount` en `FIXED`            | Prohibido (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`)            |
-| `amount` en `VARIABLE`         | Obligatorio (`RECURRING_PAYMENT_AMOUNT_REQUIRED`)           |
+| `amount` en `VARIABLE`         | PIX por clave / BILL: obligatorio; PIX QR: prohibido        |
 | PIX informado en ejecución     | `payment.pixKey` + `payment.pixKeyType`                     |
 | BILL informado en ejecución    | `payment.identificationField` (independiente de config)     |
 | Método                         | Decidido por el comando; `pixDestination` solo como default |
@@ -2641,8 +2657,8 @@ Request (`application/json`):
 | Campo                    | Regla                                                                    |
 | ------------------------ | ------------------------------------------------------------------------ |
 | `competence`             | requerido, `YYYY-MM`                                                     |
-| `amount`                 | prohibido si `FIXED` (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`); requerido si `VARIABLE` (`RECURRING_PAYMENT_AMOUNT_REQUIRED`) |
-| `payment`                | opcional; si falta se usa `pixDestination`. `PIX`: `pixKey` + `pixKeyType`; `BILL`: `identificationField` |
+| `amount`                 | prohibido si `FIXED` o PIX QR; requerido si `VARIABLE` con PIX por clave o BILL |
+| `payment`                | opcional; si falta se usa `pixDestination`. `PIX`: `pixKey` + `pixKeyType`; `PIX_QR`: `payload`; `BILL`: `identificationField` |
 | `availabilityAccountId`  | opcional; obligatorio si la iglesia tiene más de una cuenta utilizable   |
 
 `200` → `ExecuteRecurringPaymentResult`:
@@ -2658,7 +2674,7 @@ Request (`application/json`):
 
 `status` ∈ `PROCESSING | BLOCKED | FAILED | PAID | ALREADY_PAID`.
 `failureCode` es diagnóstico del proveedor y no se persiste.
-`providerValueInCents` es el valor que `church-banking` leyó del boleto.
+`providerValueInCents` es el importe autoritativo que `church-banking` devuelve para boleto o PIX QR.
 
 Reglas de ejecución:
 
@@ -2767,7 +2783,7 @@ activa), `RECURRING_PAYMENT_NOT_FOUND`, `RECURRING_PAYMENT_INVALID`,
 | ¿Qué **es** una recurrencia?           | Un compromiso financiero mensual permanente, configurado una sola vez                                                                                   | §1            |
 | ¿Qué **no es** una recurrencia?        | Una ocurrencia mensual, un histórico, un método de pago                                                                                                 | §1, §2        |
 | ¿Qué se configura **una sola vez**?    | Nombre, concepto, centro de costo, tipo, monto (si FIXED), día de vencimiento, destino PIX opcional, estado                                             | §3, §30       |
-| ¿Qué se solicita **cada mes**?         | Competencia, datos de ejecución (monto si VARIABLE, método y destino si no está guardado), cuenta y comprobante si es manual                            | §11, §15, §18 |
+| ¿Qué se solicita **cada mes**?         | Competencia, datos de ejecución (monto si VARIABLE salvo PIX QR, método y destino si no está guardado), cuenta y comprobante si es manual                            | §11, §15, §18 |
 | ¿Qué depende de **Asaas**?             | Solo la **ejecución bancaria**: PIX y boleto                                                                                                            | §7, §26       |
 | ¿Qué ocurre al elegir cuenta no Asaas? | Registro manual: `FinancialRecord` sin operación bancaria                                                                                               | §8, §9, §18   |
 | ¿Cuándo se crea el `FinancialRecord`?  | PIX QR: al recibir `DONE`; otros pagos bancarios: webhook terminal; manual: al registrar                                                                | §19, §20      |

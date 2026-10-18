@@ -33,7 +33,7 @@ const messages: Record<RecurringPaymentErrorCode, string> = {
   RECURRING_PAYMENT_AMOUNT_REQUIRED:
     "A valid amount is required for this payment",
   RECURRING_PAYMENT_AMOUNT_FORBIDDEN:
-    "An amount must not be supplied for a fixed recurring payment",
+    "An amount must not be supplied for a fixed recurring payment or PIX QR",
   RECURRING_PAYMENT_BILL_CODE_REQUIRED:
     "A bill identification field is required",
   RECURRING_PAYMENT_DAY_OF_MONTH_INVALID:

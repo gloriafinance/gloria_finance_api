@@ -44,7 +44,7 @@ function build(
     recurringPaymentsRepository as never,
     availabilityAccountRepository as never,
     bankRepository as never,
-    churchBankingClient as never
+    churchBankingClient
   )
 
   return {

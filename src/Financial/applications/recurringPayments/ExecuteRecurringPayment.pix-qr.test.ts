@@ -1,6 +1,13 @@
 import { describe, expect, it, jest } from "@jest/globals"
 import { createHash } from "node:crypto"
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
+import type {
+  IChurchBankingClient,
+  PayPixQrResponse,
+} from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
+import type { CurrentRecurringPayment } from "@/Financial/domain/RecurringPayments"
+import { RecurringPixQrExecution } from "./RecurringPixQrExecution"
+import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 import { ExecuteRecurringPayment } from "./ExecuteRecurringPayment"
 
@@ -9,11 +16,14 @@ const REFERENCE = "urn:recurringPayment:recurring-1:2026-10"
 
 function build(
   options: {
-    qrResponses?: unknown[]
-    statusResponses?: unknown[]
+    type?: "FIXED" | "VARIABLE"
+    decodedAmountInCents?: number
+    decodeError?: unknown
+    qrResponses?: PayPixQrResponse[]
+    statusResponses?: PayPixQrResponse[]
     qrError?: unknown
     statusError?: unknown
-    currentPayment?: Record<string, unknown>
+    currentPayment?: CurrentRecurringPayment
   } = {}
 ) {
   const recurring = RecurringPayments.fromPrimitives({
@@ -22,17 +32,28 @@ function build(
     financialConceptId: "concept-1",
     costCenterId: "cost-center-1",
     name: "Aluguel",
-    type: "FIXED",
-    amount: 100,
+    type: options.type ?? "FIXED",
+    ...(options.type === "VARIABLE" ? {} : { amount: 100 }),
     dayOfMonth: 10,
     status: "ACTIVE",
     ...(options.currentPayment
-      ? { currentPayment: options.currentPayment as never }
+      ? { currentPayment: options.currentPayment }
       : {}),
   })
+  const callOrder: string[] = []
+  const reservations: CurrentRecurringPayment[] = []
   const recurringPaymentsRepository = {
     one: jest.fn(async () => recurring),
-    saveIfCurrentPaymentMatches: jest.fn(async () => true),
+    saveIfCurrentPaymentMatches: jest.fn(
+      async (
+        entity: RecurringPayments,
+        _expected: CurrentRecurringPayment | undefined
+      ) => {
+        callOrder.push("save")
+        reservations.push(structuredClone(entity.getCurrentPayment()!))
+        return true
+      }
+    ),
   }
   const financialRecordRepository = {
     findRecurringPayment: jest.fn(async () => undefined),
@@ -42,7 +63,13 @@ function build(
     getSource: () => ({ bankId: "bank-1" }),
   }
   const banking = {
-    payPixQr: jest.fn(async (..._args: unknown[]) => {
+    decodePixQr: jest.fn<IChurchBankingClient["decodePixQr"]>(async () => {
+      callOrder.push("decode")
+      if (options.decodeError) throw options.decodeError
+      return { amountInCents: options.decodedAmountInCents ?? 12500 }
+    }),
+    payPixQr: jest.fn<IChurchBankingClient["payPixQr"]>(async () => {
+      callOrder.push("pay")
       if (options.qrError) throw options.qrError
       const response = options.qrResponses?.shift()
       return (
@@ -56,22 +83,24 @@ function build(
         }
       )
     }),
-    getPixQrStatus: jest.fn(async (..._args: unknown[]) => {
-      if (options.statusError) throw options.statusError
-      const response = options.statusResponses?.shift()
-      return (
-        response ?? {
-          externalAccountId: "church-1",
-          externalReference: REFERENCE,
-          description: "Aluguel",
-          amountInCents: 15000,
-          status: "PENDING",
-          providerTransactionId: "pix-tx-1",
-        }
-      )
-    }),
-    createPixTransfer: jest.fn(),
-    createBillPayment: jest.fn(),
+    getPixQrStatus: jest.fn<IChurchBankingClient["getPixQrStatus"]>(
+      async () => {
+        if (options.statusError) throw options.statusError
+        const response = options.statusResponses?.shift()
+        return (
+          response ?? {
+            externalAccountId: "church-1",
+            externalReference: REFERENCE,
+            description: "Aluguel",
+            amountInCents: 15000,
+            status: "PENDING",
+            providerTransactionId: "pix-tx-1",
+          }
+        )
+      }
+    ),
+    createPixTransfer: jest.fn<IChurchBankingClient["createPixTransfer"]>(),
+    createBillPayment: jest.fn<IChurchBankingClient["createBillPayment"]>(),
   }
   const recordRegistrar = {
     execute: jest.fn(async (..._args: unknown[]) => undefined),
@@ -92,8 +121,17 @@ function build(
       list: jest.fn(async () => [account]),
     } as never,
     { one: jest.fn(async () => ({ isClosed: () => false })) } as never,
-    banking as never,
-    recordRegistrar as never,
+    {
+      createPixTransfer: banking.createPixTransfer,
+      createBillPayment: banking.createBillPayment,
+      decodePixQr: banking.decodePixQr,
+    },
+    new RecurringPixQrExecution(
+      recurringPaymentsRepository as never,
+      { payPixQr: banking.payPixQr, getPixQrStatus: banking.getPixQrStatus },
+      recordRegistrar as never,
+      () => new Date("2026-10-17T12:00:00.000Z")
+    ),
     () => new Date("2026-10-17T12:00:00.000Z")
   )
 
@@ -104,6 +142,8 @@ function build(
     financialRecordRepository,
     banking,
     recordRegistrar,
+    callOrder,
+    reservations,
   }
 }
 
@@ -115,7 +155,8 @@ const request = {
 
 describe("ExecuteRecurringPayment PIX QR", () => {
   it("books only a confirmed DONE with the provider amount and stable reference", async () => {
-    const { useCase, recurring, banking, recordRegistrar } = build()
+    const { useCase, recurring, banking, recordRegistrar, reservations } =
+      build()
 
     const result = await useCase.execute(
       "church-1",
@@ -124,6 +165,8 @@ describe("ExecuteRecurringPayment PIX QR", () => {
       "user-1"
     )
 
+    expect(banking.decodePixQr).not.toHaveBeenCalled()
+    expect(reservations[0]).toMatchObject({ amount: 100, status: "PROCESSING" })
     expect(result).toMatchObject({
       status: "PAID",
       providerValueInCents: 15000,
@@ -145,8 +188,9 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     expect(recurring.getCurrentPayment()?.amount).toBe(150)
   })
 
-  it("reconciles PENDING to DONE through the same reserved identity", async () => {
+  it("reconciles variable PENDING to DONE using the status amount", async () => {
     const { useCase, recurring, banking, recordRegistrar } = build({
+      type: "VARIABLE",
       qrResponses: [
         {
           externalAccountId: "church-1",
@@ -162,7 +206,7 @@ describe("ExecuteRecurringPayment PIX QR", () => {
           externalAccountId: "church-1",
           externalReference: REFERENCE,
           description: "Aluguel",
-          amountInCents: 15000,
+          amountInCents: 15789,
           status: "DONE",
           providerTransactionId: "pix-tx-1",
         },
@@ -177,12 +221,17 @@ describe("ExecuteRecurringPayment PIX QR", () => {
 
     await expect(
       useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
-    ).resolves.toMatchObject({ status: "PAID", providerValueInCents: 15000 })
+    ).resolves.toMatchObject({ status: "PAID", providerValueInCents: 15789 })
     expect(banking.payPixQr).toHaveBeenCalledTimes(1)
     expect(banking.getPixQrStatus).toHaveBeenCalledWith({
       externalAccountId: "church-1",
       externalReference: REFERENCE,
     })
+    expect(recordRegistrar.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 157.89 })
+    )
+    expect(recurring.getCurrentPayment()?.amount).toBe(157.89)
+    expect(banking.decodePixQr).toHaveBeenCalledTimes(1)
     expect(recordRegistrar.execute).toHaveBeenCalledTimes(1)
     expect(recurring.getCurrentPayment()?.status).toBe("PAID")
   })
@@ -227,6 +276,10 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     await expect(
       useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
     ).resolves.toMatchObject({ status: "BLOCKED" })
+    await expect(
+      useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "BLOCKED" })
+    expect(banking.getPixQrStatus).not.toHaveBeenCalled()
     expect(banking.payPixQr).toHaveBeenCalledTimes(1)
     expect(recordRegistrar.execute).not.toHaveBeenCalled()
     expect(recurring.getCurrentPayment()?.status).toBe("BLOCKED")
@@ -415,9 +468,267 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     expect(banking.payPixQr).toHaveBeenCalledTimes(1)
     expect(recurring.getCurrentPayment()?.status).toBe("PAID")
   })
+  it("decodes a variable QR before reserving and uses the pay response amount", async () => {
+    const ctx = build({ type: "VARIABLE", decodedAmountInCents: 12345 })
+
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "PAID", providerValueInCents: 15000 })
+
+    expect(ctx.banking.decodePixQr).toHaveBeenCalledWith({
+      externalAccountId: "church-1",
+      payload: QR_PAYLOAD,
+    })
+    expect(ctx.callOrder.slice(0, 3)).toEqual(["decode", "save", "pay"])
+    expect(ctx.reservations[0]).toMatchObject({
+      amount: 123.45,
+      status: "PROCESSING",
+    })
+    expect(ctx.recurring.getCurrentPayment()?.amount).toBe(150)
+    expect(ctx.recordRegistrar.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 150 })
+    )
+  })
+
+  it("does not reserve or send money if variable QR decoding fails", async () => {
+    const error = new ChurchBankingClientError(422, "PIX_QR_INVALID")
+    const ctx = build({ type: "VARIABLE", decodeError: error })
+
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).rejects.toBe(error)
+    expect(
+      ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches
+    ).not.toHaveBeenCalled()
+    expect(ctx.recurring.getCurrentPayment()).toBeUndefined()
+    expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    expect(ctx.recordRegistrar.execute).not.toHaveBeenCalled()
+  })
+
+  it.each([0, -1, 12.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects invalid decoded cents %s before reservation",
+    async (decodedAmountInCents) => {
+      const ctx = build({ type: "VARIABLE", decodedAmountInCents })
+      await expect(
+        ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+      ).rejects.toMatchObject({ code: "CHURCH_BANKING_INVALID_RESPONSE" })
+      expect(
+        ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches
+      ).not.toHaveBeenCalled()
+      expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    }
+  )
+
+  it.each(["FIXED", "VARIABLE"] as const)(
+    "forbids a client QR amount for %s",
+    async (type) => {
+      const ctx = build({ type })
+      await expect(
+        ctx.useCase.execute(
+          "church-1",
+          "recurring-1",
+          { ...request, amount: 100 },
+          "user-1"
+        )
+      ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_FORBIDDEN" })
+      expect(ctx.banking.decodePixQr).not.toHaveBeenCalled()
+      expect(
+        ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches
+      ).not.toHaveBeenCalled()
+      expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    }
+  )
+
+  it.each(["PAID", "BLOCKED"] as const)(
+    "returns %s without another payment or status call",
+    async (status) => {
+      const ctx = build({
+        currentPayment: { ...reservedPayment(true), status },
+      })
+      await expect(
+        ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+      ).resolves.toMatchObject({ status })
+      expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+      expect(ctx.banking.getPixQrStatus).not.toHaveBeenCalled()
+      expect(ctx.banking.decodePixQr).not.toHaveBeenCalled()
+      expect(
+        ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches
+      ).not.toHaveBeenCalled()
+    }
+  )
+
+  it("preserves the QR fingerprint when an in-flight request changes payload", async () => {
+    const ctx = build({ currentPayment: reservedPayment(true) })
+    await expect(
+      ctx.useCase.execute(
+        "church-1",
+        "recurring-1",
+        {
+          ...request,
+          payment: { type: "PIX_QR", payload: "another-qr" },
+        },
+        "user-1"
+      )
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
+    expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    expect(ctx.banking.getPixQrStatus).not.toHaveBeenCalled()
+    expect(ctx.recurring.getCurrentPayment()?.executionDestination).toBe(
+      reservedPayment(true).executionDestination
+    )
+  })
+
+  it("recovers a creation timeout through status without sending another payment", async () => {
+    const ctx = build({
+      type: "VARIABLE",
+      qrError: new ChurchBankingClientError(504, "CHURCH_BANKING_TIMEOUT"),
+      statusResponses: [
+        {
+          externalAccountId: "church-1",
+          externalReference: REFERENCE,
+          description: "Aluguel",
+          amountInCents: 15555,
+          status: "DONE",
+          providerTransactionId: "pix-1",
+        },
+      ],
+    })
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "PROCESSING" })
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "PAID", providerValueInCents: 15555 })
+    expect(ctx.banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(ctx.banking.decodePixQr).toHaveBeenCalledTimes(1)
+    expect(ctx.recordRegistrar.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 155.55 })
+    )
+  })
+
+  it("starts a new reserved attempt only after a refusal was observed", async () => {
+    const ctx = build({
+      type: "VARIABLE",
+      currentPayment: reservedPayment(true),
+      statusResponses: [
+        {
+          externalAccountId: "church-1",
+          externalReference: REFERENCE,
+          description: "Aluguel",
+          amountInCents: 12500,
+          status: "REFUSED",
+          providerTransactionId: "pix-1",
+        },
+      ],
+    })
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "FAILED" })
+    expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    expect(ctx.banking.decodePixQr).not.toHaveBeenCalled()
+    await expect(
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "PAID" })
+    expect(ctx.callOrder.slice(1, 4)).toEqual(["decode", "save", "pay"])
+    expect(ctx.banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(ctx.banking.payPixQr).toHaveBeenCalledWith(
+      expect.objectContaining({ externalReference: REFERENCE })
+    )
+  })
+
+  it("allows only one QR debit when two requests race for the CAS reservation", async () => {
+    const ctx = build({ type: "VARIABLE" })
+    let stored = ctx.recurring.toPrimitives()
+    let reservationAttempts = 0
+    let releaseBoth: () => void = () => {}
+    const bothPrepared = new Promise<void>((resolve) => {
+      releaseBoth = resolve
+    })
+    ctx.recurringPaymentsRepository.one.mockImplementation(async () =>
+      RecurringPayments.fromPrimitives(structuredClone(stored))
+    )
+    ctx.recurringPaymentsRepository.saveIfCurrentPaymentMatches.mockImplementation(
+      async (entity, expected) => {
+        if (!expected) {
+          reservationAttempts++
+          if (reservationAttempts === 2) releaseBoth()
+          await bothPrepared
+        }
+        if (JSON.stringify(stored.currentPayment) !== JSON.stringify(expected))
+          return false
+        stored = structuredClone(entity.toPrimitives())
+        return true
+      }
+    )
+
+    const results = await Promise.all([
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1"),
+      ctx.useCase.execute("church-1", "recurring-1", request, "user-1"),
+    ])
+    expect(reservationAttempts).toBe(2)
+    expect(results.some((result) => result.status === "PAID")).toBe(true)
+    expect(ctx.banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(stored.currentPayment?.status).toBe("PAID")
+  })
+
+  it("deduplicates concurrent DONE accounting through the existing registrar", async () => {
+    const ctx = build({ currentPayment: reservedPayment(true) })
+    const jobs = new Map<string, unknown>()
+    const dispatch = jest.fn(
+      (_name: unknown, payload: unknown, options: { jobId: string }) => {
+        jobs.set(options.jobId, payload)
+      }
+    )
+    const registrar = new RegisterRecurringPaymentFinancialRecord(
+      {
+        findRecurringPayment: jest.fn(async () => undefined),
+        countRecurringPaymentRecords: jest.fn(async () => 0),
+      } as never,
+      { one: jest.fn(async () => ({})) } as never,
+      { one: jest.fn(async () => ({})) } as never,
+      { findCostCenterByCostCenterId: jest.fn(async () => ({})) } as never,
+      { dispatch } as never
+    )
+    const execution = new RecurringPixQrExecution(
+      ctx.recurringPaymentsRepository as never,
+      {
+        payPixQr: ctx.banking.payPixQr,
+        getPixQrStatus: jest.fn<IChurchBankingClient["getPixQrStatus"]>(
+          async () => ({
+            externalAccountId: "church-1",
+            externalReference: REFERENCE,
+            description: "Aluguel",
+            status: "DONE",
+            amountInCents: 15789,
+            providerTransactionId: "pix-1",
+          })
+        ),
+      },
+      registrar
+    )
+    const payment = ctx.recurring.getCurrentPayment()!
+    await Promise.all([
+      execution.reconcile(ctx.recurring, payment, "user-1"),
+      execution.reconcile(ctx.recurring, payment, "user-1"),
+    ])
+    expect(dispatch).toHaveBeenCalledTimes(2)
+    expect(jobs.size).toBe(1)
+    expect([...jobs.values()][0]).toMatchObject({
+      amount: 157.89,
+      bankingExternalReference: REFERENCE,
+    })
+    expect(ctx.banking.payPixQr).not.toHaveBeenCalled()
+    await execution.reconcile(
+      ctx.recurring,
+      ctx.recurring.getCurrentPayment()!,
+      "user-1"
+    )
+    expect(dispatch).toHaveBeenCalledTimes(2)
+  })
 })
 
-function reservedPayment(providerPaymentReserved: boolean) {
+function reservedPayment(
+  providerPaymentReserved: boolean
+): CurrentRecurringPayment {
   return {
     competence: "2026-10",
     externalReference: REFERENCE,

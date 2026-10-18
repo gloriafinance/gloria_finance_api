@@ -87,8 +87,8 @@ export async function validateRecurringPaymentConfiguration(
 }
 
 /**
- * Banking execution. `amount` is forbidden for FIXED and required for VARIABLE
- * (enforced by the use case, which owns the configured amount). `payment`
+ * Banking execution. PIX QR forbids `amount`. Other methods forbid it for FIXED
+ * and require it for VARIABLE (enforced by the use case). `payment`
  * describes this operation only and is never persisted.
  */
 export async function validatePayRecurringPayment(
@@ -107,7 +107,9 @@ export async function validatePayRecurringPayment(
     ]) &&
     typeof body.competence === "string" &&
     COMPETENCE_PATTERN.test(body.competence) &&
-    optionalAmount(body.amount) &&
+    (isRecord(body.payment) && body.payment.type === "PIX_QR"
+      ? !("amount" in body)
+      : optionalAmount(body.amount)) &&
     optionalReference(body.availabilityAccountId) &&
     validPaymentMethod(body.payment)
   if (!valid) {
@@ -125,15 +127,9 @@ export async function validatePayRecurringPaymentPixQr(
   const body: unknown = req.body
   const valid =
     isRecord(body) &&
-    hasOnlyKeys(body, [
-      "competence",
-      "amount",
-      "payment",
-      "availabilityAccountId",
-    ]) &&
+    hasOnlyKeys(body, ["competence", "payment", "availabilityAccountId"]) &&
     typeof body.competence === "string" &&
     COMPETENCE_PATTERN.test(body.competence) &&
-    optionalAmount(body.amount) &&
     optionalReference(body.availabilityAccountId) &&
     isRecord(body.payment) &&
     hasOnlyKeys(body.payment, ["type", "payload"]) &&

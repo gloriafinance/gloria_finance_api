@@ -6,6 +6,8 @@ import type {
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
 import { RecurringPaymentException } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 
+type BillSimulationClient = Pick<IChurchBankingClient, "simulateBill">
+
 /**
  * Reads a boleto through church-banking so the payer can review it before
  * confirming. It moves no money and persists nothing: the only writes of this
@@ -14,7 +16,7 @@ import { RecurringPaymentException } from "@/Financial/domain/exceptions/Recurri
 export class SimulateRecurringPaymentBill {
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
-    private readonly churchBankingClient: IChurchBankingClient
+    private readonly churchBankingClient: BillSimulationClient
   ) {}
 
   async execute(

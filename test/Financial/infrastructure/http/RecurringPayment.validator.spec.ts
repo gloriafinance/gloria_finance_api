@@ -1,5 +1,6 @@
 import {
   validatePayRecurringPayment,
+  validatePayRecurringPaymentPixQr,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
   validateSimulateRecurringPaymentBill,
@@ -242,6 +243,37 @@ describe("recurring payment HTTP validation", () => {
       expect(response.status).toHaveBeenCalledWith(422)
       expect(next).not.toHaveBeenCalled()
     })
+  })
+
+  describe.each([
+    ["pay", validatePayRecurringPayment],
+    ["pix-qr/pay", validatePayRecurringPaymentPixQr],
+  ] as const)("%s PIX QR contract", (_route, validate) => {
+    const body = {
+      competence: "2026-10",
+      payment: { type: "PIX_QR", payload: "000201-original" },
+    }
+    it("accepts PIX QR without an amount", async () => {
+      const response = makeResponse()
+      const next = jest.fn()
+      await validate({ body } as never, response as never, next)
+      expect(next).toHaveBeenCalledTimes(1)
+      expect(response.send).not.toHaveBeenCalled()
+    })
+    it.each([100, 0, "100", null, undefined])(
+      "rejects a supplied amount %s",
+      async (amount) => {
+        const response = makeResponse()
+        const next = jest.fn()
+        await validate(
+          { body: { ...body, amount } } as never,
+          response as never,
+          next
+        )
+        expect(response.status).toHaveBeenCalledWith(422)
+        expect(next).not.toHaveBeenCalled()
+      }
+    )
   })
 
   describe("bill/simulate", () => {

@@ -55,7 +55,7 @@ flowchart TD
     BANK --> BT{"Tipo de<br/>recurrencia?"}
 
     BT -->|FIXED| BF{"¿Tiene<br/>pixDestination<br/>guardado?"}
-    BT -->|VARIABLE| BV["Usuario informa valor"]
+    BT -->|VARIABLE| BV["PIX por clave / boleto: usuario informa valor<br/>PIX QR: importe de Church Banking"]
 
     BF -->|SÍ| BPIXSAVED["PIX directo<br/>SIN volver a preguntar<br/>valor, chave ni tipo"]
     BF -->|NO| BCHOOSE["Usuario elige<br/>PIX o BOLETO"]
@@ -69,7 +69,7 @@ flowchart TD
     BPIX --> CMD
     BBILL --> CMD
 
-    CMD["PayRecurringPaymentRequest<br/>competence<br/>amount? (solo VARIABLE)<br/>payment: type + destino"]
+    CMD["PayRecurringPaymentRequest<br/>competence<br/>amount? (VARIABLE, salvo PIX QR)<br/>payment: type + destino"]
 
     CMD --> RESERVE["reserve currentPayment<br/>(CAS + índice único)<br/>status = PROCESSING"]
 
