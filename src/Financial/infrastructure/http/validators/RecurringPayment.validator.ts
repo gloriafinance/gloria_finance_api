@@ -87,8 +87,8 @@ export async function validateRecurringPaymentConfiguration(
 }
 
 /**
- * Banking execution. `amount` is forbidden for FIXED and required for VARIABLE
- * (enforced by the use case, which owns the configured amount). `payment`
+ * Banking execution. PIX QR forbids `amount`. Other methods forbid it for FIXED
+ * and require it for VARIABLE (enforced by the use case). `payment`
  * describes this operation only and is never persisted.
  */
 export async function validatePayRecurringPayment(
@@ -107,9 +107,35 @@ export async function validatePayRecurringPayment(
     ]) &&
     typeof body.competence === "string" &&
     COMPETENCE_PATTERN.test(body.competence) &&
-    optionalAmount(body.amount) &&
+    (isRecord(body.payment) && body.payment.type === "PIX_QR"
+      ? !("amount" in body)
+      : optionalAmount(body.amount)) &&
     optionalReference(body.availabilityAccountId) &&
     validPaymentMethod(body.payment)
+  if (!valid) {
+    invalid(res, "RECURRING_PAYMENT_PAY_PAYLOAD_INVALID")
+    return
+  }
+  next()
+}
+
+export async function validatePayRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const body: unknown = req.body
+  const valid =
+    isRecord(body) &&
+    hasOnlyKeys(body, ["competence", "payment", "availabilityAccountId"]) &&
+    typeof body.competence === "string" &&
+    COMPETENCE_PATTERN.test(body.competence) &&
+    optionalReference(body.availabilityAccountId) &&
+    isRecord(body.payment) &&
+    hasOnlyKeys(body.payment, ["type", "payload"]) &&
+    body.payment.type === "PIX_QR" &&
+    typeof body.payment.payload === "string" &&
+    body.payment.payload.trim() !== ""
   if (!valid) {
     invalid(res, "RECURRING_PAYMENT_PAY_PAYLOAD_INVALID")
     return
@@ -139,6 +165,42 @@ export async function validateSimulateRecurringPaymentBill(
     res.status(HttpStatus.BAD_REQUEST).send({
       code: "RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID",
     })
+    return
+  }
+  next()
+}
+
+export async function validateDecodeRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const validator = new Validator(req.body, {
+    availabilityAccountId: "required|string",
+    payload: "required|string",
+  })
+  if (!(await validator.check())) {
+    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
+    return
+  }
+  next()
+}
+
+export async function validateReconcileRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const validator = new Validator(req.body, {
+    competence: "required|string",
+  })
+  if (!(await validator.check())) {
+    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
+    return
+  }
+  const body = req.body as Record<string, unknown>
+  if (!COMPETENCE_PATTERN.test(body.competence as string)) {
+    invalid(res, "RECURRING_PAYMENT_PAY_PAYLOAD_INVALID")
     return
   }
   next()
@@ -208,6 +270,13 @@ function validPaymentMethod(value: unknown): boolean {
       hasOnlyKeys(value, ["type", "identificationField"]) &&
       typeof value.identificationField === "string" &&
       value.identificationField.trim() !== ""
+    )
+  }
+  if (value.type === "PIX_QR") {
+    return (
+      hasOnlyKeys(value, ["type", "payload"]) &&
+      typeof value.payload === "string" &&
+      value.payload.trim() !== ""
     )
   }
   return false

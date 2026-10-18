@@ -68,13 +68,15 @@ export type CurrentRecurringPayment = {
   externalReference: string
   amount: number
   /** Method chosen for this execution. Never part of the permanent config. */
-  paymentMethod?: "PIX" | "BILL"
+  paymentMethod?: "PIX" | "PIX_QR" | "BILL"
   /**
    * Destination actually sent for this execution, kept only so a retry of an
    * unknown outcome can prove it repeats the identical payload. This is
    * operational state, not permanent configuration (see ADR-001 / ADR-007).
    */
   executionDestination?: string
+  /** True only after Church Banking confirmed this external reference is reserved. */
+  providerPaymentReserved?: boolean
   bankId: string
   availabilityAccountId: string
   /**

@@ -162,13 +162,14 @@ Aluguel do templo — FIXED — R$ 3.500
 
 #### `VARIABLE`
 
-**NO tiene monto permanente.** El monto se informa **al ejecutar el pago**.
+**NO tiene monto permanente.** El monto se obtiene **al ejecutar el pago** según el método.
 
 ```text
 Energia elétrica — VARIABLE
 ```
 
-- El comando de ejecución **debe** enviar `amount`.
+- PIX por clave, boleto y registro manual **deben** enviar `amount`. Para boleto se usa el importe simulado.
+- PIX QR **no debe** enviar `amount`: el backend obtiene el importe inicial de Church Banking antes de reservar.
 - Enviar `amount` en la creación de una `VARIABLE` es un error de contrato.
 
 ### Nota de nomenclatura
@@ -389,9 +390,9 @@ CON ASAAS
 │
 └── VARIABLE
       │
-      ├── usuario informa valor
+      ├── PIX por clave / BOLETO: usuario informa valor
       │
-      └── usuario elige PIX o BOLETO
+      └── PIX QR: Church Banking determina el importe
 ```
 
 **La diferencia determinante no es el tipo (`FIXED`/`VARIABLE`) sino la capacidad bancaria.** El tipo determina _qué datos_ se piden; la capacidad bancaria determina _si Glória ejecuta el pago o solo lo registra_.
@@ -489,13 +490,13 @@ porque Glória **no ejecutará** la operación bancaria. Preguntar el método se
 
 ## 10. Comprobante en ejecución manual
 
-**Decisión cerrada:**
+**Decisión vigente: ver ADR-010.**
 
 ```text
-voucher = REQUIRED
+voucher = REQUIRED en BANK/WALLET; no se solicita en CASH
 ```
 
-Todo registro manual de una recurrencia requiere comprobante. Sin comprobante no hay `FinancialRecord`.
+El tipo de cuenta seleccionada define si el registro manual requiere comprobante: BANK y WALLET lo requieren; CASH no.
 
 ### Flujo de almacenamiento
 
@@ -522,11 +523,7 @@ FinancialRecord.voucher
 | Implementación                      | `src/package/gcp/infrastructure/StorageGCP.ts`                                                                                                                              |
 | Precedente de uso en flujo bancario | `src/Webhook/infrastructure/services/AsaasReceiptStorage.ts` (`storage.uploadFile({ data: buffer, mimetype: "application/pdf", originalname })`)                            |
 
-Ver [`adr/ADR-005-manual-voucher-is-mandatory.md`](./adr/ADR-005-manual-voucher-is-mandatory.md).
-
-### `CURRENT`
-
-En el flujo bancario el voucher es **opcional**: `RegisterRecurringPaymentFinancialRecord` solo lo crea si `transactionReceiptUrl` existe (`src/Financial/applications/recurringPayments/RegisterRecurringPaymentFinancialRecord.ts:57-62`), y **no existe ningún flujo manual** que reciba un archivo (no hay `multipart/form-data` en el repo). **GAP-03.**
+Ver [`adr/ADR-010-manual-voucher-by-account-type.md`](./adr/ADR-010-manual-voucher-by-account-type.md).
 
 ---
 
@@ -716,6 +713,12 @@ pixKey
 pixKeyType
 ```
 
+### PIX QR
+
+Solicitar únicamente el payload del QR, sin `amount`. El backend decodifica el
+importe con Church Banking antes de la reserva; al confirmar `DONE`, usa el
+importe devuelto por `/qr/pay` o `/qr/status`. Ver §15.
+
 ### BILL
 
 Solicitar:
@@ -877,7 +880,7 @@ porque describe **la operación concreta**.
 | Qué describe            | **Qué** compromiso existe         | **Cómo** se paga este mes                          |
 | Frecuencia de escritura | Una vez (y cambios excepcionales) | Una vez por competencia ejecutada                  |
 | Contiene método de pago | **NO**                            | **SÍ**                                             |
-| Contiene valor          | Solo si `FIXED`                   | **Solo si `VARIABLE`**                             |
+| Contiene valor          | Solo si `FIXED`                   | **Solo si `VARIABLE` y no es PIX QR**              |
 | Contiene destino PIX    | Opcional (`pixDestination`)       | Opcional (override puntual)                        |
 | Contiene `costCenterId` | **SÍ (obligatorio)**              | **NO**                                             |
 | Contiene `competence`   | **NO**                            | **SÍ**                                             |
@@ -912,27 +915,66 @@ porque describe **la operación concreta**.
 }
 ```
 
+### PIX QR (copia y pega)
+
+Primero se lee el importe con `POST /api/v1/recurring-payments/:id/pix-qr/decode`
+enviando `{ "availabilityAccountId": "...", "payload": "..." }`. La cuenta
+debe pertenecer a la iglesia y estar activa y conectada a Asaas. Después de
+mostrar el importe, la app ejecuta
+`POST /api/v1/recurring-payments/:id/pix-qr/pay`:
+
+```json
+{
+  "competence": "2026-10",
+  "payment": { "type": "PIX_QR", "payload": "000201..." }
+}
+```
+
+Glória envía el payload original al servicio bancario; no lo interpreta ni lo
+convierte en una clave PIX. El comando PIX QR prohíbe `amount`, tanto en FIXED
+como en VARIABLE. Para VARIABLE, el backend llama a `decodePixQr()` de Church
+Banking antes de reservar mediante CAS y exige `amountInCents` entero positivo
+seguro. Si el decode falla o devuelve un importe inválido, no crea la reserva ni
+llama a `/qr/pay`. La vista previa del frontend no sustituye esa lectura.
+
+FIXED conserva el importe configurado como valor inicial y no necesita decode
+previo en el backend. En ambos tipos, el `amountInCents` que devuelven `/qr/pay`
+o `/qr/status` es autoritativo para actualizar la ejecución y, al confirmar
+`DONE`, registrar el movimiento contable.
+El payload no queda persistido: solo se guarda su hash para repetir el mismo
+intento de forma idempotente. Una respuesta `DONE` registra el `FinancialRecord`
+porque este flujo no recibe webhook.
+
+Si Church Banking devuelve `PENDING`, `POST /api/v1/recurring-payments/:id/pix-qr/status`
+consulta el estado durable de la referencia usando solo la competencia. No
+requiere reenviar el QR ni iniciar otro pago. Solo consulta una operación cuya
+reserva ya fue confirmada por Church Banking.
+La interfaz ofrece esta consulta manualmente y no hace polling automático. Si la
+creación quedó ambigua (`CREATION_UNKNOWN`) o no se confirmó la reserva, Glória
+mantiene el resultado incierto y no vuelve a enviar el pago.
+
 ### Para `FIXED`
 
 **`amount` no debe enviarse** si puede obtenerse de la configuración.
 
-`CURRENT` ya implementa esta regla correctamente y la defiende con dos errores:
+El caso de uso aplica estas reglas:
 
-- `RECURRING_PAYMENT_AMOUNT_FORBIDDEN` si `FIXED` + `request.amount !== undefined` (`ExecuteRecurringPayment.ts:174-179`)
-- `RECURRING_PAYMENT_AMOUNT_REQUIRED` si `VARIABLE` sin `amount` válido (`:180-188`)
+- `RECURRING_PAYMENT_AMOUNT_FORBIDDEN` si se suministra `amount` para FIXED o PIX QR.
+- `RECURRING_PAYMENT_AMOUNT_REQUIRED` si VARIABLE con PIX por clave o BILL no tiene un `amount` válido.
+- Ambos endpoints de pago rechazan un campo `amount` en PIX QR con `RECURRING_PAYMENT_PAY_PAYLOAD_INVALID` en la validación HTTP.
 
-El validador de `amount` exige además precisión de centavos: `Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7` → rechazo (`:184`). **Mantener esta regla.**
+El importe informado para PIX por clave o BILL sigue exigiendo precisión de centavos: `Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7` → rechazo.
 
 ### Reglas del comando
 
-| Aspecto                        | Regla                                                        |
-| ------------------------------ | ------------------------------------------------------------ |
-| Objeto `payment` en el comando | `{ type: "PIX" \| "BILL", ... }`                                 |
-| `amount` en `FIXED`            | Prohibido (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`)             |
-| `amount` en `VARIABLE`         | Obligatorio (`RECURRING_PAYMENT_AMOUNT_REQUIRED`)            |
-| PIX informado en ejecución     | `payment.pixKey` + `payment.pixKeyType`                      |
-| BILL informado en ejecución    | `payment.identificationField` (independiente de config)      |
-| Método                         | Decidido por el comando; `pixDestination` solo como default  |
+| Aspecto                        | Regla                                                       |
+| ------------------------------ | ----------------------------------------------------------- |
+| Objeto `payment` en el comando | `{ type: "PIX" \| "PIX_QR" \| "BILL", ... }`                |
+| `amount` en `FIXED`            | Prohibido (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`)            |
+| `amount` en `VARIABLE`         | PIX por clave / BILL: obligatorio; PIX QR: prohibido        |
+| PIX informado en ejecución     | `payment.pixKey` + `payment.pixKeyType`                     |
+| BILL informado en ejecución    | `payment.identificationField` (independiente de config)     |
+| Método                         | Decidido por el comando; `pixDestination` solo como default |
 
 ---
 
@@ -986,10 +1028,10 @@ Es la **competencia contable/mensual** de esa recurrencia. **No** es la fecha de
 
 Ejemplos:
 
-| Recurrencia | Vencimiento | Pago realizado | `competence` |
-| ----------- | ----------- | -------------- | ------------ |
-| Conta de Luz | día 20 | 17/10/2026 | `2026-10` |
-| Conta de setembro | — | 05/10/2026 (pago atrasado) | `2026-09` |
+| Recurrencia       | Vencimiento | Pago realizado             | `competence` |
+| ----------------- | ----------- | -------------------------- | ------------ |
+| Conta de Luz      | día 20      | 17/10/2026                 | `2026-10`    |
+| Conta de setembro | —           | 05/10/2026 (pago atrasado) | `2026-09`    |
 
 Incluso si la factura se paga atrasada, la competencia sigue siendo la del mes al que corresponde el recibo (ej. `2026-09`), no el mes en que se efectúa el pago.
 
@@ -1088,7 +1130,7 @@ Consulta por referencia bancaria (`findByBankingExternalReference`) — usada po
 POST /api/v1/recurring-payments/:id/register-payment
 ```
 
-**`multipart/form-data`** (porque el comprobante es obligatorio — §10).
+`multipart/form-data` cuando se adjunta comprobante; para CASH no se requiere archivo.
 
 ### Campos
 
@@ -1097,7 +1139,7 @@ competence              // YYYY-MM, obligatorio
 amount?                 // obligatorio SOLO para VARIABLE
 paymentDate             // obligatorio
 availabilityAccountId   // obligatorio — §11
-voucher                 // OBLIGATORIO — archivo — §10
+file                    // obligatorio para BANK/WALLET; omitido para CASH — §10
 ```
 
 ### NO recibir desde frontend
@@ -1131,20 +1173,23 @@ POST /api/v1/recurring-payments/:recurringPaymentId/register-payment
 ```
 
 `multipart/form-data` con `competence`, `amount?`, `paymentDate`,
-`availabilityAccountId` y el archivo `file` obligatorio. Está prohibido mientras
-la iglesia tenga una conexión bancaria activa
-(`RECURRING_PAYMENT_MANUAL_NOT_ALLOWED`); no crea `currentPayment` (ADR-008).
+`availabilityAccountId` y `file` obligatorio solo para BANK/WALLET. CASH omite
+el archivo. La cuenta seleccionada determina el camino; una cuenta vinculada a
+Asaas se paga por `/pay`. No crea `currentPayment` (ADR-008).
 
 ### Endpoints `CURRENT` completos
 
-| Método | Ruta                                                             | Propósito                          |
-| ------ | ---------------------------------------------------------------- | ---------------------------------- |
-| `POST` | `/api/v1/recurring-payments`                                     | Crear configuración                |
-| `PUT`  | `/api/v1/recurring-payments/:id`                                 | Actualizar configuración           |
-| `GET`  | `/api/v1/recurring-payments?competence=YYYY-MM`                  | Listar con estado por competencia  |
-| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay`             | Ejecutar pago bancario             |
-| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/bill/simulate`   | Simular boleto (lectura, 0 writes) |
-| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/register-payment`| Registrar pago manual con voucher  |
+| Método | Ruta                                                              | Propósito                          |
+| ------ | ----------------------------------------------------------------- | ---------------------------------- |
+| `POST` | `/api/v1/recurring-payments`                                      | Crear configuración                |
+| `PUT`  | `/api/v1/recurring-payments/:id`                                  | Actualizar configuración           |
+| `GET`  | `/api/v1/recurring-payments?competence=YYYY-MM`                   | Listar con estado por competencia  |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pay`              | Ejecutar pago bancario             |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/bill/simulate`    | Simular boleto (lectura, 0 writes) |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pix-qr/decode`    | Leer importe de QR Pix             |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pix-qr/pay`       | Ejecutar pago QR Pix               |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/pix-qr/status`    | Consultar QR Pix ya reservado      |
+| `POST` | `/api/v1/recurring-payments/:recurringPaymentId/register-payment` | Registrar pago manual              |
 
 ---
 
@@ -1160,7 +1205,7 @@ amount           = configured FIXED amount
                    OR execution VARIABLE amount
 availabilityAccount = selected by user                // §11
 date             = paymentDate
-voucher          = required uploaded file             // §10
+voucher          = uploaded file for BANK/WALLET; absent for CASH // §10
 source           = MANUAL
 createdBy        = authenticated user
 reference:
@@ -1590,19 +1635,37 @@ CREATION_UNKNOWN
 ### `CURRENT` — verificado
 
 `continueInFlight` devuelve el estado existente para todo lo que no sea
-`FAILED`. Solo un `FAILED` vuelve a llamar a `church-banking` (`submit`).
+`FAILED`. Solo un `FAILED` vuelve a llamar a `church-banking` (`submit`) para
+iniciar un intento nuevo ya confirmado por el usuario.
+
+Para un `PIX_QR` en `PROCESSING` —incluido un comando repetido— la operación se
+resuelve **solo** leyendo `/pix-qr/status`; nunca se reenvía `/qr/pay`:
+
+```ts
+if (payment.status === "PROCESSING") {
+  return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+}
+```
+
+`/qr/pay` queda reservado para el intento inicial y para un nuevo intento tras
+persistir `FAILED`. Motivo: desde PR #109 de `church-banking`, `/qr/pay` reintenta
+de forma legítima `REFUSED`/`CANCELLED`/`CREATION_FAILED` bajo la misma
+referencia. Un comando repetido no puede disparar ese reintento mientras Glória
+todavía muestra `PROCESSING`: movería dinero otra vez sin que el operador haya
+visto el rechazo.
 
 ### Manejo de `CREATION_UNKNOWN` — el caso más delicado
 
 `CREATION_UNKNOWN` significa: **no sabemos si la operación se creó en el banco.**
-Glória **no lo convierte en `FAILED`** ni reintenta: el `ChurchBankingClientError`
-no es un rechazo confirmado, así que el `currentPayment` permanece en
-`PROCESSING` y solo el webhook puede resolverlo.
+Glória **no lo convierte en `FAILED`** ni reintenta: un error que no sea `422` no
+es un rechazo confirmado, así que el `currentPayment` permanece en `PROCESSING` y
+solo el webhook puede resolverlo.
 
 ```ts
-const failure = bankingError?.isConfirmedRejection
-  ? { status: "FAILED" as const }
-  : { status: "PROCESSING" as const }
+if (!(error instanceof ChurchBankingClientError)) throw error
+if (!isConfirmedBankingRejection(error)) {
+  return this.result(payment, undefined, error.code)
+}
 ```
 
 Como el `externalReference` es estable, un reenvío de red del mismo intento está
@@ -1612,22 +1675,61 @@ se reintenta automáticamente.**
 
 ### Fallo confirmado vs no confirmado
 
-| Situación                                                                | `currentPayment.status` |
-| ------------------------------------------------------------------------ | ----------------------- |
-| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED`                |
-| Cualquier otro error (red, 5xx, respuesta ambigua)                       | `PROCESSING`            |
+| Situación                                                            | `currentPayment.status` |
+| -------------------------------------------------------------------- | ----------------------- |
+| `ChurchBankingClientError` con `status === 422` (rechazo confirmado) | `FAILED`                |
+| Cualquier otro error (409, 5xx, red, respuesta ambigua)              | `PROCESSING`            |
 
-
-**Regla:** solo un rechazo **confirmado** habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
+**Regla:** solo un rechazo **confirmado** (HTTP `422`) habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
 
 ### Correspondencia con `church-banking`
 
-`church-banking` distingue:
+`church-banking` responde **422** cuando el proveedor confirmó el rechazo
+(`PixQrPaymentCreationRejectedError`, `PixTransferCreationRejectedError`,
+`BillPaymentCreationRejectedError`). El resto —`409` de cuenta no lista o
+conflicto de identidad, `503` de credencial/decode, transporte— queda ambiguo.
 
-- **rechazo confirmado** = `AsaasIntegrationError` con `400 <= status < 500` y **no** 408/425/429 → `CREATION_FAILED` (`create-asaas-pix-transfer.use-case.ts:330-339`)
-- **cualquier otra cosa** (transporte, parse, 5xx, 408, 425, 429) → `CREATION_UNKNOWN` (`:138-176`)
+Glória clasifica **solo** el `422` como `FAILED` y deja el resto en `PROCESSING`.
+Mantener sincronizada esta semántica: si `church-banking` cambia qué considera
+"confirmado", Glória debe cambiar con él.
 
-La clasificación de Glória es **coherente** con la de `church-banking`. Mantener sincronizada esta semántica: si `church-banking` cambia qué considera "confirmado", Glória debe cambiar con él.
+### Respuesta de creación perdida — reconciliación por `externalReference`
+
+`providerPaymentReserved` se activa solo cuando llega una respuesta HTTP válida
+de `/qr/pay`. Si `church-banking` reservó o creó el pago pero Glória perdió la
+respuesta (timeout, red, parse), el pago queda en `PROCESSING` sin esa marca.
+
+`/pix-qr/status` es **read-only** en términos financieros: no inicia un débito.
+Por eso la reconciliación consulta por `externalReference` **aunque**
+`providerPaymentReserved` esté ausente:
+
+```ts
+if (payment.status !== "PROCESSING") return this.result(payment)
+return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+```
+
+- Si `church-banking` devuelve el pago (`DONE`, `REFUSED`, …), Glória adopta ese
+  estado y, en `DONE`, registra el `FinancialRecord` de forma idempotente.
+- Si `church-banking` devuelve `404` (no conoce la referencia), la incertidumbre
+  **se preserva**: se mantiene `PROCESSING`, **no** se crea otro pago y **no** se
+  infiere `FAILED`. Un `404` no prueba que no exista un débito.
+- Cualquier otro error de la lectura (`5xx`, transporte) deja el estado igual:
+  tampoco cambia `currentPayment`.
+
+Sin `providerPaymentReserved` como puerta, la única forma de resolver un PIX QR
+cuyo estado Glória no conoce es esta lectura; no hay webhook de PIX QR que la
+reemplace.
+
+### Cambio de contrato explícito: `422` vs «cualquier error HTTP»
+
+Esta versión clasifica como `FAILED` **solo** un rechazo confirmado (HTTP `422`).
+Difere de una regla anteriormente indicada —*«cualquier error HTTP recibido →
+`FAILED`»*— y el cambio es deliberado: solo el `422` prueba que el proveedor
+rechazó la creación sin mover dinero. Un `4xx` distinto de `422` (p. ej. `404` o
+`409`) es ambiguo y se conserva como `PROCESSING`.
+
+**No asumir que ambos contratos son el mismo.** Volver a la regla anterior sería
+un cambio de comportamiento explícito y debe discutirse aparte.
 
 ---
 
@@ -2076,15 +2178,15 @@ pago, y un `CREATION_UNKNOWN` nunca se reintenta.
 
 ### Resumen de las invariantes de no-doble-pago
 
-| Invariante                                       | Mecanismo                                                             | Ubicación                                                                         |
-| ------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Un `FinancialRecord` por recurrencia+competencia | índice único parcial                                                  | `FinanceRecordMongoRepository`                                                    |
-| Una `currentPayment` con referencia activa       | índice único sparse                                                   | `RecurringPaymentsMongoRepository`                                                |
-| Un solo ganador al reservar                      | CAS `replaceOne` con estado esperado                                  | `saveIfCurrentPaymentMatches`                                                     |
-| Webhook procesado una sola vez                   | cortocircuito por `bankingExternalReference` + `findRecurringPayment` | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
-| Encolado de `FinancialRecord` una sola vez       | `jobId` determinista (`sha256(recurringPaymentId:competence:sequence)`) | `RegisterRecurringPaymentFinancialRecord`                                       |
-| Una operación lógica en el banco                 | índice único `{clientId, externalAccountId, externalReference}`       | `church-banking`                                                                  |
-| Sin nuevo envío tras duda                        | `CREATION_UNKNOWN` permanece `PROCESSING`; solo el webhook lo resuelve | `ExecuteRecurringPayment`                                                         |
+| Invariante                                       | Mecanismo                                                               | Ubicación                                                                         |
+| ------------------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Un `FinancialRecord` por recurrencia+competencia | índice único parcial                                                    | `FinanceRecordMongoRepository`                                                    |
+| Una `currentPayment` con referencia activa       | índice único sparse                                                     | `RecurringPaymentsMongoRepository`                                                |
+| Un solo ganador al reservar                      | CAS `replaceOne` con estado esperado                                    | `saveIfCurrentPaymentMatches`                                                     |
+| Webhook procesado una sola vez                   | cortocircuito por `bankingExternalReference` + `findRecurringPayment`   | `ProcessRecurringPaymentBankingUpdate`, `RegisterRecurringPaymentFinancialRecord` |
+| Encolado de `FinancialRecord` una sola vez       | `jobId` determinista (`sha256(recurringPaymentId:competence:sequence)`) | `RegisterRecurringPaymentFinancialRecord`                                         |
+| Una operación lógica en el banco                 | índice único `{clientId, externalAccountId, externalReference}`         | `church-banking`                                                                  |
+| Sin nuevo envío tras duda                        | `CREATION_UNKNOWN` permanece `PROCESSING`; solo el webhook lo resuelve  | `ExecuteRecurringPayment`                                                         |
 
 ---
 
@@ -2173,7 +2275,8 @@ Una iglesia con Asaas:
   el boleto se simula antes de pagar      (bill/simulate)
   el costCenter es obligatorio            (configuración → FinancialRecord)
 
-Una iglesia sin Asaas:
+Una cuenta no vinculada a Asaas puede registrarse manualmente aunque la iglesia
+tenga otra cuenta Asaas conectada:
   registra el pago manualmente con voucher (register-payment)
 ```
 
@@ -2211,8 +2314,8 @@ Conta utilizada
 Centro de custo
 Templo                      ← readonly (viene de la recurrencia, §4)
 
-Comprovante *
-[ ANEXAR ]                  ← OBLIGATORIO (§10)
+Comprovante
+[ ANEXAR ]                  ← obligatorio para BANK/WALLET; no aplica a CASH (§10)
 
 [ REGISTRAR PAGAMENTO ]
 ```
@@ -2222,7 +2325,7 @@ Comprovante *
 - **VARIABLE habilita el input de valor**; FIXED lo muestra readonly.
 - **No se muestra selector de método de pago** (§8, §9).
 - **No se muestran** `Conceito` ni `Centro de custo` como editables: se muestran como contexto informativo.
-- El comprobante es obligatorio; el botón de envío permanece deshabilitado sin archivo adjunto.
+- BANK/WALLET requieren archivo; CASH permite registrar sin archivo.
 
 ### Estado del botón según `competenceStatus`
 
@@ -2554,8 +2657,8 @@ Request (`application/json`):
 | Campo                    | Regla                                                                    |
 | ------------------------ | ------------------------------------------------------------------------ |
 | `competence`             | requerido, `YYYY-MM`                                                     |
-| `amount`                 | prohibido si `FIXED` (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`); requerido si `VARIABLE` (`RECURRING_PAYMENT_AMOUNT_REQUIRED`) |
-| `payment`                | opcional; si falta se usa `pixDestination`. `PIX`: `pixKey` + `pixKeyType`; `BILL`: `identificationField` |
+| `amount`                 | prohibido si `FIXED` o PIX QR; requerido si `VARIABLE` con PIX por clave o BILL |
+| `payment`                | opcional; si falta se usa `pixDestination`. `PIX`: `pixKey` + `pixKeyType`; `PIX_QR`: `payload`; `BILL`: `identificationField` |
 | `availabilityAccountId`  | opcional; obligatorio si la iglesia tiene más de una cuenta utilizable   |
 
 `200` → `ExecuteRecurringPaymentResult`:
@@ -2571,7 +2674,7 @@ Request (`application/json`):
 
 `status` ∈ `PROCESSING | BLOCKED | FAILED | PAID | ALREADY_PAID`.
 `failureCode` es diagnóstico del proveedor y no se persiste.
-`providerValueInCents` es el valor que `church-banking` leyó del boleto.
+`providerValueInCents` es el importe autoritativo que `church-banking` devuelve para boleto o PIX QR.
 
 Reglas de ejecución:
 
@@ -2675,20 +2778,20 @@ activa), `RECURRING_PAYMENT_NOT_FOUND`, `RECURRING_PAYMENT_INVALID`,
 
 ## 40. Resultado esperado — matriz de respuestas
 
-| Pregunta                              | Respuesta                                                                                                                    | Sección       |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| ¿Qué **es** una recurrencia?          | Un compromiso financiero mensual permanente, configurado una sola vez                                                        | §1            |
-| ¿Qué **no es** una recurrencia?       | Una ocurrencia mensual, un histórico, un método de pago                                                                      | §1, §2        |
-| ¿Qué se configura **una sola vez**?   | Nombre, concepto, centro de costo, tipo, monto (si FIXED), día de vencimiento, destino PIX opcional, estado                  | §3, §30       |
-| ¿Qué se solicita **cada mes**?        | Competencia, datos de ejecución (monto si VARIABLE, método y destino si no está guardado), cuenta y comprobante si es manual | §11, §15, §18 |
-| ¿Qué depende de **Asaas**?            | Solo la **ejecución bancaria**: PIX y boleto                                                                                 | §7, §26       |
-| ¿Qué ocurre **sin Asaas**?            | Registro manual: `FinancialRecord` sin operación bancaria                                                                    | §8, §9, §18   |
-| ¿Cuándo se crea el `FinancialRecord`? | Bancario: al confirmar webhook terminal (`DONE`/`PAID`). Manual: al registrar con comprobante                                | §19, §20      |
-| ¿Cómo se evita el **doble pago**?     | Índice único `recurringPaymentId + recurringCompetence` + `currentPayment` CAS + idempotencia de `church-banking`            | §22, §29      |
-| ¿Cómo funciona **PIX**?               | `POST /api/pix-transfers` con `pixKey` + `pixKeyType`; se paga al recibir `DONE`                                             | §12, §13, §26 |
-| ¿Cómo funciona **boleto**?            | `simulate` muestra el snapshot; `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. El monto autoritativo es `valueInCents` | §14, §26, §33 |
-| ¿Cómo funciona **manual**?            | `POST .../register-payment` multipart con comprobante obligatorio; crea `FinancialRecord` sin referencia bancaria            | §18, §19      |
-| ¿Cómo funciona **CostCenter**?        | Obligatorio en la configuración; se copia al `FinancialRecord` en toda ejecución                                             | §4            |
-| ¿Cómo funciona el **comprobante**?    | Obligatorio en manual; vía `StorageProviderService`; en bancario deriva del recibo de Asaas                                  | §10, §20      |
-| ¿Cómo funciona **retry**?             | Solo desde `FAILED` confirmado; reutiliza la misma referencia. `CREATION_UNKNOWN` no se reintenta                            | §25           |
-| ¿Cómo funciona **BLOCKED**?           | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago                                               | §24           |
+| Pregunta                               | Respuesta                                                                                                                                               | Sección       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| ¿Qué **es** una recurrencia?           | Un compromiso financiero mensual permanente, configurado una sola vez                                                                                   | §1            |
+| ¿Qué **no es** una recurrencia?        | Una ocurrencia mensual, un histórico, un método de pago                                                                                                 | §1, §2        |
+| ¿Qué se configura **una sola vez**?    | Nombre, concepto, centro de costo, tipo, monto (si FIXED), día de vencimiento, destino PIX opcional, estado                                             | §3, §30       |
+| ¿Qué se solicita **cada mes**?         | Competencia, datos de ejecución (monto si VARIABLE salvo PIX QR, método y destino si no está guardado), cuenta y comprobante si es manual                            | §11, §15, §18 |
+| ¿Qué depende de **Asaas**?             | Solo la **ejecución bancaria**: PIX y boleto                                                                                                            | §7, §26       |
+| ¿Qué ocurre al elegir cuenta no Asaas? | Registro manual: `FinancialRecord` sin operación bancaria                                                                                               | §8, §9, §18   |
+| ¿Cuándo se crea el `FinancialRecord`?  | PIX QR: al recibir `DONE`; otros pagos bancarios: webhook terminal; manual: al registrar                                                                | §19, §20      |
+| ¿Cómo se evita el **doble pago**?      | Índice único `recurringPaymentId + recurringCompetence` + `currentPayment` CAS + idempotencia de `church-banking`                                       | §22, §29      |
+| ¿Cómo funciona **PIX**?                | QR: `pix-qr/decode` y `/pay` con payload; pagos con clave usan `pixKey` + `pixKeyType`                                                                  | §12, §13, §26 |
+| ¿Cómo funciona **boleto**?             | `simulate` muestra el snapshot; `POST /api/bill-payments` con `identificationField`; se paga al recibir `PAID`. El monto autoritativo es `valueInCents` | §14, §26, §33 |
+| ¿Cómo funciona **manual**?             | `POST .../register-payment`; BANK/WALLET con archivo, CASH sin archivo; crea `FinancialRecord` sin referencia bancaria                                  | §18, §19      |
+| ¿Cómo funciona **CostCenter**?         | Obligatorio en la configuración; se copia al `FinancialRecord` en toda ejecución                                                                        | §4            |
+| ¿Cómo funciona el **comprobante**?     | BANK/WALLET manual lo requieren; CASH no; en bancario deriva del recibo de Asaas                                                                        | §10, §20      |
+| ¿Cómo funciona **retry**?              | Solo desde `FAILED` confirmado; reutiliza la misma referencia. `CREATION_UNKNOWN` no se reintenta                                                       | §25           |
+| ¿Cómo funciona **BLOCKED**?            | Estado de espera no terminal; no crea `FinancialRecord`, no permite otro pago                                                                           | §24           |

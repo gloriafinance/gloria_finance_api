@@ -23,10 +23,7 @@ function setup(found = true) {
   }
   const banking = { simulateBill: jest.fn().mockResolvedValue(simulation) }
 
-  const service = new SimulateRecurringPaymentBill(
-    repository as never,
-    banking as never
-  )
+  const service = new SimulateRecurringPaymentBill(repository as never, banking)
   return { service, repository, banking, simulation }
 }
 

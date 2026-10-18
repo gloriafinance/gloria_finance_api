@@ -3,7 +3,7 @@ import {
   type UpdateAvailabilityAccountRequest,
 } from "@/FinanceConfig/domain"
 import { Logger } from "@/Shared/adapter"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 
 export class UpdateAvailabilityAccount {
   private logger = Logger(UpdateAvailabilityAccount.name)
@@ -15,10 +15,12 @@ export class UpdateAvailabilityAccount {
   async execute(request: UpdateAvailabilityAccountRequest): Promise<void> {
     this.logger.info(`Updating availability account`, request)
 
-    const availabilityAccount =
-      await new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(request.availabilityAccountId, request.churchId)
+    const availabilityAccount = await new SearchAvailabilityAccount(
+      this.availabilityAccountRepository
+    ).execute({
+      availabilityAccountId: request.availabilityAccountId,
+      churchId: request.churchId,
+    })
 
     availabilityAccount.setAccountName(request.accountName)
 

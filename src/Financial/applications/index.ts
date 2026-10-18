@@ -18,6 +18,7 @@ export { DispatchCreateFinancialRecord } from "./dispatchers/DispatchCreateFinan
 export { CreateOrUpdateRecurringPayment } from "./recurringPayments/CreateOrUpdateRecurringPayment"
 export { ListRecurringPayments } from "./recurringPayments/ListRecurringPayments"
 export { ExecuteRecurringPayment } from "./recurringPayments/ExecuteRecurringPayment"
+export { DecodeRecurringPaymentPixQr } from "./recurringPayments/DecodeRecurringPaymentPixQr"
 export { RegisterRecurringPaymentFinancialRecord } from "./recurringPayments/RegisterRecurringPaymentFinancialRecord"
 export { DispatchUpdateCostCenterMaster } from "./dispatchers/DispatchUpdateCostCenterMaster"
 export * from "./dispatchers/DispatchUpdateStatusFinancialRecord"

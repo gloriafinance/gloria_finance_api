@@ -1,7 +1,8 @@
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IChurchRepository } from "@/Church/domain"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
+
 import {
   FinanceRecord,
   FinancialConcept,
@@ -14,15 +15,15 @@ import {
   type InternalTransferRequest,
   TypeOperationMoney,
 } from "@/Financial/domain"
-import type {
-  IAvailabilityAccountRepository,
-  IFinancialConceptRepository,
-  IFinancialRecordRepository,
-} from "@/Financial/domain/interfaces"
 import { DispatchUpdateAvailabilityAccountBalance } from "@/Financial/applications"
 import { DatabaseTransaction, IdentifyEntity, Logger } from "@/Shared/adapter"
 import { GenericException } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
+import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import type {
+  IAvailabilityAccountRepository,
+  IFinancialConceptRepository,
+} from "@/FinanceConfig/domain"
 
 export class CreateInternalTransfer {
   private logger = Logger(CreateInternalTransfer.name)
@@ -65,12 +66,18 @@ export class CreateInternalTransfer {
     })
 
     const [sourceAccount, destinationAccount] = await Promise.all([
-      new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(params.fromAvailabilityAccountId, params.churchId),
-      new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(params.toAvailabilityAccountId, params.churchId),
+      new SearchAvailabilityAccount(this.availabilityAccountRepository).execute(
+        {
+          availabilityAccountId: params.fromAvailabilityAccountId,
+          churchId: params.churchId,
+        }
+      ),
+      new SearchAvailabilityAccount(this.availabilityAccountRepository).execute(
+        {
+          availabilityAccountId: params.toAvailabilityAccountId,
+          churchId: params.churchId,
+        }
+      ),
     ])
 
     if (sourceAccount.getSymbol() !== destinationAccount.getSymbol()) {

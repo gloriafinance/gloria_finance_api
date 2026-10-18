@@ -5,7 +5,7 @@ import type {
   IAvailabilityAccountRepository,
 } from "@/FinanceConfig/domain"
 import { AvailabilityAccountHasMovements } from "@/FinanceConfig/domain"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 
 export class DeleteAvailabilityAccount {
   private logger = Logger(DeleteAvailabilityAccount.name)
@@ -22,10 +22,12 @@ export class DeleteAvailabilityAccount {
   }): Promise<void> {
     this.logger.info(`Deleting availability account`, request)
 
-    const availabilityAccount =
-      await new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(request.availabilityAccountId, request.churchId)
+    const availabilityAccount = await new SearchAvailabilityAccount(
+      this.availabilityAccountRepository
+    ).execute({
+      availabilityAccountId: request.availabilityAccountId,
+      churchId: request.churchId,
+    })
 
     const hasFinancialMovements = await this.financialMovementChecker.exists(
       availabilityAccount.getAvailabilityAccountId(),

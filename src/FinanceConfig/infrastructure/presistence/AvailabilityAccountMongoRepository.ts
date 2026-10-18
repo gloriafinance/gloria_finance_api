@@ -1,8 +1,4 @@
-import {
-  Criteria,
-  MongoRepository,
-  type Paginate,
-} from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
 import { AvailabilityAccount } from "@/FinanceConfig/domain/AvailabilityAccount"
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
 import { Collection } from "mongodb"
@@ -22,23 +18,6 @@ export class AvailabilityAccountMongoRepository
       this.instance = new AvailabilityAccountMongoRepository()
     }
     return this.instance
-  }
-
-  override list(filter: object): Promise<AvailabilityAccount[]>
-  override list(criteria: Criteria): Promise<Paginate<AvailabilityAccount>>
-
-  override async list(
-    filter: object | Criteria
-  ): Promise<AvailabilityAccount[] | Paginate<AvailabilityAccount>> {
-    const collection = await this.collection()
-    const documents = await collection.find(filter).toArray()
-
-    return documents.map((document) =>
-      AvailabilityAccount.fromPrimitives({
-        ...document,
-        id: document._id,
-      })
-    )
   }
 
   async deleteByAvailabilityAccountId(

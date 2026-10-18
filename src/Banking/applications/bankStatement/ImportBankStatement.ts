@@ -1,8 +1,8 @@
 import { Logger } from "@/Shared/adapter/CustomLogger"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { Bank, type ImportBankStatementRequest } from "@/Banking/domain"
-import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { AvailabilityAccountNotFound } from "@/Financial/domain"
+import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain"
 
 type ImportBankStatementUseCaseRequest = Omit<
   ImportBankStatementRequest,

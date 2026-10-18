@@ -16,11 +16,12 @@ Las decisiones marcadas como **ACEPTADA** son definitivas y no deben rediseñars
 | [ADR-002](./ADR-002-cost-center-belongs-to-recurring-payment.md) | CostCenter belongs to RecurringPayment | Todo gasto tiene CostCenter; se configura una vez | **ACEPTADA** |
 | [ADR-003](./ADR-003-manual-and-banking-execution-coexist.md) | Manual and banking execution coexist | Dos caminos de ejecución, un solo modelo de recurrencia | **ACEPTADA** |
 | [ADR-004](./ADR-004-financial-record-is-execution-history.md) | FinancialRecord is execution history | El histórico es `FinancialRecord`; `PAID` es su consecuencia | **ACEPTADA** |
-| [ADR-005](./ADR-005-manual-voucher-is-mandatory.md) | Manual voucher is mandatory | Todo registro manual requiere comprobante | **ACEPTADA** |
+| [ADR-005](./ADR-005-manual-voucher-is-mandatory.md) | Manual voucher is mandatory | Reemplazada por ADR-010 | **REEMPLAZADA** |
 | [ADR-006](./ADR-006-availability-account-is-selected-per-manual-execution.md) | AvailabilityAccount is selected per manual execution | La cuenta es un hecho de la ejecución, no del compromiso | **ACEPTADA** |
 | [ADR-007](./ADR-007-pix-destination-is-optional-reusable-metadata.md) | PIX destination is optional reusable metadata | `pixDestination` es conveniencia, no método | **ACEPTADA** |
 | [ADR-008](./ADR-008-current-payment-is-banking-operational-state-only.md) | currentPayment is banking operational state only | Estado operativo en vuelo, nunca histórico, nunca manual | **ACEPTADA** |
 | [ADR-009](./ADR-009-settlement-history-outranks-configuration.md) | Settled history outranks configuration | `PAID` precede a `INACTIVE`; el histórico es el `FinancialRecord` | **ACEPTADA** |
+| [ADR-010](./ADR-010-manual-voucher-by-account-type.md) | Manual voucher depends on account type | BANK/WALLET requieren archivo; CASH no | **ACEPTADA** |
 
 ## Resumen ejecutivo de las decisiones
 
@@ -37,7 +38,7 @@ ADR-003  Sin Asaas  → REGISTRO MANUAL   (Glória no ejecuta)
 ADR-004  FinancialRecord = histórico de ejecuciones
          PAID = existe FinancialRecord        (no es un campo)
 
-ADR-005  voucher = REQUIRED en ejecución manual
+ADR-010  voucher requerido en BANK/WALLET; ausente en CASH
          reutiliza StorageProviderService     (sin almacenamiento paralelo)
 
 ADR-006  AvailabilityAccount se selecciona al registrar el pago

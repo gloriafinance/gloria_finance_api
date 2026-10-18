@@ -24,6 +24,19 @@ export type RecurringPaymentCompetenceStatus =
   | "PAID"
   | "INACTIVE"
 
+export type RecurringPaymentExecutionSummary = Pick<
+  CurrentRecurringPayment,
+  | "competence"
+  | "externalReference"
+  | "amount"
+  | "paymentMethod"
+  | "status"
+  | "identificationField"
+  | "paymentDate"
+  | "transactionReceiptUrl"
+  | "updatedAt"
+>
+
 /**
  * The settled accounting entry that makes a competence PAID. It belongs to the
  * financial record (the real history), so the competence response only exposes
@@ -63,7 +76,7 @@ export type RecurringPaymentForCompetence = {
    * screen would only know that something is PROCESSING/BLOCKED/FAILED, not the
    * amount, the method, the reference or when it was last updated.
    */
-  currentPayment?: CurrentRecurringPayment
+  currentPayment?: RecurringPaymentExecutionSummary
   /** Present only when the competence is PAID. */
   settlement?: RecurringPaymentSettlement
 }
@@ -169,7 +182,33 @@ export class ListRecurringPayments {
             // Only the execution of the requested month is meaningful here; a
             // failed attempt from another competence must not be shown.
             ...(currentPayment && currentPayment.competence === competence
-              ? { currentPayment }
+              ? {
+                  currentPayment: {
+                    competence: currentPayment.competence,
+                    externalReference: currentPayment.externalReference,
+                    amount: currentPayment.amount,
+                    ...(currentPayment.paymentMethod
+                      ? { paymentMethod: currentPayment.paymentMethod }
+                      : {}),
+                    status: currentPayment.status,
+                    ...(currentPayment.identificationField
+                      ? {
+                          identificationField:
+                            currentPayment.identificationField,
+                        }
+                      : {}),
+                    ...(currentPayment.paymentDate
+                      ? { paymentDate: currentPayment.paymentDate }
+                      : {}),
+                    ...(currentPayment.transactionReceiptUrl
+                      ? {
+                          transactionReceiptUrl:
+                            currentPayment.transactionReceiptUrl,
+                        }
+                      : {}),
+                    updatedAt: currentPayment.updatedAt,
+                  },
+                }
               : {}),
             ...(settlement
               ? { settlement: this.settlementOf(settlement) }

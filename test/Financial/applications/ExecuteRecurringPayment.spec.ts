@@ -1,3 +1,4 @@
+import { RecurringPixQrExecution } from "@/Financial/applications/recurringPayments/RecurringPixQrExecution"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
@@ -102,7 +103,12 @@ function setup(input: SetupInput = {}) {
           : { isClosed: () => false }
       ),
   }
-  const queue = { dispatch: jest.fn() }
+  const recordRegistrar = { execute: jest.fn() }
+  const pixQrExecution = new RecurringPixQrExecution(
+    repository as never,
+    { payPixQr: jest.fn(), getPixQrStatus: jest.fn() },
+    recordRegistrar as never
+  )
 
   const service = new ExecuteRecurringPayment(
     repository as never,
@@ -111,7 +117,7 @@ function setup(input: SetupInput = {}) {
     availabilityAccounts as never,
     financialYears as never,
     banking as never,
-    queue as never,
+    pixQrExecution,
     () => new Date("2026-10-01T12:00:00Z")
   )
   return {
@@ -122,7 +128,7 @@ function setup(input: SetupInput = {}) {
     banking,
     banks,
     availabilityAccounts,
-    queue,
+    recordRegistrar,
     callOrder,
   }
 }
@@ -158,7 +164,10 @@ describe("ExecuteRecurringPayment", () => {
       })
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_FORBIDDEN" })
 
-    const variable = setup({ type: "VARIABLE" })
+    const variable = setup({
+      type: "VARIABLE",
+      pixDestination: PIX_DESTINATION,
+    })
     await expect(
       variable.service.execute("church-1", "recurring-1", {
         competence: "2026-10",
@@ -570,6 +579,7 @@ describe("ExecuteRecurringPayment", () => {
       payment: { type: "BILL", identificationField: "34191..." },
     })
 
+    expect(ctx.recordRegistrar.execute).not.toHaveBeenCalled()
     // The boleto charged more than the declared amount; the execution records what
     // the bank actually paid instead of refusing a debit that already happened.
     expect(result).toMatchObject({
@@ -651,5 +661,21 @@ describe("ExecuteRecurringPayment", () => {
       })
     )
     expect(ctx.banking.createPixTransfer).not.toHaveBeenCalled()
+  })
+  it("requires the simulated amount for a variable bill before reserving", async () => {
+    const ctx = setup({ type: "VARIABLE" })
+    await expect(
+      ctx.service.execute(
+        "church-1",
+        "recurring-1",
+        {
+          competence: "2026-10",
+          payment: { type: "BILL", identificationField: "34191..." },
+        },
+        "user-1"
+      )
+    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_AMOUNT_REQUIRED" })
+    expect(ctx.repository.saveIfCurrentPaymentMatches).not.toHaveBeenCalled()
+    expect(ctx.banking.createBillPayment).not.toHaveBeenCalled()
   })
 })

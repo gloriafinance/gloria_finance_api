@@ -7,7 +7,7 @@ import type {
 } from "@/Financial/domain/interfaces"
 import type { IQueueService } from "@/package/queue/domain"
 import { BasePurchaseRecord } from "@/Purchases/applications/BasePurchaseRecord.ts"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 
 export class RecordPurchase extends BasePurchaseRecord {
   constructor(
@@ -26,7 +26,7 @@ export class RecordPurchase extends BasePurchaseRecord {
   }
 
   async execute(request: RecordPurchaseRequest) {
-    const account = await new FindAvailabilityAccountByAvailabilityAccountId(
+    const account = await new SearchAvailabilityAccount(
       this.availabilityAccountRepository
     ).execute(request.availabilityAccountId!)
 

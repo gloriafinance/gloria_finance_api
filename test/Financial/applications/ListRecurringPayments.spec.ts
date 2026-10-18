@@ -264,8 +264,10 @@ describe("ListRecurringPayments", () => {
       externalReference: "urn:recurringPayment:recurring-1:2026-10",
       amount: 742.83,
       paymentMethod: "BILL" as const,
+      executionDestination: "PIX_QR:private-fingerprint",
       bankId: "bank-1",
       availabilityAccountId: "availability-1",
+      providerPaymentReserved: true,
       status: "PROCESSING" as const,
       updatedAt: new Date("2026-10-01T12:00:00Z"),
     }
@@ -278,6 +280,11 @@ describe("ListRecurringPayments", () => {
       amount: 742.83,
       status: "PROCESSING",
     })
+    expect(same[0]?.currentPayment).not.toHaveProperty("executionDestination")
+    expect(same[0]?.currentPayment).not.toHaveProperty("bankId")
+    expect(same[0]?.currentPayment).not.toHaveProperty(
+      "providerPaymentReserved"
+    )
     expect(same[0]?.competenceStatus).toBe("PROCESSING")
 
     // A failed attempt from another month must not leak into this one.

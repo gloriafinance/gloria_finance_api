@@ -40,9 +40,9 @@ import {
 import { CreateFinancialRecordJob } from "@/Financial/applications/jobs/CreateFinancialRecord.job"
 import { toFinancialRecordType } from "@/Financial/domain/mappers"
 import {
-  FindAvailabilityAccountByAvailabilityAccountId,
   FindCostCenterByCostCenterId,
   FindFinancialConceptByChurchIdAndFinancialConceptId,
+  SearchAvailabilityAccount,
 } from "@/FinanceConfig/applications"
 import {
   FinancialConceptMongoRepository,
@@ -375,9 +375,9 @@ export class FinancialRecordController {
     request: FinancialRecordRequest,
     financialConcept: FinancialConcept
   ) {
-    const account = await new FindAvailabilityAccountByAvailabilityAccountId(
+    const account = await new SearchAvailabilityAccount(
       AvailabilityAccountMongoRepository.getInstance()
-    ).execute(request.availabilityAccountId)
+    ).execute({ availabilityAccountId: request.availabilityAccountId })
 
     if (account.getType() === AccountType.INVESTMENT) {
       throw new GenericException(

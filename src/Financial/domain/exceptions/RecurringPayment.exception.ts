@@ -33,7 +33,7 @@ const messages: Record<RecurringPaymentErrorCode, string> = {
   RECURRING_PAYMENT_AMOUNT_REQUIRED:
     "A valid amount is required for this payment",
   RECURRING_PAYMENT_AMOUNT_FORBIDDEN:
-    "An amount must not be supplied for a fixed recurring payment",
+    "An amount must not be supplied for a fixed recurring payment or PIX QR",
   RECURRING_PAYMENT_BILL_CODE_REQUIRED:
     "A bill identification field is required",
   RECURRING_PAYMENT_DAY_OF_MONTH_INVALID:
@@ -51,7 +51,7 @@ const messages: Record<RecurringPaymentErrorCode, string> = {
   RECURRING_PAYMENT_VOUCHER_REQUIRED:
     "A voucher file is required to register a manual payment",
   RECURRING_PAYMENT_MANUAL_NOT_ALLOWED:
-    "This church executes its recurring payments through the bank, so a manual registration is not allowed",
+    "This availability account is connected to Asaas and must use banking execution",
 }
 
 export class RecurringPaymentException extends DomainException {

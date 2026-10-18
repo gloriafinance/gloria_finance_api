@@ -6,8 +6,10 @@ import { FinancialYearMongoRepository } from "@/ConsolidatedFinancial/infrastruc
 import { FinanceRecordMongoRepository } from "@/Financial/infrastructure/persistence/FinanceRecordMongoRepository"
 import { RecurringPaymentsMongoRepository } from "@/Financial/infrastructure/persistence/RecurringPaymentsMongoRepository"
 import { CreateOrUpdateRecurringPayment } from "@/Financial/applications/recurringPayments/CreateOrUpdateRecurringPayment"
+import { RecurringPixQrExecution } from "@/Financial/applications/recurringPayments/RecurringPixQrExecution"
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
 import { SimulateRecurringPaymentBill } from "@/Financial/applications/recurringPayments/SimulateRecurringPaymentBill"
+import { DecodeRecurringPaymentPixQr } from "@/Financial/applications/recurringPayments/DecodeRecurringPaymentPixQr"
 import {
   RegisterRecurringPaymentManually,
   type RegisterRecurringPaymentManuallyInput,
@@ -18,6 +20,7 @@ import {
 } from "@/Financial/applications/recurringPayments/ListRecurringPayments"
 import type { RecurringPaymentConfigurationData } from "@/Financial/domain/RecurringPayments"
 import type {
+  PayRecurringPaymentPixQrRequest,
   PayRecurringPaymentRequest,
   RecurringPaymentConfigurationRequest,
   RegisterRecurringPaymentRequest,
@@ -41,7 +44,10 @@ import {
   Use,
 } from "bun-platform-kit"
 import {
+  validateDecodeRecurringPaymentPixQr,
   validatePayRecurringPayment,
+  validatePayRecurringPaymentPixQr,
+  validateReconcileRecurringPaymentPixQr,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
   validateSimulateRecurringPaymentBill,
@@ -57,9 +63,11 @@ import {
 } from "@/FinanceConfig/infrastructure/presistence"
 import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 import { AccountType } from "@/FinanceConfig/domain"
 import { RecurringPaymentException } from "@/Financial/domain"
+import { GenericException } from "@/Shared/domain"
+import { BankNotFound } from "@/Banking/domain"
 
 @Controller("/api/v1/recurring-payments")
 export class RecurringPaymentController {
@@ -147,16 +155,106 @@ export class RecurringPaymentController {
     @Res() res: ServerResponse
   ) {
     try {
-      const result = await new ExecuteRecurringPayment(
-        RecurringPaymentsMongoRepository.getInstance(),
-        FinanceRecordMongoRepository.getInstance(),
-        BankMongoRepository.getInstance(),
-        AvailabilityAccountMongoRepository.getInstance(),
-        FinancialYearMongoRepository.getInstance(),
-        new ChurchBankingClient()
-      ).execute(req.auth.churchId, recurringPaymentId, body)
+      const result = await this.executePayment(
+        recurringPaymentId,
+        body,
+        req.auth.churchId,
+        req.auth.userId ?? req.auth.memberId ?? "unknown"
+      )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
+      domainResponse(error, res)
+    }
+  }
+
+  @Post("/:recurringPaymentId/pix-qr/pay")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "create"),
+    validatePayRecurringPaymentPixQr,
+  ])
+  async payPixQr(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: PayRecurringPaymentPixQrRequest,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await this.executePayment(
+        recurringPaymentId,
+        body,
+        req.auth.churchId,
+        req.auth.userId ?? req.auth.memberId ?? "unknown"
+      )
+      res.status(HttpStatus.OK).send(result)
+    } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
+      domainResponse(error, res)
+    }
+  }
+
+  @Post("/:recurringPaymentId/pix-qr/status")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "read"),
+    validateReconcileRecurringPaymentPixQr,
+  ])
+  async reconcilePixQr(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: { competence: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await this.paymentExecutor().reconcilePixQr(
+        req.auth.churchId,
+        recurringPaymentId,
+        body.competence,
+        req.auth.userId ?? req.auth.memberId ?? "unknown"
+      )
+      res.status(HttpStatus.OK).send(result)
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
+  @Post("/:recurringPaymentId/pix-qr/decode")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "read"),
+    validateDecodeRecurringPaymentPixQr,
+  ])
+  async decodePixQr(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: { availabilityAccountId: string; payload: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const decoded = await new DecodeRecurringPaymentPixQr(
+        RecurringPaymentsMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        BankMongoRepository.getInstance(),
+        new ChurchBankingClient()
+      ).execute(
+        req.auth.churchId,
+        recurringPaymentId,
+        body.availabilityAccountId,
+        body.payload
+      )
+      res.status(HttpStatus.OK).send(decoded)
+    } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        res.status(error.status).send({ code: error.code })
+        return
+      }
       domainResponse(error, res)
     }
   }
@@ -213,9 +311,12 @@ export class RecurringPaymentController {
     try {
       const file = req.files?.file
 
-      const account = await new FindAvailabilityAccountByAvailabilityAccountId(
+      const account = await new SearchAvailabilityAccount(
         AvailabilityAccountMongoRepository.getInstance()
-      ).execute(bodyRequest.availabilityAccountId)
+      ).execute({
+        availabilityAccountId: bodyRequest.availabilityAccountId,
+        churchId: req.auth.churchId,
+      })
 
       if (!account) {
         throw new RecurringPaymentException(
@@ -233,6 +334,22 @@ export class RecurringPaymentController {
         )
       }
 
+      if (account.getType() === AccountType.BANK) {
+        const bank = await BankMongoRepository.getInstance().findById(
+          account.getSource().bankId
+        )
+
+        if (!bank) {
+          throw new BankNotFound()
+        }
+
+        if (bank.isConnectedProvider()) {
+          throw new GenericException(
+            "Selected bank is not enabled for manual flow"
+          )
+        }
+      }
+
       // Uploads arrive as multipart parts, never inside the parsed body.
       const body: RegisterRecurringPaymentManuallyInput = {
         ...bodyRequest,
@@ -241,8 +358,6 @@ export class RecurringPaymentController {
       const result = await new RegisterRecurringPaymentManually(
         RecurringPaymentsMongoRepository.getInstance(),
         FinanceRecordMongoRepository.getInstance(),
-        AvailabilityAccountMongoRepository.getInstance(),
-        BankMongoRepository.getInstance(),
         StorageProviderService.getInstance(),
         new RegisterRecurringPaymentFinancialRecord(
           FinanceRecordMongoRepository.getInstance(),
@@ -260,5 +375,43 @@ export class RecurringPaymentController {
     } catch (error) {
       domainResponse(error, res)
     }
+  }
+
+  private executePayment(
+    recurringPaymentId: string,
+    body: PayRecurringPaymentRequest,
+    churchId: string,
+    createdBy: string
+  ) {
+    return this.paymentExecutor().execute(
+      churchId,
+      recurringPaymentId,
+      body,
+      createdBy
+    )
+  }
+
+  private paymentExecutor(): ExecuteRecurringPayment {
+    const bankingClient = new ChurchBankingClient()
+    return new ExecuteRecurringPayment(
+      RecurringPaymentsMongoRepository.getInstance(),
+      FinanceRecordMongoRepository.getInstance(),
+      BankMongoRepository.getInstance(),
+      AvailabilityAccountMongoRepository.getInstance(),
+      FinancialYearMongoRepository.getInstance(),
+      bankingClient,
+      new RecurringPixQrExecution(
+        RecurringPaymentsMongoRepository.getInstance(),
+        bankingClient,
+        new RegisterRecurringPaymentFinancialRecord(
+          FinanceRecordMongoRepository.getInstance(),
+          AvailabilityAccountMongoRepository.getInstance(),
+          FinancialConceptMongoRepository.getInstance(),
+          FinancialConfigurationMongoRepository.getInstance(),
+          undefined,
+          FinancialYearMongoRepository.getInstance()
+        )
+      )
+    )
   }
 }
