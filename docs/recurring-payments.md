@@ -1624,14 +1624,15 @@ CREATION_UNKNOWN
 ### Manejo de `CREATION_UNKNOWN` — el caso más delicado
 
 `CREATION_UNKNOWN` significa: **no sabemos si la operación se creó en el banco.**
-Glória **no lo convierte en `FAILED`** ni reintenta: el `ChurchBankingClientError`
-no es un rechazo confirmado, así que el `currentPayment` permanece en
-`PROCESSING` y solo el webhook puede resolverlo.
+Glória **no lo convierte en `FAILED`** ni reintenta: un error que no sea `422` no
+es un rechazo confirmado, así que el `currentPayment` permanece en `PROCESSING` y
+solo el webhook puede resolverlo.
 
 ```ts
-const failure = bankingError?.isConfirmedRejection
-  ? { status: "FAILED" as const }
-  : { status: "PROCESSING" as const }
+if (!(error instanceof ChurchBankingClientError)) throw error
+if (!isConfirmedBankingRejection(error)) {
+  return this.result(payment, undefined, error.code)
+}
 ```
 
 Como el `externalReference` es estable, un reenvío de red del mismo intento está
@@ -1641,21 +1642,23 @@ se reintenta automáticamente.**
 
 ### Fallo confirmado vs no confirmado
 
-| Situación                                                                | `currentPayment.status` |
-| ------------------------------------------------------------------------ | ----------------------- |
-| `ChurchBankingClientError.isConfirmedRejection` (rechazo 4xx confirmado) | `FAILED`                |
-| Cualquier otro error (red, 5xx, respuesta ambigua)                       | `PROCESSING`            |
+| Situación                                                            | `currentPayment.status` |
+| -------------------------------------------------------------------- | ----------------------- |
+| `ChurchBankingClientError` con `status === 422` (rechazo confirmado) | `FAILED`                |
+| Cualquier otro error (409, 5xx, red, respuesta ambigua)              | `PROCESSING`            |
 
-**Regla:** solo un rechazo **confirmado** habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
+**Regla:** solo un rechazo **confirmado** (HTTP `422`) habilita `FAILED` → retry. Una duda **no** habilita retry con intento nuevo. Esto es correcto y debe preservarse.
 
 ### Correspondencia con `church-banking`
 
-`church-banking` distingue:
+`church-banking` responde **422** cuando el proveedor confirmó el rechazo
+(`PixQrPaymentCreationRejectedError`, `PixTransferCreationRejectedError`,
+`BillPaymentCreationRejectedError`). El resto —`409` de cuenta no lista o
+conflicto de identidad, `503` de credencial/decode, transporte— queda ambiguo.
 
-- **rechazo confirmado** = `AsaasIntegrationError` con `400 <= status < 500` y **no** 408/425/429 → `CREATION_FAILED` (`create-asaas-pix-transfer.use-case.ts:330-339`)
-- **cualquier otra cosa** (transporte, parse, 5xx, 408, 425, 429) → `CREATION_UNKNOWN` (`:138-176`)
-
-La clasificación de Glória es **coherente** con la de `church-banking`. Mantener sincronizada esta semántica: si `church-banking` cambia qué considera "confirmado", Glória debe cambiar con él.
+Glória clasifica **solo** el `422` como `FAILED` y deja el resto en `PROCESSING`.
+Mantener sincronizada esta semántica: si `church-banking` cambia qué considera
+"confirmado", Glória debe cambiar con él.
 
 ---
 

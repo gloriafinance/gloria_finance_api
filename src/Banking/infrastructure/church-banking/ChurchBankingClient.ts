@@ -99,12 +99,7 @@ export class ChurchBankingClient implements IChurchBankingClient {
       path: "/api/pix-transfers/qr/pay",
       payload: input,
     })
-    const data = responseData(response)
-    if (data.description !== input.description) {
-      throw invalidResponse()
-    }
-
-    return this.parsePixQrPaymentResponse(data, input)
+    return this.parsePixQrPaymentResponse(responseData(response), input)
   }
 
   async getPixQrStatus(input: PixQrStatusInput): Promise<PayPixQrResponse> {
@@ -117,43 +112,48 @@ export class ChurchBankingClient implements IChurchBankingClient {
 
   private parsePixQrPaymentResponse(
     response: Record<string, unknown>,
-    input: PixQrStatusInput
+    input: {
+      externalAccountId: string
+      externalReference: string
+      description?: string
+    }
   ): PayPixQrResponse {
     if (
       response.externalAccountId !== input.externalAccountId ||
       response.externalReference !== input.externalReference ||
+      !isNonBlankString(response.description) ||
       !isPositiveInteger(response.amountInCents) ||
-      !isPixQrPaymentStatus(response.status)
+      (input.description !== undefined &&
+        response.description !== input.description)
     ) {
       throw invalidResponse()
     }
 
+    const base = {
+      externalAccountId: input.externalAccountId,
+      externalReference: input.externalReference,
+      amountInCents: response.amountInCents,
+      description: response.description,
+    }
     const status = response.status
-    const createdStatus =
-      status === "PENDING" ||
-      status === "DONE" ||
-      status === "REFUSED" ||
-      status === "CANCELLED" ||
-      status === "STATUS_UNRECOGNIZED"
-    if (
-      (createdStatus && !isNonBlankString(response.providerTransactionId)) ||
-      (!createdStatus && !isOptionalString(response.providerTransactionId)) ||
-      !isOptionalString(response.errorCode)
-    ) {
+    if (status === "RESERVED" || status === "CREATING") {
+      return { ...base, status }
+    }
+    if (status === "CREATION_FAILED" || status === "CREATION_UNKNOWN") {
+      if (!isNonBlankString(response.errorCode)) throw invalidResponse()
+      return { ...base, status, errorCode: response.errorCode }
+    }
+    if (!isPixQrCreatedStatus(status)) throw invalidResponse()
+    // Every created, non-failed state owns the Asaas transaction it may still
+    // have to reconcile.
+    if (!isNonBlankString(response.providerTransactionId)) {
       throw invalidResponse()
     }
 
     return {
-      externalAccountId: input.externalAccountId,
-      externalReference: input.externalReference,
-      amountInCents: response.amountInCents,
+      ...base,
       status,
-      ...(typeof response.providerTransactionId === "string"
-        ? { providerTransactionId: response.providerTransactionId }
-        : {}),
-      ...(typeof response.errorCode === "string"
-        ? { errorCode: response.errorCode }
-        : {}),
+      providerTransactionId: response.providerTransactionId,
     }
   }
 
@@ -619,23 +619,21 @@ function isBillPaymentStatus(
   )
 }
 
-const PIX_QR_PAYMENT_STATUSES: readonly PayPixQrResponse["status"][] = [
-  "RESERVED",
-  "CREATING",
+/** The PIX QR states that carry an Asaas transaction id. */
+type PixQrCreatedStatus =
+  "PENDING" | "STATUS_UNRECOGNIZED" | "DONE" | "REFUSED" | "CANCELLED"
+
+const PIX_QR_CREATED_STATUSES: readonly PixQrCreatedStatus[] = [
   "PENDING",
   "STATUS_UNRECOGNIZED",
   "DONE",
   "REFUSED",
   "CANCELLED",
-  "CREATION_FAILED",
-  "CREATION_UNKNOWN",
 ]
 
-function isPixQrPaymentStatus(
-  value: unknown
-): value is PayPixQrResponse["status"] {
+function isPixQrCreatedStatus(value: unknown): value is PixQrCreatedStatus {
   return (
     typeof value === "string" &&
-    (PIX_QR_PAYMENT_STATUSES as readonly string[]).includes(value)
+    (PIX_QR_CREATED_STATUSES as readonly string[]).includes(value)
   )
 }

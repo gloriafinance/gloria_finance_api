@@ -391,15 +391,17 @@ export class ExecuteRecurringPayment {
         })
       }
     } catch (error) {
-      const bankingError =
-        error instanceof ChurchBankingClientError ? error : undefined
-      // A confirmed rejection is a failure this service can retry; anything else
-      // leaves the operation in flight, where only the confirmation webhook can
-      // resolve it. The provider's own code is not persisted.
-      const failure = { status: "FAILED" as const }
+      if (!(error instanceof ChurchBankingClientError)) throw error
+      // Only a confirmed rejection proves no debit happened, so it is the only
+      // status that releases the reservation as FAILED. Anything else is
+      // ambiguous and stays PROCESSING: a retry could double the debit.
+      if (!isConfirmedBankingRejection(error)) {
+        return this.result(payment, undefined, error.code)
+      }
+
       const next: CurrentRecurringPayment = {
         ...payment,
-        ...failure,
+        status: "FAILED",
         updatedAt: this.now(),
       }
       recurring.updateCurrentPayment(next)
@@ -407,7 +409,7 @@ export class ExecuteRecurringPayment {
         recurring,
         payment
       )
-      return this.result(next, undefined, bankingError?.code)
+      return this.result(next, undefined, error.code)
     }
 
     return this.applyBankingResult(recurring, payment, response)
@@ -431,11 +433,13 @@ export class ExecuteRecurringPayment {
         description: recurring.getName(),
       })
     } catch (error) {
-      if (
-        !(error instanceof ChurchBankingClientError) ||
-        !error.isConfirmedRejection
-      ) {
-        throw error
+      if (!(error instanceof ChurchBankingClientError)) throw error
+      // church-banking answers 422 for a creation its provider confirmed was
+      // refused, which proves no money moved: the reservation is released as
+      // FAILED. Every other status (409, 5xx, transport) is ambiguous and stays
+      // PROCESSING, because re-sending the payment could create a second debit.
+      if (!isConfirmedBankingRejection(error)) {
+        return this.result(payment, undefined, error.code)
       }
 
       const failed: CurrentRecurringPayment = {
@@ -486,7 +490,7 @@ export class ExecuteRecurringPayment {
       recurring,
       payment
     )
-    return this.result(next, response.amountInCents, response.errorCode)
+    return this.result(next, response.amountInCents, pixQrErrorCode(response))
   }
 
   private async applyBankingResult(
@@ -585,16 +589,7 @@ function executionStatusOf(
 }
 
 function qrExecutionStatus(
-  status:
-    | "RESERVED"
-    | "CREATING"
-    | "PENDING"
-    | "STATUS_UNRECOGNIZED"
-    | "DONE"
-    | "REFUSED"
-    | "CANCELLED"
-    | "CREATION_FAILED"
-    | "CREATION_UNKNOWN"
+  status: PayPixQrResponse["status"]
 ): RecurringPaymentExecutionStatus {
   if (status === "DONE") return "PAID"
   if (
@@ -605,4 +600,17 @@ function qrExecutionStatus(
     return "FAILED"
   if (status === "CREATION_UNKNOWN") return "BLOCKED"
   return "PROCESSING"
+}
+
+/**
+ * church-banking answers 422 for an outgoing payment its provider definitively
+ * refused, which proves no money moved. Every other status is ambiguous and must
+ * never be treated as a confirmed failure, or a retry could double the debit.
+ */
+function isConfirmedBankingRejection(error: ChurchBankingClientError): boolean {
+  return error.status === 422
+}
+
+function pixQrErrorCode(response: PayPixQrResponse): string | undefined {
+  return "errorCode" in response ? response.errorCode : undefined
 }

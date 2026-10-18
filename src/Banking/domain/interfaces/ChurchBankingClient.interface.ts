@@ -94,23 +94,48 @@ export type PixQrStatusInput = {
   externalReference: string
 }
 
-export type PayPixQrResponse = {
+/** States church-banking reports for a PIX QR payment. */
+export type PixQrPaymentStatus =
+  | "RESERVED"
+  | "CREATING"
+  | "PENDING"
+  | "STATUS_UNRECOGNIZED"
+  | "DONE"
+  | "REFUSED"
+  | "CANCELLED"
+  | "CREATION_FAILED"
+  | "CREATION_UNKNOWN"
+
+type PixQrPaymentBase = {
   externalAccountId: string
   externalReference: string
+  /**
+   * Amount Asaas reported when the QR was decoded. It is provider-owned and
+   * always present, even for states that have not moved money yet.
+   */
   amountInCents: number
-  status:
-    | "RESERVED"
-    | "CREATING"
-    | "PENDING"
-    | "STATUS_UNRECOGNIZED"
-    | "DONE"
-    | "REFUSED"
-    | "CANCELLED"
-    | "CREATION_FAILED"
-    | "CREATION_UNKNOWN"
-  providerTransactionId?: string
-  errorCode?: string
+  /** The description Glória sent; church-banking echoes it in every state. */
+  description: string
 }
+
+/**
+ * church-banking answers a PIX QR operation per state, so only the states that
+ * carry a provider transaction expose its id, and only a creation failure
+ * exposes the provider error code. This mirrors church-banking's own public
+ * shape, so an unexpected field combination is a protocol violation and not a
+ * value this service may silently ignore.
+ */
+export type PayPixQrResponse =
+  | (PixQrPaymentBase & { status: "RESERVED" | "CREATING" })
+  | (PixQrPaymentBase & {
+      status:
+        "PENDING" | "STATUS_UNRECOGNIZED" | "DONE" | "REFUSED" | "CANCELLED"
+      providerTransactionId: string
+    })
+  | (PixQrPaymentBase & {
+      status: "CREATION_FAILED" | "CREATION_UNKNOWN"
+      errorCode: string
+    })
 
 export type BillSimulationBankSlip = {
   identificationField?: string | null
