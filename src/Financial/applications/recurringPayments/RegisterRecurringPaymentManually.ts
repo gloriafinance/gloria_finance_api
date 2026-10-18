@@ -7,7 +7,7 @@ import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import type { IStorageService } from "@/Shared/domain/interfaces/StorageService.interface"
 import { assertCompetence } from "./RecurringPaymentCompetence"
-import { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
+import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
 
 export type RegisterRecurringPaymentManuallyInput =
   RegisterRecurringPaymentRequest & {
@@ -46,10 +46,6 @@ export class RegisterRecurringPaymentManually {
     request: RegisterRecurringPaymentManuallyInput
   ): Promise<RegisterRecurringPaymentManuallyResult> {
     assertCompetence(request.competence)
-
-    if (!request.file) {
-      throw new RecurringPaymentException("RECURRING_PAYMENT_VOUCHER_REQUIRED")
-    }
 
     // The two execution paths must not run for the same competence: a manual
     // record and a real provider debit would both claim it. While the church has
@@ -90,18 +86,13 @@ export class RegisterRecurringPaymentManually {
       }
     }
 
-    const account = await this.availabilityAccountRepository.one({
-      availabilityAccountId: request.availabilityAccountId,
-      churchId,
-    })
-    if (!account) {
-      throw new RecurringPaymentException(
-        "RECURRING_PAYMENT_AVAILABILITY_ACCOUNT_UNAVAILABLE"
-      )
-    }
-
     const amount = this.resolveAmount(recurring.getAmount(), request.amount)
-    const voucher = await this.storage.uploadFile(request.file)
+    let deleteVoucherOnRollback = false
+    let voucher = undefined
+    if (request.file) {
+      voucher = await this.storage.uploadFile(request.file)
+      deleteVoucherOnRollback = true
+    }
 
     try {
       await this.recordRegistrar.execute({
@@ -114,9 +105,9 @@ export class RegisterRecurringPaymentManually {
         voucher,
       })
     } catch (error) {
-      // The voucher was already uploaded; do not leave it orphaned when the
-      // record could not be scheduled.
-      await this.storage.deleteFile(voucher).catch(() => undefined)
+      if (deleteVoucherOnRollback)
+        await this.storage.deleteFile(voucher!).catch(() => undefined)
+
       throw error
     }
 

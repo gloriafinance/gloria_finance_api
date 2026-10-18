@@ -57,6 +57,9 @@ import {
 } from "@/FinanceConfig/infrastructure/presistence"
 import { RegisterRecurringPaymentFinancialRecord } from "@/Financial/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
+import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { AccountType } from "@/FinanceConfig/domain"
+import { RecurringPaymentException } from "@/Financial/domain"
 
 @Controller("/api/v1/recurring-payments")
 export class RecurringPaymentController {
@@ -203,14 +206,37 @@ export class RecurringPaymentController {
   ])
   async registerPayment(
     @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() bodyRequest: RegisterRecurringPaymentRequest,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
     try {
+      const file = req.files?.file
+
+      const account = await new FindAvailabilityAccountByAvailabilityAccountId(
+        AvailabilityAccountMongoRepository.getInstance()
+      ).execute(bodyRequest.availabilityAccountId)
+
+      if (!account) {
+        throw new RecurringPaymentException(
+          "RECURRING_PAYMENT_AVAILABILITY_ACCOUNT_UNAVAILABLE"
+        )
+      }
+
+      if (
+        (account.getType() === AccountType.BANK ||
+          account.getType() === AccountType.WALLET) &&
+        !file
+      ) {
+        throw new RecurringPaymentException(
+          "RECURRING_PAYMENT_VOUCHER_REQUIRED"
+        )
+      }
+
       // Uploads arrive as multipart parts, never inside the parsed body.
       const body: RegisterRecurringPaymentManuallyInput = {
-        ...(req.body as RegisterRecurringPaymentRequest),
-        file: req.files?.file,
+        ...bodyRequest,
+        file,
       }
       const result = await new RegisterRecurringPaymentManually(
         RecurringPaymentsMongoRepository.getInstance(),

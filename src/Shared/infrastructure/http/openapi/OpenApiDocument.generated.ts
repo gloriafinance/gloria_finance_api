@@ -1920,7 +1920,14 @@ export const openApiDocument = {
             in: "query",
             required: false,
             schema: {
-              description: "TypeScript type: string | number",
+              oneOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "number",
+                },
+              ],
             },
           },
           {
@@ -1928,7 +1935,14 @@ export const openApiDocument = {
             in: "query",
             required: false,
             schema: {
-              description: "TypeScript type: string | number",
+              oneOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "number",
+                },
+              ],
             },
           },
           {
@@ -2378,7 +2392,15 @@ export const openApiDocument = {
                     type: "string",
                   },
                   openingDate: {
-                    description: "TypeScript type: Date | string",
+                    oneOf: [
+                      {
+                        type: "string",
+                        format: "date-time",
+                      },
+                      {
+                        type: "string",
+                      },
+                    ],
                   },
                   regionId: {
                     type: "string",
@@ -9969,9 +9991,6 @@ export const openApiDocument = {
                   identificationField: {
                     type: "string",
                   },
-                  barCode: {
-                    description: "TypeScript type: never",
-                  },
                 },
                 required: ["identificationField"],
                 additionalProperties: false,
@@ -10337,8 +10356,8 @@ export const openApiDocument = {
                           type: "Gloria Finance",
                           flowType: "entry",
                           status: "Gloria Finance",
-                          accountId: 0,
-                          accountName: 0,
+                          accountId: "00000000-0000-0000-0000-000000000001",
+                          accountName: "Gloria Finance",
                           voucher: "Gloria Finance",
                         },
                       ],
@@ -11106,7 +11125,15 @@ export const openApiDocument = {
                         format: "date-time",
                       },
                       endDate: {
-                        description: "TypeScript type: Date | null",
+                        oneOf: [
+                          {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          {
+                            description: "TypeScript type: null",
+                          },
+                        ],
                       },
                     },
                     required: [
@@ -11433,7 +11460,15 @@ export const openApiDocument = {
                         format: "date-time",
                       },
                       endDate: {
-                        description: "TypeScript type: Date | null",
+                        oneOf: [
+                          {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          {
+                            description: "TypeScript type: null",
+                          },
+                        ],
                       },
                     },
                     required: [

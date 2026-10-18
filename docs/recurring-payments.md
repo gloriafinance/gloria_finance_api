@@ -2119,7 +2119,7 @@ pero **NO**:
 Método de pagamento obrigatório
 ```
 
-### Contrato TARGET de creación
+### Contrato de creación
 
 ```http
 POST /api/v1/recurring-payments
@@ -2141,42 +2141,28 @@ POST /api/v1/recurring-payments
 }
 ```
 
-`pixDestination` es opcional y **no** implica `method = PIX`.
-
-### `CURRENT` — contrato de creación real
-
-```json
-{
-  "name": "Aluguel do templo",
-  "financialConceptId": "urn:financialConcept:...",
-  "type": "FIXED",
-  "amount": 3500,
-  "dayOfMonth": 10,
-  "status": "ACTIVE",
-  "payment": {
-    "method": "PIX",
-    "pixKey": "12345678000190",
-    "pixKeyType": "CNPJ"
-  }
-}
-```
-
-Obligatoriedades verificadas en `validateRecurringPaymentConfiguration`:
+Obligatoriedades verificadas en `validateRecurringPaymentConfiguration` y en
+`RecurringPayments.assertConfiguration`:
 
 ```text
-payment.method          required, in: PIX, BILL     ← [GAP-01](./recurring-payments-gap-analysis.md#gap-01-paymentmethod-obligatorio-dentro-de-recurringpayment-alto) / [ADR-001](./adr/ADR-001-recurring-payment-does-not-own-payment-method.md)
-payment.pixKey          required si method = PIX
-payment.pixKeyType      required si method = PIX
-payment (claves)        hasOnlyKeys: ["method"] para BILL
-                          → BILL NO puede llevar pixKey     ← GAP-05
-campos permitidos       name, financialConceptId, type, amount,
-                        dayOfMonth, payment, status
-                          → costCenterId RECHAZADO           ← GAP-02
-amount                  required|numeric si FIXED; debe ser > 0
-                        VARIABLE && amount !== undefined → inválido
+name, financialConceptId, costCenterId   required
+type                                    required, in: FIXED, VARIABLE
+amount                                  required y > 0 si FIXED
+                                        PROHIBIDO si VARIABLE
+dayOfMonth                              required, integer 1..31
+status                                  optional, in: ACTIVE, INACTIVE
+pixDestination                          optional; { pixKey, pixKeyType }
+                                        nunca implica un método de pago
+campos permitidos                       name, financialConceptId, costCenterId,
+                                        type, amount, dayOfMonth, pixDestination,
+                                        status
+                                        → `payment` es RECHAZADO (ADR-001)
 ```
 
-`payment: { method: "BILL" }` es obligatorio y **excluyente** con PIX: no se puede tener una recurrencia sin método, ni con destino PIX disponible para fallback.
+`pixDestination` es opcional y **no** implica `method = PIX`. El método se elige
+por ejecución (§15).
+
+---
 
 ### Estado actual del flujo
 
@@ -2435,6 +2421,255 @@ PAID = FinancialRecord exists
 `PAID` **no** es un campo que se escriba. Es una consecuencia de la existencia del `FinancialRecord` (§17). Ver el diagrama Mermaid en:
 
 [`recurring-payments-diagrams.md` → §3 Diagrama de estados](./recurring-payments-diagrams.md#3-diagrama-de-estados)
+
+---
+
+## 37. API — endpoints de pagos recurrentes
+
+Base: `/api/v1/recurring-payments`. Todos los endpoints requieren
+`Authorization: Bearer <JWT>` y `PermissionMiddleware`.
+
+Los contratos siguientes son los **vigentes**. La referencia interactiva se
+sirve en `/docs/` (Scalar) y `/docs/openapi.json` (OpenAPI generado desde los
+controllers).
+
+### 37.1 `POST /api/v1/recurring-payments` — crear configuración
+
+Permiso: `financial_configuration` / `manage_concepts`.
+
+Request (`application/json`):
+
+```json
+{
+  "name": "Aluguel do templo",
+  "financialConceptId": "urn:financialConcept:...",
+  "costCenterId": "urn:costCenter:...",
+  "type": "FIXED",
+  "amount": 3500,
+  "dayOfMonth": 10,
+  "status": "ACTIVE",
+  "pixDestination": { "pixKey": "12345678000190", "pixKeyType": "CNPJ" }
+}
+```
+
+| Campo                 | Regla                                                         |
+| --------------------- | ------------------------------------------------------------- |
+| `name`                | requerido, string                                             |
+| `financialConceptId`  | requerido, concepto OUTGO activo de la iglesia                |
+| `costCenterId`        | requerido, centro de costo de la iglesia                      |
+| `type`                | `FIXED` \| `VARIABLE`                                         |
+| `amount`              | requerido y > 0 si `FIXED`; prohibido si `VARIABLE`           |
+| `dayOfMonth`          | entero 1..31                                                  |
+| `pixDestination`      | opcional `{ pixKey, pixKeyType }`; no implica método de pago  |
+| `status`              | opcional `ACTIVE` \| `INACTIVE` (default `ACTIVE`)            |
+| `payment`             | **rechazado** (ADR-001)                                       |
+
+`201` → `RecurringPaymentConfigurationData`:
+
+```json
+{
+  "recurringPaymentId": "urn:recurringPayments:...",
+  "churchId": "urn:church:...",
+  "financialConceptId": "urn:financialConcept:...",
+  "costCenterId": "urn:costCenter:...",
+  "name": "Aluguel do templo",
+  "type": "FIXED",
+  "amount": 3500,
+  "dayOfMonth": 10,
+  "pixDestination": { "pixKey": "12345678000190", "pixKeyType": "CNPJ" },
+  "status": "ACTIVE"
+}
+```
+
+Errores: `422 RECURRING_PAYMENT_PAYLOAD_INVALID` (forma) o `400` con
+`RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID` / `RECURRING_PAYMENT_COST_CENTER_INVALID`
+/ `RECURRING_PAYMENT_DAY_OF_MONTH_INVALID` / `RECURRING_PAYMENT_FIXED_AMOUNT_REQUIRED`
+/ `RECURRING_PAYMENT_VARIABLE_AMOUNT_FORBIDDEN` / `RECURRING_PAYMENT_PIX_KEY_REQUIRED`.
+
+### 37.2 `PUT /api/v1/recurring-payments/:id` — actualizar configuración
+
+Permiso: `financial_configuration` / `manage_concepts`. Mismo request que
+§37.1. `200` → `RecurringPaymentConfigurationData`.
+
+Rechaza la actualización mientras exista un `currentPayment` no-`FAILED`
+(`400 RECURRING_PAYMENT_IN_PROGRESS`), para no cambiar el compromiso de una
+ejecución en vuelo.
+
+### 37.3 `GET /api/v1/recurring-payments` — competencias del mes
+
+Permiso: `financial_records` / `read`.
+
+Query: `competence=YYYY-MM` (opcional; default mes actual en
+`America/Sao_Paulo`).
+
+`200` → `RecurringPaymentForCompetence[]`:
+
+```json
+[
+  {
+    "recurringPaymentId": "urn:recurringPayments:...",
+    "churchId": "urn:church:...",
+    "financialConceptId": "urn:financialConcept:...",
+    "costCenterId": "urn:costCenter:...",
+    "name": "Energia",
+    "type": "VARIABLE",
+    "dayOfMonth": 10,
+    "status": "ACTIVE",
+    "competence": "2026-10",
+    "competenceStatus": "PROCESSING",
+    "currentPayment": {
+      "competence": "2026-10",
+      "externalReference": "urn:recurringPayment:...:2026-10",
+      "amount": 742.83,
+      "paymentMethod": "BILL",
+      "bankId": "urn:bank:...",
+      "availabilityAccountId": "urn:availabilityAccount:...",
+      "status": "PROCESSING",
+      "identificationField": "...",
+      "updatedAt": "2026-10-01T12:00:00.000Z"
+    }
+  }
+]
+```
+
+`competenceStatus` = `PENDING | UPCOMING | PROCESSING | BLOCKED | FAILED | PAID | INACTIVE`.
+`currentPayment` solo aparece si la ejecución corresponde a la competencia
+consultada; `settlement` solo cuando la competencia está `PAID`.
+
+### 37.4 `POST /api/v1/recurring-payments/:recurringPaymentId/pay` — ejecutar pago
+
+Permiso: `financial_records` / `create`. **Único endpoint que mueve dinero.**
+
+Request (`application/json`):
+
+```json
+{
+  "competence": "2026-10",
+  "amount": 742.83,
+  "payment": { "type": "BILL", "identificationField": "34191..." },
+  "availabilityAccountId": "urn:availabilityAccount:..."
+}
+```
+
+| Campo                    | Regla                                                                    |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `competence`             | requerido, `YYYY-MM`                                                     |
+| `amount`                 | prohibido si `FIXED` (`RECURRING_PAYMENT_AMOUNT_FORBIDDEN`); requerido si `VARIABLE` (`RECURRING_PAYMENT_AMOUNT_REQUIRED`) |
+| `payment`                | opcional; si falta se usa `pixDestination`. `PIX`: `pixKey` + `pixKeyType`; `BILL`: `identificationField` |
+| `availabilityAccountId`  | opcional; obligatorio si la iglesia tiene más de una cuenta utilizable   |
+
+`200` → `ExecuteRecurringPaymentResult`:
+
+```json
+{
+  "status": "PROCESSING",
+  "competence": "2026-10",
+  "failureCode": "BILL_INVALID",
+  "providerValueInCents": 74283
+}
+```
+
+`status` ∈ `PROCESSING | BLOCKED | FAILED | PAID | ALREADY_PAID`.
+`failureCode` es diagnóstico del proveedor y no se persiste.
+`providerValueInCents` es el valor que `church-banking` leyó del boleto.
+
+Reglas de ejecución:
+
+- Una competencia tiene una sola `externalReference` y una sola operación lógica.
+- Si ya existe una operación en vuelo, la respuesta devuelve su estado sin
+  volver a llamar al banco (`PROCESSING` / `BLOCKED` / `PAID`).
+- Solo un `FAILED` confirmado permite un nuevo envío.
+- Un resultado ambiguo permanece `PROCESSING`; **no** se reintenta.
+- `BILL`: el payload enviado a `church-banking` no lleva monto; el `valueInCents`
+  confirmado es la autoridad del débito.
+
+Errores: `400 RECURRING_PAYMENT_NOT_FOUND`, `RECURRING_PAYMENT_IN_PROGRESS`,
+`RECURRING_PAYMENT_INVALID`, `RECURRING_PAYMENT_AMOUNT_*`,
+`RECURRING_PAYMENT_BANK_ACCOUNT_UNAVAILABLE`,
+`RECURRING_PAYMENT_AVAILABILITY_ACCOUNT_UNAVAILABLE`;
+`422 RECURRING_PAYMENT_PAY_PAYLOAD_INVALID`.
+
+### 37.5 `POST /api/v1/recurring-payments/:recurringPaymentId/bill/simulate` — simular boleto
+
+Permiso: `financial_records` / `read`. Lectura: no mueve dinero ni escribe.
+
+Request (`application/json`): exactamente uno de
+
+```json
+{ "identificationField": "03399201595100529040147600301023888440000421177" }
+```
+
+```json
+{ "barCode": "03391815100000029909777729900000000475110101" }
+```
+
+Rechaza ambos, ninguno, un valor en blanco y cualquier campo extra (`amount`,
+`churchId`, `externalAccountId`, `recurringPaymentId`, `competence`,
+`availabilityAccountId`, `context`) con
+`400 RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID`.
+
+`200` → snapshot del boleto (§14):
+
+```json
+{
+  "minimumScheduleDate": "2026-10-02",
+  "feeInCents": 0,
+  "bankSlip": {
+    "identificationField": "033992015951...",
+    "valueInCents": 74283,
+    "originalValueInCents": 74283,
+    "dueDate": "2026-10-10",
+    "companyName": "Fornecedor",
+    "bank": "033",
+    "beneficiaryCpfCnpj": "19.540.550/0001-21",
+    "beneficiaryName": "ASAAS GESTAO FINANCEIRA S.A.",
+    "allowChangeValue": false,
+    "minValueInCents": 74283,
+    "maxValueInCents": 74283,
+    "discountValueInCents": 0,
+    "interestValueInCents": 0,
+    "fineValueInCents": 0,
+    "totalDiscountValueInCents": 0,
+    "totalAdditionalValueInCents": 0,
+    "isOverdue": false
+  }
+}
+```
+
+Errores: `400 RECURRING_PAYMENT_NOT_FOUND` (inexistente, otra iglesia o
+inactiva). Un error del proveedor conserva su status HTTP (`502`, `503`, …) con
+`{ code }`; nunca se reporta como boleto inválido.
+
+### 37.6 `POST /api/v1/recurring-payments/:recurringPaymentId/register-payment` — registro manual
+
+Permiso: `financial_records` / `create`. `multipart/form-data`.
+
+| Parte                    | Regla                                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| `competence`             | requerido, `YYYY-MM`                                         |
+| `amount`                 | prohibido si `FIXED`; requerido si `VARIABLE`                |
+| `paymentDate`            | requerido, `YYYY-MM-DD`                                      |
+| `availabilityAccountId`  | requerido                                                    |
+| `file`                   | requerido; comprobante (PDF/imagen)                          |
+
+`202` → `{ "status": "PROCESSING", "competence": "2026-10" }`
+(o `ALREADY_REGISTERED` si la competencia ya tenía registro).
+
+Errores: `400 RECURRING_PAYMENT_VOUCHER_REQUIRED`,
+`RECURRING_PAYMENT_MANUAL_NOT_ALLOWED` (la iglesia tiene conexión bancaria
+activa), `RECURRING_PAYMENT_NOT_FOUND`, `RECURRING_PAYMENT_INVALID`,
+`RECURRING_PAYMENT_AMOUNT_*`;
+`422 RECURRING_PAYMENT_REGISTER_PAYLOAD_INVALID`.
+
+### 37.7 Errores y códigos HTTP
+
+| Origen                                        | HTTP | Body                                   |
+| --------------------------------------------- | ---- | -------------------------------------- |
+| Validación de payload (excepto simulate)       | 422  | `{ code }` o `validator.errors`        |
+| Validación de simulate                         | 400  | `{ code }`                             |
+| `DomainException` (regla de negocio)           | 400  | `{ code, message }`                    |
+| `ChurchBankingClientError` (solo simulate)     | el del proveedor (`502`, `503`, `4xx`) | `{ code }` |
+| Error inesperado                               | 500  | `{ message }`                          |
 
 ---
 

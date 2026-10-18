@@ -56,6 +56,7 @@ type OpenApiSchema = {
   format?: string
   enum?: string[]
   items?: OpenApiSchema
+  oneOf?: OpenApiSchema[]
   properties?: Record<string, OpenApiSchema>
   required?: string[]
   additionalProperties?: boolean
@@ -284,6 +285,24 @@ async function loadTypeDeclarations(): Promise<void> {
   }
 }
 
+/** Splits a union at depth 0, so `A | B` yields two members but `{ a: A | B }` does not. */
+function splitUnion(source: string): string[] {
+  const values: string[] = []
+  let start = 0
+  let depth = 0
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]!
+    if ("{[(<".includes(character)) depth += 1
+    if ("}])>".includes(character)) depth -= 1
+    if (character === "|" && depth === 0) {
+      values.push(source.slice(start, index))
+      start = index + 1
+    }
+  }
+  values.push(source.slice(start))
+  return values.map((value) => value.trim()).filter(Boolean)
+}
+
 function splitTopLevel(source: string): string[] {
   const values: string[] = []
   let start = 0
@@ -377,6 +396,14 @@ function schemaFromType(
       schema.required = schema.required.filter((name) => name !== omit[2])
     return schema
   }
+  const unionMembers = splitUnion(normalized)
+  if (unionMembers.length > 1) {
+    return {
+      oneOf: unionMembers.map((member) =>
+        schemaFromType(member, new Set(visited), descriptions)
+      ),
+    }
+  }
   if (normalized.includes(" & ")) {
     const schemas = normalized
       .split(" & ")
@@ -396,6 +423,9 @@ function schemaFromType(
         .trim()
         .match(/^([A-Za-z0-9_]+)(\?)?\s*:\s*([\s\S]+)$/)
       if (!property) continue
+      // `key?: never` is how a discriminated option forbids its siblings, so the
+      // property does not belong to that member of the union.
+      if (property[2] && property[3]!.trim() === "never") continue
       const propSchema = schemaFromType(property[3]!, visited, descriptions)
       const description = descriptions.get(property[1]!)
       if (description) propSchema.description = description
@@ -419,6 +449,7 @@ function exampleFromSchema(
   schema: OpenApiSchema,
   propertyName?: string
 ): OpenApiExample {
+  if (schema.oneOf?.[0]) return exampleFromSchema(schema.oneOf[0], propertyName)
   if (schema.enum?.[0]) return schema.enum[0]
   if (schema.type === "string")
     return exampleForStringProperty(propertyName ?? "value")
