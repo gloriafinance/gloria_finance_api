@@ -9,10 +9,10 @@ import {
 import { RegisterContributionsOnline } from "@/Financial/applications"
 import { AmountValue } from "@/Shared/domain"
 import type { IMemberRepository } from "@/Church/domain"
-import type { IAvailabilityAccountRepository } from "@/Financial/domain/interfaces"
 import { FindMemberById } from "@/Church/applications"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 import { DateBR } from "@/Shared/helpers"
+import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain"
 
 export class DeclareInstallmentPayment {
   private logger = Logger(DeclareInstallmentPayment.name)
@@ -43,10 +43,12 @@ export class DeclareInstallmentPayment {
       throw new AccountReceivableNotFound()
     }
 
-    const availabilityAccount =
-      await new FindAvailabilityAccountByAvailabilityAccountId(
-        this.availabilityAccountRepository
-      ).execute(request.availabilityAccountId, member.getChurch().churchId)
+    const availabilityAccount = await new SearchAvailabilityAccount(
+      this.availabilityAccountRepository
+    ).execute({
+      availabilityAccountId: request.availabilityAccountId,
+      churchId: member.getChurch().churchId,
+    })
 
     const installment = account.getInstallment(request.installmentId)
 

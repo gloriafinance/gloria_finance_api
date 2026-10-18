@@ -1,21 +1,13 @@
 import type { Church } from "@/Church/domain/Church"
 import { Urn } from "@/Shared/adapter/Urn"
 import {
-  AggregateRoot,
   type AggregateRelations,
+  AggregateRoot,
 } from "@abejarano/ts-mongodb-criteria"
 import { TypeBankAccount } from "@/Banking/domain/enums/TypeBankAccount.enum"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
 
 export class Bank extends AggregateRoot {
-  static collectionName(): string {
-    return "churches"
-  }
-
-  static relations(): AggregateRelations {
-    return {}
-  }
-
   private accountType: TypeBankAccount
   private bankId: string
   private active: boolean
@@ -26,6 +18,14 @@ export class Bank extends AggregateRoot {
   /** Payment provider this account is connected to, if any. Empty when manual. */
   private provider?: Provider
   private churchId: string
+
+  static collectionName(): string {
+    return "churches"
+  }
+
+  static relations(): AggregateRelations {
+    return {}
+  }
 
   static create(
     accountType: TypeBankAccount,
@@ -98,6 +98,10 @@ export class Bank extends AggregateRoot {
    */
   isConnectedTo(provider: Provider): boolean {
     return this.provider === provider
+  }
+
+  isConnectedProvider(): boolean {
+    return this.provider !== undefined
   }
 
   setInstancePaymentAddress(address: string): void {

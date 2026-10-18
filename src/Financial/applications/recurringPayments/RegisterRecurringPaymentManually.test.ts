@@ -23,8 +23,6 @@ function bankingCurrentPayment(
 function build(
   options: {
     currentPayment?: Record<string, unknown>
-    providerConnected?: boolean
-    providerActive?: boolean
     existingRecord?: boolean
     inactive?: boolean
     requiresCostCenter?: boolean
@@ -58,15 +56,6 @@ function build(
     uploadFile: jest.fn(async (..._args: unknown[]) => "voucher-key"),
     deleteFile: jest.fn(async (..._args: unknown[]) => undefined),
   }
-  const banks =
-    options.providerConnected === true
-      ? [
-          {
-            isActive: () => options.providerActive !== false,
-            isConnectedTo: () => true,
-          },
-        ]
-      : []
   const useCase = new RegisterRecurringPaymentManually(
     {
       one: jest.fn(async () => (options.inactive ? undefined : recurring)),
@@ -76,8 +65,6 @@ function build(
         options.existingRecord ? { id: "record-1" } : undefined
       ),
     } as never,
-    { one: jest.fn() } as never,
-    { all: jest.fn(async () => banks) } as never,
     storage as never,
     recordRegistrar as never
   )
@@ -158,27 +145,6 @@ describe("RegisterRecurringPaymentManually", () => {
       useCase.execute("church-1", "recurring-1", "user-1", request)
     ).resolves.toEqual({ status: "ALREADY_REGISTERED", competence: "2026-10" })
     expect(recordRegistrar.execute).not.toHaveBeenCalled()
-  })
-
-  it("refuses a manual registration when the church executes through the provider", async () => {
-    const { useCase, recordRegistrar } = build({ providerConnected: true })
-
-    await expect(
-      useCase.execute("church-1", "recurring-1", "user-1", request)
-    ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_MANUAL_NOT_ALLOWED" })
-    expect(recordRegistrar.execute).not.toHaveBeenCalled()
-  })
-
-  it("allows the manual registration when the provider connection is inactive", async () => {
-    const { useCase, recordRegistrar } = build({
-      providerConnected: true,
-      providerActive: false,
-    })
-
-    await expect(
-      useCase.execute("church-1", "recurring-1", "user-1", request)
-    ).resolves.toMatchObject({ status: "PROCESSING" })
-    expect(recordRegistrar.execute).toHaveBeenCalledTimes(1)
   })
 
   it("refuses to register against an inactive recurrence", async () => {

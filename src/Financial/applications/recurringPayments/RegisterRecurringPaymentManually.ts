@@ -33,8 +33,6 @@ export class RegisterRecurringPaymentManually {
   constructor(
     private readonly recurringPaymentsRepository: IRecurringPaymentsRepository,
     private readonly financialRecordRepository: IFinancialRecordRepository,
-    private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
-    private readonly bankRepository: IBankRepository,
     private readonly storage: IStorageService,
     private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord
   ) {}
@@ -46,16 +44,6 @@ export class RegisterRecurringPaymentManually {
     request: RegisterRecurringPaymentManuallyInput
   ): Promise<RegisterRecurringPaymentManuallyResult> {
     assertCompetence(request.competence)
-
-    // The two execution paths must not run for the same competence: a manual
-    // record and a real provider debit would both claim it. While the church has
-    // an active provider connection, a payment is either executed through the
-    // bank or not paid at all.
-    if (await this.hasProviderConnection(churchId)) {
-      throw new RecurringPaymentException(
-        "RECURRING_PAYMENT_MANUAL_NOT_ALLOWED"
-      )
-    }
 
     const recurring = await this.recurringPaymentsRepository.one({
       recurringPaymentId,
@@ -120,13 +108,6 @@ export class RegisterRecurringPaymentManually {
     }
 
     return { status: "PROCESSING", competence: request.competence }
-  }
-
-  private async hasProviderConnection(churchId: string): Promise<boolean> {
-    const banks = await this.bankRepository.all(churchId)
-    return banks.some(
-      (bank) => bank.isActive() && bank.isConnectedTo(Provider.ASAAS)
-    )
   }
 
   /**

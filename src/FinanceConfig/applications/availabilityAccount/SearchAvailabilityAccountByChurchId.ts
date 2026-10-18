@@ -13,7 +13,7 @@ export class SearchAvailabilityAccountByChurchId {
 
   async execute(churchId: string): Promise<AvailabilityAccount[]> {
     this.logger.info(`Search availability account for church ${churchId}`)
-    return this.availabilityAccountRepository.list({
+    return this.availabilityAccountRepository.many({
       churchId,
       active: true,
     })

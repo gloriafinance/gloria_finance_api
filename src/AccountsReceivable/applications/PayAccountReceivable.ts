@@ -13,15 +13,15 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import {
-  type IAvailabilityAccountRepository,
-  type IFinancialConceptRepository,
-} from "@/Financial/domain/interfaces"
 import { PayInstallment } from "@/Shared/applications"
 import { PaymentAmountExceedsPending } from "@/Shared/domain"
 import type { IQueueService } from "@/package/queue/domain"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 import { StorageProviderService } from "@/Shared/infrastructure"
+import type {
+  IAvailabilityAccountRepository,
+  IFinancialConceptRepository,
+} from "@/FinanceConfig/domain"
 
 export class PayAccountReceivable {
   private logger = Logger(PayAccountReceivable.name)
@@ -51,14 +51,15 @@ export class PayAccountReceivable {
           throw new PayAccountReceivableNotFound()
         }
 
-        const availabilityAccount =
-          await new FindAvailabilityAccountByAvailabilityAccountId(
-            this.availabilityAccountRepository
-          ).execute(
-            req.availabilityAccountId,
-            accountReceivable.getChurchId(),
-            transaction
-          )
+        const availabilityAccount = await new SearchAvailabilityAccount(
+          this.availabilityAccountRepository
+        ).execute(
+          {
+            availabilityAccountId: req.availabilityAccountId,
+            churchId: accountReceivable.getChurchId(),
+          },
+          transaction
+        )
         let amountPay = req.amount.getValue()
 
         for (const installmentId of req.installmentIds) {

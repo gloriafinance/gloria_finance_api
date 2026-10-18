@@ -7,7 +7,7 @@ export * from "./financialConcept/FirstLoadFinancialConcepts"
 
 export * from "./availabilityAccount/CreateAvailabilityAccount"
 export * from "./availabilityAccount/DeleteAvailabilityAccount"
-export * from "./availabilityAccount/FindAvailabilityAccountByAvailabilityAccountId"
+export * from "./availabilityAccount/SearchAvailabilityAccount.ts"
 export * from "./availabilityAccount/SearchAvailabilityAccountByChurchId"
 export * from "./availabilityAccount/UpdateAvailabilityAccount"
 

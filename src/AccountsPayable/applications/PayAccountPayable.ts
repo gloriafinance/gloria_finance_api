@@ -6,11 +6,6 @@ import {
   InstallmentNotFound,
   type PayAccountPayableRequest,
 } from "@/AccountsPayable/domain"
-import type {
-  IAvailabilityAccountRepository,
-  IFinancialConceptRepository,
-  IFinancialConfigurationRepository,
-} from "@/Financial/domain/interfaces"
 import { AmountValue, PaymentAmountExceedsPending } from "@/Shared/domain"
 import { PayInstallment } from "@/Shared/applications"
 import {
@@ -18,6 +13,9 @@ import {
   CostCenter,
   FinancialConcept,
   FinancialConceptNotFound,
+  type IAvailabilityAccountRepository,
+  type IFinancialConceptRepository,
+  type IFinancialConfigurationRepository,
 } from "@/FinanceConfig/domain"
 import { type IQueueService, QueueName } from "@/package/queue/domain"
 import { DispatchCreateFinancialRecord } from "@/Financial/applications"
@@ -28,7 +26,7 @@ import {
   FinancialRecordStatus,
   FinancialRecordType,
 } from "@/Financial/domain"
-import { FindAvailabilityAccountByAvailabilityAccountId } from "@/FinanceConfig/applications"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 
 export class PayAccountPayable {
   private logger = Logger(PayAccountPayable.name)
@@ -68,14 +66,15 @@ export class PayAccountPayable {
           throw new FinancialConceptNotFound()
         }
 
-        const availabilityAccount =
-          await new FindAvailabilityAccountByAvailabilityAccountId(
-            this.availabilityAccountRepository
-          ).execute(
-            req.availabilityAccountId,
-            accountPayable.getChurchId(),
-            transaction
-          )
+        const availabilityAccount = await new SearchAvailabilityAccount(
+          this.availabilityAccountRepository
+        ).execute(
+          {
+            availabilityAccountId: req.availabilityAccountId,
+            churchId: accountPayable.getChurchId(),
+          },
+          transaction
+        )
         let amountPay = req.amount.getValue()
 
         for (const installmentId of req.installmentIds) {
