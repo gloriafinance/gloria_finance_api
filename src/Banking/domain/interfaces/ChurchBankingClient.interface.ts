@@ -89,11 +89,18 @@ export type PayPixQrInput = DecodePixQrInput & {
   description: string
 }
 
+export type PixQrStatusInput = {
+  externalAccountId: string
+  externalReference: string
+}
+
 export type PayPixQrResponse = {
   externalAccountId: string
   externalReference: string
   amountInCents: number
   status:
+    | "RESERVED"
+    | "CREATING"
     | "PENDING"
     | "STATUS_UNRECOGNIZED"
     | "DONE"
@@ -102,7 +109,7 @@ export type PayPixQrResponse = {
     | "CREATION_FAILED"
     | "CREATION_UNKNOWN"
   providerTransactionId?: string
-  failureCode?: string
+  errorCode?: string
 }
 
 export type BillSimulationBankSlip = {
@@ -217,4 +224,6 @@ export interface IChurchBankingClient {
   decodePixQr(input: DecodePixQrInput): Promise<DecodePixQrResponse>
 
   payPixQr(input: PayPixQrInput): Promise<PayPixQrResponse>
+
+  getPixQrStatus(input: PixQrStatusInput): Promise<PayPixQrResponse>
 }

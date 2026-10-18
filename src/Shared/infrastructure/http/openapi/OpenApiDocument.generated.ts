@@ -9703,21 +9703,7 @@ export const openApiDocument = {
                             "00000000-0000-0000-0000-000000000001",
                           voucher: "Gloria Finance",
                         },
-                        currentPayment: {
-                          competence: "Gloria Finance",
-                          externalReference: "Gloria Finance",
-                          amount: 0,
-                          paymentMethod: "PIX",
-                          executionDestination: "Gloria Finance",
-                          bankId: "00000000-0000-0000-0000-000000000001",
-                          availabilityAccountId:
-                            "00000000-0000-0000-0000-000000000001",
-                          status: [],
-                          identificationField: "Gloria Finance",
-                          paymentDate: "2026-01-01T00:00:00.000Z",
-                          transactionReceiptUrl: "https://example.com",
-                          updatedAt: "2026-01-01T00:00:00.000Z",
-                        },
+                        currentPayment: "Gloria Finance",
                         settlement: "Gloria Finance",
                       },
                     ],
@@ -10211,11 +10197,14 @@ export const openApiDocument = {
               schema: {
                 type: "object",
                 properties: {
+                  availabilityAccountId: {
+                    type: "string",
+                  },
                   payload: {
                     type: "string",
                   },
                 },
-                required: ["payload"],
+                required: ["availabilityAccountId", "payload"],
                 additionalProperties: false,
               },
             },
@@ -10310,6 +10299,82 @@ export const openApiDocument = {
                   },
                 },
                 required: ["competence", "payment"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_PAID",
+                      competence: "Gloria Finance",
+                      failureCode: "Gloria Finance",
+                      providerValueInCents: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/pix-qr/status": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "reconcile pix qr",
+        description:
+          "Implemented by RecurringPaymentController.reconcilePixQr. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_reconcilePixQr",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  competence: {
+                    type: "string",
+                  },
+                },
+                required: ["competence"],
                 additionalProperties: false,
               },
             },

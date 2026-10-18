@@ -180,10 +180,31 @@ export async function validateDecodeRecurringPaymentPixQr(
   next: NextFunction
 ): Promise<void> {
   const validator = new Validator(req.body, {
+    availabilityAccountId: "required|string",
     payload: "required|string",
   })
   if (!(await validator.check())) {
     res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
+    return
+  }
+  next()
+}
+
+export async function validateReconcileRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const validator = new Validator(req.body, {
+    competence: "required|string",
+  })
+  if (!(await validator.check())) {
+    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
+    return
+  }
+  const body = req.body as Record<string, unknown>
+  if (!COMPETENCE_PATTERN.test(body.competence as string)) {
+    invalid(res, "RECURRING_PAYMENT_PAY_PAYLOAD_INVALID")
     return
   }
   next()

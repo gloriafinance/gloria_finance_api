@@ -17,6 +17,7 @@ import type {
   IChurchBankingClient,
   PayPixQrInput,
   PayPixQrResponse,
+  PixQrStatusInput,
   SimulateBillInput,
   StaticPixResponse,
 } from "@/Banking/domain"
@@ -84,17 +85,76 @@ export class ChurchBankingClient implements IChurchBankingClient {
   }
 
   async decodePixQr(input: DecodePixQrInput): Promise<DecodePixQrResponse> {
-    return (await this.execute<DecodePixQrInput>({
+    const response = await this.execute<DecodePixQrInput>({
       path: "/api/pix-transfers/qr/decode",
       payload: input,
-    })) as DecodePixQrResponse
+    })
+    const data = responseData(response)
+    if (!isPositiveInteger(data.amountInCents)) throw invalidResponse()
+    return { amountInCents: data.amountInCents }
   }
 
   async payPixQr(input: PayPixQrInput): Promise<PayPixQrResponse> {
-    return (await this.execute<PayPixQrInput>({
+    const response = await this.execute<PayPixQrInput>({
       path: "/api/pix-transfers/qr/pay",
       payload: input,
-    })) as PayPixQrResponse
+    })
+    const data = responseData(response)
+    if (data.description !== input.description) {
+      throw invalidResponse()
+    }
+
+    return this.parsePixQrPaymentResponse(data, input)
+  }
+
+  async getPixQrStatus(input: PixQrStatusInput): Promise<PayPixQrResponse> {
+    const response = await this.execute<PixQrStatusInput>({
+      path: "/api/pix-transfers/qr/status",
+      payload: input,
+    })
+    return this.parsePixQrPaymentResponse(responseData(response), input)
+  }
+
+  private parsePixQrPaymentResponse(
+    response: Record<string, unknown>,
+    input: PixQrStatusInput
+  ): PayPixQrResponse {
+    if (
+      response.externalAccountId !== input.externalAccountId ||
+      response.externalReference !== input.externalReference ||
+      !isPositiveInteger(response.amountInCents) ||
+      !isPixQrPaymentStatus(response.status)
+    ) {
+      throw invalidResponse()
+    }
+
+    const status = response.status
+    const createdStatus =
+      status === "PENDING" ||
+      status === "DONE" ||
+      status === "REFUSED" ||
+      status === "CANCELLED" ||
+      status === "STATUS_UNRECOGNIZED"
+    if (
+      (createdStatus && !isNonBlankString(response.providerTransactionId)) ||
+      (!createdStatus && !isOptionalString(response.providerTransactionId)) ||
+      !isOptionalString(response.errorCode)
+    ) {
+      throw invalidResponse()
+    }
+
+    return {
+      externalAccountId: input.externalAccountId,
+      externalReference: input.externalReference,
+      amountInCents: response.amountInCents,
+      status,
+      ...(typeof response.providerTransactionId === "string"
+        ? { providerTransactionId: response.providerTransactionId }
+        : {}),
+      ...(typeof response.errorCode === "string"
+        ? { errorCode: response.errorCode }
+        : {}),
+    }
   }
 
   async createStaticPix(
@@ -556,5 +616,26 @@ function isBillPaymentStatus(
   return (
     typeof value === "string" &&
     (BILL_PAYMENT_STATUSES as readonly string[]).includes(value)
+  )
+}
+
+const PIX_QR_PAYMENT_STATUSES: readonly PayPixQrResponse["status"][] = [
+  "RESERVED",
+  "CREATING",
+  "PENDING",
+  "STATUS_UNRECOGNIZED",
+  "DONE",
+  "REFUSED",
+  "CANCELLED",
+  "CREATION_FAILED",
+  "CREATION_UNKNOWN",
+]
+
+function isPixQrPaymentStatus(
+  value: unknown
+): value is PayPixQrResponse["status"] {
+  return (
+    typeof value === "string" &&
+    (PIX_QR_PAYMENT_STATUSES as readonly string[]).includes(value)
   )
 }

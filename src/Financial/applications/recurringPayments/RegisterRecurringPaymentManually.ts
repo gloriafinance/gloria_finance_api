@@ -75,6 +75,14 @@ export class RegisterRecurringPaymentManually {
       )
     }
 
+    const currentPayment = recurring.getCurrentPayment()
+    if (
+      currentPayment?.competence === request.competence &&
+      currentPayment.status !== "FAILED"
+    ) {
+      throw new RecurringPaymentException("RECURRING_PAYMENT_IN_PROGRESS")
+    }
+
     const existing = await this.financialRecordRepository.findRecurringPayment(
       recurringPaymentId,
       request.competence

@@ -46,6 +46,7 @@ import {
   validatePayRecurringPayment,
   validatePayRecurringPaymentPixQr,
   validateDecodeRecurringPaymentPixQr,
+  validateReconcileRecurringPaymentPixQr,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
   validateSimulateRecurringPaymentBill,
@@ -194,6 +195,15 @@ export class RecurringPaymentController {
     churchId: string,
     createdBy: string
   ) {
+    return this.paymentExecutor().execute(
+      churchId,
+      recurringPaymentId,
+      body,
+      createdBy
+    )
+  }
+
+  private paymentExecutor(): ExecuteRecurringPayment {
     return new ExecuteRecurringPayment(
       RecurringPaymentsMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
@@ -209,7 +219,32 @@ export class RecurringPaymentController {
         undefined,
         FinancialYearMongoRepository.getInstance()
       )
-    ).execute(churchId, recurringPaymentId, body, createdBy)
+    )
+  }
+
+  @Post("/:recurringPaymentId/pix-qr/status")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "read"),
+    validateReconcileRecurringPaymentPixQr,
+  ])
+  async reconcilePixQr(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: { competence: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await this.paymentExecutor().reconcilePixQr(
+        req.auth.churchId,
+        recurringPaymentId,
+        body.competence,
+        req.auth.userId ?? req.auth.memberId ?? "unknown"
+      )
+      res.status(HttpStatus.OK).send(result)
+    } catch (error) {
+      domainResponse(error, res)
+    }
   }
 
   @Post("/:recurringPaymentId/pix-qr/decode")
@@ -220,15 +255,22 @@ export class RecurringPaymentController {
   ])
   async decodePixQr(
     @Param("recurringPaymentId") recurringPaymentId: string,
-    @Body() body: { payload: string },
+    @Body() body: { availabilityAccountId: string; payload: string },
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
     try {
       const decoded = await new DecodeRecurringPaymentPixQr(
         RecurringPaymentsMongoRepository.getInstance(),
+        AvailabilityAccountMongoRepository.getInstance(),
+        BankMongoRepository.getInstance(),
         new ChurchBankingClient()
-      ).execute(req.auth.churchId, recurringPaymentId, body.payload)
+      ).execute(
+        req.auth.churchId,
+        recurringPaymentId,
+        body.availabilityAccountId,
+        body.payload
+      )
       res.status(HttpStatus.OK).send(decoded)
     } catch (error) {
       if (error instanceof ChurchBankingClientError) {

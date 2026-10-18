@@ -3,6 +3,7 @@ import type {
   ChurchBankingBillPaymentResponse,
   ChurchBankingPixTransferResponse,
   IChurchBankingClient,
+  PayPixQrResponse,
 } from "@/Banking/domain/interfaces/ChurchBankingClient.interface"
 import type { IBankRepository } from "@/Banking/domain/interfaces/BankRepository.interface"
 import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
@@ -146,6 +147,47 @@ export class ExecuteRecurringPayment {
     return await this.submit(recurring, currentPayment, method, createdBy)
   }
 
+  async reconcilePixQr(
+    churchId: string,
+    recurringPaymentId: string,
+    competence: string,
+    createdBy: string
+  ): Promise<ExecuteRecurringPaymentResult> {
+    assertCompetence(competence)
+    const recurring = await this.recurringPaymentsRepository.one({
+      recurringPaymentId,
+      churchId,
+      status: "ACTIVE",
+    })
+    if (!recurring) {
+      throw new PaymentError("RECURRING_PAYMENT_NOT_FOUND")
+    }
+
+    const payment = recurring.getCurrentPayment()
+    if (
+      !payment ||
+      payment.competence !== competence ||
+      payment.paymentMethod !== "PIX_QR"
+    ) {
+      throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
+    }
+    if (payment.status === "FAILED" || payment.status === "PAID") {
+      return this.result(payment)
+    }
+    // A network failure before Church Banking returned leaves no evidence that
+    // it reserved this reference. Keep the outcome uncertain; a status request
+    // must never become a new payment command in that case.
+    if (payment.status !== "PROCESSING" || !payment.providerPaymentReserved) {
+      return this.result(payment)
+    }
+
+    const response = await this.churchBankingClient.getPixQrStatus({
+      externalAccountId: recurring.getChurchId(),
+      externalReference: payment.externalReference,
+    })
+    return await this.applyPixQrResult(recurring, payment, response, createdBy)
+  }
+
   /**
    * An operation already exists for this competence. Nothing may start a second
    * one: a confirmed failure is the only state that resumes the workflow, and
@@ -169,7 +211,12 @@ export class ExecuteRecurringPayment {
         ) {
           throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
         }
-        return await this.submit(recurring, payment, method, createdBy)
+        if (
+          payment.status === "PROCESSING" &&
+          payment.providerPaymentReserved
+        ) {
+          return await this.submit(recurring, payment, method, createdBy)
+        }
       }
       return this.result(payment)
     }
@@ -375,18 +422,50 @@ export class ExecuteRecurringPayment {
     // QR execution has no webhook. If the transport fails, keep PROCESSING so a
     // repeat with the same payload/reference asks church-banking for its durable
     // result instead of creating a new payment.
-    const response = await this.churchBankingClient.payPixQr({
-      externalAccountId: recurring.getChurchId(),
-      externalReference: payment.externalReference,
-      payload: method.payload,
-      description: recurring.getName(),
-    })
+    let response: PayPixQrResponse
+    try {
+      response = await this.churchBankingClient.payPixQr({
+        externalAccountId: recurring.getChurchId(),
+        externalReference: payment.externalReference,
+        payload: method.payload,
+        description: recurring.getName(),
+      })
+    } catch (error) {
+      if (
+        !(error instanceof ChurchBankingClientError) ||
+        !error.isConfirmedRejection
+      ) {
+        throw error
+      }
 
+      const failed: CurrentRecurringPayment = {
+        ...payment,
+        status: "FAILED",
+        updatedAt: this.now(),
+      }
+      recurring.updateCurrentPayment(failed)
+      await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
+        recurring,
+        payment
+      )
+      return this.result(failed, undefined, error.code)
+    }
+
+    return await this.applyPixQrResult(recurring, payment, response, createdBy)
+  }
+
+  private async applyPixQrResult(
+    recurring: RecurringPayments,
+    payment: CurrentRecurringPayment,
+    response: PayPixQrResponse,
+    createdBy: string
+  ): Promise<ExecuteRecurringPaymentResult> {
     const status = qrExecutionStatus(response.status)
     const next: CurrentRecurringPayment = {
       ...payment,
       amount: response.amountInCents / 100,
       status,
+      providerPaymentReserved: true,
       updatedAt: this.now(),
     }
 
@@ -407,7 +486,7 @@ export class ExecuteRecurringPayment {
       recurring,
       payment
     )
-    return this.result(next, response.amountInCents, response.failureCode)
+    return this.result(next, response.amountInCents, response.errorCode)
   }
 
   private async applyBankingResult(
@@ -507,6 +586,8 @@ function executionStatusOf(
 
 function qrExecutionStatus(
   status:
+    | "RESERVED"
+    | "CREATING"
     | "PENDING"
     | "STATUS_UNRECOGNIZED"
     | "DONE"
@@ -522,6 +603,6 @@ function qrExecutionStatus(
     status === "CREATION_FAILED"
   )
     return "FAILED"
-  if (status === "STATUS_UNRECOGNIZED") return "BLOCKED"
+  if (status === "CREATION_UNKNOWN") return "BLOCKED"
   return "PROCESSING"
 }
