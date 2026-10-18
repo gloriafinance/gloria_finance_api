@@ -117,6 +117,36 @@ export async function validatePayRecurringPayment(
   next()
 }
 
+export async function validatePayRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const body: unknown = req.body
+  const valid =
+    isRecord(body) &&
+    hasOnlyKeys(body, [
+      "competence",
+      "amount",
+      "payment",
+      "availabilityAccountId",
+    ]) &&
+    typeof body.competence === "string" &&
+    COMPETENCE_PATTERN.test(body.competence) &&
+    optionalAmount(body.amount) &&
+    optionalReference(body.availabilityAccountId) &&
+    isRecord(body.payment) &&
+    hasOnlyKeys(body.payment, ["type", "payload"]) &&
+    body.payment.type === "PIX_QR" &&
+    typeof body.payment.payload === "string" &&
+    body.payment.payload.trim() !== ""
+  if (!valid) {
+    invalid(res, "RECURRING_PAYMENT_PAY_PAYLOAD_INVALID")
+    return
+  }
+  next()
+}
+
 /**
  * Boleto simulation. The boleto is identified by exactly one of the typed line
  * or the barcode; no amount, account or church is accepted, because the account
@@ -139,6 +169,21 @@ export async function validateSimulateRecurringPaymentBill(
     res.status(HttpStatus.BAD_REQUEST).send({
       code: "RECURRING_PAYMENT_BILL_SIMULATION_PAYLOAD_INVALID",
     })
+    return
+  }
+  next()
+}
+
+export async function validateDecodeRecurringPaymentPixQr(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+): Promise<void> {
+  const validator = new Validator(req.body, {
+    payload: "required|string",
+  })
+  if (!(await validator.check())) {
+    res.status(HttpStatus.UNPROCESSABLE_ENTITY).send(validator.errors)
     return
   }
   next()
@@ -208,6 +253,13 @@ function validPaymentMethod(value: unknown): boolean {
       hasOnlyKeys(value, ["type", "identificationField"]) &&
       typeof value.identificationField === "string" &&
       value.identificationField.trim() !== ""
+    )
+  }
+  if (value.type === "PIX_QR") {
+    return (
+      hasOnlyKeys(value, ["type", "payload"]) &&
+      typeof value.payload === "string" &&
+      value.payload.trim() !== ""
     )
   }
   return false

@@ -51,7 +51,7 @@ const messages: Record<RecurringPaymentErrorCode, string> = {
   RECURRING_PAYMENT_VOUCHER_REQUIRED:
     "A voucher file is required to register a manual payment",
   RECURRING_PAYMENT_MANUAL_NOT_ALLOWED:
-    "This church executes its recurring payments through the bank, so a manual registration is not allowed",
+    "This availability account is connected to Asaas and must use banking execution",
 }
 
 export class RecurringPaymentException extends DomainException {

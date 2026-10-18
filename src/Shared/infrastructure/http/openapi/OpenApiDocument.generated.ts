@@ -10090,26 +10090,226 @@ export const openApiDocument = {
                     type: "number",
                   },
                   payment: {
-                    type: "object",
-                    properties: {
-                      type: {
-                        description: 'TypeScript type: "PIX"',
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            description: 'TypeScript type: "PIX"',
+                          },
+                          pixKey: {
+                            type: "string",
+                          },
+                          pixKeyType: {
+                            description: "TypeScript type: PixKeyType",
+                          },
+                        },
+                        required: ["type", "pixKey", "pixKeyType"],
+                        additionalProperties: false,
                       },
-                      pixKey: {
-                        type: "string",
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            description: 'TypeScript type: "PIX_QR"',
+                          },
+                          payload: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "payload"],
+                        additionalProperties: false,
                       },
-                      pixKeyType: {
-                        description: "TypeScript type: PixKeyType",
+                      {
+                        type: "object",
+                        properties: {
+                          type: {
+                            description: 'TypeScript type: "BILL"',
+                          },
+                          identificationField: {
+                            type: "string",
+                          },
+                        },
+                        required: ["type", "identificationField"],
+                        additionalProperties: false,
                       },
-                    },
-                    required: ["type", "pixKey", "pixKeyType"],
-                    additionalProperties: false,
+                    ],
                   },
                   availabilityAccountId: {
                     type: "string",
                   },
                 },
                 required: ["competence"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_PAID",
+                      competence: "Gloria Finance",
+                      failureCode: "Gloria Finance",
+                      providerValueInCents: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/pix-qr/decode": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "decode pix qr",
+        description:
+          "Implemented by RecurringPaymentController.decodePixQr. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_decodePixQr",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  payload: {
+                    type: "string",
+                  },
+                },
+                required: ["payload"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      amountInCents: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
+    "/api/v1/recurring-payments/{recurringPaymentId}/pix-qr/pay": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "pay pix qr",
+        description:
+          "Implemented by RecurringPaymentController.payPixQr. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_payPixQr",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  competence: {
+                    type: "string",
+                    description:
+                      'Mes al que corresponde el pago recurrente, en formato YYYY-MM. Es la competencia contable/mensual de esa recurrencia, no la fecha del pago ni la fecha de vencimiento. Ejemplo: una "Conta de Luz" con vencimiento día 20 pagada el 17/10/2026 lleva "2026-10". Incluso si se paga atrasada (p. ej. Conta de setembro pagada el 05/10/2026), la competencia sigue siendo "2026-09".',
+                  },
+                  amount: {
+                    type: "number",
+                  },
+                  payment: {
+                    type: "object",
+                    properties: {
+                      type: {
+                        description: 'TypeScript type: "PIX_QR"',
+                      },
+                      payload: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "payload"],
+                    additionalProperties: false,
+                  },
+                  availabilityAccountId: {
+                    type: "string",
+                  },
+                },
+                required: ["competence", "payment"],
                 additionalProperties: false,
               },
             },

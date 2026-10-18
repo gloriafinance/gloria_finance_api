@@ -12,7 +12,11 @@ import type {
   CreateBillPaymentInput,
   CreatePixTransferInput,
   CreateStaticPixInput,
+  DecodePixQrInput,
+  DecodePixQrResponse,
   IChurchBankingClient,
+  PayPixQrInput,
+  PayPixQrResponse,
   SimulateBillInput,
   StaticPixResponse,
 } from "@/Banking/domain"
@@ -77,6 +81,20 @@ export class ChurchBankingClient implements IChurchBankingClient {
       payload: input,
     })
     return this.parseBillSimulationResponse(response)
+  }
+
+  async decodePixQr(input: DecodePixQrInput): Promise<DecodePixQrResponse> {
+    return (await this.execute<DecodePixQrInput>({
+      path: "/api/pix-transfers/qr/decode",
+      payload: input,
+    })) as DecodePixQrResponse
+  }
+
+  async payPixQr(input: PayPixQrInput): Promise<PayPixQrResponse> {
+    return (await this.execute<PayPixQrInput>({
+      path: "/api/pix-transfers/qr/pay",
+      payload: input,
+    })) as PayPixQrResponse
   }
 
   async createStaticPix(

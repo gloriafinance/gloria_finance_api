@@ -75,6 +75,36 @@ export type SimulateBillInput = {
   externalAccountId: string
 } & BillIdentificationInput
 
+export type DecodePixQrInput = {
+  externalAccountId: string
+  payload: string
+}
+
+export type DecodePixQrResponse = {
+  amountInCents: number
+}
+
+export type PayPixQrInput = DecodePixQrInput & {
+  externalReference: string
+  description: string
+}
+
+export type PayPixQrResponse = {
+  externalAccountId: string
+  externalReference: string
+  amountInCents: number
+  status:
+    | "PENDING"
+    | "STATUS_UNRECOGNIZED"
+    | "DONE"
+    | "REFUSED"
+    | "CANCELLED"
+    | "CREATION_FAILED"
+    | "CREATION_UNKNOWN"
+  providerTransactionId?: string
+  failureCode?: string
+}
+
 export type BillSimulationBankSlip = {
   identificationField?: string | null
   valueInCents?: number | null
@@ -183,4 +213,8 @@ export interface IChurchBankingClient {
   ): Promise<ChurchBankingBillPaymentResponse>
 
   simulateBill(input: SimulateBillInput): Promise<BillSimulation>
+
+  decodePixQr(input: DecodePixQrInput): Promise<DecodePixQrResponse>
+
+  payPixQr(input: PayPixQrInput): Promise<PayPixQrResponse>
 }

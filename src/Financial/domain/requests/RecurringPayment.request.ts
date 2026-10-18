@@ -21,6 +21,7 @@ export type RecurringPaymentConfigurationRequest = {
 
 export type PayRecurringPaymentMethod =
   | { type: "PIX"; pixKey: string; pixKeyType: PixKeyType }
+  | { type: "PIX_QR"; payload: string }
   | { type: "BILL"; identificationField: string }
 
 /**
@@ -37,6 +38,13 @@ export type PayRecurringPaymentRequest = {
   competence: string
   amount?: number
   payment?: PayRecurringPaymentMethod
+  availabilityAccountId?: string
+}
+
+export type PayRecurringPaymentPixQrRequest = {
+  competence: string
+  amount?: number
+  payment: { type: "PIX_QR"; payload: string }
   availabilityAccountId?: string
 }
 

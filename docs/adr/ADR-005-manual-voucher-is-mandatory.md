@@ -1,6 +1,6 @@
 # ADR-005 — Manual voucher is mandatory
 
-- **Estado:** ACEPTADA (definitiva)
+- **Estado:** REEMPLAZADA por [ADR-010](./ADR-010-manual-voucher-by-account-type.md)
 - **Fecha:** 2026-10-14
 - **Feature:** Pagamentos Recorrentes (PR #146)
 - **Documento principal:** [`../recurring-payments.md`](../recurring-payments.md) §10, §18, §19, §31

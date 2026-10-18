@@ -61,6 +61,7 @@ type OpenApiSchema = {
   required?: string[]
   additionalProperties?: boolean
   description?: string
+  oneOf?: OpenApiSchema[]
 }
 
 type OpenApiDocument = {
@@ -168,8 +169,7 @@ async function createResponseExampleAnalyzer(): Promise<ResponseExampleAnalyzer>
       if (itemType === "any" || itemType === "unknown") return []
       return [exampleFromSchema(schemaFromType(itemType), propertyName)]
     }
-    if (depth >= 3)
-      return propertyName ? exampleForProperty(propertyName) : {}
+    if (depth >= 3) return propertyName ? exampleForProperty(propertyName) : {}
     if (visited.has(type.id))
       return propertyName ? exampleForProperty(propertyName) : {}
     visited.add(type.id)
@@ -252,13 +252,18 @@ async function loadTypeDeclarations(): Promise<void> {
     for (const match of source.matchAll(declarationPattern)) {
       const openIndex = source.indexOf("{", match.index)
       const closeIndex = matchingBrace(source, openIndex)
-      const declarationEnd = closeIndex + 1
+      let declarationEnd = closeIndex + 1
+      if (match[1] === "PayRecurringPaymentMethod") {
+        let cursor = declarationEnd
+        while (source.slice(cursor).match(/^\s*\|\s*\{/)) {
+          const nextOpen = source.indexOf("{", cursor)
+          declarationEnd = matchingBrace(source, nextOpen) + 1
+          cursor = declarationEnd
+        }
+      }
       // Store only the body `{ ... }` (original behavior) so type resolution
       // is not broken.
-      typeDeclarations.set(
-        match[1]!,
-        source.slice(openIndex, declarationEnd)
-      )
+      typeDeclarations.set(match[1]!, source.slice(openIndex, declarationEnd))
       // Capture property-level JSDoc descriptions from the comment block that
       // immediately precedes the `export type X = { ... }` declaration.
       const beforeDeclaration = source.slice(0, match.index)
@@ -267,7 +272,9 @@ async function loadTypeDeclarations(): Promise<void> {
         const between = source.slice(lastJsdocStart, match.index)
         if (!/export\s+(?:declare\s+)?(?:interface|type)\s/.test(between)) {
           const jsdocBlock = source.slice(lastJsdocStart, match.index)
-          const descriptions = extractPropertyDescriptions(jsdocBlock + " " + source.slice(openIndex, declarationEnd))
+          const descriptions = extractPropertyDescriptions(
+            jsdocBlock + " " + source.slice(openIndex, declarationEnd)
+          )
           if (descriptions.size > 0) {
             typePropertyDescriptions.set(match[1]!, descriptions)
           }
@@ -320,6 +327,23 @@ function splitTopLevel(source: string): string[] {
   return values
 }
 
+function splitTopLevelUnion(source: string): string[] {
+  const values: string[] = []
+  let start = 0
+  let depth = 0
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]!
+    if ("{[(<".includes(character)) depth += 1
+    if ("}])>".includes(character)) depth -= 1
+    if (character === "|" && depth === 0) {
+      values.push(source.slice(start, index).trim())
+      start = index + 1
+    }
+  }
+  values.push(source.slice(start).trim())
+  return values.filter(Boolean)
+}
+
 /**
  * Extract property-level descriptions from JSDoc comments in a type
  * declaration text. Matches JSDoc blocks immediately followed by a property
@@ -339,7 +363,10 @@ function extractPropertyDescriptions(fullText: string): Map<string, string> {
       /@description\s+([\s\S]*?)(?=\s*@\w|\s*\*\/|$)/
     )
     if (descTag) {
-      description = descTag[1]!.trim().replace(/\s*\*\s*/g, " ").trim()
+      description = descTag[1]!
+        .trim()
+        .replace(/\s*\*\s*/g, " ")
+        .trim()
     } else {
       const lines = comment
         .split("\n")
@@ -386,6 +413,14 @@ function schemaFromType(
     return {
       type: "string",
       enum: [...normalized.matchAll(/"([^"]+)"/g)].map((match) => match[1]!),
+    }
+  }
+  const unionMembers = splitTopLevelUnion(normalized)
+  if (unionMembers.length > 1) {
+    return {
+      oneOf: unionMembers.map((member) =>
+        schemaFromType(member, new Set(visited), new Map(descriptions))
+      ),
     }
   }
   const omit = normalized.match(/^Omit<([A-Za-z0-9_]+),\s*"([A-Za-z0-9_]+)">$/)
@@ -652,8 +687,7 @@ function fallbackForResponseExpression(expression: string): OpenApiExample {
     .replace(/^await\s+/, "")
     .replace(/\/\/.*$/gm, "")
     .trim()
-  if (value === "churches")
-    return { nextPag: null, count: 0, results: [] }
+  if (value === "churches") return { nextPag: null, count: 0, results: [] }
   if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value) && /s$/i.test(value)) return []
   return null
 }
@@ -815,16 +849,16 @@ async function responseExamples(
         : /\bbuildAuthResponse\b/.test(handler) &&
             /^(?:response|authResponse)$/.test(expression.trim())
           ? authResponseExample()
-        : sourceFile.endsWith("ApiDocs.controller.ts") &&
-            /\bopenApiDocument\b/.test(expression)
-          ? { openapi: "3.1.0" }
-          : await mergeObjectFields(
-              expression,
-              await analyzer.exampleAt(sourceFile, expressionPosition),
-              sourceFile,
-              expressionPosition,
-              analyzer
-            )
+          : sourceFile.endsWith("ApiDocs.controller.ts") &&
+              /\bopenApiDocument\b/.test(expression)
+            ? { openapi: "3.1.0" }
+            : await mergeObjectFields(
+                expression,
+                await analyzer.exampleAt(sourceFile, expressionPosition),
+                sourceFile,
+                expressionPosition,
+                analyzer
+              )
       examples.set(
         status,
         generatedExample &&

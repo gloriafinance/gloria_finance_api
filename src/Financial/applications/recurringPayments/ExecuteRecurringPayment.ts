@@ -17,14 +17,14 @@ import type {
   PayRecurringPaymentRequest,
 } from "@/Financial/domain/requests/RecurringPayment.request"
 import type { IRecurringPaymentsRepository } from "@/Financial/domain/interfaces/RecurringPaymentsRepository.interface"
-import type { IQueueService } from "@/package/queue/domain"
-import { QueueService } from "@/package/queue/infrastructure/QueueService"
 import { RecurringPaymentException as PaymentError } from "@/Financial/domain/exceptions/RecurringPayment.exception"
 import { assertCompetence } from "./RecurringPaymentCompetence"
 import { Provider } from "@/Banking/domain/enums/Provider.enum"
 import { FinancialMonthValidator } from "@/ConsolidatedFinancial/applications"
 import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/interfaces/FinancialYearRepository.interface"
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
+import { createHash } from "node:crypto"
+import type { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 
 export type ExecuteRecurringPaymentResult = {
   /**
@@ -51,14 +51,15 @@ export class ExecuteRecurringPayment {
     private readonly availabilityAccountRepository: IAvailabilityAccountRepository,
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly churchBankingClient: IChurchBankingClient,
-    private readonly queueService: IQueueService = QueueService.getInstance(),
+    private readonly recordRegistrar: RegisterRecurringPaymentFinancialRecord,
     private readonly now: () => Date = () => new Date()
   ) {}
 
   async execute(
     churchId: string,
     recurringPaymentId: string,
-    request: PayRecurringPaymentRequest
+    request: PayRecurringPaymentRequest,
+    createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
     assertCompetence(request.competence)
     const recurring = await this.recurringPaymentsRepository.one({
@@ -79,7 +80,12 @@ export class ExecuteRecurringPayment {
       if (inFlight.competence !== request.competence) {
         throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
       }
-      return await this.continueInFlight(recurring, inFlight, request)
+      return await this.continueInFlight(
+        recurring,
+        inFlight,
+        request,
+        createdBy
+      )
     }
 
     // Reuses the repository lookup so a voided record does not count as paid;
@@ -137,7 +143,7 @@ export class ExecuteRecurringPayment {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
 
-    return await this.submit(recurring, currentPayment, method)
+    return await this.submit(recurring, currentPayment, method, createdBy)
   }
 
   /**
@@ -148,12 +154,23 @@ export class ExecuteRecurringPayment {
   private async continueInFlight(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
-    request: PayRecurringPaymentRequest
+    request: PayRecurringPaymentRequest,
+    createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
     // Anything that is not a failure is left alone: an operation in flight is
     // resolved by the confirmation webhook, which is the only writer of the
     // financial record, and a paid one already has its record.
     if (payment.status !== "FAILED") {
+      if (payment.paymentMethod === "PIX_QR") {
+        const method = this.resolveMethod(recurring, request)
+        if (
+          method.type !== "PIX_QR" ||
+          payment.executionDestination !== this.qrFingerprint(method.payload)
+        ) {
+          throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
+        }
+        return await this.submit(recurring, payment, method, createdBy)
+      }
       return this.result(payment)
     }
 
@@ -164,7 +181,8 @@ export class ExecuteRecurringPayment {
     return await this.submit(
       recurring,
       payment,
-      this.resolveMethod(recurring, request)
+      this.resolveMethod(recurring, request),
+      createdBy
     )
   }
 
@@ -299,8 +317,12 @@ export class ExecuteRecurringPayment {
   private async submit(
     recurring: RecurringPayments,
     payment: CurrentRecurringPayment,
-    method: PayRecurringPaymentMethod
+    method: PayRecurringPaymentMethod,
+    createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
+    if (method.type === "PIX_QR") {
+      return await this.submitPixQr(recurring, payment, method, createdBy)
+    }
     let response:
       ChurchBankingPixTransferResponse | ChurchBankingBillPaymentResponse
     try {
@@ -342,6 +364,50 @@ export class ExecuteRecurringPayment {
     }
 
     return this.applyBankingResult(recurring, payment, response)
+  }
+
+  private async submitPixQr(
+    recurring: RecurringPayments,
+    payment: CurrentRecurringPayment,
+    method: Extract<PayRecurringPaymentMethod, { type: "PIX_QR" }>,
+    createdBy: string
+  ): Promise<ExecuteRecurringPaymentResult> {
+    // QR execution has no webhook. If the transport fails, keep PROCESSING so a
+    // repeat with the same payload/reference asks church-banking for its durable
+    // result instead of creating a new payment.
+    const response = await this.churchBankingClient.payPixQr({
+      externalAccountId: recurring.getChurchId(),
+      externalReference: payment.externalReference,
+      payload: method.payload,
+      description: recurring.getName(),
+    })
+
+    const status = qrExecutionStatus(response.status)
+    const next: CurrentRecurringPayment = {
+      ...payment,
+      amount: response.amountInCents / 100,
+      status,
+      updatedAt: this.now(),
+    }
+
+    if (status === "PAID") {
+      await this.recordRegistrar.execute({
+        recurring,
+        competence: payment.competence,
+        amount: response.amountInCents / 100,
+        availabilityAccountId: payment.availabilityAccountId,
+        paymentDate: this.now(),
+        createdBy,
+        bankingExternalReference: payment.externalReference,
+      })
+    }
+
+    recurring.updateCurrentPayment(next)
+    await this.recurringPaymentsRepository.saveIfCurrentPaymentMatches(
+      recurring,
+      payment
+    )
+    return this.result(next, response.amountInCents, response.failureCode)
   }
 
   private async applyBankingResult(
@@ -400,9 +466,14 @@ export class ExecuteRecurringPayment {
 
   /** The payee data that identifies this execution's target. */
   private destinationOf(method: PayRecurringPaymentMethod): string {
+    if (method.type === "PIX_QR") return this.qrFingerprint(method.payload)
     return method.type === "PIX"
       ? `${method.pixKeyType}:${method.pixKey}`
       : method.identificationField
+  }
+
+  private qrFingerprint(payload: string): string {
+    return `PIX_QR:${createHash("sha256").update(payload).digest("hex")}`
   }
 
   private toCents(amount: number): number {
@@ -431,5 +502,26 @@ function executionStatusOf(
     return "FAILED"
   }
   if (status === "BLOCKED") return "BLOCKED"
+  return "PROCESSING"
+}
+
+function qrExecutionStatus(
+  status:
+    | "PENDING"
+    | "STATUS_UNRECOGNIZED"
+    | "DONE"
+    | "REFUSED"
+    | "CANCELLED"
+    | "CREATION_FAILED"
+    | "CREATION_UNKNOWN"
+): RecurringPaymentExecutionStatus {
+  if (status === "DONE") return "PAID"
+  if (
+    status === "REFUSED" ||
+    status === "CANCELLED" ||
+    status === "CREATION_FAILED"
+  )
+    return "FAILED"
+  if (status === "STATUS_UNRECOGNIZED") return "BLOCKED"
   return "PROCESSING"
 }
