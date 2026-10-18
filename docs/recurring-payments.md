@@ -1619,7 +1619,24 @@ CREATION_UNKNOWN
 ### `CURRENT` — verificado
 
 `continueInFlight` devuelve el estado existente para todo lo que no sea
-`FAILED`. Solo un `FAILED` vuelve a llamar a `church-banking` (`submit`).
+`FAILED`. Solo un `FAILED` vuelve a llamar a `church-banking` (`submit`) para
+iniciar un intento nuevo ya confirmado por el usuario.
+
+Para un `PIX_QR` en `PROCESSING` —incluido un comando repetido— la operación se
+resuelve **solo** leyendo `/pix-qr/status`; nunca se reenvía `/qr/pay`:
+
+```ts
+if (payment.status === "PROCESSING") {
+  return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+}
+```
+
+`/qr/pay` queda reservado para el intento inicial y para un nuevo intento tras
+persistir `FAILED`. Motivo: desde PR #109 de `church-banking`, `/qr/pay` reintenta
+de forma legítima `REFUSED`/`CANCELLED`/`CREATION_FAILED` bajo la misma
+referencia. Un comando repetido no puede disparar ese reintento mientras Glória
+todavía muestra `PROCESSING`: movería dinero otra vez sin que el operador haya
+visto el rechazo.
 
 ### Manejo de `CREATION_UNKNOWN` — el caso más delicado
 
@@ -1659,6 +1676,44 @@ conflicto de identidad, `503` de credencial/decode, transporte— queda ambiguo.
 Glória clasifica **solo** el `422` como `FAILED` y deja el resto en `PROCESSING`.
 Mantener sincronizada esta semántica: si `church-banking` cambia qué considera
 "confirmado", Glória debe cambiar con él.
+
+### Respuesta de creación perdida — reconciliación por `externalReference`
+
+`providerPaymentReserved` se activa solo cuando llega una respuesta HTTP válida
+de `/qr/pay`. Si `church-banking` reservó o creó el pago pero Glória perdió la
+respuesta (timeout, red, parse), el pago queda en `PROCESSING` sin esa marca.
+
+`/pix-qr/status` es **read-only** en términos financieros: no inicia un débito.
+Por eso la reconciliación consulta por `externalReference` **aunque**
+`providerPaymentReserved` esté ausente:
+
+```ts
+if (payment.status !== "PROCESSING") return this.result(payment)
+return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+```
+
+- Si `church-banking` devuelve el pago (`DONE`, `REFUSED`, …), Glória adopta ese
+  estado y, en `DONE`, registra el `FinancialRecord` de forma idempotente.
+- Si `church-banking` devuelve `404` (no conoce la referencia), la incertidumbre
+  **se preserva**: se mantiene `PROCESSING`, **no** se crea otro pago y **no** se
+  infiere `FAILED`. Un `404` no prueba que no exista un débito.
+- Cualquier otro error de la lectura (`5xx`, transporte) deja el estado igual:
+  tampoco cambia `currentPayment`.
+
+Sin `providerPaymentReserved` como puerta, la única forma de resolver un PIX QR
+cuyo estado Glória no conoce es esta lectura; no hay webhook de PIX QR que la
+reemplace.
+
+### Cambio de contrato explícito: `422` vs «cualquier error HTTP»
+
+Esta versión clasifica como `FAILED` **solo** un rechazo confirmado (HTTP `422`).
+Difere de una regla anteriormente indicada —*«cualquier error HTTP recibido →
+`FAILED`»*— y el cambio es deliberado: solo el `422` prueba que el proveedor
+rechazó la creación sin mover dinero. Un `4xx` distinto de `422` (p. ej. `404` o
+`409`) es ambiguo y se conserva como `PROCESSING`.
+
+**No asumir que ambos contratos son el mismo.** Volver a la regla anterior sería
+un cambio de comportamiento explícito y debe discutirse aparte.
 
 ---
 

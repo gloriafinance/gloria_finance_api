@@ -171,20 +171,48 @@ export class ExecuteRecurringPayment {
     ) {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
-    if (payment.status === "FAILED" || payment.status === "PAID") {
-      return this.result(payment)
-    }
-    // A network failure before Church Banking returned leaves no evidence that
-    // it reserved this reference. Keep the outcome uncertain; a status request
-    // must never become a new payment command in that case.
-    if (payment.status !== "PROCESSING" || !payment.providerPaymentReserved) {
+    // A terminal outcome is reported as-is. Every other state is resolved
+    // through the read-only status read, including one where the creation
+    // response was lost: Church Banking may hold the payment even when this
+    // service never saw the answer.
+    if (payment.status !== "PROCESSING") {
       return this.result(payment)
     }
 
-    const response = await this.churchBankingClient.getPixQrStatus({
-      externalAccountId: recurring.getChurchId(),
-      externalReference: payment.externalReference,
-    })
+    return await this.reconcilePixQrStatus(recurring, payment, createdBy)
+  }
+
+  /**
+   * Resolves an in-flight PIX QR operation through the read-only status read.
+   *
+   * It never issues `/qr/pay`. That endpoint legitimately retries a previously
+   * confirmed refusal under the same reference, so re-sending it from a state
+   * this service still reports as `PROCESSING` could move money again without
+   * the operator ever seeing the refusal. `/qr/pay` stays reserved for the first
+   * attempt and for a new attempt confirmed after `FAILED` was persisted.
+   *
+   * A failed read — including a `404` for a reference Church Banking does not
+   * know — proves nothing about the payment, so the outcome is preserved as
+   * `PROCESSING`: it is never turned into a new payment nor inferred `FAILED`.
+   */
+  private async reconcilePixQrStatus(
+    recurring: RecurringPayments,
+    payment: CurrentRecurringPayment,
+    createdBy: string
+  ): Promise<ExecuteRecurringPaymentResult> {
+    let response: PayPixQrResponse
+    try {
+      response = await this.churchBankingClient.getPixQrStatus({
+        externalAccountId: recurring.getChurchId(),
+        externalReference: payment.externalReference,
+      })
+    } catch (error) {
+      if (error instanceof ChurchBankingClientError) {
+        return this.result(payment)
+      }
+      throw error
+    }
+
     return await this.applyPixQrResult(recurring, payment, response, createdBy)
   }
 
@@ -199,9 +227,10 @@ export class ExecuteRecurringPayment {
     request: PayRecurringPaymentRequest,
     createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
-    // Anything that is not a failure is left alone: an operation in flight is
-    // resolved by the confirmation webhook, which is the only writer of the
-    // financial record, and a paid one already has its record.
+    // Anything that is not a failure is left alone: a paid one already has its
+    // record, and an operation in flight is only ever read back. A PIX QR has no
+    // webhook, so its outcome is resolved by the read-only status read, never by
+    // paying again.
     if (payment.status !== "FAILED") {
       if (payment.paymentMethod === "PIX_QR") {
         const method = this.resolveMethod(recurring, request)
@@ -211,11 +240,11 @@ export class ExecuteRecurringPayment {
         ) {
           throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
         }
-        if (
-          payment.status === "PROCESSING" &&
-          payment.providerPaymentReserved
-        ) {
-          return await this.submit(recurring, payment, method, createdBy)
+        // A repeated command for an in-flight PIX QR only reads its outcome.
+        // `/qr/pay` is reserved for the first attempt and for a new attempt
+        // confirmed after this service has persisted FAILED.
+        if (payment.status === "PROCESSING") {
+          return await this.reconcilePixQrStatus(recurring, payment, createdBy)
         }
       }
       return this.result(payment)

@@ -12,6 +12,7 @@ function build(
     qrResponses?: unknown[]
     statusResponses?: unknown[]
     qrError?: unknown
+    statusError?: unknown
     currentPayment?: Record<string, unknown>
   } = {}
 ) {
@@ -56,6 +57,7 @@ function build(
       )
     }),
     getPixQrStatus: jest.fn(async (..._args: unknown[]) => {
+      if (options.statusError) throw options.statusError
       const response = options.statusResponses?.shift()
       return (
         response ?? {
@@ -230,7 +232,7 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     expect(recurring.getCurrentPayment()?.status).toBe("BLOCKED")
   })
 
-  it("keeps an ambiguous 503 PROCESSING and never queries a reference that was not reserved", async () => {
+  it("keeps an ambiguous 503 PROCESSING and repairs it through the status read", async () => {
     const { useCase, recurring, banking, recordRegistrar } = build({
       qrError: new ChurchBankingClientError(
         503,
@@ -246,14 +248,62 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     })
     expect(recurring.getCurrentPayment()?.providerPaymentReserved).toBeFalsy()
 
-    // A status request must never become a new payment command: with no proof
-    // that church-banking reserved the reference, the outcome stays uncertain.
+    // The lost creation response is repaired by the read-only status read, and
+    // that read never becomes a new payment command.
     await expect(
       useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
     ).resolves.toMatchObject({ status: "PROCESSING" })
-    expect(banking.getPixQrStatus).not.toHaveBeenCalled()
+    expect(banking.getPixQrStatus).toHaveBeenCalledTimes(1)
     expect(banking.payPixQr).toHaveBeenCalledTimes(1)
     expect(recordRegistrar.execute).not.toHaveBeenCalled()
+  })
+
+  it("reconciles a lost creation response through the status read", async () => {
+    const { useCase, recurring, banking, recordRegistrar } = build({
+      qrError: new Error("socket hang up"),
+      statusResponses: [
+        {
+          externalAccountId: "church-1",
+          externalReference: REFERENCE,
+          description: "Aluguel",
+          amountInCents: 15000,
+          status: "DONE",
+          providerTransactionId: "pix-tx-1",
+        },
+      ],
+    })
+
+    // Church Banking created the payment, but the answer never arrived, so no
+    // reservation was ever acknowledged.
+    await expect(
+      useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).rejects.toThrow("socket hang up")
+    expect(recurring.getCurrentPayment()?.status).toBe("PROCESSING")
+    expect(recurring.getCurrentPayment()?.providerPaymentReserved).toBeFalsy()
+    expect(banking.payPixQr).toHaveBeenCalledTimes(1)
+
+    await expect(
+      useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
+    ).resolves.toMatchObject({ status: "PAID", providerValueInCents: 15000 })
+    expect(banking.getPixQrStatus).toHaveBeenCalledTimes(1)
+    expect(banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(recordRegistrar.execute).toHaveBeenCalledTimes(1)
+    expect(recurring.getCurrentPayment()?.status).toBe("PAID")
+  })
+
+  it("preserves uncertainty when the status read does not know the reference", async () => {
+    const { useCase, recurring, banking, recordRegistrar } = build({
+      currentPayment: reservedPayment(false),
+      statusError: new ChurchBankingClientError(404, "PAYMENT_NOT_FOUND"),
+    })
+
+    await expect(
+      useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
+    ).resolves.toMatchObject({ status: "PROCESSING" })
+    expect(banking.getPixQrStatus).toHaveBeenCalledTimes(1)
+    expect(banking.payPixQr).not.toHaveBeenCalled()
+    expect(recordRegistrar.execute).not.toHaveBeenCalled()
+    expect(recurring.getCurrentPayment()?.status).toBe("PROCESSING")
   })
 
   it("keeps a 409 identity conflict PROCESSING instead of a confirmed failure", async () => {
@@ -326,41 +376,44 @@ describe("ExecuteRecurringPayment PIX QR", () => {
     expect(recurring.getCurrentPayment()?.status).toBe("PAID")
   })
 
-  it("does not query the provider when the reservation was never confirmed", async () => {
-    const { useCase, banking } = build({
-      currentPayment: reservedPayment(false),
+  it("never re-sends /qr/pay for an in-flight PIX QR, only reads its status", async () => {
+    const { useCase, recurring, banking, recordRegistrar } = build({
+      currentPayment: reservedPayment(true),
+      statusResponses: [
+        {
+          externalAccountId: "church-1",
+          externalReference: REFERENCE,
+          description: "Aluguel",
+          amountInCents: 15000,
+          status: "REFUSED",
+          providerTransactionId: "pix-tx-1",
+        },
+      ],
     })
 
+    // A repeated command while this service still reports PROCESSING must not
+    // reach `/qr/pay`: that endpoint would legitimately retry the refusal and
+    // move money again without the operator ever seeing it.
     await expect(
-      useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
-    ).resolves.toMatchObject({ status: "PROCESSING" })
-    expect(banking.getPixQrStatus).not.toHaveBeenCalled()
+      useCase.execute("church-1", "recurring-1", request, "user-1")
+    ).resolves.toMatchObject({ status: "FAILED" })
+    expect(banking.getPixQrStatus).toHaveBeenCalledTimes(1)
     expect(banking.payPixQr).not.toHaveBeenCalled()
+    expect(recurring.getCurrentPayment()?.status).toBe("FAILED")
+    expect(recordRegistrar.execute).not.toHaveBeenCalled()
   })
 
-  it("returns a terminal FAILED as-is without querying the provider", async () => {
-    const { useCase, banking } = build({
+  it("uses /qr/pay again only for a new attempt after FAILED was persisted", async () => {
+    const { useCase, recurring, banking } = build({
       currentPayment: { ...reservedPayment(true), status: "FAILED" },
     })
 
     await expect(
-      useCase.reconcilePixQr("church-1", "recurring-1", "2026-10", "user-1")
-    ).resolves.toMatchObject({ status: "FAILED" })
-    expect(banking.getPixQrStatus).not.toHaveBeenCalled()
-  })
-
-  it("re-submits a reserved PIX QR only when the provider confirmed the reference", async () => {
-    const unconfirmed = build({ currentPayment: reservedPayment(false) })
-    await expect(
-      unconfirmed.useCase.execute("church-1", "recurring-1", request, "user-1")
-    ).resolves.toMatchObject({ status: "PROCESSING" })
-    expect(unconfirmed.banking.payPixQr).not.toHaveBeenCalled()
-
-    const confirmed = build({ currentPayment: reservedPayment(true) })
-    await expect(
-      confirmed.useCase.execute("church-1", "recurring-1", request, "user-1")
+      useCase.execute("church-1", "recurring-1", request, "user-1")
     ).resolves.toMatchObject({ status: "PAID" })
-    expect(confirmed.banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(banking.getPixQrStatus).not.toHaveBeenCalled()
+    expect(banking.payPixQr).toHaveBeenCalledTimes(1)
+    expect(recurring.getCurrentPayment()?.status).toBe("PAID")
   })
 })
 

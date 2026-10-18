@@ -61,7 +61,6 @@ type OpenApiSchema = {
   required?: string[]
   additionalProperties?: boolean
   description?: string
-  oneOf?: OpenApiSchema[]
 }
 
 type OpenApiDocument = {
@@ -327,23 +326,6 @@ function splitTopLevel(source: string): string[] {
   return values
 }
 
-function splitTopLevelUnion(source: string): string[] {
-  const values: string[] = []
-  let start = 0
-  let depth = 0
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index]!
-    if ("{[(<".includes(character)) depth += 1
-    if ("}])>".includes(character)) depth -= 1
-    if (character === "|" && depth === 0) {
-      values.push(source.slice(start, index).trim())
-      start = index + 1
-    }
-  }
-  values.push(source.slice(start).trim())
-  return values.filter(Boolean)
-}
-
 /**
  * Extract property-level descriptions from JSDoc comments in a type
  * declaration text. Matches JSDoc blocks immediately followed by a property
@@ -413,14 +395,6 @@ function schemaFromType(
     return {
       type: "string",
       enum: [...normalized.matchAll(/"([^"]+)"/g)].map((match) => match[1]!),
-    }
-  }
-  const unionMembers = splitTopLevelUnion(normalized)
-  if (unionMembers.length > 1) {
-    return {
-      oneOf: unionMembers.map((member) =>
-        schemaFromType(member, new Set(visited), new Map(descriptions))
-      ),
     }
   }
   const omit = normalized.match(/^Omit<([A-Za-z0-9_]+),\s*"([A-Za-z0-9_]+)">$/)

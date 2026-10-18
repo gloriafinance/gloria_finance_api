@@ -10439,6 +10439,36 @@ export const openApiDocument = {
             },
           },
         ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  competence: {
+                    type: "string",
+                  },
+                  amount: {
+                    type: "number",
+                  },
+                  paymentDate: {
+                    type: "string",
+                  },
+                  availabilityAccountId: {
+                    type: "string",
+                  },
+                },
+                required: [
+                  "competence",
+                  "paymentDate",
+                  "availabilityAccountId",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
         security: [
           {
             bearerAuth: [],
