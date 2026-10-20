@@ -35,6 +35,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   Res,
   Use,
@@ -267,7 +268,7 @@ export class UserController {
   @Get("/")
   @Use(PermissionMiddleware)
   async fetchAllUser(
-    @Param() filter: FilterUserRequest,
+    @Query() filter: FilterUserRequest,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
