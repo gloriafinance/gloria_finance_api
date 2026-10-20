@@ -90,7 +90,7 @@ export class ChurchController {
 
   @Get("/")
   @Use(PermissionMiddleware)
-  async list(@Param() req: ChurchPaginateRequest, @Res() res: ServerResponse) {
+  async list(@Query() req: ChurchPaginateRequest, @Res() res: ServerResponse) {
     try {
       const churches = await new SearchChurches(
         ChurchMongoRepository.getInstance()
