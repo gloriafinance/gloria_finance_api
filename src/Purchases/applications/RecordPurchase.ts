@@ -1,13 +1,14 @@
 import type { IPurchaseRepository } from "../domain/interfaces"
 import type { RecordPurchaseRequest } from "../domain/requests"
+
+import type { IQueueService } from "@/package/queue/domain"
+import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 import type {
   IAvailabilityAccountRepository,
   IFinancialConceptRepository,
   IFinancialConfigurationRepository,
-} from "@/Financial/domain/interfaces"
-import type { IQueueService } from "@/package/queue/domain"
+} from "@/FinanceConfig/domain"
 import { BasePurchaseRecord } from "@/Purchases/applications/BasePurchaseRecord.ts"
-import { SearchAvailabilityAccount } from "@/FinanceConfig/applications"
 
 export class RecordPurchase extends BasePurchaseRecord {
   constructor(
@@ -28,7 +29,7 @@ export class RecordPurchase extends BasePurchaseRecord {
   async execute(request: RecordPurchaseRequest) {
     const account = await new SearchAvailabilityAccount(
       this.availabilityAccountRepository
-    ).execute(request.availabilityAccountId!)
+    ).execute({ availabilityAccountId: request.availabilityAccountId! })
 
     const { purchase, costCenter } = await this.basicRecord({
       ...request,

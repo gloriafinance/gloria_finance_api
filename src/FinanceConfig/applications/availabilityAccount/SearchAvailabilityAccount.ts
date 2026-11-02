@@ -20,13 +20,6 @@ export class SearchAvailabilityAccount {
     this.logger.info(
       `FindAvailabilityAccountByAvailabilityAccountId ${JSON.stringify(filter)}`
     )
-    // const filter: any = {
-    //   availabilityAccountId,
-    // }
-    //
-    // if (churchId) {
-    //   filter.churchId = churchId
-    // }
 
     const account = await this.availabilityAccountRepository.one(filter, {
       transaction,
