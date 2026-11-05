@@ -4,7 +4,10 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import type { BunMultipartFile } from "bun-platform-kit"
+import { Logger } from "@/Shared/adapter/CustomLogger"
 import { GenericException } from "@/Shared/domain"
+
+const logger = Logger("ReadPDFService")
 
 export type ExtractedPurchase = {
   items: Array<{
@@ -164,7 +167,10 @@ type FiscalDocumentType = "NFE" | "NFCE" | "NFSE_NACIONAL" | "NFSE_MUNICIPAL"
 function detectType(text: string): FiscalDocumentType {
   if (
     /Nota Fiscal de Consumidor\s+Eletr[oô]nica/i.test(text) ||
-    /NFC-e/i.test(text)
+    /NFC-e/i.test(text) ||
+    (/Informações gerais da Nota/i.test(text) &&
+      /Chave de acesso/i.test(text) &&
+      /Vl\. Unit\.:/i.test(text))
   ) {
     return "NFCE"
   }
@@ -618,17 +624,61 @@ function parseNfce(text: string): ExtractedPurchase {
     })
   }
 
+  // Consulta Resumida NFC-e (SEFAZ-SP) places the product description and
+  // its quantity/unit price on separate lines and does not print "NFC-e nº".
+  if (!items.length && /Vl\. Total/i.test(text) && /Qtde\.:/i.test(text)) {
+    const lines = text.split(/\r?\n/)
+
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index] ?? ""
+      const product = line.match(
+        /^\s*(.+?)\s*\(Código:\s*[^)]+\)\s+Vl\. Total\s*$/i
+      )
+
+      if (!product) {
+        continue
+      }
+
+      const detail = lines
+        .slice(index + 1, index + 3)
+        .join(" ")
+        .match(
+          /Qtde\.:\s*([\d.,]+)\s+UN:\s*\S+\s+Vl\. Unit\.:\s*([\d.,]+)[\s\S]*?([\d.]+,\d{2})\s*$/i
+        )
+      const quantity = decimal(detail?.[1])
+      const price = money(detail?.[2])
+      const total = money(detail?.[3])
+
+      if (quantity != null && quantity > 0 && price != null && total != null) {
+        items.push({ quantity, price, total, name: compact(product[1]) })
+      }
+    }
+  }
+
   const date = purchaseDate(
-    first(text, /NFC-e\s+nº[\s\S]*?(\d{2}[/.]\d{2}[/.]\d{4})/i)
+    first(text, /NFC-e\s+nº[\s\S]*?(\d{2}[/.]\d{2}[/.]\d{4})/i) ??
+      first(
+        text,
+        /Número:\s*\d+\s+Série:\s*\d+\s+Emissão:\s*(\d{2}[/.]\d{2}[/.]\d{4})/i
+      )
   )
-  const total = money(first(text, /Valor total\s+R\$\s*([\d.]+,\d{2})/i))
+  const total =
+    money(first(text, /Valor total\s+R\$\s*([\d.]+,\d{2})/i)) ??
+    money(first(text, /Valor a pagar R\$:\s*([\d.]+,\d{2})/i))
   const tax =
     money(
       first(
         text,
         /Informaç[aã]o dos Tributos Totais Incidentes[\s\S]*?R\$\s*([\d.]+,\d{2})/i
       )
-    ) ?? 0
+    ) ??
+    money(
+      first(
+        text,
+        /Informação dos Tributos Totais Incidentes[\s\S]*?R\s*([\d.]+,\d{2})/i
+      )
+    ) ??
+    0
 
   if (!date) {
     throw new Error("No pude extraer la fecha de emisión de la NFC-e.")
@@ -917,7 +967,11 @@ export async function readPurchaseFromPdf(
     await writeFile(pdfPath, content)
 
     return extractPurchaseFromFiscalPdf(pdfPath)
-  } catch {
+  } catch (error: unknown) {
+    logger.error("Unable to extract purchase data from PDF", {
+      error: error instanceof Error ? error.message : String(error),
+      fileSize: content.length,
+    })
     throw new GenericException(
       "Unable to extract purchase data from the provided PDF"
     )
