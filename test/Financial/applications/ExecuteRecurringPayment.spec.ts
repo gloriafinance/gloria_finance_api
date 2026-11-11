@@ -2,6 +2,8 @@ import { RecurringPixQrExecution } from "@/Financial/applications/recurringPayme
 import { ExecuteRecurringPayment } from "@/Financial/applications/recurringPayments/ExecuteRecurringPayment"
 import { RecurringPayments } from "@/Financial/domain/RecurringPayments"
 import { ChurchBankingClientError } from "@/Banking/domain/exceptions/ChurchBankingClient.exception"
+import type { IAvailabilityAccountRepository } from "@/FinanceConfig/domain/interfaces/AvailabilityAccountRepository.interface"
+import { AvailabilityAccountMongoRepository } from "@/FinanceConfig/infrastructure/presistence/AvailabilityAccountMongoRepository"
 
 const PIX_DESTINATION = {
   pixKey: "12345678000190",
@@ -17,6 +19,7 @@ type SetupInput = {
   bankCount?: number
   bankConnected?: boolean
   accounts?: number
+  availabilityAccountRepository?: IAvailabilityAccountRepository
   closedMonth?: boolean
 }
 
@@ -63,8 +66,8 @@ function setup(input: SetupInput = {}) {
     getAvailabilityAccountId: () => `availability-${index + 1}`,
     getSource: () => ({ bankId: "bank-1" }),
   }))
-  const availabilityAccounts = {
-    list: jest.fn().mockResolvedValue(accounts),
+  const availabilityAccounts = input.availabilityAccountRepository ?? {
+    many: jest.fn().mockResolvedValue(accounts),
     one: jest.fn().mockResolvedValue(accounts[0]),
   }
   const banking = {
@@ -643,20 +646,67 @@ describe("ExecuteRecurringPayment", () => {
     })
   })
 
-  it("executes a variable bill using the per-competence amount and code", async () => {
-    const ctx = setup({ type: "VARIABLE" })
-    await ctx.service.execute("church-1", "recurring-1", {
-      competence: "2026-10",
-      amount: 742.83,
-      payment: {
-        type: "BILL",
-        identificationField: "83640000007442830048100801012345678900000000000",
-      },
+  it("executes a variable bill with the real account repository", async () => {
+    const availabilityAccountRepository =
+      AvailabilityAccountMongoRepository.getInstance()
+    const find = jest.fn().mockReturnValue({
+      sort: () => ({
+        toArray: async () => [
+          {
+            _id: "account-document",
+            churchId: "church-1",
+            availabilityAccountId: "availability-1",
+            active: true,
+            source: { bankId: "bank-1" },
+          },
+        ],
+      }),
     })
+    const collection = jest
+      .spyOn(
+        availabilityAccountRepository as unknown as {
+          collection(): Promise<unknown>
+        },
+        "collection"
+      )
+      .mockResolvedValue({ find })
+    const ctx = setup({ type: "VARIABLE", availabilityAccountRepository })
+    const identificationField =
+      "83640000007442830048100801012345678900000000000"
 
+    try {
+      const result = await ctx.service.execute(
+        "church-1",
+        "recurring-1",
+        {
+          competence: "2026-10",
+          amount: 742.83,
+          payment: { type: "BILL", identificationField },
+          availabilityAccountId: "availability-1",
+        },
+        "user-1"
+      )
+      expect(result).toMatchObject({ status: "PROCESSING" })
+    } finally {
+      collection.mockRestore()
+    }
+
+    expect(find).toHaveBeenCalledWith(
+      {
+        churchId: "church-1",
+        active: true,
+        "source.bankId": { $in: ["bank-1"] },
+      },
+      undefined
+    )
+    expect(ctx.recurrence.getCurrentPayment()).toMatchObject({
+      bankId: "bank-1",
+      availabilityAccountId: "availability-1",
+      amount: 742.83,
+    })
     expect(ctx.banking.createBillPayment).toHaveBeenCalledWith(
       expect.objectContaining({
-        identificationField: "83640000007442830048100801012345678900000000000",
+        identificationField,
         externalReference: "urn:recurringPayment:recurring-1:2026-10",
       })
     )

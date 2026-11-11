@@ -192,7 +192,7 @@ describe.each(["pay", "payPixQr"] as const)(
         jest
           .spyOn(AvailabilityAccountMongoRepository, "getInstance")
           .mockReturnValue({
-            list: jest.fn().mockResolvedValue([
+            many: jest.fn().mockResolvedValue([
               {
                 getAvailabilityAccountId: () => "availability-1",
                 getSource: () => ({ bankId: "bank-1" }),

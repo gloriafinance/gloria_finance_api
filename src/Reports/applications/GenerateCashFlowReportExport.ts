@@ -150,7 +150,7 @@ export class GenerateCashFlowReportExport {
       request.availabilityAccountId
     )
 
-    const availableAccounts = await this.availabilityAccountRepository.list({
+    const availableAccounts = await this.availabilityAccountRepository.many({
       churchId: request.churchId,
       ...(request.symbol ? { symbol: request.symbol } : {}),
       ...(request.method ? { accountType: request.method } : {}),

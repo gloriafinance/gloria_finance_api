@@ -308,7 +308,7 @@ export class ExecuteRecurringPayment {
     const banksById = new Map(
       activeBanks.map((bank) => [bank.getBankId(), bank] as const)
     )
-    const accounts = await this.availabilityAccountRepository.list({
+    const accounts = await this.availabilityAccountRepository.many({
       churchId,
       active: true,
       "source.bankId": { $in: [...banksById.keys()] },

@@ -120,7 +120,7 @@ function build(
       ]),
     } as never,
     {
-      list: jest.fn(async () =>
+      many: jest.fn(async () =>
         options.accountAvailable === false ? [] : [account]
       ),
     } as never,
