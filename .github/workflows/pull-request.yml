@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check code using Bun
         uses: oven-sh/setup-bun@v2
@@ -19,6 +21,11 @@ jobs:
 
       - name: Check code formatting
         run: bun run format:check
+
+      - name: Check TypeScript regressions
+        run: bun run typecheck "$TYPECHECK_BASE"
+        env:
+          TYPECHECK_BASE: ${{ github.event.pull_request.base.sha }}
 
       - name: Build code
         run: bun build.ts

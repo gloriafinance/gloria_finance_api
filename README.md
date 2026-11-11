@@ -159,6 +159,16 @@ La API debería quedar disponible en:
 
 ---
 
+## Comprobación de TypeScript
+
+`bun run typecheck` comprueba el código de producción y los scripts sin generar archivos.
+Falla si aparecen errores de tipos nuevos respecto a `origin/main`, usando la referencia
+Git local. Puedes indicar otra base con `bun run typecheck <ref>`.
+
+CI compara el resultado del pull request con su rama base y, antes de desplegar,
+compara `main` con la revisión anterior. `bun run typecheck:strict` muestra todos
+los errores, incluida la deuda existente, y falla si queda alguno.
+
 ## Convenciones de commits (Conventional Commits)
 
 Usamos **Conventional Commits** para mantener un historial consistente y facilitar automatizaciones (releases, changelog, etc.).

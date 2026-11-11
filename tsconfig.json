@@ -30,14 +30,13 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
-    "baseUrl": "./",
     "typeRoots": [
       "./src/@types",
       "./node_modules/@types",
       "./node_modules/bun-types"
     ],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "exclude": [

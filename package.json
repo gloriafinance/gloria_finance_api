@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "bun --watch src/app.ts",
     "test": "bunx jest --forceExit --runInBand --detectOpenHandles",
+    "typecheck": "bun scripts/check-type-regressions.ts",
+    "typecheck:strict": "tsc --noEmit --project tsconfig.build.json",
     "start:prod": "bun src/app.ts",
     "cli": "bun src/cli.ts",
     "migrate": "set -a && . ./.env && set +a && ts-mongo migrate:up",
