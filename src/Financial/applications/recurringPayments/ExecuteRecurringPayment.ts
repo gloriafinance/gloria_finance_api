@@ -25,6 +25,7 @@ import type { IFinancialYearRepository } from "@/ConsolidatedFinancial/domain/in
 import type { IFinancialRecordRepository } from "@/Financial/domain/interfaces"
 import { createHash } from "node:crypto"
 import type { RecurringPixQrExecution } from "./RecurringPixQrExecution"
+import type { RegisterRecurringPaymentFinancialRecord } from "./RegisterRecurringPaymentFinancialRecord"
 
 type RecurringBankingClient = Pick<
   IChurchBankingClient,
@@ -60,6 +61,10 @@ export class ExecuteRecurringPayment {
     private readonly financialYearRepository: IFinancialYearRepository,
     private readonly churchBankingClient: RecurringBankingClient,
     private readonly pixQrExecution: RecurringPixQrExecution,
+    private readonly recordRegistrar: Pick<
+      RegisterRecurringPaymentFinancialRecord,
+      "execute"
+    >,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -185,7 +190,8 @@ export class ExecuteRecurringPayment {
   async reconcileBillPayment(
     churchId: string,
     recurringPaymentId: string,
-    competence: string
+    competence: string,
+    createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
     const { recurring, payment } = await this.loadInFlightPayment(
       churchId,
@@ -193,7 +199,7 @@ export class ExecuteRecurringPayment {
       competence,
       "BILL"
     )
-    return await this.reconcileBill(recurring, payment)
+    return await this.reconcileBill(recurring, payment, createdBy)
   }
 
   /** Shared by the two reconciliations: both need the same in-flight guarantees. */
@@ -242,7 +248,7 @@ export class ExecuteRecurringPayment {
       ) {
         throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
       }
-      return await this.reconcileBill(recurring, payment)
+      return await this.reconcileBill(recurring, payment, createdBy)
     }
     if (payment.paymentMethod !== "PIX_QR") return this.result(payment)
 
@@ -262,7 +268,8 @@ export class ExecuteRecurringPayment {
    */
   private async reconcileBill(
     recurring: RecurringPayments,
-    payment: CurrentRecurringPayment
+    payment: CurrentRecurringPayment,
+    createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
     let response: ChurchBankingBillPaymentResponse
     try {
@@ -274,7 +281,44 @@ export class ExecuteRecurringPayment {
       if (error instanceof ChurchBankingClientError) return this.result(payment)
       throw error
     }
+    await this.registerRecoveredBill(recurring, payment, response, createdBy)
     return await this.applyBankingResult(recurring, payment, response)
+  }
+
+  /**
+   * The webhook is the usual writer of the accounting record, and this read only
+   * exists because that notification never arrived. Registration is idempotent
+   * by recurrence and competence, so a confirmation that did reach the webhook
+   * is not booked twice.
+   *
+   * It runs before the status is persisted: if the record cannot be written, the
+   * execution stays `PROCESSING` and a later reconciliation retries it, instead
+   * of looking paid with no expense behind it.
+   */
+  private async registerRecoveredBill(
+    recurring: RecurringPayments,
+    payment: CurrentRecurringPayment,
+    response: ChurchBankingBillPaymentResponse,
+    createdBy: string
+  ): Promise<void> {
+    if (response.status !== "PAID" || !("valueInCents" in response)) return
+    const paymentDate = response.paymentDate
+      ? new Date(response.paymentDate)
+      : this.now()
+    if (Number.isNaN(paymentDate.getTime())) {
+      throw new PaymentError("RECURRING_PAYMENT_BANKING_REFERENCE_MISMATCH")
+    }
+    await this.recordRegistrar.execute({
+      recurring,
+      competence: payment.competence,
+      // The billed amount is authoritative: a reservation that declared another
+      // amount still has to book what the bank actually paid.
+      amount: response.valueInCents / 100,
+      availabilityAccountId: payment.availabilityAccountId,
+      paymentDate,
+      createdBy,
+      bankingExternalReference: payment.externalReference,
+    })
   }
 
   /**

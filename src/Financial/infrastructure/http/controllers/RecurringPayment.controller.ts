@@ -241,7 +241,8 @@ export class RecurringPaymentController {
       const result = await this.paymentExecutor().reconcileBillPayment(
         req.auth.churchId,
         recurringPaymentId,
-        body.competence
+        body.competence,
+        req.auth.userId ?? req.auth.memberId ?? "unknown"
       )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {
@@ -417,6 +418,16 @@ export class RecurringPaymentController {
 
   private paymentExecutor(): ExecuteRecurringPayment {
     const bankingClient = new ChurchBankingClient()
+    // Both banking paths book through the same registrar: the PIX QR one has no
+    // webhook, and the boleto one reconciles a webhook that never arrived.
+    const recordRegistrar = new RegisterRecurringPaymentFinancialRecord(
+      FinanceRecordMongoRepository.getInstance(),
+      AvailabilityAccountMongoRepository.getInstance(),
+      FinancialConceptMongoRepository.getInstance(),
+      FinancialConfigurationMongoRepository.getInstance(),
+      undefined,
+      FinancialYearMongoRepository.getInstance()
+    )
     return new ExecuteRecurringPayment(
       RecurringPaymentsMongoRepository.getInstance(),
       FinanceRecordMongoRepository.getInstance(),
@@ -427,15 +438,9 @@ export class RecurringPaymentController {
       new RecurringPixQrExecution(
         RecurringPaymentsMongoRepository.getInstance(),
         bankingClient,
-        new RegisterRecurringPaymentFinancialRecord(
-          FinanceRecordMongoRepository.getInstance(),
-          AvailabilityAccountMongoRepository.getInstance(),
-          FinancialConceptMongoRepository.getInstance(),
-          FinancialConfigurationMongoRepository.getInstance(),
-          undefined,
-          FinancialYearMongoRepository.getInstance()
-        )
-      )
+        recordRegistrar
+      ),
+      recordRegistrar
     )
   }
 }

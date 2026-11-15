@@ -84,6 +84,9 @@ function build(
     if (options.statusError) throw options.statusError
     return options.statusResponses?.shift() ?? billPayment()
   })
+  const recordRegistrar = {
+    execute: jest.fn(async (_input: unknown) => undefined),
+  }
   const banking = {
     getBillPaymentStatus,
     createPixTransfer: jest.fn<IChurchBankingClient["createPixTransfer"]>(),
@@ -113,10 +116,11 @@ function build(
     { one: jest.fn(async () => ({ isClosed: () => false })) } as never,
     banking as never,
     { submit: jest.fn(), reconcile: jest.fn() } as never,
+    recordRegistrar as never,
     NOW
   )
 
-  return { useCase, recurring, banking, saved }
+  return { useCase, recurring, banking, saved, recordRegistrar }
 }
 
 describe("ExecuteRecurringPayment BILL reconciliation", () => {
@@ -126,7 +130,8 @@ describe("ExecuteRecurringPayment BILL reconciliation", () => {
     const result = await useCase.reconcileBillPayment(
       "church-1",
       "recurring-1",
-      "2026-10"
+      "2026-10",
+      "user-1"
     )
 
     expect(result).toMatchObject({
@@ -153,7 +158,8 @@ describe("ExecuteRecurringPayment BILL reconciliation", () => {
     const result = await useCase.reconcileBillPayment(
       "church-1",
       "recurring-1",
-      "2026-10"
+      "2026-10",
+      "user-1"
     )
 
     // An unsuccessful read cannot prove a refusal, so nothing is persisted.
@@ -170,7 +176,12 @@ describe("ExecuteRecurringPayment BILL reconciliation", () => {
     })
 
     await expect(
-      useCase.reconcileBillPayment("church-1", "recurring-1", "2026-10")
+      useCase.reconcileBillPayment(
+        "church-1",
+        "recurring-1",
+        "2026-10",
+        "user-1"
+      )
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
     expect(banking.getBillPaymentStatus).not.toHaveBeenCalled()
   })
@@ -220,5 +231,97 @@ describe("ExecuteRecurringPayment BILL reconciliation", () => {
       )
     ).rejects.toMatchObject({ name: "RECURRING_PAYMENT_IN_PROGRESS" })
     expect(banking.getBillPaymentStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe("ExecuteRecurringPayment BILL accounting recovery", () => {
+  it("books the expense when the reconciliation confirms a payment the webhook never reported", async () => {
+    const { useCase, recordRegistrar, saved } = build({
+      currentPayment: processingPayment(),
+    })
+
+    const result = await useCase.reconcileBillPayment(
+      "church-1",
+      "recurring-1",
+      "2026-10",
+      "user-1"
+    )
+
+    expect(result).toMatchObject({
+      status: "PAID",
+      providerValueInCents: 74283,
+    })
+    expect(recordRegistrar.execute).toHaveBeenCalledTimes(1)
+    expect(recordRegistrar.execute.mock.calls[0]?.[0]).toMatchObject({
+      competence: "2026-10",
+      // The billed amount is authoritative over the reserved one.
+      amount: 742.83,
+      availabilityAccountId: "availability-1",
+      createdBy: "user-1",
+      bankingExternalReference: REFERENCE,
+    })
+    expect(saved).toHaveLength(1)
+  })
+
+  it("uses the settlement date the provider reports for the accounting entry", async () => {
+    const { useCase, recordRegistrar } = build({
+      currentPayment: processingPayment(),
+      statusResponses: [billPayment({ paymentDate: "2026-11-18" })],
+    })
+
+    await useCase.reconcileBillPayment(
+      "church-1",
+      "recurring-1",
+      "2026-10",
+      "user-1"
+    )
+
+    const input = recordRegistrar.execute.mock.calls[0]?.[0] as {
+      paymentDate: Date
+    }
+    expect(input.paymentDate.toISOString()).toBe("2026-11-18T00:00:00.000Z")
+  })
+
+  it("does not book anything while the provider has not confirmed", async () => {
+    const { useCase, recordRegistrar } = build({
+      currentPayment: processingPayment(),
+      statusResponses: [
+        billPayment({
+          status: "BANK_PROCESSING",
+          paymentDate: null,
+          transactionReceiptUrl: null,
+        }),
+      ],
+    })
+
+    const result = await useCase.reconcileBillPayment(
+      "church-1",
+      "recurring-1",
+      "2026-10",
+      "user-1"
+    )
+
+    expect(result).toMatchObject({ status: "PROCESSING" })
+    expect(recordRegistrar.execute).not.toHaveBeenCalled()
+  })
+
+  it("keeps the execution in flight when the accounting entry cannot be written", async () => {
+    const { useCase, recordRegistrar, saved } = build({
+      currentPayment: processingPayment(),
+    })
+    recordRegistrar.execute.mockRejectedValueOnce(
+      new Error("RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID")
+    )
+
+    await expect(
+      useCase.reconcileBillPayment(
+        "church-1",
+        "recurring-1",
+        "2026-10",
+        "user-1"
+      )
+    ).rejects.toThrow("RECURRING_PAYMENT_FINANCIAL_CONCEPT_INVALID")
+    // A paid state without its expense behind it is never persisted.
+    expect(saved).toHaveLength(0)
   })
 })
