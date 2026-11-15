@@ -47,7 +47,7 @@ import {
   validateDecodeRecurringPaymentPixQr,
   validatePayRecurringPayment,
   validatePayRecurringPaymentPixQr,
-  validateReconcileRecurringPaymentPixQr,
+  validateReconcileRecurringPayment,
   validateRecurringPaymentConfiguration,
   validateRegisterRecurringPayment,
   validateSimulateRecurringPaymentBill,
@@ -204,7 +204,7 @@ export class RecurringPaymentController {
   @Use([
     PermissionMiddleware,
     Can("financial_records", "read"),
-    validateReconcileRecurringPaymentPixQr,
+    validateReconcileRecurringPayment,
   ])
   async reconcilePixQr(
     @Param("recurringPaymentId") recurringPaymentId: string,
@@ -218,6 +218,30 @@ export class RecurringPaymentController {
         recurringPaymentId,
         body.competence,
         req.auth.userId ?? req.auth.memberId ?? "unknown"
+      )
+      res.status(HttpStatus.OK).send(result)
+    } catch (error) {
+      domainResponse(error, res)
+    }
+  }
+
+  @Post("/:recurringPaymentId/bill-payment/status")
+  @Use([
+    PermissionMiddleware,
+    Can("financial_records", "read"),
+    validateReconcileRecurringPayment,
+  ])
+  async reconcileBillPayment(
+    @Param("recurringPaymentId") recurringPaymentId: string,
+    @Body() body: { competence: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await this.paymentExecutor().reconcileBillPayment(
+        req.auth.churchId,
+        recurringPaymentId,
+        body.competence
       )
       res.status(HttpStatus.OK).send(result)
     } catch (error) {

@@ -186,7 +186,11 @@ export async function validateDecodeRecurringPaymentPixQr(
   next()
 }
 
-export async function validateReconcileRecurringPaymentPixQr(
+/**
+ * The status query of either banking method carries only the competence, so the
+ * same contract serves both.
+ */
+export async function validateReconcileRecurringPayment(
   req: ServerRequest,
   res: ServerResponse,
   next: NextFunction

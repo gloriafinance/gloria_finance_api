@@ -1,6 +1,8 @@
 import type {
+  BillPaymentStatusInput,
   BillSimulation,
   BillSimulationBankSlip,
+  ChurchBankingBillPaymentBase,
   ChurchBankingBillPaymentResponse,
   ChurchBankingBillPaymentStatus,
   ChurchBankingPixTransferResponse,
@@ -74,6 +76,16 @@ export class ChurchBankingClient implements IChurchBankingClient {
       payload: input,
     })
     return this.parseBillPaymentResponse(response, input)
+  }
+
+  async getBillPaymentStatus(
+    input: BillPaymentStatusInput
+  ): Promise<ChurchBankingBillPaymentResponse> {
+    const response = await this.execute<BillPaymentStatusInput>({
+      path: "/api/bill-payments/status",
+      payload: input,
+    })
+    return this.parseBillPaymentStatusResponse(response, input)
   }
 
   async simulateBill(input: SimulateBillInput): Promise<BillSimulation> {
@@ -379,12 +391,45 @@ export class ChurchBankingClient implements IChurchBankingClient {
       throw invalidResponse()
     }
 
-    const base = {
+    return this.parseBillPaymentState(result, {
       externalAccountId: expected.externalAccountId,
       externalReference: expected.externalReference,
       identificationField: expected.identificationField,
       description: expected.description,
+    })
+  }
+
+  /**
+   * A status query identifies the payment by its durable reference, so the
+   * boleto data comes back from church-banking instead of being compared with
+   * the command.
+   */
+  private parseBillPaymentStatusResponse(
+    value: unknown,
+    expected: BillPaymentStatusInput
+  ): ChurchBankingBillPaymentResponse {
+    const result = responseData(value)
+    if (
+      result.externalAccountId !== expected.externalAccountId ||
+      result.externalReference !== expected.externalReference ||
+      !isNonBlankString(result.identificationField) ||
+      !isNonBlankString(result.description)
+    ) {
+      throw invalidResponse()
     }
+
+    return this.parseBillPaymentState(result, {
+      externalAccountId: expected.externalAccountId,
+      externalReference: expected.externalReference,
+      identificationField: result.identificationField,
+      description: result.description,
+    })
+  }
+
+  private parseBillPaymentState(
+    result: Record<string, unknown>,
+    base: ChurchBankingBillPaymentBase
+  ): ChurchBankingBillPaymentResponse {
     const status = result.status
     if (status === "RESERVED" || status === "CREATING") {
       return { ...base, status }

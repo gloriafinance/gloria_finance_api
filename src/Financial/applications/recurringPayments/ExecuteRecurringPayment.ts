@@ -28,7 +28,10 @@ import type { RecurringPixQrExecution } from "./RecurringPixQrExecution"
 
 type RecurringBankingClient = Pick<
   IChurchBankingClient,
-  "createPixTransfer" | "createBillPayment" | "decodePixQr"
+  | "createPixTransfer"
+  | "createBillPayment"
+  | "decodePixQr"
+  | "getBillPaymentStatus"
 >
 
 export type ExecuteRecurringPaymentResult = {
@@ -165,6 +168,44 @@ export class ExecuteRecurringPayment {
     competence: string,
     createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
+    const { recurring, payment } = await this.loadInFlightPayment(
+      churchId,
+      recurringPaymentId,
+      competence,
+      "PIX_QR"
+    )
+    return await this.pixQrExecution.reconcile(recurring, payment, createdBy)
+  }
+
+  /**
+   * A boleto is notified by webhook, but that notification can be lost. The
+   * durable status church-banking already reconciles with Asaas is read here so
+   * an execution stuck in `PROCESSING` can advance without the push.
+   */
+  async reconcileBillPayment(
+    churchId: string,
+    recurringPaymentId: string,
+    competence: string
+  ): Promise<ExecuteRecurringPaymentResult> {
+    const { recurring, payment } = await this.loadInFlightPayment(
+      churchId,
+      recurringPaymentId,
+      competence,
+      "BILL"
+    )
+    return await this.reconcileBill(recurring, payment)
+  }
+
+  /** Shared by the two reconciliations: both need the same in-flight guarantees. */
+  private async loadInFlightPayment(
+    churchId: string,
+    recurringPaymentId: string,
+    competence: string,
+    paymentMethod: NonNullable<CurrentRecurringPayment["paymentMethod"]>
+  ): Promise<{
+    recurring: RecurringPayments
+    payment: CurrentRecurringPayment
+  }> {
     assertCompetence(competence)
     const recurring = await this.recurringPaymentsRepository.one({
       recurringPaymentId,
@@ -179,11 +220,11 @@ export class ExecuteRecurringPayment {
     if (
       !payment ||
       payment.competence !== competence ||
-      payment.paymentMethod !== "PIX_QR"
+      payment.paymentMethod !== paymentMethod
     ) {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
-    return await this.pixQrExecution.reconcile(recurring, payment, createdBy)
+    return { recurring, payment }
   }
 
   /** Existing operations are read back; FAILED takes the normal reservation path. */
@@ -193,6 +234,16 @@ export class ExecuteRecurringPayment {
     request: PayRecurringPaymentRequest,
     createdBy: string
   ): Promise<ExecuteRecurringPaymentResult> {
+    if (payment.paymentMethod === "BILL") {
+      const billMethod = this.resolveMethod(recurring, request)
+      if (
+        billMethod.type !== "BILL" ||
+        payment.identificationField !== billMethod.identificationField
+      ) {
+        throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
+      }
+      return await this.reconcileBill(recurring, payment)
+    }
     if (payment.paymentMethod !== "PIX_QR") return this.result(payment)
 
     const method = this.resolveMethod(recurring, request)
@@ -203,6 +254,27 @@ export class ExecuteRecurringPayment {
       throw new PaymentError("RECURRING_PAYMENT_IN_PROGRESS")
     }
     return await this.pixQrExecution.reconcile(recurring, payment, createdBy)
+  }
+
+  /**
+   * Only reads the durable status. A failed read cannot prove a refusal, so the
+   * execution stays `PROCESSING` instead of being released as failed.
+   */
+  private async reconcileBill(
+    recurring: RecurringPayments,
+    payment: CurrentRecurringPayment
+  ): Promise<ExecuteRecurringPaymentResult> {
+    let response: ChurchBankingBillPaymentResponse
+    try {
+      response = await this.churchBankingClient.getBillPaymentStatus({
+        externalAccountId: recurring.getChurchId(),
+        externalReference: payment.externalReference,
+      })
+    } catch (error) {
+      if (error instanceof ChurchBankingClientError) return this.result(payment)
+      throw error
+    }
+    return await this.applyBankingResult(recurring, payment, response)
   }
 
   /**

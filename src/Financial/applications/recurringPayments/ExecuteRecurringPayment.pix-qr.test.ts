@@ -133,6 +133,7 @@ function build(
       createPixTransfer: banking.createPixTransfer,
       createBillPayment: banking.createBillPayment,
       decodePixQr: banking.decodePixQr,
+      getBillPaymentStatus: jest.fn(),
     },
     new RecurringPixQrExecution(
       recurringPaymentsRepository as never,
