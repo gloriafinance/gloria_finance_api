@@ -89,6 +89,11 @@ export type PayPixQrInput = DecodePixQrInput & {
   description: string
 }
 
+export type BillPaymentStatusInput = {
+  externalAccountId: string
+  externalReference: string
+}
+
 export type PixQrStatusInput = {
   externalAccountId: string
   externalReference: string
@@ -201,7 +206,7 @@ export type ChurchBankingPixTransferResponse =
 export type ChurchBankingBillPaymentStatus =
   "PENDING" | "BANK_PROCESSING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED"
 
-type ChurchBankingBillPaymentBase = {
+export type ChurchBankingBillPaymentBase = {
   externalAccountId: string
   externalReference: string
   identificationField: string
@@ -242,6 +247,10 @@ export interface IChurchBankingClient {
 
   createBillPayment(
     input: CreateBillPaymentInput
+  ): Promise<ChurchBankingBillPaymentResponse>
+
+  getBillPaymentStatus(
+    input: BillPaymentStatusInput
   ): Promise<ChurchBankingBillPaymentResponse>
 
   simulateBill(input: SimulateBillInput): Promise<BillSimulation>

@@ -2311,6 +2311,41 @@ export const openApiDocument = {
         description:
           "Implemented by ChurchController.list. The runtime endpoint validates its input and response contract.",
         operationId: "get_Church_list",
+        parameters: [
+          {
+            name: "perPage",
+            in: "query",
+            required: true,
+            schema: {
+              type: "number",
+            },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: true,
+            schema: {
+              type: "number",
+            },
+          },
+          {
+            name: "regionId",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "status",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              enum: ["DISABLED", "ACTIVE", "INACTIVE", "NO_MINISTER"],
+            },
+          },
+        ],
         security: [
           {
             bearerAuth: [],
@@ -9950,6 +9985,82 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/v1/recurring-payments/{recurringPaymentId}/bill-payment/status": {
+      post: {
+        tags: ["RecurringPayment"],
+        summary: "reconcile bill payment",
+        description:
+          "Implemented by RecurringPaymentController.reconcileBillPayment. The runtime endpoint validates its input and response contract.",
+        operationId: "post_RecurringPayment_reconcileBillPayment",
+        parameters: [
+          {
+            name: "recurringPaymentId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  competence: {
+                    type: "string",
+                  },
+                },
+                required: ["competence"],
+                additionalProperties: false,
+              },
+            },
+          },
+        },
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successful response",
+            content: {
+              "application/json": {
+                examples: {
+                  success: {
+                    summary: "Successful response",
+                    value: {
+                      status: "ALREADY_PAID",
+                      competence: "Gloria Finance",
+                      failureCode: "Gloria Finance",
+                      providerValueInCents: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid request or domain validation error",
+          },
+          "401": {
+            description: "Authentication is required",
+          },
+          "403": {
+            description: "The authenticated user is not authorized",
+          },
+          "422": {
+            description: "Request validation failed",
+          },
+          "500": {
+            description: "Unexpected server error",
+          },
+        },
+      },
+    },
     "/api/v1/recurring-payments/{recurringPaymentId}/bill/simulate": {
       post: {
         tags: ["RecurringPayment"],
@@ -11988,6 +12099,24 @@ export const openApiDocument = {
         description:
           "Implemented by UserController.fetchAllUser. The runtime endpoint validates its input and response contract.",
         operationId: "get_User_fetchAllUser",
+        parameters: [
+          {
+            name: "isSuperuser",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "isActive",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+        ],
         security: [
           {
             bearerAuth: [],

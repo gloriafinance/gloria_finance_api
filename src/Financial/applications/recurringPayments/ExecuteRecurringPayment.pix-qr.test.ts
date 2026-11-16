@@ -133,6 +133,7 @@ function build(
       createPixTransfer: banking.createPixTransfer,
       createBillPayment: banking.createBillPayment,
       decodePixQr: banking.decodePixQr,
+      getBillPaymentStatus: jest.fn(),
     },
     new RecurringPixQrExecution(
       recurringPaymentsRepository as never,
@@ -140,6 +141,7 @@ function build(
       recordRegistrar as never,
       () => new Date("2026-10-17T12:00:00.000Z")
     ),
+    recordRegistrar as never,
     () => new Date("2026-10-17T12:00:00.000Z")
   )
 
